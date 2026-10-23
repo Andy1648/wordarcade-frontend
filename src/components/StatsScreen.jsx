@@ -24,7 +24,7 @@ import { formatNum, formatRate } from '../format';
 import { CollectionBody } from './CollectionScreen';
 import { AchievementsBody } from './AchievementsScreen';
 import { SEASON2 } from '../progress/season';
-import { exportSave, importSave } from '../save/saveBackup';
+import { exportSaveCode, importAnySave } from '../save/saveCode';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
 import { getMyProfile } from '../leaderboard/client';
 import { resetAllProgress } from '../progress/resetAll';
@@ -133,7 +133,7 @@ function StatsScreenLive({ onBack, initialTab }) {
   const [restoreMsg, setRestoreMsg] = useState('');
   const [confirmingRestore, setConfirmingRestore] = useState(false);
   const handleCopySave = async () => {
-    const code = exportSave();
+    const code = exportSaveCode(); // the compact TAW2 code (save/saveCode.js, oct22)
     try {
       await navigator.clipboard.writeText(code);
       setCopyMsg('COPIED — PASTE IT SOMEWHERE SAFE');
@@ -146,7 +146,7 @@ function StatsScreenLive({ onBack, initialTab }) {
     window.setTimeout(() => setCopyMsg(''), 4000);
   };
   const handleRestore = () => {
-    const res = importSave(restoreText);
+    const res = importAnySave(restoreText, undefined, { source: 'code' }); // any code generation, tolerant of mangled pastes
     if (res.ok) {
       // Reload so every module re-reads the restored progress from storage.
       window.location.reload();

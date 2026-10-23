@@ -162,7 +162,10 @@ for (const vp of VPS) {
     await pc.getByTestId('profile-gear-1').click();
     const sheet = page.locator('.mx-sheet');
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByTestId('mark-main')).toContainText('WINS IN CHAIN');
+    // Andy oct22: one YOU haven't found opens LOCKED — HOW TO FIND, never its numbers
+    await expect(sheet).toHaveClass(/is-locked/);
+    await expect(sheet.getByTestId('mark-main')).toContainText('HOW TO FIND');
+    await expect(sheet.getByTestId('mark-main')).not.toContainText('WINS IN CHAIN');
     await expect(sheet.getByTestId('unlisted-serial')).toHaveText('FINDER #0003'); // THIS player's serial, from the server
     await expect(sheet.getByTestId('gear-equip')).toHaveCount(0); // someone else's gear: no EQUIP
     await page.waitForTimeout(400);

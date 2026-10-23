@@ -1,0 +1,256 @@
+/* DailyBlitz.css — the DAILY BLITZ screen. One column that FITS THE VIEWPORT (no scroll at 1366x768, a 1280x720
+   Chromebook, or a 360x640 phone): every block sizes off --dz (a viewport unit capped for big screens). House look:
+   flat fills, darker-shade coloured outlines, hard black offset shadows, Bungee + Space Mono. Motion is one-shot
+   WAAPI (transform/opacity) from the component; nothing here loops. */
+.dbz {
+  --dz: min(1vw, 1.45vh, 11px);
+  --fs-dzrule: max(16px, calc(1.9 * var(--dz)));
+  --blue: #3DA8FF;
+  --blue-dk: #1f6fc4;
+  box-sizing: border-box;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(10px, calc(1.6 * var(--dz))) 16px max(12px, calc(1.6 * var(--dz)));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: max(8px, calc(1.4 * var(--dz)));
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+}
+.dbz *, .dbz *::before, .dbz *::after { box-sizing: border-box; }
+
+/* ---- top bar ---- */
+.dbz-top { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; }
+.dbz-right { display: inline-flex; align-items: center; gap: 10px; }
+.dbz-exit {
+  min-height: 44px;
+  padding: 0 14px;
+  background: #1a0b2e;
+  border: 3px solid #5a3a8a;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  color: #fff;
+  font: 400 16px/1 'Bungee', cursive;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.dbz-exit:active { transform: translate(4px, 4px); box-shadow: none; }
+.dbz-day { font: 400 max(18px, calc(2.4 * var(--dz)))/1 'Bungee', cursive; color: var(--blue); -webkit-text-stroke: 4px #000; paint-order: stroke fill; white-space: nowrap; }
+@media (max-width: 420px) { .dbz-day-k { display: none; } }
+.dbz-streak { display: inline-flex; align-items: center; gap: 2px; font: 400 20px/1 'Bungee', cursive; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.dbz-streak img { width: 28px; height: 28px; object-fit: contain; }
+
+/* ---- cover ---- */
+.dbz-cover { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: max(8px, calc(1.6 * var(--dz))); text-align: center; }
+.dbz-brain { flex: 0 1 auto; min-height: 0; height: min(30vh, calc(26 * var(--dz))); width: auto; object-fit: contain; }
+.dbz-title { margin: 0; display: flex; flex-direction: column; font: 400 max(44px, calc(8.2 * var(--dz)))/0.92 'Bungee', cursive; color: var(--blue); -webkit-text-stroke: 8px #000; paint-order: stroke fill; transform: rotate(-2deg); }
+.dbz-rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font: 700 var(--fs-dzrule)/1.25 'Space Mono', monospace; letter-spacing: 0.3px; }
+.dbz-rules b { color: var(--blue); }
+.dbz-rules b.is-gold { color: #FFD54A; }
+.dbz-streakline { margin: 0; font: 700 max(16px, calc(1.9 * var(--dz))) 'Space Mono', monospace; color: #FF6B3D; }
+.dbz-go {
+  min-height: 56px;
+  min-width: min(320px, 100%);
+  padding: 0 28px;
+  background: var(--blue);
+  border: 4px solid var(--blue-dk);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #000;
+  font: 400 max(24px, calc(3.2 * var(--dz)))/1 'Bungee', cursive;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.dbz-go:hover { transform: translate(-1px, -2px); }
+.dbz-go:active { transform: translate(6px, 6px); box-shadow: none; }
+.dbz-go:disabled { opacity: 0.6; cursor: default; }
+.dbz-go:focus-visible, .dbz-copy:focus-visible, .dbz-exit:focus-visible, .dbz-send:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
+
+/* ---- play ---- */
+.dbz-prog { display: flex; gap: 6px; }
+.dbz-prog i { display: block; width: max(18px, calc(3 * var(--dz))); height: 16px; background: #12071f; border: 3px solid #000; border-radius: 4px; }
+.dbz-prog i.is-now { background: #fff; }
+.dbz-prog i.is-miss { background: #3a2a52; }
+.dbz-prog i.is-common { background: #F0EAD9; }
+.dbz-prog i.is-uncommon { background: #2EFFE0; }
+.dbz-prog i.is-rare { background: #9A1AFF; }
+.dbz-prog i.is-obscure { background: #FFD54A; }
+.dbz-clock { flex: none; height: 14px; background: #12071f; border: 3px solid #000; border-radius: 7px; overflow: hidden; }
+.dbz-clock-fill { height: 100%; background: var(--blue); transform-origin: left center; }
+.dbz-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: max(6px, calc(1.2 * var(--dz)));
+  padding: max(12px, calc(2 * var(--dz))) 14px;
+  background: #1a0b2e;
+  border: 4px solid var(--blue-dk);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  text-align: center;
+}
+.dbz-tier { font: 700 max(16px, calc(2 * var(--dz))) 'Space Mono', monospace; color: #9fc8ff; letter-spacing: 1px; }
+.dbz-cat { margin: 0; max-width: 100%; font: 400 max(36px, calc(7 * var(--dz)))/1.02 'Bungee', cursive; color: #fff; -webkit-text-stroke: 6px #000; paint-order: stroke fill; overflow-wrap: anywhere; }
+.dbz-ask { margin: 0; font: 700 max(16px, calc(2.1 * var(--dz))) 'Space Mono', monospace; color: #FFD54A; }
+.dbz-secs { font: 400 max(40px, calc(6.4 * var(--dz)))/1 'Bungee', cursive; color: var(--blue); -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.dbz-secs.is-low { color: #FF6B3D; }
+.dbz-stamp {
+  position: absolute;
+  inset: auto 10% 12% 10%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  background: var(--band, #F0EAD9);
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #000;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.dbz-stamp.is-miss { background: #FF6B3D; font: 400 max(30px, calc(4.4 * var(--dz)))/1 'Bungee', cursive; }
+.dbz-stamp-k { font: 400 max(28px, calc(4.2 * var(--dz)))/1 'Bungee', cursive; }
+.dbz-stamp-w { font: 700 max(18px, calc(2.6 * var(--dz)))/1.1 'Space Mono', monospace; overflow-wrap: anywhere; }
+.dbz-form { flex: none; display: flex; gap: 10px; }
+.dbz-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 14px;
+  background: #fff;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  color: #000;
+  font: 700 max(20px, calc(2.8 * var(--dz))) 'Space Mono', monospace; /* ≥16px: no iOS zoom */
+  text-transform: uppercase;
+}
+.dbz-input::placeholder { color: #8a7aa8; }
+.dbz-input:focus { outline: 3px solid var(--blue); outline-offset: 2px; }
+.dbz-send {
+  flex: none;
+  min-width: 72px;
+  min-height: 56px;
+  background: #FFE94A;
+  border: 4px solid #b8a21a;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  color: #000;
+  font: 400 24px/1 'Bungee', cursive;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.dbz-send:active { transform: translate(5px, 5px); box-shadow: none; }
+.dbz-send:disabled { opacity: 0.6; }
+.dbz-msg { flex: none; margin: 0; min-height: 1.3em; font: 700 max(16px, calc(2 * var(--dz))) 'Space Mono', monospace; color: #FF6B3D; text-align: center; }
+
+/* ---- results ---- */
+.dbz.is-results { max-width: 980px; }
+/* a laptop / Chromebook is wide but short: the six rows go 2 x 3, so each keeps room for its MOST SAID line */
+@media (min-width: 700px) {
+  .dbz.is-results .dbz-rows { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; grid-auto-flow: column; grid-template-rows: repeat(3, 1fr); }
+}
+.dbz-score { flex: none; display: flex; align-items: baseline; justify-content: center; gap: 4px; line-height: 1; }
+.dbz-total { font: 400 max(48px, calc(8 * var(--dz)))/1 'Bungee', cursive; color: #fff; -webkit-text-stroke: 8px #000; paint-order: stroke fill; }
+.dbz-max { font: 400 max(20px, calc(3 * var(--dz)))/1 'Bungee', cursive; color: #9fc8ff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.dbz-rarest { flex: none; margin: 0; text-align: center; font: 700 max(16px, calc(2 * var(--dz)))/1.25 'Space Mono', monospace; }
+.dbz-rarest b { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.dbz-rows { flex: 1 1 auto; min-height: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: max(5px, calc(0.9 * var(--dz))); }
+/* a result row (Andy oct22 "text is too small"): three lines — the prompt with the points on its right, the answer
+   with its share of players on ITS right, then the MOST SAID line across. The band square leads on wide screens. */
+.dbz-row {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 1px;
+  padding: 2px 12px 2px 8px;
+  background: #1a0b2e;
+  border: 3px solid #3d2566;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+}
+.dbz-row.is-rarest { border-color: var(--band); }
+.dbz-sq { grid-column: 1; grid-row: 1 / span 2; width: max(20px, calc(3 * var(--dz))); height: max(20px, calc(3 * var(--dz))); background: var(--band); border: 3px solid #000; border-radius: 4px; }
+.dbz-row-main, .dbz-row-side { display: contents; }
+.dbz-row-cat { grid-column: 2; grid-row: 1; min-width: 0; font: 700 max(16px, calc(1.75 * var(--dz)))/1.1 'Space Mono', monospace; color: #9fc8ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dbz-row-ans { grid-column: 2; grid-row: 2; min-width: 0; font: 400 max(19px, calc(2.6 * var(--dz)))/1.05 'Bungee', cursive; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dbz-row.is-miss .dbz-row-ans { color: #5a4a72; }
+.dbz-row-pts { grid-column: 3; grid-row: 1; justify-self: end; font: 400 max(24px, calc(3.2 * var(--dz)))/1 'Bungee', cursive; color: var(--band); -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.dbz-row.is-miss .dbz-row-pts { color: #5a4a72; }
+.dbz-row-pct { grid-column: 3; grid-row: 2; justify-self: end; font: 700 max(16px, calc(1.75 * var(--dz)))/1 'Space Mono', monospace; color: var(--band); white-space: nowrap; }
+.dbz-row.is-miss .dbz-row-pct { color: #8a7aa8; }
+.dbz-said { display: none; } /* "34%" beside the answer; the RAREST line above spells out "SAID IT" */
+.dbz-row-top { grid-column: 2 / -1; grid-row: 3; min-width: 0; font: 700 max(16px, calc(1.6 * var(--dz)))/1.1 'Space Mono', monospace; color: #8a7aa8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dbz-share { flex: none; display: flex; gap: 12px; justify-content: center; }
+.dbz-share .dbz-go { flex: 1 1 auto; min-width: 0; max-width: 360px; }
+.dbz-copy {
+  flex: none;
+  min-height: 56px;
+  padding: 0 20px;
+  background: #1a0b2e;
+  border: 4px solid #5a3a8a;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  color: #fff;
+  font: 400 max(20px, calc(2.6 * var(--dz)))/1 'Bungee', cursive;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.dbz-copy:active { transform: translate(6px, 6px); box-shadow: none; }
+.dbz-foot { flex: none; margin: 0; text-align: center; font: 700 max(16px, calc(1.6 * var(--dz))) 'Space Mono', monospace; color: #9fc8ff; }
+
+/* PHONE: the band square goes (the points carry the band colour, the rarest row its border) so the answer gets
+   the full width; the MOST SAID line keeps its first pick. */
+@media (max-width: 699px) {
+  .dbz-row { grid-template-columns: minmax(0, 1fr) auto; padding: 2px 10px; }
+  .dbz-sq { display: none; }
+  .dbz-row-cat, .dbz-row-ans { grid-column: 1; }
+  .dbz-row-pts, .dbz-row-pct { grid-column: 2; }
+  .dbz-row-pts { font-size: var(--fs-k22); }
+  .dbz-row-top { grid-column: 1 / -1; }
+  .dbz-top-i + .dbz-top-i { display: none; }
+  /* the cover had a third of a tall phone empty: the brain + the wordmark take it (they shrink first on a short one) */
+  .dbz-brain { height: min(24vh, 210px); }
+  .dbz-title { font: 400 clamp(44px, 15vw, 68px)/0.92 'Bungee', cursive; }
+  .dbz-wide { display: none; } /* the footer stays one line: "120 PLAYED · NEW IN 2H 27M" */
+  .dbz-row-cat, .dbz-row-pct, .dbz-row-top { letter-spacing: -0.3px; }
+}
+/* a short phone: the RAREST line repeats the gold-bordered row, so it yields its height to the rows */
+@media (max-width: 699px) and (max-height: 720px) {
+  .dbz.is-results .dbz-rarest { display: none; }
+  .dbz.is-results { gap: 6px; }
+  .dbz.is-results .dbz-total { font-size: var(--fs-k44); }
+  .dbz.is-results .dbz-go, .dbz.is-results .dbz-copy { min-height: 48px; }
+  .dbz-rows { gap: 4px; }
+  .dbz-row { row-gap: 0; }
+  .dbz-row-cat, .dbz-row-top { line-height: 1.05; }
+}
+
+/* an SE-size phone (320x568): the last few px come from the score + buttons, never from the 16px text */
+@media (max-width: 699px) and (max-height: 600px) {
+  .dbz.is-results .dbz-total { font-size: var(--fs-k38); }
+  .dbz.is-results .dbz-go, .dbz.is-results .dbz-copy { min-height: 44px; }
+  .dbz.is-results .dbz-row { padding-top: 1px; padding-bottom: 1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dbz-go, .dbz-copy, .dbz-exit, .dbz-send { transition: none; }
+}

@@ -6,11 +6,12 @@ import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
+import { PATCH_ID } from '../src/components/patchNotes/patchSeen.js';
 
 const OUT = 'claude/shots/hero-preview';
 const shot = async (page, name) => { if (process.env.SHOTS) { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/${name}.png` }); } };
 const seed = (gems) => ({
-  'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.seen.patch': '2026-10-13', 'taw.main': 'riot', 'taw.s2.heroes.gf': '1',
+  'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.seen.patch': PATCH_ID, 'taw.main': 'riot', 'taw.s2.heroes.gf': '1',
   'taw.s2.gems': JSON.stringify({ bal: gems }),
 });
 async function openPicker(page, vp, gems) {

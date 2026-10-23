@@ -50,7 +50,9 @@ test('export -> import round-trips every progress key EXACTLY', () => {
   const res = importSave(code, dst);
   assert.equal(res.ok, true);
   assert.equal(res.imported, Object.keys(REAL).length);
-  assert.deepEqual(dst._dump(), REAL); // byte-for-byte identical
+  const { 'taw.preRestore': snap, ...after } = dst._dump();
+  assert.deepEqual(after, REAL); // byte-for-byte identical
+  assert.equal(JSON.parse(snap).src, 'restore'); // the replaced (empty) save is kept for UNDO / support
 });
 
 test('a corrupt import is REJECTED with a readable message and never wipes existing progress', () => {
@@ -117,7 +119,7 @@ test('PROGRESS_KEYS excludes the five device/UX keys', () => {
   for (const dev of ['taw.seenWinsHint', 'taw.sfxEvents', 'taw.clack', 'taw.audioVolume', 'taw.musicMuted']) {
     assert.ok(!PROGRESS_KEYS.includes(dev), `${dev} must not be a progress key`);
   }
-  assert.equal(PROGRESS_KEYS.length, 55); // +taw.unlisted (oct17), +taw.gems (GEMS), +taw.raceWords (oct14)
+  assert.equal(PROGRESS_KEYS.length, 60); // oct22 +main, contracts, wordsenseRefunded, ulwish, boost; +taw.unlisted (oct17), +taw.gems (GEMS), +taw.raceWords (oct14)
   assert.ok(PROGRESS_KEYS.includes('taw.raceWords'));
   assert.ok(PROGRESS_KEYS.includes('taw.gems'));
   // earlier: +forge, forgeFromMomentum, claims, rankClaimed, frenzyUntil (Andy oct2); +wallTierSeen (N4); +xpv10, rbgate, pv10notice (PV10); +markRolls, permanentMarks, winsCarry, overdrive, rrnotice (RR)

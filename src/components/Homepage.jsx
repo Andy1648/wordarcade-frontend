@@ -112,6 +112,7 @@ import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
+import DailyBlitzTile from '../dailyBlitz/DailyBlitzTile.jsx'; // DAILY BLITZ — joins the same daily cluster
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -164,7 +165,7 @@ const barSeen = { level: null, frac: 0 };
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -1355,8 +1356,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
-  const dailyTile = <DailyTile onPlay={handleOpenDialog} navigating={navigating} />;
-  const dailyIcon = <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />;
+  // DAILY BLITZ (dailyBlitz/, the once-a-day rare-answer game) joins the same DAILY cluster in the same faces: the
+  // right-column chip under CONTRACTS, the icon beside the flame, the phone's first mode row.
+  const openDailyBlitz = () => {
+    if (navigating || !onDailyBlitz) return;
+    sound.click();
+    setNavigating(true);
+    onDailyBlitz();
+  };
+  const dailyTile = (
+    <>
+      <DailyTile onPlay={handleOpenDialog} navigating={navigating} />
+      {onDailyBlitz ? <DailyBlitzTile variant="chip" onPlay={openDailyBlitz} navigating={navigating} /> : null}
+    </>
+  );
+  const dailyIcon = (
+    <>
+      <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />
+      {onDailyBlitz ? <DailyBlitzTile variant="icon" onPlay={openDailyBlitz} navigating={navigating} /> : null}
+    </>
+  );
   const gearSlot = markShown && isPagedMenu ? (
     <>
       <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
@@ -1452,7 +1471,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             news={news}
-            daily={dailyIcon}
+            daily={<DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />}
+            dailyBlitz={onDailyBlitz ? <DailyBlitzTile variant="row" onPlay={openDailyBlitz} navigating={navigating} /> : null}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
