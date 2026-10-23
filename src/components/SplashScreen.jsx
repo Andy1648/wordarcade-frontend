@@ -9,7 +9,7 @@ import { useXpCapture } from '../progress/useXpCapture';
 import { loadProgress } from '../progress/xp';
 import { splashDismissed as evSplashDismissed } from '../lib/events.js';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
-import Mascot from './Mascot';
+import { titleHeroSrc } from '../cast/mainFace.js';
 
 const TAGLINES = [
   // "TYPE FAST. DIE SLOW." intentionally lives in the post-dismiss intro card,
@@ -87,7 +87,8 @@ const EMBERS = [
  *   so App can hide the splash and wipe to the homepage.
  */
 export default function SplashScreen({ onStart, onDismiss }) {
-  const [tagIndex, setTagIndex] = useState(0);
+  // ONE tagline a visit (TITLE REWORK oct22: the 2.5s carousel was one more thing moving against the wordmark)
+  const [tagIndex] = useState(() => Math.floor(Math.random() * TAGLINES.length));
   const [leaving, setLeaving] = useState(false);
   // Fine pointer (mouse/trackpad + keyboard) → "TYPE TO START"; coarse (touch) → "TAP".
   const [fine] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches);
@@ -141,11 +142,6 @@ export default function SplashScreen({ onStart, onDismiss }) {
   });
 
   // Cycle the taglines every 2.5s.
-  useEffect(() => {
-    const id = setInterval(() => setTagIndex((i) => (i + 1) % TAGLINES.length), 2500);
-    return () => clearInterval(id);
-  }, []);
-
   // Click/tap dismisses (and unlocks audio) on EVERY device.
   useEffect(() => {
     const onClick = () => dismiss();
@@ -201,29 +197,32 @@ export default function SplashScreen({ onStart, onDismiss }) {
         </div>
       </div>
 
-      {/* The bomb mascot — the splash's hero image (fix/splash). Pose only (no looping emote);
-          the idle breathe loop is also switched off here (SplashScreen.css) so the LCP screen
-          runs at most 3 loops: blink + logo bounce + burst. The enter pop is a one-shot. */}
-      <Mascot pose="idle" size={160} className="splash-hero-mascot" />
-
       <div className="splash-taglines">
-        {/* re-keyed per index so the fade replays on each swap */}
-        <span key={tagIndex} className="splash-tagline">
-          {TAGLINES[tagIndex]}
-        </span>
+        <span className="splash-tagline">{TAGLINES[tagIndex]}</span>
       </div>
 
-      <div className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</div>
-
-      {/* Keystroke-gate progress: one pip per required keystroke, filled left-to-right.
-          Fine pointer only (a coarse tap enters on one). Instant class swap, no animation. */}
-      {fine && (
-        <div className="splash-pips" aria-hidden="true">
-          {Array.from({ length: needed }, (_, i) => (
-            <span key={i} className={`splash-pip${i < filled ? ' is-on' : ''}`} />
-          ))}
-        </div>
-      )}
+      {/* TITLE REWORK (oct22, Andy "title screen needs rework"): ONE read — your HERO (the cast PNG you play as; RIOT on
+          a fresh save) beside ONE PLAY plate. The plate is the start prompt: a tap / click anywhere still starts, and on
+          a keyboard the pips inside it fill one per key (the 5-key gate, 3 for a returning player). */}
+      <div className="splash-main">
+        <img className="splash-hero" src={titleHeroSrc()} alt="" aria-hidden="true" draggable="false" decoding="async" />
+        <button type="button" className="splash-play" onClick={(e) => { e.stopPropagation(); dismiss(); }}>
+          <span className="splash-play-shadow" aria-hidden="true" />
+          <span className="splash-play-face">
+            <span className="splash-play-k">PLAY</span>
+            <span className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</span>
+            {/* Keystroke-gate progress: one pip per required keystroke, filled left-to-right.
+                Fine pointer only (a coarse tap enters on one). Instant class swap, no animation. */}
+            {fine && (
+              <span className="splash-pips" aria-hidden="true">
+                {Array.from({ length: needed }, (_, i) => (
+                  <span key={i} className={`splash-pip${i < filled ? ' is-on' : ''}`} />
+                ))}
+              </span>
+            )}
+          </span>
+        </button>
+      </div>
 
       {/* Mini XP readout under the prompt — hidden entirely for a first-time visitor
           (no progress yet). Same store + scaleX fill as the menu bar. */}

@@ -24,6 +24,8 @@ import { canAffordAny, buyKeyPower } from '../progress/shop';
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { peakLevel } from '../progress/peakLevel';
+import { liveReveal, GEARS_LV } from '../progress/reveal'; // FIRST-RUN PROGRESSIVE REVEAL: which menu systems a newcomer sees yet
+import TitlePlay from './TitlePlay.jsx'; // the fresh menu's TITLE (hero + PLAY) — stage 0 of the reveal
 // unlock-ladder: FRAME cosmetics + the NEXT-unlock teaser. The ladder's THEME half was dropped
 // on merge — main's themes system (syncThemeUnlocks above) supersedes it — so this only supplies
 // LV-badge frames now (see unlockLadder.js LADDER, frames-only).
@@ -66,7 +68,7 @@ import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { patchSeen } from './patchNotes/patchSeen.js';
-import { mainFaceSrc } from '../cast/mainFace.js';
+import { mainFaceSrc, titleHeroSrc } from '../cast/mainFace.js';
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -1241,7 +1243,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }
 
   // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
-  const trophy = V3.Trophy && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   // SETTINGS (Andy oct9: "top right placement instead"): the cog is the top-right cluster's last tile, both trees
   const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />;
   // Andy oct6 SEASON 2 #5: the four rail buttons show FROM THE START (a gated one is LOCKED with its gate) — REBIRTH
@@ -1271,6 +1272,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // REBIRTH (season 2): LOCKED until it is first reachable — padlock + the gate level ("LV26") while this climb has
   // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
   // the lock is the LEVEL gate only — at the gate it opens and says "PLAY N WORDS" if game words are short (035)
+  // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
+  const ownsAnyGear = useMemo(() => {
+    if (equippedMark || markIdList.length) return true;
+    const st = loadRollState();
+    return !!(st && st.marks && Object.keys(st.marks).length);
+  }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  // FIRST-RUN PROGRESSIVE REVEAL (progress/reveal.js): a newcomer's menu opens a step at a time — the TITLE (hero +
+  // PLAY), then the core (wins / upgrades / stats / contracts / board / achievements) after a first game or LV3, then
+  // gears + gems, then rebirth when near. Existing saves are grandfathered to ALL. Keyed on the signals only (cheap,
+  // a storage read — never per keystroke: the level moves a few times a minute at most).
+  const playedGame = firstTimer === false || wins > 0;
+  const canRoll = canAffordRoll(gems);
+  const reveal = useMemo(
+    () => liveReveal({ level: xpProgress.level, peak: peakLevel(), rebirths: s2State ? s2State.rebirths : rebirths, stars: s2State ? s2State.stars : 0, playedGame, canRoll, ownsGear: ownsAnyGear, rebirthGate, wins, gems }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- wins/gems only matter as "any" (first-run grandfathering)
+    [xpProgress.level, rebirths, playedGame, canRoll, ownsAnyGear, rebirthGate, wins > 0, gems > 0],
+  );
   const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
@@ -1294,26 +1312,36 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
-    shop: { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null },
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
-    gears: { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock },
-    rebirth: { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : needWords ? `${formatShort(wordsShort)} WORDS` : 'READY', /* Andy oct14: the tile SAYS words when they are all that is left (the desktop tile hides its unit line) */ unit: toRebirth > 0 ? 'LEVELS TO GO' : needWords ? 'GAME WORDS TO GO' : `×${nextRebirthStep(rebirths)} XP · ×${nextRebirthStep(rebirths)} WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : needWords ? `play ${formatNum(wordsShort)} more words in a game` : 'ready', locked: rebirthLock },
+    // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden
+    gears: reveal.gears ? { onClick: () => openMarks('roll'), dot: rollDot || marksNew, onHover: hover, value: null, locked: rollLock }
+      : reveal.teaser === 'gears' ? { onClick: () => {}, dot: false, value: null, locked: `LV${GEARS_LV}` } : null,
+    rebirth: !reveal.rebirth && reveal.teaser !== 'rebirth' ? null : { onClick: handleRebirth, dot: rebirthReady, onHover: hover, value: { full: rebirthValue, short: rebirthShort, big: toRebirth > 0 ? formatShort(toRebirth) : needWords ? `${formatShort(wordsShort)} WORDS` : 'READY', /* Andy oct14: the tile SAYS words when they are all that is left (the desktop tile hides its unit line) */ unit: toRebirth > 0 ? 'LEVELS TO GO' : needWords ? 'GAME WORDS TO GO' : `×${nextRebirthStep(rebirths)} XP · ×${nextRebirthStep(rebirths)} WINS` }, valueSays: toRebirth > 0 ? `in ${formatNum(toRebirth)} levels` : needWords ? `play ${formatNum(wordsShort)} more words in a game` : 'ready', locked: reveal.rebirth ? rebirthLock : `LV${formatNum(rebirthGate)}` },
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
-    stats: { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
+    stats: !reveal.core ? null : { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
-  const board = LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
-  const ach = { count: claims.length, onClick: handleAchievements };
+  const trophy = V3.Trophy && reveal.core && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
+  const board = reveal.core && LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
+  const ach = reveal.core ? { count: claims.length, onClick: handleAchievements } : null;
+  // STAGE 0 (reveal.title): the TITLE — your hero + ONE PLAY + the open modes as a quiet row — in the cards' place
+  const titlePlay = reveal.title ? (
+    <TitlePlay
+      variant={isPhoneMenu ? 'phone' : 'desk'}
+      heroSrc={titleHeroSrc(mainId)}
+      games={GAMES.filter((g) => !isModeLocked(g, xpProgress.level))}
+      onPlay={onPlaySolo ? handleHookSolo : null}
+      onPick={handleOpenDialog}
+      connecting={connecting === 'solo' && !dialog}
+      coldStart={coldStart}
+      navigating={navigating}
+    />
+  ) : null;
   // YOUR GEAR (Andy oct9 22:56: "the equip gear page will be separate in the 'your gear' icon"): the EQUIP screen —
   // the OWNED gears, the equipped one first, EQUIP / UNEQUIP on a tap (EquipScreen, lazy, the MARKS overlay slot, view
   // 'gear'). A save that owns no gear yet has nothing to equip: ROLL, as before.
-  const wornGear = markShown ? markEntry(equippedMark) : null;
-  // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
-  const ownsAnyGear = useMemo(() => {
-    if (equippedMark || markIdList.length) return true;
-    const st = loadRollState();
-    return !!(st && st.marks && Object.keys(st.marks).length);
-  }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const wornGear = markShown && reveal.gears ? markEntry(equippedMark) : null;
   const openGear = () => {
     if (navigating) return;
     if (!ownsAnyGear) { openMarks('roll'); return; }
@@ -1341,8 +1369,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     setShowMarks(false);
     requestAnimationFrame(() => focusNav(navRootRef.current, 'gear2'));
   };
-  const showGear2 = SEASON2 && markShown && gear2Gate != null;
-  const markChip = markShown ? (
+  const showGear2 = SEASON2 && markShown && gear2Gate != null && reveal.gear2;
+  const markChip = markShown && reveal.gears ? (
     showGear2 ? (
       <>
         <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
@@ -1355,9 +1383,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
-  const dailyTile = <DailyTile onPlay={handleOpenDialog} navigating={navigating} />;
-  const dailyIcon = <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />;
-  const gearSlot = markShown && isPagedMenu ? (
+  const dailyTile = reveal.core ? <DailyTile onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
       <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
       {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
@@ -1426,6 +1454,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-menu-tier={tier}
         data-paged={isPagedMenu ? '' : undefined}
         data-menu={MENU_VARIANT}
+        data-first={reveal.title ? '' : undefined}
       >
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
         {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
@@ -1442,6 +1471,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onOpen={handleOpenDialog}
             onHookPlay={firstTimer && onPlaySolo ? handleHookSolo : null}
             hookPlayLabel={connecting === 'solo' && !dialog ? <ConnectingContent cold={coldStart} /> : null}
+            title={titlePlay}
             navigating={navigating}
             musicMuted={musicMuted}
             onToggleMusic={onToggleMusic}
@@ -1451,7 +1481,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             board={board}
             ach={ach}
             achSlot={trophy}
-            news={news}
+            news={reveal.gears ? news : null}
             daily={dailyIcon}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
@@ -1460,12 +1490,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             xpBar={xpBar}
             markChip={markChip}
             wins={wins}
-            gems={markShown ? gems : null}
+            gems={markShown && reveal.gears ? gems : null}
           />
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        <MenuRail items={railItems} wins={wins} gems={markShown ? gems : null} navigating={navigating} foot={gearSlot} />
+        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} foot={gearSlot} />}
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1477,7 +1507,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} daily={hasMainColumn ? null : dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={reveal.gears ? news : null} daily={hasMainColumn ? null : dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
@@ -1485,7 +1515,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
             CREDITS
           </button>
-          {LEADERBOARD_ENABLED && <LiveTicker className="homepage-live" />}
+          {LEADERBOARD_ENABLED && reveal.core && <LiveTicker className="homepage-live" />}
           {/* boost timers, where the paged layout has no bottom-right cell (Homepage.css .hp-dock--extras) */}
           <div className="hp-dock hp-dock--extras"><BoostDock /></div>
         </div>
@@ -1499,7 +1529,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* PROFILE ≥ 1200 (oct17 night, Andy "still dont like the menu … the profile thing there (also off center)"): a CORNER CHIP
             under the icons sharing their right edge (Brawl Stars / Clash Royale); ?menu=slab = the framed right-column slab
             instead (research: claude notes menu-profile-layout-research.md). Under 1200 the face sits in the icon cluster. */}
-        {isPagedMenu && <div className={`hp-main is-${MENU_VARIANT}`}>{dailyTile}</div>}
+        {isPagedMenu && dailyTile && <div className={`hp-main is-${MENU_VARIANT}`}>{dailyTile}</div>}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
@@ -1511,6 +1541,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           {/* NIGHT oct8 #1c: no in-flow REBIRTH READY CTA on the menu — readiness is the REBIRTH tile's dot + READY. */}
         </div>
 
+        {titlePlay || (
         <div className="homepage-cards-region">
           {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row is the three cards on the page's
               centre line, with ONE pager row under them (← • • →), all in flow inside the region (no fixed
@@ -1548,6 +1579,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           )}
           {isPagedMenu && pager('ctl')}
         </div>
+        )}
         </>
         )}
       </div>
@@ -1615,7 +1647,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {patchDue && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
+      {patchDue && reveal.gears && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
       {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
@@ -1623,8 +1655,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           <TutorialHost
             level={xpProgress.level}
             rebirths={rebirths}
-            powerReady={winsAffordable && (getKeyTier() || 0) === 0}
-            gearsReady={!rollLock && starterWaiting}
+            powerReady={reveal.core && winsAffordable && (getKeyTier() || 0) === 0}
+            gearsReady={reveal.gears && !rollLock && starterWaiting}
             onBoard={!!getMyProfile()}
             rebirthReady={rebirthReady}
           />
@@ -1684,9 +1716,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {tourStep === 2 && tourReady && (
         <Spotlight
           key="tour-games"
-          targetSelector={isPhoneMenu ? '.hp-m-row--word-bomb' : '.game-card-magnet[data-game="word-bomb"]'}
+          targetSelector={reveal.title ? '.tp-play' : isPhoneMenu ? '.hp-m-row--word-bomb' : '.game-card-magnet[data-game="word-bomb"]'}
           caption="PLAY GAMES = WINS"
-          sub="WINS BUY POWER — YOUR MULTIPLIER"
+          sub={reveal.title ? 'YOUR FIRST GAME OPENS UP THE MENU' : 'WINS BUY POWER — YOUR MULTIPLIER'}
           avoidTextIn=".homepage-stage"
           plateWhenCrowded
           avoidSelector=".homepage-logo-wrap, .homepage-corner-nav, .hp-icons"

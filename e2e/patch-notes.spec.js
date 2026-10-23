@@ -7,17 +7,20 @@ import { PATCH_GIFT_ROLLS } from '../src/components/patchNotes/patchNotesData.js
 
 const S2_ROLL_PRICE = 75; // v3/econ.js ROLL_PRICE
 
-async function boot(page, w, h, returning = true) {
+async function boot(page, w, h, returning = true, brandNew = false) {
   await page.setViewportSize({ width: w, height: h });
   await installBackendMock(page, { patchNotes: true });
-  await page.addInitScript((ret) => {
+  await page.addInitScript(({ ret, brandNew }) => {
     if (sessionStorage.getItem('pn.seeded')) return;
     sessionStorage.setItem('pn.seeded', '1');
+    // the first-run reveal (progress/reveal.js) holds the notes until GEARS open; every test here but the last is a
+    // player past that point
+    if (!brandNew) localStorage.setItem('taw.reveal', 'all');
     if (ret) {
       localStorage.setItem('taw.seenMenu', '1');
       localStorage.setItem('taw.seenMenuSpotlight', '1');
     }
-  }, returning);
+  }, { ret: returning, brandNew });
   await page.goto('/?portal=1&season2=1');
 }
 const wallet = (page) => page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0);
@@ -88,4 +91,13 @@ test('PATCH NOTES: a first-time visitor gets it too — after the menu spotlight
   await page.waitForTimeout(800); // past step 2's input hold
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('patch-notes')).toBeVisible({ timeout: 15_000 });
+});
+
+test('PATCH NOTES: a BRAND-NEW save does not get them on the title — they wait for the gears reveal', async ({ page }) => {
+  test.setTimeout(60_000);
+  await boot(page, 1280, 720, true, true);
+  await expect(page.locator('.tp-play')).toBeVisible({ timeout: 10_000 }); // stage 0: the TITLE
+  await page.waitForTimeout(5000);
+  await expect(page.getByTestId('patch-notes')).toHaveCount(0);
+  await expect(page.locator('[data-nav="news"]')).toHaveCount(0);
 });

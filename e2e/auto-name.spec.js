@@ -17,6 +17,7 @@ async function boot(page, { stored = null, named = false } = {}) {
     sessionStorage.setItem('an.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
+    localStorage.setItem('taw.reveal', 'all'); // the whole menu (the first-run reveal hides the board on a brand-new save)
     if (stored) localStorage.setItem('wa_playername', stored);
     if (named) localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'x', username: 'ALREADY' }));
   }, { stored, named });

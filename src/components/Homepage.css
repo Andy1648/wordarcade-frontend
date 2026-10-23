@@ -990,3 +990,9 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 /* the right column's DAILY chip sits where the profile chip was: the icon cluster's width, its own height */
 .homepage-stage[data-paged] .hp-main .hp-daily { height: max(56px, calc(70 * var(--u))); }
 .hp-profplate .hp-rankplate-k.is-new { color: #FFE94A; }
+
+/* ---- STAGE 0 of the FIRST-RUN REVEAL (progress/reveal.js, data-first): the TITLE. Nothing but the wordmark, the
+   level bar and TitlePlay (hero + ONE PLAY) — the wordmark takes the room the rail and the icons are not using yet.
+   Same three faces, same fill; only bigger. ---- */
+.homepage-stage[data-first] .homepage-logo-wrap { height: max(84px, 17vh); }
+.homepage-stage[data-first] .homepage-logo { font-size: calc(var(--fs-hpword) * 1.5); }
