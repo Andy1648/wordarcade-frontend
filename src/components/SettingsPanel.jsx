@@ -21,7 +21,10 @@ import { disableClack } from '../progress/clack';
 import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
-import { exportSave, importSave } from '../save/saveBackup';
+import { exportSave, writeSaveKeys } from '../save/saveBackup';
+import { exportSaveCode, parseAnySave, readPreRestore } from '../save/saveCode';
+import { progressScoreFromKeys, localScore } from '../save/cloudSave';
+import { resolveXpState } from '../progress/xp';
 import './kit/tokens.css';
 import './SettingsPanel.css';
 import { beatSyncOn, setBeatSync } from '../lib/beatSync';
@@ -50,28 +53,115 @@ function OnOff({ on, onClick, label }) {
 }
 
 // SAVE PROGRESS (Andy oct8: "you need a button for people to save their progress — remember the restore code"): the
-// save CODE (save/saveBackup — every progress key incl. season 2's taw.s2.*) to COPY, and a box to paste one back.
+// save CODE (save/saveCode — every progress key incl. season 2's taw.s2.*) to COPY, and a box to paste one back.
+// SAVE CODE FIX (Andy oct22 "fix save code - its buggy (people complaining)"):
+//   * the code is the compact TAW2 code (gzip + a checksum, ~3× shorter) and the paste box has no length cap (it cut
+//     every code past 200,000 characters — every heavy save — and then called it "corrupted");
+//   * a pasted code is READ first and the player confirms what it holds against this device ("R7 · LV 44 vs R2 · LV 5");
+//     a code BEHIND this device says so and needs LOAD ANYWAY — a paste can no longer quietly lower a save;
+//   * the save it replaced is kept (taw.preRestore): UNDO LAST RESTORE puts it back, through the same confirm;
+//   * COPY falls back to a hidden-textarea copy where the Clipboard API is missing or refused (in-app browsers, some
+//     Chromebook policies), and the code box selects ALL of itself on a tap.
+const UNDO_FOR_MS = 7 * 86400000;
+const S2_DUP = ['taw.xp', 'taw.xpv10', 'taw.rebirths'];
+/** A save's headline (★ · R · LV) and its progress score — the same score the cloud restore compares. */
+function headline(get) {
+  const keys = {};
+  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters', 'taw.s2.stars']) {
+    const v = get(k);
+    if (v != null) keys[k] = v;
+  }
+  let lv = 1;
+  try { lv = resolveXpState((k) => keys[k] ?? null).level || 1; } catch { lv = 1; }
+  const rb = Math.max(0, Math.floor(Number(keys['taw.rebirths']) || 0));
+  const st = Math.max(0, Math.floor(Number(keys['taw.s2.stars']) || 0));
+  return { text: `${st > 0 ? `★${formatNum(st)} · ` : ''}R${formatNum(rb)} · LV ${formatNum(Math.floor(lv))}`, keys };
+}
+function codeHeadline(keys) {
+  // a season-2 code carries the mapped keys twice (taw.xp AND taw.s2.xp); fall back to the s2 copy if one is missing
+  const get = (k) => (keys[k] != null ? keys[k] : S2_DUP.includes(k) ? keys[`taw.s2.${k.slice(4)}`] ?? null : null);
+  const h = headline(get);
+  return { ...h, score: progressScoreFromKeys(h.keys, { asConverted: true }) };
+}
+function deviceHeadline() {
+  const h = headline((k) => { try { return localStorage.getItem(k); } catch { return null; } });
+  return { ...h, score: localScore(undefined, { asConverted: true }) };
+}
+function recentUndo() {
+  const p = readPreRestore();
+  return p && p.src === 'code' && Date.now() - p.at < UNDO_FOR_MS ? p : null;
+}
+/** Put `text` on the clipboard → Promise<boolean>. The Clipboard API first; a hidden textarea + execCommand('copy')
+ *  where it is missing or refused. */
+function copyText(text) {
+  const legacy = () => {
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      ta.style.fontSize = '16px'; // iOS: no zoom-on-focus
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch {
+      ok = false;
+    }
+    return ok;
+  };
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(text).then(() => true, () => legacy());
+    }
+  } catch {
+    /* fall through */
+  }
+  return Promise.resolve(legacy());
+}
+const selectAll = (e) => {
+  try { e.target.select(); e.target.setSelectionRange(0, e.target.value.length); } catch { /* */ }
+};
+const loud = (s) => String(s || 'THAT CODE DID NOT WORK').toUpperCase();
+
 function SaveRow() {
   const [code, setCode] = useState('');
   const [draft, setDraft] = useState('');
   const [msg, setMsg] = useState('');
+  const [ask, setAsk] = useState(null); // { keys, mine, here, lower, undo } while the player confirms a load
+  const [undo] = useState(recentUndo);
   const copy = () => {
-    const c = exportSave();
+    let c = '';
+    try { c = exportSaveCode(); } catch { c = exportSave(); }
     setCode(c);
-    try {
-      navigator.clipboard.writeText(c).then(() => setMsg('COPIED — KEEP IT SOMEWHERE SAFE'), () => setMsg('SELECT THE CODE BELOW AND COPY IT'));
-    } catch {
-      setMsg('SELECT THE CODE BELOW AND COPY IT');
-    }
+    copyText(c).then(
+      (ok) => setMsg(ok ? 'COPIED — PASTE THE WHOLE CODE ON YOUR OTHER DEVICE' : 'TAP THE CODE BELOW TO SELECT IT ALL, THEN COPY'),
+      () => setMsg('TAP THE CODE BELOW TO SELECT IT ALL, THEN COPY'),
+    );
   };
-  const restore = (e) => {
-    e.preventDefault();
-    const r = importSave(draft);
+  const offer = (text, isUndo) => {
+    const r = parseAnySave(text);
     if (!r.ok) {
-      setMsg(String(r.error || 'THAT CODE DID NOT WORK').toUpperCase());
+      setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : r.error));
       return;
     }
-    setMsg('RESTORED — RELOADING…');
+    const mine = codeHeadline(r.keys);
+    const here = deviceHeadline();
+    setAsk({ keys: r.keys, mine, here, lower: mine.score < here.score, undo: !!isUndo });
+    setMsg('');
+  };
+  const check = (e) => {
+    e.preventDefault();
+    offer(draft, false);
+  };
+  const load = () => {
+    if (!ask) return;
+    writeSaveKeys(ask.keys, undefined, { source: 'code' });
+    setAsk(null);
+    setMsg(ask.undo ? 'PUT BACK — RELOADING…' : 'RESTORED — RELOADING…');
     setTimeout(() => {
       try { window.location.reload(); } catch { /* */ }
     }, 700);
@@ -82,12 +172,28 @@ function SaveRow() {
         <span className="sp-label">SAVE PROGRESS</span>
         <span className="sp-sub">COPY YOUR SAVE CODE · PASTE IT ON ANY DEVICE TO GET EVERYTHING BACK</span>
       </div>
-      <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">COPY SAVE CODE</button>
-      {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" onFocus={(e) => e.target.select()} /> : null}
-      <form className="sp-restore" onSubmit={restore}>
-        <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 200000))} placeholder="PASTE A SAVE CODE" aria-label="Paste a save code" autoComplete="off" spellCheck="false" />
-        <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim()}>RESTORE</button>
-      </form>
+      {ask ? (
+        <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
+          <p className="sp-msg" data-testid="sp-load-compare">{ask.undo ? 'PUT BACK' : 'THIS CODE'}: {ask.mine.text} · THIS DEVICE: {ask.here.text}</p>
+          {ask.lower ? <p className="sp-msg sp-reset-warn">THAT IS BEHIND THIS DEVICE — LOADING IT LOWERS YOUR PROGRESS</p> : null}
+          <div className="sp-restore">
+            <button type="button" className={`sp-btn${ask.lower ? ' sp-btn--danger' : ''}`} onClick={load} data-testid="sp-load-yes">{ask.lower ? 'LOAD ANYWAY' : 'LOAD IT'}</button>
+            <button type="button" className="sp-btn sp-btn--ghost" onClick={() => setAsk(null)}>CANCEL</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">COPY SAVE CODE</button>
+          {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" data-testid="sp-save-code" onFocus={selectAll} onClick={selectAll} /> : null}
+          <form className="sp-restore" onSubmit={check}>
+            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE A SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+            <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim()}>RESTORE</button>
+          </form>
+          {undo && !code ? (
+            <button type="button" className="sp-btn sp-btn--ghost" onClick={() => offer(undo.code, true)} data-testid="sp-undo">UNDO LAST RESTORE</button>
+          ) : null}
+        </>
+      )}
       {msg ? <p className="sp-msg" role="status" aria-live="polite">{msg}</p> : null}
     </div>
   );

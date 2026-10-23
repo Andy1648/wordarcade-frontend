@@ -5,8 +5,9 @@
 // TYPEWRITER_IDLE_MS with no word (you walked away), instead of "leaving the game screen".
 // Pure: the clock and storage are injected.
 
-export const TYPEWRITER_WORDS = 40;
-export const TYPEWRITER_MIN_LEN = 6;
+// oct22 (Andy "make typewriter have 5+ but 50 words"): was 40 words of 6+
+export const TYPEWRITER_WORDS = 50;
+export const TYPEWRITER_MIN_LEN = 5;
 export const TYPEWRITER_IDLE_MS = 3 * 60 * 1000;
 /**
  * A run of accepted long words with no take-back: { onKey(key), onDelete(), onWord(word, now) → true once the run

@@ -46,18 +46,18 @@ test('WISHBONE: a word at 11:11 AM, then one at 11:11 PM, the same day', () => {
   assert.deepEqual(judgeAcceptedWord('planet', { now: at(23), rng: never, storage: s }), ['mk-ul-wishbone']);
 });
 
-test('TYPEWRITER: 40 words of 6+ letters in a row; a 3-minute gap starts it over', () => {
+test('TYPEWRITER: 50 words of 5+ letters in a row; a 3-minute gap starts it over', () => {
   const run = createTypewriterRun();
   let t = NOON;
   let hit = false;
-  for (let i = 0; i < 39; i += 1) hit = judge('planets', { run, now: (t += 5000) }).includes('mk-ul-typewriter') || hit;
+  for (let i = 0; i < 49; i += 1) hit = judge('planets', { run, now: (t += 5000) }).includes('mk-ul-typewriter') || hit;
   assert.equal(hit, false);
-  assert.equal(run.count(), 39);
+  assert.equal(run.count(), 49);
   // walked away for longer than TYPEWRITER_IDLE_MS: this word is the first of a new run
   assert.deepEqual(judge('planets', { run, now: (t += TYPEWRITER_IDLE_MS + 1) }), []);
   assert.equal(run.count(), 1);
-  for (let i = 0; i < 38; i += 1) judge('planets', { run, now: (t += 5000) });
-  assert.ok(judge('planets', { run, now: (t += 5000) }).includes('mk-ul-typewriter'), 'the 40th in a row');
+  for (let i = 0; i < 48; i += 1) judge('planets', { run, now: (t += 5000) });
+  assert.ok(judge('planets', { run, now: (t += 5000) }).includes('mk-ul-typewriter'), 'the 50th in a row');
 });
 
 test('junk is never a find: empty, spaces, digits, mixed', () => {
