@@ -90,6 +90,7 @@ function ResultLine({ result, view, pop = true }) {
     >
       <span className="rs-res-name">{m ? m.name : ''}</span>
       {result.newMark ? <span className="rs-chip is-new">NEW</span> : null}
+      {result.rollOf && result.rollOf[0] < result.rollOf[1] ? <span className="rs-chip is-double" data-testid="mark-roll-double">ROLL {result.rollOf[0]}/{result.rollOf[1]}</span> : null}
       {result.ticket ? <span className="rs-chip is-ticket" data-testid="mark-roll-ticket">{ticketLabel(result.ticket)} TICKET</span> : null}
       <span className="rs-card-stat">
         <span className="rs-res-num">{num}</span>
@@ -155,6 +156,11 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const btn = useRef(null);
   const closeRef = useRef(null);
   const pending = useRef(null); // the paid roll whose reel has not landed yet
+  // DOUBLE ROLLS (Andy oct22 "roll twice should roll twice"): a roll that paid out two gears (SINGULARITY's perk, a
+  // double server pick) spins the reel ONCE PER GEAR — the lesser first, the rarest last (it is `pending`, the one that
+  // commits: equip, AUTO stop, ticker). `queue` = the parts still to spin; `partProbs` = that roll's live odds (strip).
+  const queue = useRef([]);
+  const partProbs = useRef(null);
   const auto = useRef({ on: false, until: null, timer: null });
   const live = useRef({});
 
@@ -217,6 +223,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const p = pending.current;
     if (!p || p !== res) return;
     pending.current = null;
+    queue.current = []; // a roll that lands (or is flushed) ends its chain
     setShown(res);
     setFresh(true);
     setLanded((n) => n + 1);
@@ -267,13 +274,18 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (seq) claimServerRoll(seq); // the release commits the server's pick (retried later if this fails)
     setNeed(0);
     sndPurchase();
+    const parts = [...(res.extra || []).filter(Boolean), res];
+    if (parts.length > 1) parts.forEach((x, i) => { x.rollOf = [i + 1, parts.length]; });
+    const first = parts[0];
     // the hit that stops AUTO always gets the full reveal
-    const mode = revealMode(res, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
-    const strip = drawShowcaseStrip(table.probs, Math.random, { resultId: res.markId, marks: ROLL_MARKS });
+    const mode = revealMode(first, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
+    const strip = drawShowcaseStrip(table.probs, Math.random, { resultId: first.markId, marks: ROLL_MARKS });
     const rest = restOffset();
     pending.current = res;
     setShown(null);
-    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: res, strip, mode, rest }));
+    queue.current = parts.slice(1);
+    partProbs.current = table.probs;
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: first, strip, mode, rest }));
     return res;
   };
   live.current.doRoll = doRoll;
@@ -305,7 +317,18 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   const offer = bestTicket(tickets);
 
-  const onLand = (res) => commit(res);
+  // a DOUBLE ROLL's first part lands: its line shows ("ROLL 1/2"), nothing commits until the last part lands
+  const onLand = (res) => {
+    if (res && res !== pending.current && res.rollOf) { setShown(res); setFresh(true); return; }
+    commit(res);
+  };
+  const spinNextPart = () => {
+    const nxt = queue.current.shift();
+    const mode = revealMode(nxt, { skipBelow, reduced, autoUntil: auto.current.on ? auto.current.until : null });
+    const strip = drawShowcaseStrip(partProbs.current, Math.random, { resultId: nxt.markId, marks: ROLL_MARKS });
+    setShown(null);
+    setSpin((s) => ({ seq: (s ? s.seq : 0) + 1, result: nxt, strip, mode, rest: restOffset() }));
+  };
   // RE-ARM (R4 step 7, the one thing the prod critique found missing): after a roll is kept, nothing pulled the thumb
   // back — the slab just went quiet. Now the ROLL slab gives ONE bump (transform, 320 ms) + a two-note "ready" blip
   // a beat after the reveal closes, the way Clash's chest slot and Pet Sim's egg re-light. Never under AUTO.
@@ -322,6 +345,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     setTimeout(sndRollReady, 180);
   };
   const onDone = () => {
+    if (pending.current && queue.current.length) { spinNextPart(); return; } // the DOUBLE ROLL's next spin
     if (!auto.current.on) { rearm(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;

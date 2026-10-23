@@ -338,6 +338,9 @@ for (const [w, h] of [[390, 844], [360, 640]]) {
     await holdRoll(page);
     await expect(result(page)).toHaveCount(1, { timeout: SPUN });
     await keepReveal(page);
+    // DOUBLE ROLLS spin twice (oct22): the "+EXTRA" chip is on the LAST spin's line — wait for it, then tap that reveal
+    await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1, { timeout: SPUN * 2 });
+    await keepReveal(page);
     await page.waitForTimeout(700);
     await expect(page.locator('[data-testid="mark-roll-extra"]')).toHaveCount(1); // the double roll's "+EXTRA" chip
     await inside('.rs-win', '.rs-stage');
