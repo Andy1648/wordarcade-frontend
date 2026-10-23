@@ -24,6 +24,7 @@ import { unlistedEntry, ownsUnlistedId } from '../../unlisted/unlistedIds.js'; /
 import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
+import { takeLevelChests } from './levelChest.js'; // LEVEL CHESTS: every 5th level of a climb (Andy oct22)
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
 
 export const LV_GEMS_KEY = `${S2_PREFIX}lvgems`; // { r, peak }: the climb whose levels have paid LEVEL_UP gems (Andy oct10)
@@ -143,8 +144,10 @@ export const gemsSwap = {
     if (!st || st.r !== rc) { save({ r: rc, peak: L }); return 0; } // a new climb: record, never back-pay
     if (L <= st.peak) return 0;
     const n = L - st.peak;
+    const chest = takeLevelChests(st.peak, L); // oct22: a small gem chest on each 5th level reached (daily-capped)
     save({ r: rc, peak: L });
-    return LEVEL_UP > 0 ? grantGems(n * LEVEL_UP, 'level', { detail: `lv-${L}` }) : 0;
+    const gems = (LEVEL_UP > 0 ? n * LEVEL_UP : 0) + chest;
+    return gems > 0 ? grantGems(gems, 'level', { detail: `lv-${L}` }) : 0;
   },
   c: ROLL_PRICE, // ROLL_PRICE_GEMS: 75
   // noteRebirth: rebirthGems(rc) — 25 × R (Andy oct11); rebirthWithStars (xpSwap above) calls it

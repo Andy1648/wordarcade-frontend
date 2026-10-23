@@ -309,11 +309,13 @@ test('GEMS: 75 a roll; drops 1 in 10 for 3–12; bot win +30 (MEDIUM); WINNER TA
   X.saveProgress({ level: 1, frac: 0 });
   const g0 = G.getGems();
   X.saveProgress({ level: 5, frac: 0 });
-  assert.equal(G.getGems() - g0, 0, 'LV1 → LV5: no gems (Andy oct11 "dont give gems for leveling up")');
+  // levels still pay nothing per level (Andy oct11) — but every 5th level of a climb now pays a small LEVEL CHEST (oct22,
+  // v3/levelChest.js: 10 gems, daily-capped), so LV1 → LV5 is exactly one chest
+  assert.equal(G.getGems() - g0, 10, 'LV1 → LV5: one 10-gem chest, nothing per level');
   X.saveRebirths(1);
   X.saveProgress({ level: 1, frac: 0 });
   X.saveProgress({ level: 3, frac: 0 });
-  assert.equal(G.getGems() - g0, 0, 'a new climb pays nothing either');
+  assert.equal(G.getGems() - g0, 10, 'a new climb below LV 5 adds nothing');
   assert.equal(G.dropGemsForWord({ mode: 'menu', rng: () => 0 }), 0, 'menu typing gives no gems');
 });
 

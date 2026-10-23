@@ -56,3 +56,6 @@
 .solo-earned-row > .gems-earned { margin: 0; padding: 3px 8px; gap: 6px; border-width: 2px; box-shadow: 2px 2px 0 #000; }
 .solo-earned-row > .xp-earned .xp-earned-hex,
 .solo-earned-row > .gems-earned .gem-icon { width: 16px; height: 16px; }
+/* the CONTRACT DONE chip (contracts/ContractDoneLine) in the same row, the same compact chip (oct22 360x640 fit) */
+.solo-earned-row > .cx-endline { padding: 3px 8px 3px 3px; gap: 5px; font-size: var(--fs-k14); border-width: 2px; box-shadow: 2px 2px 0 #000; }
+.solo-earned-row > .cx-endline img { width: 18px; height: 18px; }

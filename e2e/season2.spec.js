@@ -103,7 +103,9 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(st.rebirths).toBe('1');
     expect(st.level, 'back to LV 1').toBe(1);
     expect(shared.rows[0].level, 'the server sent the row to LV 1 too (029)').toBe(1);
-    expect(st.gems, 'levels pay no gems; the rebirth to R1 pays 25 (Andy oct11)').toBe(25);
+    // levels still pay nothing per level (Andy oct11); the climb's 5th-level LEVEL CHEST pays 10 (oct22, v3/levelChest.js)
+    // — the test's climb crosses one — plus the rebirth to R1's 25
+    expect(st.gems, 'one LV 5 level chest (10) + the rebirth to R1 (25)').toBe(35);
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
@@ -130,13 +132,13 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await page.locator(phone ? '.hp-m-navbtn.is-ach' : '.homepage-nav-btn.is-ach').click();
     const ach = page.locator('.av3-overlay');
     await ach.waitFor({ state: 'visible' });
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('25');
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('35'); // 25 rebirth + 10 level chest
     const type = ach.locator('[data-ach="type"]');
     await expect(type.locator('.av3-strip')).toContainText('READY!');
     await type.locator('.av3-claim').click();
-    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('65'); // the gems fly in, then the pill lands
+    await expect(ach.locator('.av3-gems .kp-num')).toHaveText('75'); // the gems fly in, then the pill lands (35 + 40)
     st = await s2(page);
-    expect(st.gems).toBe(65);
+    expect(st.gems).toBe(75);
     expect(await page.evaluate(() => localStorage.getItem('taw.s2.ach'))).toBe('{"type":1}');
     await ach.locator('.av3-back').click();
     await expect(ach).toHaveCount(0);
