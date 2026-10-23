@@ -143,7 +143,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await seed(page, {
     'taw.tut.markRolls': '1',
-    'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 49, everEpic: true, starter: true, marks: {}, milestones: [] }),
+    'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 59, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
   await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
