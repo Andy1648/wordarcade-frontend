@@ -546,6 +546,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         {/* SECRET's lights-down (a flat black plate over the rays) and the MYTHIC+ colour flash (over everything) */}
         <div className="rv-dim" ref={reg('rvDim')} />
         <div className="rs-cut-shake" ref={reg('cutShake')}>
+          {cr && cr.rollOf ? <div className="rs-cut-double" data-testid="roll-double">DOUBLE ROLL {cr.rollOf[0]}/{cr.rollOf[1]}</div> : null}
           <div className="rs-cut-tier" ref={reg('cutTier')}>{cr ? <TierBanner tier={cr.tier} size="lg" /> : null}</div>
           <div className="rs-cut-stamp" ref={reg('cutStamp')} data-testid="roll-cutscene-odds">
             {cr ? `1 IN ${formatNum(cr.oneInX)}` : ''}
