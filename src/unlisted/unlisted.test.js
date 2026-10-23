@@ -231,16 +231,16 @@ test('the index card never prints SECRET odds', async () => {
 });
 
 // ------------------------------------------------------------------------------------------- the two feats (oct18)
-test('TYPEWRITER: forty ACCEPTED words of 6+ letters in a row; a short word or ANY deletion starts over', async () => {
+test('TYPEWRITER: fifty ACCEPTED words of 5+ letters in a row; a short word or ANY deletion starts over', async () => {
   const { createTypewriterRun, TYPEWRITER_WORDS, TYPEWRITER_MIN_LEN } = await import('./gearFinds.js');
-  assert.equal(TYPEWRITER_WORDS, 40);
-  assert.equal(TYPEWRITER_MIN_LEN, 6);
+  assert.equal(TYPEWRITER_WORDS, 50);
+  assert.equal(TYPEWRITER_MIN_LEN, 5);
   const run = createTypewriterRun();
-  for (let i = 1; i < 39; i += 1) assert.equal(run.onWord('planet'), false);
+  for (let i = 1; i < 49; i += 1) assert.equal(run.onWord('planet'), false);
   run.onKey('a');
   run.onKey('Shift');
   run.onKey('Unidentified'); // a phone key — never a take-back on its own…
-  assert.equal(run.count(), 38, 'letters and modifiers never break the run');
+  assert.equal(run.count(), 48, 'letters and modifiers never break the run');
   run.onDelete(); // …but the input reporting a deletion is (phones DO send InputEvent "deleteContentBackward")
   assert.equal(run.count(), 0, 'one take-back and the run is over');
   for (let i = 0; i < 20; i += 1) run.onWord('planet');
@@ -252,7 +252,12 @@ test('TYPEWRITER: forty ACCEPTED words of 6+ letters in a row; a short word or A
   assert.equal(run.onWord(''), false, 'an unknown word never counts');
   let hits = 0;
   for (let i = 0; i < 60; i += 1) if (run.onWord('planets')) hits += 1;
-  assert.equal(hits, 1, 'fires exactly once, at 40');
+  assert.equal(hits, 1, 'fires exactly once, at 50');
+  // oct22: a 5-letter word now counts, a 4-letter one still breaks the run
+  for (let i = 0; i < 3; i += 1) run.onWord('apple');
+  assert.ok(run.count() >= 3, 'APPLE (5) counts');
+  run.onWord('pear');
+  assert.equal(run.count(), 0, 'PEAR (4) breaks it');
   run.reset();
   assert.equal(run.count(), 0);
 });
