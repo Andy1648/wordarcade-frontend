@@ -153,6 +153,7 @@ export default function MobileMenu({
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
   daily = null, // the DAILY CONTRACTS icon (contracts/DailyTile variant icon) — the icon cluster's first tile (oct21)
+  dailyBlitz = null, // the DAILY BLITZ row (dailyBlitz/DailyBlitzTile variant row) — the mode list's first row
   railItems,
   xpBar = null,
   markChip = null,
@@ -200,6 +201,7 @@ export default function MobileMenu({
       {/* 2. The three mode rows. They flex-grow to share whatever height is left, so the
              screen always fills exactly one viewport with no scroll at any phone height. */}
       <nav className="hp-m-modes" aria-label="Game modes">
+        {dailyBlitz}
         {rows.map((game) => {
           const s = ROW_STYLE[game.id];
           return (

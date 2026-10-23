@@ -167,3 +167,15 @@ test('bridge: no-op for the menu paths and unknown paths (nothing to bridge)', (
     assert.equal(withWindow(p, '', bridgePathToSearch).called, false, `${p} should not rewrite`);
   }
 });
+
+test('DAILY BLITZ: /daily?s=share bridges to ?dailyblitz=1 and KEEPS the share tag; the view owns /daily', () => {
+  const c = withWindow('/daily', '?s=share', bridgePathToSearch);
+  assert.ok(c.called, '/daily must bridge');
+  const u = new URL('http://x' + c.url);
+  assert.equal(u.pathname, '/daily');
+  assert.equal(u.searchParams.get('dailyblitz'), '1');
+  assert.equal(u.searchParams.get('s'), 'share');
+  assert.equal(canonicalPathForView('daily-blitz'), '/daily');
+  assert.equal(viewIntentFromPath('/daily'), 'daily-blitz');
+  assert.equal(viewIntentFromPath('/daily/'), 'daily-blitz');
+});
