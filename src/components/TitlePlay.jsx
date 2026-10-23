@@ -36,7 +36,7 @@ export default function TitlePlay({ heroSrc, games = [], onPlay, onPick, connect
     <section className={`tp tp--${variant}`} aria-label="Play">
       <div className="tp-stage" aria-hidden="true">
         <span className="tp-burst" />
-        <img className="tp-hero" src={heroSrc} alt="" draggable="false" decoding="async" fetchpriority="high" />
+        <img className="tp-hero" src={heroSrc} width="384" height="384" alt="" draggable="false" decoding="async" fetchpriority="high" />
       </div>
       <div className="tp-side">
         <button type="button" className="tp-play" data-nav="play" onClick={play} disabled={navigating && !connecting} aria-label="Play Word Bomb against a bot">

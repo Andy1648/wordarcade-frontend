@@ -205,7 +205,7 @@ export default function SplashScreen({ onStart, onDismiss }) {
           a fresh save) beside ONE PLAY plate. The plate is the start prompt: a tap / click anywhere still starts, and on
           a keyboard the pips inside it fill one per key (the 5-key gate, 3 for a returning player). */}
       <div className="splash-main">
-        <img className="splash-hero" src={titleHeroSrc()} alt="" aria-hidden="true" draggable="false" decoding="async" />
+        <img className="splash-hero" src={titleHeroSrc()} width="384" height="384" alt="" aria-hidden="true" draggable="false" decoding="async" />
         <button type="button" className="splash-play" onClick={(e) => { e.stopPropagation(); dismiss(); }}>
           <span className="splash-play-shadow" aria-hidden="true" />
           <span className="splash-play-face">

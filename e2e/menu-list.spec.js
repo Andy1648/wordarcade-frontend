@@ -84,9 +84,26 @@ test('season 1, marks revealed: GEARS shows no roll count — just its dot while
   await page.locator('.rs-overlay').waitFor();
 });
 
-test('season 2 (?season2=1), a FRESH save: GEARS unlocked from the start — it opens ROLL, whose INDEX button opens the index; REBIRTH padlocked until reachable', async ({ page }) => {
-  // PROGRESSION FINAL "start: ROLL + INDEX visible" — never the season-1 MARKS reveal (LV10). (prod bug: only SHOP showed)
+// FIRST-RUN REVEAL (progress/reveal.js, feat/first-run-reveal): a brand-new season-2 save is the TITLE — no rail at all;
+// after its first game the core opens (UPGRADES · STATS) with GEARS as the ONE padlocked teaser (LV6) and REBIRTH hidden.
+test('season 2, a BRAND-NEW save: the TITLE (one PLAY), no rail; after a first game UPGRADES + STATS, GEARS padlocked LV6, no REBIRTH', async ({ page }) => {
   await boot(page, { 'taw.s2.conv': JSON.stringify({ v: 1, st: 'shown', had: false, srv: 1 }) }, { season2: true });
+  await expect(page.locator('.tp-play')).toBeVisible();
+  await expect(page.locator('.hp-rail')).toHaveCount(0);
+  await page.evaluate(() => { localStorage.setItem('wa_has_played', '1'); });
+  await page.reload();
+  await menuReady(page);
+  await expect(page.locator('.tp-play')).toHaveCount(0);
+  const labels = await page.locator('.hp-rail .kb-rlabel').allTextContents();
+  expect(labels).toEqual(['UPGRADES', 'GEARS', 'STATS']);
+  await expect(btn(page, 'shop')).not.toHaveAttribute('data-locked', '');
+  await expect(btn(page, 'gears')).toHaveAttribute('data-locked', '');
+  await expect(btn(page, 'gears').locator('.kb-rval')).toHaveText('LV6');
+});
+
+test('season 2 (?season2=1), an R0 save past the reveal: GEARS open — it opens ROLL, whose INDEX button opens the index; REBIRTH padlocked until reachable', async ({ page }) => {
+  // PROGRESSION FINAL "start: ROLL + INDEX visible" — never the season-1 MARKS reveal (LV10). (prod bug: only SHOP showed)
+  await boot(page, { 'taw.s2.conv': JSON.stringify({ v: 1, st: 'shown', had: false, srv: 1 }), 'taw.reveal': 'all' }, { season2: true });
   const labels = await page.locator('.hp-rail .kb-rlabel').allTextContents();
   expect(labels).toEqual(['UPGRADES', 'GEARS', 'REBIRTH', 'STATS']);
   for (const id of ['shop', 'gears', 'stats']) {

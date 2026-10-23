@@ -1476,6 +1476,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         data-first={reveal.title ? '' : undefined}
       >
         <MenuFrame tier={tier} rebirths={rebirths} fresh={frameFresh} punchKey={framePunch} />
+        {/* the season-2 EDGE toast layer normally rides the ACHIEVEMENTS trophy; the TITLE hides the trophy, so it mounts
+            here instead — the first look notes what is ready (silently) and a tier reached in the first game is said */}
+        {!reveal.core && V3.Notify && <V3.Notify check={!navigating} />}
         {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
