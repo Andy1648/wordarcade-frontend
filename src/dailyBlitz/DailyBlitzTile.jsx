@@ -28,7 +28,7 @@ export default function DailyBlitzTile({ onPlay, navigating = false, variant = '
     document.addEventListener('visibilitychange', vis);
     return () => document.removeEventListener('visibilitychange', vis);
   }, []);
-  const status = s.done ? `PLAYED · ${formatNum(s.total)}` : 'NEW TODAY';
+  const status = s.done ? `DONE · ${formatNum(s.total)}` : 'NEW TODAY'; // "DONE" not "PLAYED": the 220px chip fits it beside #N
   const label = `Daily Blitz #${s.day} — ${s.done ? `played, ${formatNum(s.total)} points` : 'new prompts today'}${s.streak ? ` · ${s.streak} day streak` : ''}`;
   const go = (e) => { if (!navigating && onPlay) onPlay(e.currentTarget); };
   if (variant === 'icon') {

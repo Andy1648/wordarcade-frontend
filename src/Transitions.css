@@ -69,7 +69,9 @@
 /* CREDITS and the WORD RACE lobby opt out too (fix/min-text-sweep): the stage-height cap shrank
    them to ~0.4-0.6 on a short laptop, so a 13px label painted at 4.6-6.5px. They are plain
    scrolling pages; at 1:1 a short window scrolls them instead of shrinking the words. */
-.view-screen.app-scaled:has(.lobby-wrap, .browser-wrap, .room-wrap, .credits-wrap, .wr-lobby) {
+/* DAILY BLITZ (Andy oct22 "text is too small for daily blitz") fits its own column to the viewport (--dz), so the
+   stage zoom only shrank it a second time (0.74 at 1366x768, and its 100dvh column then filled 74% of the height). */
+.view-screen.app-scaled:has(.lobby-wrap, .browser-wrap, .room-wrap, .credits-wrap, .wr-lobby, .dbz) {
   zoom: 1;
 }
 

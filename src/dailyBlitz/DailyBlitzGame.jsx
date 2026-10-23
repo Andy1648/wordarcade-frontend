@@ -363,10 +363,12 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
               </span>
               <span className="dbz-row-side">
                 <b className="dbz-row-pts">{formatNum(r.points)}</b>
-                <span className="dbz-row-pct">{r.pct != null ? `${formatPct(r.pct)} SAID IT` : r.band.name}</span>
+                <span className="dbz-row-pct">{r.pct != null ? <>{formatPct(r.pct)}<span className="dbz-said"> SAID IT</span></> : r.band.name}</span>
               </span>
               {top.length ? (
-                <span className="dbz-row-top">MOST SAID: {top.map(([d, n]) => `${d} ${formatPct(plays ? n / plays : 0)}`).join(' · ')}</span>
+                <span className="dbz-row-top">MOST SAID: {top.map(([d, n], j) => (
+                  <span key={j} className="dbz-top-i">{j ? ' · ' : ''}{d} {formatPct(plays ? n / plays : 0)}</span>
+                ))}</span>
               ) : null}
             </li>
           );
@@ -376,7 +378,9 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
         <button type="button" className="dbz-go" data-testid="daily-blitz-share" onClick={share}>SHARE</button>
         <button type="button" className="dbz-copy" data-testid="daily-blitz-copy" onClick={copy}>COPY</button>
       </div>
-      <p className="dbz-foot" role="status">{shareNote || `${plays ? `${plays} PLAYED TODAY · ` : ''}NEW PROMPTS IN ${formatLeft(msToMidnight())}`}</p>
+      <p className="dbz-foot" role="status">{shareNote || (
+        <>{plays ? <>{plays} PLAYED<span className="dbz-wide"> TODAY</span> · </> : null}NEW<span className="dbz-wide"> PROMPTS</span> IN {formatLeft(msToMidnight())}</>
+      )}</p>
     </div>
   );
 }

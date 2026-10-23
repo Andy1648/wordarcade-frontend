@@ -35,7 +35,7 @@
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
-.dbt-sub { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; font: 700 13px/1 'Space Mono', monospace; }
+.dbt-sub { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; font: 700 14px/1 'Space Mono', monospace; }
 .dbt-n { color: #9fc8ff; }
 .dbt-st { color: #fff; }
 .dbt-st.is-new { color: #FFE94A; }
@@ -55,10 +55,17 @@
 /* CHIP: the paged desktop's right column, under the CONTRACTS chip (Homepage .hp-main). */
 .hp-main .dbt--chip { --fs-dbtk: 16px; }
 .hp-main .dbt--chip { margin-top: max(10px, calc(14 * var(--u, 1px))); height: max(56px, calc(70 * var(--u, 1px))); }
+/* Andy oct22 "a bit of overlapping on card": in the ~220px chip the flame + count sat on the right edge, on top of
+   NEW TODAY / PLAYED · 351. The streak now badges the brain's corner (the CONTRACTS chip's flame-and-count pose),
+   so the text owns the full width. */
+.dbt--chip .dbt-face { position: relative; }
+.dbt--chip .dbt-streak { position: absolute; left: 28px; bottom: 3px; width: 28px; height: 28px; pointer-events: none; }
+.dbt--chip .dbt-streak b { font-size: var(--fs-k14); right: -6px; bottom: -3px; }
 
 /* ROW: the phone mode list's first row — a slimmer band than the mode rows (it is one tap into today). */
 .dbt--row { flex: 0 0 auto; min-height: 64px; padding-right: 14px; box-shadow: 6px 6px 0 #000; }
-.dbt--row .dbt-face { width: 52px; height: 64px; }
+.dbt--row .dbt-face { width: 52px; height: 56px; margin: 0; } /* 56 + the 4px frame = the 64px row (it was 68 and pushed a 390x844 menu 3px into scroll) */
+.dbt--row .dbt-sub { font-size: var(--fs-k16); }
 .dbt--row { --fs-dbtk: 22px; }
 
 /* ICON: the contracts flame's neighbour in the icon cluster — the brain sits a little lower in the frame */
