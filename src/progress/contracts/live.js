@@ -84,6 +84,9 @@ function worthSaying(t) {
 
 /** Handle one bus event. */
 export function handle(ev) {
+  // e2e: a layout spec that measures an end card sets this so today's random contracts can't add a CONTRACT DONE line mid-run
+  // (mirrors window.__TAW_NO_ACHIEVEMENT_GRANT)
+  if (typeof window !== 'undefined' && window.__TAW_NO_CONTRACTS) return;
   const e = { ...ev };
   if (e.type === 'word' && !e.band && e.word) {
     try { e.band = rarityOf(String(e.word).trim().toLowerCase()).band; } catch { /* unknown → no band */ }
