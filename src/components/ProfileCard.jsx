@@ -22,8 +22,9 @@ import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 
-// a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small
-const GearSheet = lazy(() => import('./GearSheet.jsx'));
+// a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small.
+// Someone else's gear that YOU don't own opens LOCKED (Andy oct22: no stats from other people's profiles) — PeekGearSheet.
+const PeekGearSheet = lazy(() => import('./PeekGearSheet.jsx'));
 
 const POP = [{ transform: 'scale(.86) rotate(-2deg)', opacity: 0 }, { transform: 'scale(1.03) rotate(1deg)', opacity: 1, offset: 0.6 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 const has = (v) => v != null && Number.isFinite(Number(v));
@@ -148,7 +149,7 @@ function Gear({ id, slot, known, onOpen }) {
         data-testid={`profile-gear-${slot}`}
         aria-label={`${u.name} — see the gear`}
         style={{ '--pc-line': CARD_RAR.unlisted.line, '--pc-edge': CARD_RAR.unlisted.edge, '--pc-fill': CARD_RAR.unlisted.fill }}
-        onClick={() => onOpen({ id: u.id, name: u.name, tier: 'unlisted', kind: 'unlisted' })}
+        onClick={() => onOpen({ id: u.id, name: u.name, tier: 'unlisted', kind: 'unlisted', riddle: u.riddle })}
       >
         <img className="pc-gear-art pc-gear-img" src={unlistedArt(u)} alt="" width="72" height="72" />
         <span className="pc-gear-name">{u.name}</span>
@@ -261,12 +262,10 @@ export default function ProfileCard({ row, mine = false, onClose }) {
         // a layer of this scrim (GearSheet's .mx-sheet-layer is absolute) — a tap inside never closes the profile
         <div role="presentation" onClick={(e) => e.stopPropagation()}>
           <Suspense fallback={null}>
-            <GearSheet
+            <PeekGearSheet
               key={gear.id}
               e={gear}
-              have
-              view={null}
-              peek
+              mine={mine}
               serial={gear.kind === 'unlisted' ? serialOf(finds, gear.id) : null}
               onClose={() => setGear(null)}
             />
