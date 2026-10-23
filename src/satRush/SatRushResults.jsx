@@ -16,6 +16,7 @@ import NearMiss from '../components/NearMiss.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { GemsEarnedLine } from '../components/gems/Gems';
+import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine } from '../components/xp/XpEarned';
 import { speakFr, canSpeak, withArticle } from './speak';
 
@@ -206,6 +207,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         {economy && <XpEarnedLine since={xpSince} print className="sr-xpline" />}
         {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
         {economy && <GemsEarnedLine since={gemsSince} print className="sr-gemsline" />}
+        {economy && <ContractDoneLine since={gemsSince} />}
 
         {/* The exits never wait for the count-up, and sit RIGHT UNDER the result (fine-tune oct2:
             at 1280x551 / 1366x625 they were below the fold under the study panels). */}

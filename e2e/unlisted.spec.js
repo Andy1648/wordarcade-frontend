@@ -63,7 +63,7 @@ for (const vp of VPS) {
     await og.click();
     const sheet = page.locator('.mx-sheet');
     await expect(sheet.getByTestId('mark-main')).toContainText('HOW TO FIND');
-    await expect(sheet.getByTestId('mark-main')).toContainText('NAME THE FLASH SITE THAT RAISED US');
+    await expect(sheet.getByTestId('mark-main')).toContainText('THE FLASH PORTAL WHOSE GROUNDS WERE ALWAYS NEW');
     await expect(sheet.getByTestId('gear-equip')).toHaveCount(0);
     await page.waitForTimeout(400);
     await shot(page, `sheet-locked-${vp.tag}`);

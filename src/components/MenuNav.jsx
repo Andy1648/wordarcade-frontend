@@ -33,22 +33,12 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, profile = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
-      {/* PROFILE (oct17): your hero's face — joins this cluster (no orphan fixed UI); the paged desktop has the column tile */}
-      {profile && (
-        <KitIconButton
-          art={profile.art}
-          tone="cyan"
-          className="hp-ico is-profile"
-          data-nav="profile"
-          disabled={navigating}
-          onClick={profile.onClick}
-          ariaLabel="Open your profile"
-          title="Profile"
-        />
-      )}
+      {/* DAILY CONTRACTS (oct21): the flame + today's count — joins this cluster where PROFILE was (the profile is the XP
+          bar's lead plate now); the paged desktop shows the right-column chip instead */}
+      {daily}
       {board && (
         <KitIconButton
           icon="leaderboard"
@@ -115,6 +105,7 @@ function sayGate(g) {
  *               `value` = the live line under the label; `locked` = its gate ("R2" / "LV10") while it is closed.
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
+ * @param daily  the DAILY tile (contracts/DailyTile — streak flame + contracts), full width under the four tiles
  */
 // THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
 // actionable dot nudges its icon ONCE every NUDGE_EVERY_MS — one shared setTimeout for the whole rail (never a CSS loop,
@@ -163,7 +154,7 @@ function useDotNudge(rootRef, enabled) {
   }, [rootRef, enabled]);
 }
 
-export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, foot = null }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, daily = null, foot = null }) {
   const navRef = useRef(null);
   const reduced = useReduceMotion();
   useDotNudge(navRef, !reduced);
@@ -199,6 +190,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {daily}
       {foot}
     </nav>
   );

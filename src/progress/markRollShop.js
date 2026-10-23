@@ -13,6 +13,7 @@ import {
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
 import { unlistedEntry as unlistedById, UNLISTED_KEY } from '../unlisted/unlistedIds.js';
+import { ownsLadderGear } from './ladderGears.js';
 import { isBoostActive } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF): ROLL EPIC+ / FILL INDEX achievement counters, and the R2 AUTO ROLL unlock.
 import { SEASON2, V3 } from './season.js'; // V3.store / V3.unlocks: installed lazily (season.js)
@@ -36,6 +37,14 @@ export function wearMark(id, earned = []) {
   if (id == null) return equipMark(null, earned);
   const r = rollMarkById(id);
   if (r && !r.legacy) return equipRolled(id) ? id : wornMarkId();
+  // A SEASON-2 EARNED gear the save owns through a maxed ladder: worn straight onto taw.mark. Checked BEFORE the legacy
+  // path (Andy oct22 "when u equip archivist it unequips the other gear"): ARCHIVIST / LEGEND / ETERNAL / HIGH ROLLER are
+  // ALSO season-1 marks (markById), so they fell to marks.equipMark, which judges the season-1 claimed list, refused, and
+  // answered with the legacy-only reader — the slot read empty (or the old gear) though the ladder was maxed.
+  if (permanentMarkById(id) && ownsLadderGear(id)) {
+    try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId();
+  }
   if (permanentMarkById(id) && !markById(id)) { // a SEASON-2 EARNED gear (a maxed ladder): worn straight onto taw.mark
     try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
     return wornMarkId(); // wornMarkId only reads it back when the save owns it
@@ -44,7 +53,8 @@ export function wearMark(id, earned = []) {
     try { if (JSON.parse(localStorage.getItem(UNLISTED_KEY) || '{}').owned?.[id]) localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
     return wornMarkId();
   }
-  return equipMark(id, earned);
+  // a refused legacy mark keeps whatever is worn — never the legacy-only reader, which reads a worn ROLLED gear as none
+  return equipMark(id, earned) === id ? id : wornMarkId();
 }
 
 /**
@@ -96,6 +106,29 @@ export function buyMarkRoll({ level = 1, rng = Math.random, picks = null } = {})
   const fromMain = worn.id ? worn.main : wornMainOf(null);
   const toMain = mainMultOf(res.markId);
   return { ...res, state: all[all.length - 1].state, spent: cost.gems, free: cost.free, decision, fromMain, toMain, lump, extra, dupeGemsPaid: dupeGems };
+}
+
+/**
+ * 060 GUARANTEED ROLL: land a server TICKET's pick ({ mark, shiny }, lb_ticket_roll) — FREE (no gems), no pity / roll
+ * count change, every INDEX reward and dupe refund as a normal roll. `floor` = the ticket's tier ('legendary').
+ * Returns the same shape as buyMarkRoll (+ `ticket`), or null without a valid pick.
+ */
+export function buyTicketRoll({ pick, floor } = {}) {
+  if (!pick || !rollMarkById(pick.mark)) return null;
+  ensureRollState();
+  const res = rollAndSave(Math.random, { boost: isBoostActive(), pickId: pick.mark, shiny: !!pick.shiny, ticket: floor || true });
+  if (SEASON2) {
+    V3.store.noteMarkSeen(res.markId);
+    if (tierRank(res.tier) >= tierRank('epic')) V3.store.bumpCounter('epic');
+  }
+  const lump = indexRewardWins(res, refWordWins());
+  if (lump > 0) grantWins(lump, 'MARKS INDEX', { detail: 'index' });
+  if (res.dupeGems > 0) grantGems(res.dupeGems, 'dupe', { detail: res.markId });
+  const worn = currentMain();
+  return {
+    ...res, spent: 0, free: true, decision: equipDecision(res.markId, worn.id, worn.main),
+    fromMain: worn.id ? worn.main : wornMainOf(null), toMain: mainMultOf(res.markId), lump, extra: [], dupeGemsPaid: res.dupeGems || 0,
+  };
 }
 
 /** The tiers AUTO ROLL can stop on ("until [tier] or better"). GEAR POOL v2: no RARE — RARE is the floor, every roll. */

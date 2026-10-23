@@ -927,6 +927,66 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   }
   .homepage-stage[data-paged][data-menu='slab'] .hp-dock--grid { display: none; }
   .homepage-stage[data-paged][data-menu='slab'] .hp-dock--extras { display: flex; justify-content: flex-end; }
-  /* the column / chip owns PROFILE here — the icon cluster keeps its four */
-  .homepage-stage[data-paged] .hp-icons .is-profile { display: none; }
+  /* the column's chip owns the DAILIES here — the icon cluster keeps its four */
+  .homepage-stage[data-paged] .hp-icons .is-daily { display: none; }
 }
+
+/* ---- DAILY CONTRACTS tile (contracts/DailyTile.jsx): the streak FLAME CHIP + today's three contracts, full width under
+   the four rail tiles — it joins the rail (NO ORPHAN FIXED UI). Static at rest; the flame pops once on a finish. ---- */
+.hp-daily {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  height: var(--hp-nav-h);
+  padding: 0 calc(16 * var(--u)) 0 calc(6 * var(--u));
+  background: #2a1206;
+  border: var(--b4) solid #a8401c;
+  border-radius: 8px;
+  box-shadow: var(--b5) var(--b5) 0 #000;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.hp-daily:hover { transform: translate(-1px, -2px); }
+.hp-daily:active { transform: translate(var(--b5), var(--b5)); box-shadow: none; }
+.hp-daily:disabled { opacity: 0.5; pointer-events: none; }
+.hp-daily-flame { position: relative; flex: 0 0 auto; display: block; width: calc(var(--hp-nav-h) - 8px); height: calc(var(--hp-nav-h) - 8px); }
+.hp-daily-flame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hp-daily-flame.is-cold img { opacity: 0.4; }
+.hp-daily-n {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  font: 400 var(--fs-hprail)/1 'Bungee', cursive;
+  color: #fff;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.hp-daily-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: calc(6 * var(--u)); }
+.hp-daily-k { font: 400 var(--fs-hpval)/1 'Bungee', cursive; color: #FF6B3D; letter-spacing: 0.5px; white-space: nowrap; }
+.hp-daily-row { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.hp-daily-pips { display: flex; gap: 6px; }
+.hp-daily-pips i { display: block; width: calc(26 * var(--u)); min-width: 18px; height: 12px; background: #12071f; border: 3px solid #000; border-radius: 4px; }
+.hp-daily-pips i.is-done { background: #FFE94A; }
+.hp-daily-count {
+  flex: 0 0 auto;
+  font: 400 var(--fs-hpval)/1 'Bungee', cursive;
+  color: #FFE94A;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+}
+.hp-daily.is-swept { border-color: #1d6b2f; background: #0f1d14; }
+.hp-daily.is-swept .hp-daily-count { color: #3ddc6b; }
+@media (prefers-reduced-motion: reduce) { .hp-daily, .hp-daily:hover { transition: none; transform: none; } }
+/* PROFILE PLATE (oct21): the XP bar's lead plate — your hero's face + PROFILE + the title you wear */
+.hp-profplate { flex-direction: row; align-items: center; gap: calc(10 * var(--u)); padding-left: calc(6 * var(--u)); }
+.hp-profplate-face { flex: none; width: calc(46 * var(--u)); height: calc(46 * var(--u)); min-width: 32px; min-height: 32px; object-fit: cover; border: 3px solid #000; border-radius: 6px; background: #2a1647; }
+.hp-profplate-t { display: flex; flex-direction: column; align-items: flex-start; gap: calc(2 * var(--u)); min-width: 0; }
+/* the right column's DAILY chip sits where the profile chip was: the icon cluster's width, its own height */
+.homepage-stage[data-paged] .hp-main .hp-daily { height: max(56px, calc(70 * var(--u))); }
+.hp-profplate .hp-rankplate-k.is-new { color: #FFE94A; }

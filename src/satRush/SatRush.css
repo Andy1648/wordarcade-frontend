@@ -2837,6 +2837,9 @@ body:has(.sr-app) .wpm-hud {
     overflow-y: auto;
     overflow-x: hidden;
   }
+  /* oct21 no-scroll sweep: the chips' press offset reached 3px under the grid, so a lineup that FITS (390x844) still
+     scrolled 3px; the grid's own box now holds it, so the lineup only scrolls when it truly runs out of room */
+  .sr-cardframe:has(.sr-lineup) .sr-lineup-grid { padding-bottom: 4px; }
 }
 @media (min-width: 380px) and (max-width: 520px) {
   .sr-caseid { white-space: nowrap; letter-spacing: 0.03em; }

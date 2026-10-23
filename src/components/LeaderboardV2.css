@@ -1056,3 +1056,6 @@
    #1 keeps Bungee (Bungee Shade's inline shading muddies below ~20px) */
 .lb2--narrow .lb2-pod-seal { display: none; }
 .lb2--narrow .lb2-col[data-tier='crown'] .lb2-pod-name-t { font-family: var(--k-display); }
+/* NO SIDEWAYS SCROLL (oct21 no-scroll sweep): the lifted YOU row is 6px wider than the list, so with a player card open
+   the board's list scrolled sideways 3–4px. The list keeps a lip on the right for the lift and never scrolls sideways. */
+.lb2-scroll { overflow-x: hidden; padding-right: 6px; }

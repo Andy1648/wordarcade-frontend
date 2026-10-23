@@ -11,6 +11,7 @@ import { KitXpBar } from './kit/KitXpBar.jsx';
 import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
+import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
@@ -76,7 +77,6 @@ import { LEADERBOARD_ENABLED, getMyProfile, submitStats as submitBoardStats, che
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
 // CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
 const CardPager = lazyWithReload(() => import('./CardPager.jsx'), 'CardPager');
-const ProfileTile = lazyWithReload(() => import('./profile/ProfileTile.jsx'), 'ProfileTile');
 const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
@@ -102,7 +102,6 @@ const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'C
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
-const RankLadder = lazyWithReload(() => import('./RankLadder.jsx'), 'RankLadder');
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -112,6 +111,7 @@ import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -173,6 +173,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const isPhoneMenu = useMediaQuery(PHONE_MENU_QUERY);
   // Short-wide desktop (Chromebook / 125%-scaled laptop): the card row pages, 3 full-ratio cards a page.
   const isPagedMenu = useMediaQuery(PAGED_MENU_QUERY) && !isPhoneMenu;
+  // the paged desktop's right column (≥ 1200px, Homepage.css .hp-main) carries the DAILY chip; the icon cluster's
+  // flame is only RENDERED where that column isn't — a CSS-hidden twin kept its dot in the DOM under nothing (oct19-ui)
+  const hasMainColumn = useMediaQuery('(min-width: 1200px)') && isPagedMenu;
   const [cardPage, setCardPage] = useState(0);
   // The phone menu's TYPE A WORD hook (WordHook.jsx) is for visitors who have never started a
   // game. Read once per mount: starting a round navigates away, so it is gone on the way back.
@@ -308,7 +311,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const showMenuSpot = tourStep !== 0; // blocks the tutorials / patch notes for the whole tour, gap included
   // PATCH NOTES: returning = had already seen the menu spotlight when this menu mounted (fixed for the mount)
   // ALL RANKS popup (Andy oct11): the RANK plate opens it
-  const [showRanks, setShowRanks] = useState(false);
   // Andy oct12 "make sure it does show up on everyone's screen": EVERY player with this release unseen gets it after
   // the knife-split — a first-timer too, once the menu spotlight is done (it blocks the host until then)
   const [patchDue] = useState(() => !patchSeen());
@@ -318,7 +320,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [showProfile, setShowProfile] = useState(false);
   const [mainId, setMainId] = useState(null); // null = read from storage (mainFaceSrc); the popup reports a change
   const openProfile = useCallback(() => setShowProfile(true), []);
-  const profileNav = useMemo(() => ({ onClick: openProfile, art: mainFaceSrc(mainId) }), [openProfile, mainId]);
   // T: unlock tutorials mount once the menu has settled (the arrival wipe) and the mount-time moments — a
   // rank-up waits on the network — have announced themselves; from there the queue orders them (H5)
   const [tutReady, setTutReady] = useState(false);
@@ -1352,6 +1353,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
+  // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
+  // and the icon cluster's first tile everywhere else
+  const dailyTile = <DailyTile onPlay={handleOpenDialog} navigating={navigating} />;
+  const dailyIcon = <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />;
   const gearSlot = markShown && isPagedMenu ? (
     <>
       <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
@@ -1367,15 +1372,38 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const at = R.RANKS_V3.findIndex((x) => x.name === name);
     return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
   };
-  const rankPlate = SEASON2 ? (
-    <button type="button" className="menu-xp-rank hp-rankplate" onClick={() => setShowRanks(true)} disabled={navigating} aria-label="Title — see all titles" data-testid="rank-plate">
-      <span className="hp-rankplate-k">TITLE</span>
-      <span className="hp-rankplate-n">{shownRankName(rankTitle(xpProgress.level))}</span>
+  // PROFILE PLATE (Andy oct21 "switch profile to where title is … include title popup in the profile"): the XP bar's
+  // lead plate is your PROFILE — your hero's face, PROFILE, and the title you wear. It opens the profile popup, whose
+  // TITLE row opens ALL TITLES. (The dailies took the profile's old spots: the right column + the icon cluster.)
+  const titleName = shownRankName(rankTitle(xpProgress.level));
+  // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
+  // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
+  const [heroNews, setHeroNews] = useState(false);
+  useEffect(() => {
+    if (showProfile) return undefined;
+    let live = true;
+    import('../cast/heroSeen.js').then((m) => { if (live) setHeroNews(m.peekUnseen().length > 0); }, () => {});
+    return () => { live = false; };
+  }, [showProfile]);
+  const rankPlate = (
+    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
+      <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />
+      <span className="hp-profplate-t">
+        <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
+        <span className="hp-rankplate-n">{titleName}</span>
+      </span>
     </button>
-  ) : null;
+  );
   // JUICE P1: the bar's right end shows the next reward — the next level (never the REBIRTH icon — Andy oct21)
   const barLevel = barLive ? xpProgress.level : barFrom.level;
-  const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1 } : null), [barLevel]);
+  // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
+  const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
+  const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
+  // NEAR MISS (Andy oct22): the keys left to the next level at THIS save's XP per key (statsMult = letterXpNow, read on
+  // render) — shown by the bar only in its last stretch. Keys, not words: a level is hundreds of keys, so "1 MORE WORD"
+  // would lie. Game words pay keys too (a 5-letter game word ≈ 1 key).
+  const keysLeft = barLive && SEASON2 && statsMult > 0 ? Math.max(1, Math.ceil((xpProgress.cost * (1 - (xpProgress.frac || 0))) / statsMult)) : 0;
+  const xpNearText = keysLeft ? { k: `${formatNum(keysLeft)} ${keysLeft === 1 ? 'KEY' : 'KEYS'}`, to: `TO LV ${formatNum(barLevel + 1)}` } : null;
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1385,6 +1413,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       lvInside={SEASON2}
       lead={rankPlate}
       goal={xpGoal}
+      nearText={xpNearText}
     />
   );
 
@@ -1423,7 +1452,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             news={news}
-            profile={profileNav}
+            daily={dailyIcon}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
@@ -1448,7 +1477,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} profile={profileNav} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={news} daily={hasMainColumn ? null : dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
@@ -1470,7 +1499,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* PROFILE ≥ 1200 (oct17 night, Andy "still dont like the menu … the profile thing there (also off center)"): a CORNER CHIP
             under the icons sharing their right edge (Brawl Stars / Clash Royale); ?menu=slab = the framed right-column slab
             instead (research: claude notes menu-profile-layout-research.md). Under 1200 the face sits in the icon cluster. */}
-        {isPagedMenu && <div className={`hp-main is-${MENU_VARIANT}`}><Suspense fallback={null}><ProfileTile heroId={mainId} onOpen={openProfile} variant={MENU_VARIANT} level={xpProgress.level} /></Suspense></div>}
+        {isPagedMenu && <div className={`hp-main is-${MENU_VARIANT}`}>{dailyTile}</div>}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
@@ -1586,8 +1615,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           </Suspense>
         </ScreenBoundary>
       )}
-      {showRanks && <Suspense fallback={null}><RankLadder onClose={() => setShowRanks(false)} /></Suspense>}
-      {patchDue && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showRanks || showMenuSpot)} /></Suspense>}
+      {patchDue && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
       {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
