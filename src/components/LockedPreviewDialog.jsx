@@ -66,7 +66,7 @@ export default function LockedPreviewDialog({ game, level = 0, onClose }) {
         <div className="lp-gate">
           UNLOCKS AT LV {game.unlockLevel}
           <span className="lp-gate-cur">
-            YOU'RE LV {level} · {Math.max(0, (game.unlockLevel || 0) - level)} TO GO
+            {Math.max(0, (game.unlockLevel || 0) - level)} TO GO
           </span>
         </div>
       </div>

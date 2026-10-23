@@ -162,14 +162,11 @@
 .cx3-nums { margin-top: 6px; display: flex; align-items: baseline; gap: 6px; }
 .cx3-have { font-family: var(--k-display); font-size: var(--fs-k44); line-height: 1; color: var(--c); -webkit-text-stroke: var(--k-stroke-l) var(--k-ink); paint-order: stroke fill; }
 .cx3-need { font-family: var(--k-display); font-size: var(--fs-k22); color: var(--k-dim); }
-.cx3-bar { position: relative; width: 100%; margin-top: 8px; height: 22px; flex: 0 0 auto; box-sizing: border-box; overflow: hidden; background: var(--k-well); border: var(--k-ink-m) solid var(--k-ink); }
-.cx3-bar-fill { position: absolute; inset: 0; background: var(--c); transform-origin: left center; }
 .cx3-foot { margin-top: auto; padding-top: 12px; width: 100%; min-height: 64px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
 .cx3-anygame { font-family: var(--k-display); font-size: var(--fs-k16); color: var(--k-dim); align-self: center; }
 .cx3-swap { min-height: 46px; }
 .cx3-paid { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--k-display); font-size: var(--fs-k22); color: var(--k-cyan); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
 .cx3-cell.is-done .cx3-strip { background: var(--k-cyan); }
-.cx3-cell.is-done .cx3-bar-fill { background: var(--k-cyan); }
 /* the DONE stamp slams over the art at 1.5× the kit size, so the task under it stays readable */
 .cx3-card .kstc-anchor { transform: scale(1.5); }
 
@@ -211,7 +208,6 @@
   .cx3-nums { grid-area: nums; margin: 0; }
   .cx3-have { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-s); }
   .cx3-need { font-size: var(--fs-k15); }
-  .cx3-bar { grid-area: bar; margin: 0; height: 14px; border-width: var(--k-ink-s); }
   .cx3-foot { grid-area: foot; margin: 2px 0 0; padding: 0; width: 100%; min-height: 0; flex-direction: row; align-items: center; justify-content: flex-end; gap: 10px; }
   .cx3-foot .kb--ghost { height: 46px; } /* the kit ghost is 64px tall — slimmer here so three cards fit a 640px phone */
   .cx3-anygame { margin-right: auto; }

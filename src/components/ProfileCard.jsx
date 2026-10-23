@@ -250,9 +250,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <Tile icon="wins" tone="#FFE94A" value={has(s.base_wins) ? formatNum(Number(s.base_wins)) : UNKNOWN} label="BASE / WORD" />
           <Tile icon="boost" tone="#FF6B3D" value={has(s.wins_per_word) ? formatNum(Number(s.wins_per_word)) : UNKNOWN} label="WINS / WORD" />
           <Tile icon="power" tone="#2EFFE0" value={has(s.power) ? `T${formatNum(Number(s.power))}` : UNKNOWN} label="POWER" />
-          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND">
-            <span className="pc-bar" aria-hidden="true"><span className="pc-bar-fill" style={{ transform: `scaleX(${found != null ? Math.min(1, found) : 0})` }} /></span>
-          </Tile>
+          <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND" />
+          {/* Andy oct22: one read-out a stat — the count, no bar beside it */}
         </div>
         {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
         {/* no UNLISTED shelf / found-count here (Andy oct19 "no need to show how many unlisted you've found") */}

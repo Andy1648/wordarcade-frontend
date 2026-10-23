@@ -186,7 +186,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const epicLeft = (ladder.find((p) => p.tier === 'epic') || { left: 0 }).left;
   const legLeft = (ladder.find((p) => p.tier === 'legendary') || { left: 0 }).left;
   const epicFrac = Math.max(0, Math.min(1, 1 - epicLeft / PITY.epic.hard));
-  const legFrac = PITY.legendary && PITY.legendary.hard ? Math.max(0, Math.min(1, 1 - legLeft / PITY.legendary.hard)) : 0;
   const col = collection(view);
   const tutDef = TUTORIALS.find((t) => t.id === 'markRolls');
   const rolling = !!(spin && pending.current);
@@ -526,8 +525,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           </div>
           <div className="rs-pity-row is-leg">
             <span className="rs-pity-lbl rs-pity-leg">LEGENDARY+ IN</span>{' '}
-            <span className="rs-pity-n">{formatNum(legLeft)}</span>
-            <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${legFrac})` }} /></div>
+            <span className="rs-pity-n">{formatNum(legLeft)}</span>{/* the count IS the read-out (Andy oct22) — no bar beside it */}
           </div>
         </div>
         <div className="rs-rollcol">

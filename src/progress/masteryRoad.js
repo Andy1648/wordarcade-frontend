@@ -57,29 +57,33 @@ export const HERO_OWNED_GEMS = 15;
 // a ROLL TICKET pays one season-2 roll's price in gems, flat (Andy oct21: "keep 75 gems for each roll") — no server roll path
 export const TICKET_GEMS = 75;
 
-const TIER = ['', 'BRONZE', 'SILVER', 'GOLD'];
-const BADGE_ART = ['', '/stage/emblem-3.webp', '/stage/emblem-2.webp', '/stage/emblem-1.webp'];
+const ROMAN = ['', 'I', 'II', 'III'];
+// Andy oct22 "horrendous bronze badge … these better just be fillers": a badge node is the painted wax SEAL with its
+// roman numeral on it (a filler between the real rewards), never a metal emblem. SIZE = how big the node sits on the
+// road: 's' fillers (seals, small chests), 'm' the free rolls + big chests, 'l' the milestones (hero, frame, pose).
+const SEAL_ART = '/fx/blitz-stamp.webp';
 
-/** The display for one node's reward: { kind, name, sub, art, gems?, heroId? }. Art is painted (public/) only. */
+/** The display for one node's reward: { kind, name, art, size, gems?, heroId?, roman? }. Art is painted (public/) only.
+ *  No definitions (Andy oct22: "stupid overloaded text (defining ticket)") — the name is 1–2 words, the art says the rest. */
 export function rewardInfo(mode, shape) {
   const m = ROAD_MODES[mode];
   switch (shape.kind) {
     case 'badge':
-      return { kind: 'badge', tier: shape.tier, name: `${TIER[shape.tier]} BADGE`, sub: `${m.badge} ${'I'.repeat(shape.tier)}`, art: BADGE_ART[shape.tier] };
+      return { kind: 'badge', tier: shape.tier, roman: ROMAN[shape.tier], name: `${m.badge} ${ROMAN[shape.tier]}`, art: SEAL_ART, size: 's' };
     case 'chest':
-      return { kind: 'chest', name: 'GEM CHEST', sub: `${shape.gems} GEMS`, art: '/shop/chest.webp', gems: shape.gems };
+      return { kind: 'chest', name: 'GEM CHEST', art: '/shop/chest.webp', gems: shape.gems, size: shape.gems >= 25 ? 'm' : 's' };
     case 'ticket':
-      return { kind: 'ticket', name: 'ROLL TICKET', sub: '75 GEMS = 1 ROLL', art: '/icons/gears.webp', gems: TICKET_GEMS };
+      return { kind: 'ticket', name: 'FREE ROLL', art: '/icons/gears.webp', gems: TICKET_GEMS, size: 'm' };
     case 'hero': {
       const h = heroById(m.hero);
-      return { kind: 'hero', name: h ? h.name : 'HERO', sub: 'NEW HERO', art: `/cast/${m.hero}-hero.webp`, heroId: m.hero };
+      return { kind: 'hero', name: h ? h.name : 'HERO', art: `/cast/${m.hero}-hero.webp`, heroId: m.hero, size: 'l' };
     }
     case 'frame':
-      return { kind: 'frame', name: 'CARD FRAME', sub: `${m.name} CARD`, art: '/cards/frame-legend.webp' };
+      return { kind: 'frame', name: `${m.name} FRAME`, art: '/cards/frame-legend.webp', size: 'l' };
     case 'pose':
-      return { kind: 'pose', name: 'VICTORY POSE', sub: m.pose, art: `/cast/${m.hero}-win.webp` };
+      return { kind: 'pose', name: m.pose, art: `/cast/${m.hero}-win.webp`, size: 'l' };
     default:
-      return { kind: shape.kind, name: '', sub: '', art: '' };
+      return { kind: shape.kind, name: '', art: '', size: 's' };
   }
 }
 

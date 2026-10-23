@@ -53,29 +53,6 @@
   color: var(--k-yellow);
   white-space: nowrap;
 }
-.av3-tiers {
-  min-height: 54px;
-  padding: 0 16px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--k-panel-deep);
-  border: var(--k-ink-m) solid var(--k-ink);
-  box-shadow: var(--k-sh-m) var(--k-sh-m) 0 var(--k-ink);
-  color: var(--k-dim);
-}
-.av3-tiers b {
-  font-family: var(--k-display);
-  text-transform: uppercase;
-  font-size: var(--fs-k24);
-  font-weight: 400;
-  color: var(--k-yellow);
-  -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
-  paint-order: stroke fill;
-}
-.av3-tiers span { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); }
-.av3-tiers small { font-size: var(--fs-k14); } /* R3 oct8: 14px floor */
 .av3-gems { flex: 0 0 auto; }
 
 .av3-body {
@@ -83,11 +60,11 @@
   min-height: 0;
   margin-top: 8px;
   display: grid;
-  grid-template-columns: 400px minmax(0, 1fr);
+  grid-template-columns: 380px minmax(0, 1fr);
   gap: 30px;
 }
 
-/* ---- the HERO next-claim panel ---- */
+/* ---- the HERO next-claim panel: label, badge, name, the ONE count, claim / reward ---- */
 .av3-hero {
   position: relative;
   min-height: 0;
@@ -95,103 +72,48 @@
   background: var(--k-panel);
   border: var(--k-ink-xl) solid var(--k-ink);
   border-top: 12px solid var(--tc);
+  border-radius: 8px;
   box-shadow: 9px 9px 0 var(--k-ink);
-  padding: 10px 22px 18px;
+  padding: 14px 22px 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   animation: av3Rise .42s cubic-bezier(.2, 1.2, .4, 1) both 1;
 }
 .av3-hero.is-ready,
 .av3-hero.is-stamped { border-top-color: var(--k-cyan); }
-.av3-hero-top { width: 100%; display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
-.av3-hero-label { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k26); color: var(--k-yellow); }
+.av3-hero-label { align-self: flex-start; font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k26); color: var(--k-yellow); transform: rotate(-3deg); }
 .av3-hero-label.is-ready { color: var(--k-cyan); }
-.av3-ready-n {
-  min-width: 40px;
-  height: 40px;
-  padding: 0 10px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--k-rule);
-  border: var(--k-ink-m) solid var(--k-ink);
-  box-shadow: var(--k-sh-s) var(--k-sh-s) 0 var(--k-ink);
-  font-family: var(--k-display);
-  text-transform: uppercase;
-  font-size: var(--fs-k24);
-  color: var(--k-ink);
-}
-.av3-ready-n.is-on { background: var(--k-cyan); }
-.av3-hero-main { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
-.av3-hero.is-stamped .av3-hero-main { opacity: .35; transition: opacity .2s; }
+.av3-hero-badge { flex: 0 0 auto; }
+.av3-hero.is-stamped .av3-hero-badge, .av3-hero.is-stamped .av3-hero-name { opacity: .35; transition: opacity .2s; }
 .av3-hero-name {
-  margin-top: 8px;
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k30);
-  line-height: 1.1;
+  font-size: var(--fs-k34);
+  line-height: 1.05;
   -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
   paint-order: stroke fill;
   text-align: center;
   white-space: nowrap;
 }
-.av3-hero-nums { margin-top: 4px; width: 100%; display: flex; align-items: baseline; gap: 6px; }
+.av3-hero-nums { display: flex; align-items: baseline; justify-content: center; gap: 8px; min-height: 48px; }
 .av3-hero-nums .av3-have { font-size: var(--fs-k44); -webkit-text-stroke-width: var(--k-stroke-xl); }
 .av3-hero-nums .av3-need { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k24); }
+.av3-hero-foot { width: 100%; min-height: 104px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.av3-hero-foot .av3-claim--big { align-self: center; }
 .av3-hero-reward {
-  margin-left: auto;
-  align-self: center;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k30);
+  font-size: var(--fs-k38);
   color: var(--k-cyan);
   -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
   paint-order: stroke fill;
 }
-.av3-ladder { list-style: none; margin: 16px 0 0; padding: 0; width: 100%; display: flex; gap: 8px; }
-.av3-step {
-  flex: 1;
-  height: 54px;
-  box-sizing: border-box;
-  background: var(--k-panel-deep);
-  border: var(--k-ink-m) solid var(--k-ink);
-  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--k-display);
-  text-transform: uppercase;
-  line-height: 1.05;
-  color: var(--k-faint);
-}
-.av3-step span { font-size: var(--fs-k14); } /* R3 oct8: 14px floor */
-.av3-step b { font-size: var(--fs-k17); font-weight: 400; }
-.av3-step.is-done { background: var(--tc); color: var(--k-ink); }
-.av3-step.is-cur { background: var(--tf); color: var(--k-white); transform: translateY(-6px); }
-.av3-step.is-cur span { color: var(--tc); }
-.av3-hero-foot { width: 100%; margin-top: 12px; display: flex; justify-content: center; flex: 0 0 auto; }
 .av3-claim--big .kb-main { display: inline-flex; align-items: center; gap: 10px; }
-.av3-hero-bar { position: relative; width: 100%; }
-.av3-hero-bar .av3-bar { margin-top: 0; height: 70px; border-width: var(--k-ink-xl); box-shadow: var(--k-sh-xl) var(--k-sh-xl) 0 var(--k-ink); }
-.av3-hero-pct {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--k-display);
-  text-transform: uppercase;
-  font-size: var(--fs-k28);
-  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
-  paint-order: stroke fill;
-  white-space: nowrap;
-}
 
 /* ---- badges: the glyph asset on a tilted tier plate ---- */
 .av3-badge { position: relative; flex: none; }
@@ -221,24 +143,29 @@
 }
 .av3-badge--big .av3-badge-roman { font-size: var(--fs-k24); line-height: 32px; padding: 0 10px; }
 
-/* ---- the 4 × 2 grid (KitStampCard tiles) ---- */
+/* ---- the right side: the 4 x 2 grid, then LEGENDARIES ---- */
+.av3-side { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 20px; }
 .av3-grid {
   list-style: none;
   margin: 0;
   padding: 0 6px 6px 0;
+  flex: 1 1 auto;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 22px 19px;
+  gap: 20px 19px;
 }
 .av3-cell { min-width: 0; min-height: 0; animation: av3Rise .42s cubic-bezier(.2, 1.2, .4, 1) both 1; animation-delay: calc(var(--i, 0) * 45ms); }
+/* a little hand-placed wobble so the grid doesn't read as a spreadsheet */
+.av3-cell:nth-child(4n + 1) .av3-tile { transform: rotate(-0.8deg); }
+.av3-cell:nth-child(4n + 3) .av3-tile { transform: rotate(0.7deg); }
 .av3-tile.kstc { width: 100%; height: 100%; }
 .av3-tile .kstc-card { box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink); }
 .av3-cell.is-ready .av3-tile .kstc-card { --kstc-bg: #0e2b29; }
 .av3-tile .kstc-body { display: flex; flex-direction: column; }
 .av3-strip {
-  height: 32px;
+  height: 30px;
   flex: 0 0 auto;
   box-sizing: border-box;
   padding: 0 10px;
@@ -254,17 +181,17 @@
 }
 .av3-cell.is-ready .av3-strip { background: var(--k-cyan); }
 .av3-cell.is-max .av3-strip { background: var(--k-gold); }
-.av3-strip-reward { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-k16); }
-/* R3 oct8 — NUMBERS FIRST on a claimable tile: the gem reward LEADS the strip at 20px and READY! follows;
-   in-progress tiles keep TIER n first (the reward is a promise there, not the headline). */
-.av3-cell.is-ready .av3-strip-reward { order: -1; font-size: var(--fs-k20); gap: 5px; }
+.av3-strip-reward { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: var(--fs-k16); }
+.av3-cell.is-ready .av3-strip-reward { font-size: var(--fs-k20); gap: 5px; }
 .av3-cell.is-ready .av3-strip-reward .kit-icon { transform: scale(1.2); }
-/* claimed-out (MAXED) tiles go quiet: nothing left to do, so the card steps back behind the live ones */
 .av3-cell.is-max .av3-tile { opacity: 0.72; }
-.av3-cell.is-max .av3-pct, .av3-cell.is-max .av3-tile-name { color: var(--k-gold); }
-.av3-tile-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 10px 12px 12px; }
-.av3-tile-row { display: flex; align-items: center; gap: 14px; }
-.av3-tile-nums { min-width: 0; display: flex; flex-direction: column; }
+.av3-cell.is-max .av3-tile-name { color: var(--k-gold); }
+.av3-tile-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 8px 12px 12px; }
+.av3-tile-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.av3-tile-row .av3-bar { flex: 1 1 auto; margin: 0; }
+.av3-tile-row .av3-claim { flex: 1 1 auto; min-width: 0; }
+.av3-tile-row .av3-claim .kb-gface { justify-content: center; }
+.av3-tile-row .av3-claim .kb-gcount { display: none; } /* the strip shows the gems on a laptop; a phone's folded strip hands them here */
 .av3-have {
   font-family: var(--k-display);
   text-transform: uppercase;
@@ -275,29 +202,27 @@
   paint-order: stroke fill;
 }
 .av3-have.is-ready { color: var(--k-cyan); }
-.av3-need { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k17); color: var(--k-dim); }
+.av3-need { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k17); color: var(--k-dim); white-space: nowrap; }
 .av3-tile-name {
-  margin: 0 0 8px;
+  flex: none;
   font-family: var(--k-display);
   text-transform: uppercase;
-  font-size: var(--fs-k22); /* Andy oct17: the NAME leads — 1–2 words you read first, bigger than the count */
+  font-size: var(--fs-k22);
   line-height: 1;
   color: var(--k-white);
   -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
   paint-order: stroke fill;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .av3-bar {
   position: relative;
-  margin-top: 6px;
   height: 22px;
   flex: 0 0 auto;
   box-sizing: border-box;
   background: var(--k-well);
   border: var(--k-ink-m) solid var(--k-ink);
   overflow: hidden;
+  transform: skewX(var(--k-skew-bar));
 }
 .av3-bar-fill {
   position: absolute;
@@ -309,138 +234,149 @@
 .av3-bar-fill.is-almost { background: var(--k-yellow); }
 .av3-bar-fill.is-ready { background: var(--k-cyan); }
 .av3-bar-fill.is-max { background: var(--k-gold); }
-.av3-tile-foot { margin-top: auto; padding-top: 8px; min-height: 64px; display: flex; align-items: flex-end; justify-content: space-between; }
-.av3-tile-foot .av3-claim { width: calc(100% - 6px); }
-.av3-tile-foot .av3-claim .kb-gface { justify-content: center; }
-.av3-pips { display: flex; gap: 4px; padding-left: 3px; }
-.av3-pips i { display: block; width: 15px; height: 13px; background: var(--k-rule); border: var(--k-ink-s) solid var(--k-ink); transform: skewX(-20deg); }
-.av3-pct {
-  font-family: var(--k-display);
-  text-transform: uppercase;
-  font-size: var(--fs-k18);
-  color: var(--k-dim);
-  -webkit-text-stroke: var(--k-stroke-s) var(--k-ink);
-  paint-order: stroke fill;
-  white-space: nowrap;
+/* opened from a gear sheet ("SEE ACHIEVEMENT"): that ladder's tile wears a static gold ring */
+.av3-cell.is-focus .av3-tile { outline: 4px solid #FFC23D; outline-offset: 3px; }
+
+/* ---- LEGENDARIES: the eight 100% gears — painted art, a silhouette until it's yours ---- */
+.av3-lg { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.av3-lg-title { margin: 0; font-family: var(--k-display); font-weight: 400; font-size: var(--fs-k18); color: var(--k-gold); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; transform: rotate(-2deg); transform-origin: left center; }
+.av3-lg-row { list-style: none; margin: 0; padding: 0 6px 6px 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; }
+.av3-lg-item {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px 4px;
+  box-sizing: border-box;
+  background: var(--k-rule);
+  border: var(--k-ink-m) solid var(--k-ink);
+  border-radius: 8px;
+  box-shadow: var(--k-sh-xs) var(--k-sh-xs) 0 var(--k-ink);
+  color: var(--k-mute);
+  font-family: var(--k-mono);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(.22, 1, .36, 1);
 }
-.av3-pct.is-almost { color: var(--k-yellow); }
+.av3-lg-row li:nth-child(odd) .av3-lg-item { transform: rotate(-2deg); }
+.av3-lg-row li:nth-child(even) .av3-lg-item { transform: rotate(1.5deg) translateY(3px); }
+.av3-lg-row li .av3-lg-item:hover { transform: translateY(-3px) rotate(-3deg); }
+.av3-lg-item img { display: block; width: 64px; height: 64px; object-fit: contain; filter: brightness(0); opacity: .85; }
+.av3-lg-name { font-size: var(--fs-k13); letter-spacing: .02em; white-space: nowrap; line-height: 1.2; }
+.av3-lg-item.is-owned { background: var(--k-plum); border-color: #B07A10; color: var(--k-gold); }
+.av3-lg-item.is-owned img { filter: none; opacity: 1; }
+.av3-lg-item.is-hero { border-color: var(--k-cyan); }
+.av3-lg-item.is-hero .av3-lg-name { color: var(--k-cyan); }
+.av3-lg-item:focus-visible { outline: 4px solid var(--k-yellow); outline-offset: 3px; }
 
 @keyframes av3Rise { 0% { transform: translateY(26px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
-/* ---- short laptops (1280×551) ---- */
+/* ---- short laptops (1280x600 and below) ---- */
 @media (min-width: 1000px) and (max-height: 620px) {
   .av3-screen { padding: 8px 26px 18px; }
-  .av3-head { min-height: 80px; }
-  .av3-title { font-size: var(--fs-k38); }
-  .av3-body { grid-template-columns: 360px minmax(0, 1fr); gap: 26px; margin-top: 4px; }
-  .av3-hero { padding: 6px 18px 12px; border-top-width: 10px; }
-  .av3-badge--big { width: 104px; height: 104px; }
-  .av3-hero-name { margin-top: 4px; font-size: var(--fs-k26); }
+  .av3-head { min-height: 80px; padding-right: 8px; }
+  .av3-body { grid-template-columns: 340px minmax(0, 1fr); gap: 26px; margin-top: 4px; }
+  .av3-hero { padding: 8px 18px 14px; border-top-width: 10px; }
+  .av3-badge--big { width: 112px; height: 112px; }
+  .av3-hero-name { font-size: var(--fs-k28); }
   .av3-hero-nums .av3-have { font-size: var(--fs-k38); }
-  .av3-ladder { margin-top: 12px; }
-  .av3-step { height: 46px; }
-  .av3-hero-foot { margin-top: 8px; }
-  .av3-hero-bar .av3-bar { height: 60px; }
+  .av3-hero-foot { min-height: 0; }
+  .av3-claim--big { transform: scale(.8); transform-origin: 50% 100%; margin: -21px 0 0; }
+  .av3-hero-nums { min-height: 0; }
+  .av3-side { gap: 14px; }
   .av3-grid { gap: 14px 16px; }
   .av3-strip { height: 28px; }
-  .av3-tile-body { padding: 6px 10px 8px; }
-  .av3-badge--small { width: 52px; height: 52px; }
-  .av3-have { font-size: var(--fs-k26); }
-  .av3-tile-name { margin-top: 4px; }
-  .av3-bar { height: 18px; }
-  .av3-tile-foot { min-height: 0; padding-top: 4px; }
-  /* the tile CLAIM at 0.8 (label 18px) — the layout box is reclaimed with a negative margin */
-  .av3-tile-foot .av3-claim { transform: skewX(var(--k-skew)) scale(.8); transform-origin: 50% 100%; margin-top: -13px; }
+  .av3-tile-body { gap: 6px; padding: 6px 10px 8px; }
+  .av3-badge--small { width: 54px; height: 54px; }
+  .av3-lg-item img { width: 48px; height: 48px; }
 }
 
-/* ---- phones: one column; the grid is 2 × 4 (the list scrolls; no visible scrollbar) ---- */
-@media (max-width: 999px) { /* Andy oct14 proportions: tablets + narrow laptops (700–999px) stack like a phone — four tiles beside the hero were ~110px wide */
-  .av3-overlay { align-items: flex-start; overflow-y: auto; scrollbar-width: none; }
-  .av3-overlay::-webkit-scrollbar { display: none; }
-  .av3-scale { width: 100%; height: auto; max-height: none; transform: none; }
-  .av3-screen { height: auto; padding: 10px 16px 24px; }
-  .av3-head { flex-wrap: wrap; min-height: 0; gap: 8px 10px; }
-  .av3-back { transform: scale(.8); transform-origin: 0 50%; margin: -8px -37px -8px 0; }
-  .av3-title { order: -1; flex-basis: 100%; font-size: var(--fs-k30); }
-  .av3-tiers { min-height: 48px; padding: 0 10px; }
+/* ---- mid laptops (1000-1199): the hero column narrows, the gear names give way to the art ---- */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .av3-body { grid-template-columns: 290px minmax(0, 1fr); gap: 18px; }
+  .av3-grid { gap: 16px 12px; }
+  .av3-tile-name { font-size: var(--fs-k16); white-space: normal; }
+  .av3-badge--small { width: 52px; height: 52px; }
+  .av3-head { gap: 12px; }
+  .av3-hero-name { font-size: var(--fs-k26); }
+  .av3-lg-name { display: none; }
+}
+
+/* ---- tablets + phones: one column, and still NO scroll (Andy oct22) — the tiles lie flat (badge | name over bar) ---- */
+@media (max-width: 999px) {
+  .av3-overlay { align-items: stretch; }
+  .av3-scale { width: 100%; height: 100%; max-height: none; transform: none; }
+  .av3-screen { height: 100%; padding: 8px 12px 12px; }
+  .av3-head { flex-wrap: wrap; min-height: 0; gap: 4px 10px; }
+  .av3-title { order: -1; flex-basis: 100%; }
+  .av3-slab .kt-slab-lab { font-size: var(--fs-k17); }
+  .av3-back { transform: scale(.75); transform-origin: 0 50%; margin: -10px -44px -10px 0; }
   .av3-gems { margin-left: auto; margin-right: 22px; }
-  .av3-gems .kp { transform: scale(.65); transform-origin: 0 0; margin-right: -84px; margin-bottom: -32px; }
+  .av3-gems .kp { transform: scale(.6); transform-origin: 0 0; margin-right: -96px; margin-bottom: -36px; }
   .av3-gems .kp-name { display: none; }
-  .av3-body { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 10px; }
-  .av3-hero { padding: 8px 14px 14px; }
-  .av3-badge--big { width: 96px; height: 96px; }
-  .av3-hero-name { font-size: var(--fs-k24); }
-  .av3-hero-nums .av3-have { font-size: var(--fs-k34); }
-  .av3-hero-nums .av3-need { font-size: var(--fs-k18); }
-  .av3-hero-reward { font-size: var(--fs-k24); }
-  .av3-step { height: 46px; }
-  .av3-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: 236px; gap: 14px; }
-  .av3-badge--small { width: 50px; height: 50px; }
-  .av3-tile-row { gap: 8px; }
-  .av3-have { font-size: var(--fs-k24); }
-  .av3-need { font-size: var(--fs-k14); }
-  .av3-tile-name { font-size: var(--fs-k14); } /* R3 oct8: 14px floor (was k13) */
-  .av3-tile-body { padding: 8px 8px 10px; }
-  .av3-strip { font-size: var(--fs-k14); padding: 0 6px; }
-  .av3-cell.is-ready .av3-strip-reward { font-size: var(--fs-k18); }
-  .av3-pips i { width: 11px; }
-  .av3-pct { font-size: var(--fs-k15); }
+  .av3-body { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .av3-hero {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "badge label foot" "badge name foot" "badge nums foot";
+    align-items: center;
+    column-gap: 12px;
+    padding: 6px 10px 8px;
+    border-width: var(--k-ink-m);
+    border-top-width: 8px;
+    box-shadow: 5px 5px 0 var(--k-ink);
+  }
+  .av3-hero-label { grid-area: label; font-size: var(--fs-k15); transform: none; }
+  .av3-hero-badge { grid-area: badge; }
+  .av3-badge--big { width: 64px; height: 64px; }
+  .av3-badge--big .av3-badge-roman { font-size: var(--fs-k14); line-height: 20px; padding: 0 6px; }
+  .av3-hero-name { grid-area: name; font-size: var(--fs-k20); text-align: left; white-space: normal; -webkit-text-stroke-width: var(--k-stroke-s); }
+  .av3-hero-nums { grid-area: nums; justify-content: flex-start; min-height: 0; gap: 4px; }
+  .av3-hero-nums .av3-have { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .av3-hero-nums .av3-need { font-size: var(--fs-k15); }
+  .av3-hero-foot { grid-area: foot; width: auto; min-height: 0; }
+  .av3-hero-reward { font-size: var(--fs-k22); -webkit-text-stroke-width: var(--k-stroke-s); }
+  .av3-claim--big { transform: scale(.42); transform-origin: 100% 50%; margin: -30px 0 -30px -191px; }
+  .av3-side { flex: 1 1 auto; gap: 10px; }
+  .av3-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px 12px; }
+  .av3-cell:nth-child(n) .av3-tile { transform: none; }
+  .av3-cell:nth-child(4n + 1) .av3-tile, .av3-cell:nth-child(4n) .av3-tile { transform: rotate(-0.6deg); }
+  .av3-tile .kstc-card { box-shadow: 4px 4px 0 var(--k-ink); }
+  /* the strip folds to a colour band; a ready tile's CLAIM carries its gems instead */
+  .av3-strip { height: 8px; padding: 0; font-size: 0; overflow: hidden; border-bottom-width: var(--k-ink-s); }
+  .av3-strip > * { display: none; }
+  .av3-tile-row .av3-claim .kb-gcount { display: inline; }
+  .av3-tile-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: 4px 8px;
+    padding: 4px 8px 6px;
+  }
+  .av3-tile-row { display: contents; }
+  .av3-tile-row .av3-badge { grid-column: 1; grid-row: 1 / span 2; }
+  .av3-tile-name { grid-column: 2; grid-row: 1; font-size: var(--fs-k14); white-space: normal; }
+  .av3-tile-row .av3-bar, .av3-tile-row .av3-claim { grid-column: 2; grid-row: 2; }
+  .av3-tile-row .av3-claim { transform: skewX(var(--k-skew)) scale(.55); transform-origin: 0 50%; margin: -15px 0; width: 160px; justify-self: start; }
+  .av3-tile .kst-center { scale: .5; }
+  .av3-tile .kstc-anchor { left: 50% !important; } /* the MAX stamp sits mid-tile on a narrow tile (KitStampCard sets at inline) */
+  .av3-badge--small { width: 40px; height: 40px; }
+  .av3-bar { height: 14px; border-width: var(--k-ink-s); }
+  .av3-lg { gap: 4px; }
+  .av3-lg-title { font-size: var(--fs-k14); }
+  .av3-lg-row { gap: 6px; padding: 0 3px 3px 0; }
+  .av3-lg-item { padding: 3px 2px; border-width: var(--k-ink-s); }
+  .av3-lg-item img { width: 32px; height: 32px; }
+  .av3-lg-name { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .av3-hero, .av3-cell { animation: none; }
-  .av3-bar-fill, .av3-hero.is-stamped .av3-hero-main { transition: none; }
-}
-/* what the count means (Andy oct8 "what is CHAIN 35?") — only on the ladders whose name does not say it */
-.av3-tile-name, .av3-what { flex: none; }
-.av3-what { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k14); line-height: 1.15; color: var(--k-dim, #c9b8e8); }
-/* a tile that carries the explanation line gives that line's height back from the name gap and the foot */
-.av3-tile-body:has(.av3-what) .av3-tile-name { margin-top: 4px; }
-.av3-tile-body:has(.av3-what) .av3-bar { margin-top: 4px; }
-.av3-tile-body:has(.av3-what) .av3-tile-foot { min-height: 44px; padding-top: 4px; }
-
-/* ---- PROPORTIONS (Andy oct14 "numbers going off line"): mid-width laptops (1000–1199px, e.g. 1080×1016; 700–999 now stacks like a phone) squeezed the
-   four tiles to ~150px — "/ 100" broke onto two lines, the % ran off the tile edge, and names got "…". The hero column
-   narrows there, the count never breaks, and the pips give way before the % does. */
-.av3-need { white-space: nowrap; }
-.av3-pips { min-width: 0; overflow: hidden; flex: 0 1 auto; }
-.av3-pct { flex: none; margin-left: 6px; }
-@media (min-width: 1000px) and (max-width: 1199px) {
-  .av3-body { grid-template-columns: 300px minmax(0, 1fr); gap: 18px; }
-  .av3-grid { gap: 16px 12px; }
-  .av3-pips i { width: 11px; }
-  .av3-what { font-size: var(--fs-k13); letter-spacing: 0; } /* the 13px label floor: "EPIC+ GEAR ROLLS" fits a 1080-wide tile */
-  .av3-tile-name { font-size: var(--fs-k14); }
-  .av3-head { gap: 12px; }
-  .av3-title { font-size: var(--fs-k34); } /* the shaded title gave way so the GEMS pill stops running off the right edge at 1024 */
-  /* a long name / explanation WRAPS to a second line (the tile has the room above its foot) instead of "WIN MULTIPLA…" */
-  .av3-tile-name, .av3-what { white-space: normal; text-overflow: clip; overflow: visible; }
-}
-
-/* the LAST tier's gear (progress/ladderGears.js): "MAX IT → IRONHAND" in the hero's top row (no extra height); EARNED once maxed */
-.av3-gear { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 10px; padding: 2px 8px 2px 2px; background: #24123d; border: 3px solid #FFC23D; border-radius: 8px; box-shadow: 3px 3px 0 #000; min-width: 0; }
-.av3-gear-art { width: 34px; height: 34px; object-fit: contain; flex: none; }
-.av3-gear-text { font: 700 var(--fs-k13) 'Space Mono', monospace; letter-spacing: .04em; color: #fff; white-space: nowrap; }
-.av3-gear-text b { color: #FFC23D; }
-.av3-gear.is-owned { border-color: #2EFFE0; }
-.av3-gear.is-owned .av3-gear-text b { color: #2EFFE0; }
-/* Andy oct19 "overlapping with the MAX IT and GRANDMASTER symbol with the zero": on one line "MAX IT → GRANDMASTER" was
-   wider than the gap between ALMOST and the ready count, so the chip ran into both. Now the label and the count never
-   shrink, the chip stacks its two words (half the width) and only the gear name may ellipsise, as a last resort. */
-.av3-hero-top { gap: 8px; }
-.av3-hero-top .av3-gear-art { width: 30px; height: 30px; }
-.av3-hero-label, .av3-ready-n { flex: none; }
-.av3-gear { flex: 0 1 auto; margin-right: 0; overflow: hidden; gap: 4px; padding-right: 6px; }
-.av3-gear-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; font-size: max(13px, var(--fs-k13)); }
-.av3-gear-text b { font-size: max(12px, calc(var(--fs-k13) * .9)); }
-.av3-gear-name { font-size: var(--fs-k15); letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; } /* GRANDMASTER / HIGH ROLLER fit a 1280×551 hero whole */
-/* opened from a gear sheet ("SEE ACHIEVEMENT"): that ladder's tile wears a static gold ring */
-.av3-cell.is-focus .av3-tile { outline: 4px solid #FFC23D; outline-offset: 3px; }
-/* phone: the hero's top row is narrow — the chip keeps the art + gear name, drops "MAX IT →" */
-@media (max-width: 520px) {
-  .av3-gear { margin-right: 6px; overflow: hidden; }
-  .av3-gear-text { overflow: hidden; text-overflow: ellipsis; }
-  .av3-gear-text b { display: none; }
+  .av3-bar-fill, .av3-hero.is-stamped .av3-hero-badge, .av3-hero.is-stamped .av3-hero-name, .av3-lg-item { transition: none; }
 }
 
 /* ---- MASTERY tab (oct21): the slab tabs take the title's place; the h2 stays for screen readers ---- */

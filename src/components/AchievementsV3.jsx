@@ -4,10 +4,12 @@
 //
 // Built from the v2 kit on the real v3 model (v3/achievements.js — counters, tiers I–V, gems 40–200 through
 // gemsCore.grantGems):
-//   * header: KitBackButton · ACHIEVEMENTS · the TIERS chip · the GEMS KitPill (the fly target);
-//   * HERO next-claim panel: READY / ALMOST / NICE, the ready count, the badge (tier plate + the glyph asset + roman),
-//     have / need, +gems, the I–V ladder, then one big CLAIM (KitButton) — or the % bar when nothing is ready;
-//   * the 4 × 2 GRID: one KitStampCard per achievement (strip, badge, have / need, name, bar, CLAIM or tier pips);
+//   * header: KitBackButton · ACHIEVEMENTS | MASTERY tabs · the GEMS KitPill (the fly target);
+//   * HERO next-claim panel: READY / ALMOST / NICE, the badge (tier plate + the glyph asset + roman), have / need, then
+//     one big CLAIM (KitButton) or the +gems it pays;
+//   * the 4 × 2 GRID: one KitStampCard per achievement (strip, name, badge, ONE bar — or CLAIM);
+//   * LEGENDARIES: the eight 100% gears as painted art, silhouettes until owned (Andy oct22).
+//   Andy oct22 "5 bars … and then 0/5 again — clear def of stupidity": every item shows ONE progress read-out.
 //   * CLAIM pays the gems ONCE (claimAchievementV3 — one tier per call; a 2nd tap on a stamped tile does nothing), the
 //     tile is stamped CLAIMED (kit stamp), and the gems FLY to the counter (KitFlyLayer — pooled nodes): the pill
 //     counts up as each one lands. MAXED tiles carry the kit MAX stamp.
@@ -19,8 +21,8 @@ import './AchievementsV3.css';
 import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitFlyLayer, KitIcon, KitSlabTabs } from './kit/index.js';
 import MasteryPanel from './masteryRoad/MasteryPanel.jsx';
 import { allRoads } from '../progress/masteryRoad.js';
-import { achievementsV3, claimAchievementV3, tierCountsV3, ROMAN } from '../progress/v3/achievements';
-import { gearOfLadder } from '../progress/ladderGears.js';
+import { achievementsV3, claimAchievementV3, ROMAN } from '../progress/v3/achievements';
+import { LADDER_GEARS, ladderOwnedGears } from '../progress/ladderGears.js';
 import { permanentMarkById } from '../progress/markRollsCore.js';
 import { earnedArt } from './earnedArt.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
@@ -62,16 +64,30 @@ function Bar({ pct, ready, maxed }) {
   );
 }
 
-/** The ladder's LAST tier earns a gear (progress/ladderGears.js): "100% → [art] IRONHAND", or GEAR EARNED once maxed. */
-function LadderGear({ id, maxed }) {
-  const gid = gearOfLadder(id);
-  const g = gid ? permanentMarkById(gid) : null;
-  if (!g) return null;
+/** LEGENDARIES (Andy oct22: "love idea of showing legendary gear on achievements to show what user CAN get"): every
+ *  ladder's 100% gear as its painted art — a black silhouette until it's yours. Tapping one puts its ladder in the hero. */
+function Legendaries({ heroId, onPick }) {
+  const owned = new Set(ladderOwnedGears());
   return (
-    <div className={`av3-gear${maxed ? ' is-owned' : ''}`} data-gear={g.id}>
-      <img className="av3-gear-art" src={earnedArt(g.id)} alt="" width="48" height="48" />
-      <span className="av3-gear-text"><b>{maxed ? 'EARNED' : 'MAX IT →'}</b> <span className="av3-gear-name">{g.name}</span></span>
-    </div>
+    <section className="av3-lg" aria-label="Legendary gear">
+      <h3 className="av3-lg-title">LEGENDARIES</h3>
+      <ul className="av3-lg-row">
+        {LADDER_GEARS.map((r) => {
+          const g = permanentMarkById(r.gear);
+          if (!g) return null;
+          const own = owned.has(r.gear);
+          return (
+            <li key={r.gear}>
+              <button type="button" className={`av3-lg-item${own ? ' is-owned' : ''}${r.ladder === heroId ? ' is-hero' : ''}`} data-gear={r.gear}
+                aria-label={own ? `${g.name} — yours` : `${g.name} — max the achievement to earn it`} onClick={() => onPick(r.ladder)}>
+                <img src={earnedArt(r.gear)} alt="" width="64" height="64" draggable="false" />
+                <span className="av3-lg-name">{g.name}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -91,10 +107,10 @@ function useStageScale(ref) {
 
 export default function AchievementsV3({ onClose, focusId = null }) {
   const [rows, setRows] = useState(() => achievementsV3());
-  const [counts, setCounts] = useState(() => tierCountsV3());
   const [gems, setGems] = useState(() => getGems());
   const [inFlight, setInFlight] = useState(0); // gems paid but still flying: the pill shows them as they land
   const [stamp, setStamp] = useState(null); // { id, key, next }
+  const [pick, setPick] = useState(null); // a LEGENDARIES tap: that ladder sits in the hero until the next claim
   // MASTERY (oct21, Andy: the mode mastery roads live "in the achievements page" — never on the menu): tab 1. It opens
   // on MASTERY when only a road reward is waiting, so a ready road is never one hidden tap away.
   const [tab, setTab] = useState(() => {
@@ -146,10 +162,10 @@ export default function AchievementsV3({ onClose, focusId = null }) {
     const res = claimAchievementV3(id);
     if (!res.ok) return;
     stampingRef.current = id;
+    setPick(null);
     const next = achievementsV3();
     const row = next.find((r) => r.id === id);
     setRows(next);
-    setCounts(tierCountsV3());
     setStamp({ id, key: Date.now(), next: row && !row.maxed ? `${ROMAN[row.tier]} · ${formatNum(row.need)}` : 'MAXED' });
     // the gems fly from the button to the counter; the pill counts each one in as it lands
     let from = null;
@@ -167,7 +183,8 @@ export default function AchievementsV3({ onClose, focusId = null }) {
   const ready = rows.filter((r) => r.ready && r.id !== stampId);
   // a gear sheet's "SEE ACHIEVEMENT" opens on that ladder (focusId) until the player claims something else
   const focusRow = focusId && !stampId ? rows.find((r) => r.id === focusId) : null;
-  const hero = (stampId && rows.find((r) => r.id === stampId)) || focusRow || ready[0] || sorted.find((r) => !r.maxed) || sorted[0];
+  const pickRow = pick && !stampId ? rows.find((r) => r.id === pick) : null;
+  const hero = (stampId && rows.find((r) => r.id === stampId)) || pickRow || focusRow || ready[0] || sorted.find((r) => !r.maxed) || sorted[0];
   const heroStamped = !!hero && hero.id === stampId;
   const heroReady = !!hero && hero.ready && !heroStamped;
   const nameOf = (r) => r.name; // Andy oct17: the name alone says what it's for (1–2 words); the numbers sit beside it
@@ -187,11 +204,6 @@ export default function AchievementsV3({ onClose, focusId = null }) {
               <KitSlabTabs options={['ACHIEVEMENTS', 'MASTERY']} value={tab} onChange={setTab} label="Achievements or mastery" idBase="av3-tab" className="av3-slab" />
               {roadReady > 0 && tab === 0 ? <span className="av3-tab-dot" aria-label={`${roadReady} mastery rewards ready`} /> : null}
             </div>
-            <div className="av3-tiers" aria-label={`${counts.done} of ${counts.all} tiers`}>
-              <b>{formatNum(counts.done)}</b>
-              <span>/{formatNum(counts.all)}</span>
-              <small>TIERS</small>
-            </div>
             <div className="av3-gems" data-gems={gems}>
               <KitPill ref={pillRef} kind="gems" value={shownGems} ariaLabel={`${formatNum(gems)} gems`} />
             </div>
@@ -203,37 +215,19 @@ export default function AchievementsV3({ onClose, focusId = null }) {
           <div className="av3-body">
             {hero && (
               <section className={`av3-hero${heroReady ? ' is-ready' : ''}${heroStamped ? ' is-stamped' : ''}`} style={{ '--tc': TC[Math.min(hero.tier, hero.tiers - 1)] }} aria-label="Next achievement" data-hero={hero.id}>
-                <div className="av3-hero-top">
-                  <span className={`av3-hero-label${heroReady || heroStamped ? ' is-ready' : ''}`}>{heroStamped ? 'NICE' : heroReady ? 'READY' : 'ALMOST'}</span>
-                  <LadderGear id={hero.id} maxed={hero.maxed} />
-                  <span className={`av3-ready-n${ready.length ? ' is-on' : ''}`} aria-label={`${ready.length} ready`}>
-                    {formatNum(ready.length)}
-                  </span>
-                </div>
-                <div className="av3-hero-main">
-                  <Badge r={hero} size="big" />
-                  <div className="av3-hero-name">{nameOf(hero)}</div>
-                  <div className="av3-hero-nums">
-                    <span className={`av3-have${hero.ready ? ' is-ready' : ''}`}>{formatNum(hero.have)}</span>
-                    <span className="av3-need">/ {formatNum(hero.need)}</span>
-                    {!hero.maxed && (
-                      <span className="av3-hero-reward">
-                        <KitIcon name="gems" size={30} shadow={2} extras={false} />+{formatNum(hero.reward)}
-                      </span>
-                    )}
-                  </div>
-                  <ol className="av3-ladder" aria-label="Tiers">
-                    {hero.T.map((n, i) => {
-                      const done = i < hero.tier || hero.maxed;
-                      const cur = i === hero.tier && !hero.maxed;
-                      return (
-                        <li key={i} className={`av3-step${done ? ' is-done' : cur ? ' is-cur' : ''}`} style={{ '--tc': TC[i], '--tf': TF[i] }}>
-                          <span>{ROMAN[i]}</span>
-                          <b>{formatNum(n)}</b>
-                        </li>
-                      );
-                    })}
-                  </ol>
+                <span className={`av3-hero-label${heroReady || heroStamped ? ' is-ready' : ''}`}>{heroStamped ? 'NICE' : heroReady ? 'READY' : hero.maxed ? 'MAXED' : hero.pct >= 55 ? 'ALMOST' : 'NEXT UP'}</span>
+                <div className="av3-hero-badge"><Badge r={hero} size="big" /></div>
+                <div className="av3-hero-name">{nameOf(hero)}</div>
+                {/* ONE progress read-out (Andy oct22 "5 bars … and then 0/5 again"): the count — no bar, no %, no ladder */}
+                <div className="av3-hero-nums" aria-label={hero.maxed ? 'maxed' : `${hero.have} of ${hero.need}`}>
+                  {heroStamped ? (
+                    <span className="av3-need">NEXT {stamp.next}</span>
+                  ) : hero.maxed ? null : (
+                    <>
+                      <span className={`av3-have${hero.ready ? ' is-ready' : ''}`}>{formatNum(hero.have)}</span>
+                      <span className="av3-need">/ {formatNum(hero.need)}</span>
+                    </>
+                  )}
                 </div>
                 <div className="av3-hero-foot">
                   {heroReady ? (
@@ -246,18 +240,16 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                       ariaLabel={`Claim ${hero.name} for ${hero.reward} gems`}
                       onClick={(e) => claim(hero.id, e)}
                     />
-                  ) : (
-                    <div className="av3-hero-bar">
-                      <Bar pct={hero.pct} ready={false} maxed={hero.maxed} />
-                      <span className="av3-hero-pct">
-                        {heroStamped ? `NEXT ${stamp.next}` : `${Math.floor(hero.pct)}%${hero.maxed ? '' : ` · ${formatNum(Math.max(0, hero.need - hero.have))} TO GO`}`}
-                      </span>
-                    </div>
-                  )}
+                  ) : !hero.maxed && !heroStamped ? (
+                    <span className="av3-hero-reward">
+                      <KitIcon name="gems" size={30} shadow={2} extras={false} />+{formatNum(hero.reward)}
+                    </span>
+                  ) : null}
                 </div>
               </section>
             )}
 
+            <div className="av3-side">
             <ul className="av3-grid">
               {sorted.map((r, i) => {
                 const t = Math.min(r.tier, r.tiers - 1);
@@ -273,7 +265,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                       at={stamping ? { left: '50%', top: '48%' } : { left: '70%', top: '42%' }}
                     >
                       <div className="av3-strip">
-                        <span>{r.maxed && !stamping ? 'MAXED' : stamping ? 'CLAIMED' : isReady ? 'READY!' : `TIER ${ROMAN[t]}`}</span>
+                        <span>{r.maxed && !stamping ? 'MAXED' : stamping ? 'CLAIMED' : isReady ? 'READY!' : ''}</span>
                         {!r.maxed && (
                           <span className="av3-strip-reward">
                             <KitIcon name="gems" size={16} shadow={1} extras={false} />
@@ -283,15 +275,9 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                       </div>
                       <div className="av3-tile-body">
                         <div className="av3-tile-name">{nameOf(r)}</div>
+                        {/* ONE progress indicator a tile (Andy oct22): the bar — the count lives in the hero */}
                         <div className="av3-tile-row">
                           <Badge r={r} size="small" />
-                          <div className="av3-tile-nums">
-                            <span className={`av3-have${r.ready ? ' is-ready' : ''}`}>{formatNum(r.have)}</span>
-                            <span className="av3-need">/ {formatNum(r.need)}</span>
-                          </div>
-                        </div>
-                        <Bar pct={r.pct} ready={r.ready} maxed={r.maxed} />
-                        <div className="av3-tile-foot">
                           {isReady ? (
                             <KitGhostButton
                               tone="cyan"
@@ -302,14 +288,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                               onClick={(e) => claim(r.id, e)}
                             />
                           ) : (
-                            <>
-                              <span className="av3-pips" aria-hidden="true">
-                                {r.T.map((_, k) => (
-                                  <i key={k} style={k < r.tier || r.maxed ? { background: TC[k] } : null} />
-                                ))}
-                              </span>
-                              <span className={`av3-pct${r.pct >= 55 && !r.maxed ? ' is-almost' : ''}`}>{stamping ? `NEXT ${stamp.next}` : `${Math.floor(r.pct)}%`}</span>
-                            </>
+                            <Bar pct={stamping ? 0 : r.pct} ready={r.ready} maxed={r.maxed} />
                           )}
                         </div>
                       </div>
@@ -318,6 +297,8 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                 );
               })}
             </ul>
+            <Legendaries heroId={hero ? hero.id : null} onPick={setPick} />
+            </div>
           </div>
           )}
         </div>
