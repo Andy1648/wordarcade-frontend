@@ -13,6 +13,7 @@ import {
 } from './markRolls.js';
 import { rollsPerRoll } from './markPerks.js';
 import { unlistedEntry as unlistedById, UNLISTED_KEY } from '../unlisted/unlistedIds.js';
+import { ownsLadderGear } from './ladderGears.js';
 import { isBoostActive } from './boost.js';
 // PROGRESSION v3 (SEASON2, default OFF): ROLL EPIC+ / FILL INDEX achievement counters, and the R2 AUTO ROLL unlock.
 import { SEASON2, V3 } from './season.js'; // V3.store / V3.unlocks: installed lazily (season.js)
@@ -36,6 +37,14 @@ export function wearMark(id, earned = []) {
   if (id == null) return equipMark(null, earned);
   const r = rollMarkById(id);
   if (r && !r.legacy) return equipRolled(id) ? id : wornMarkId();
+  // A SEASON-2 EARNED gear the save owns through a maxed ladder: worn straight onto taw.mark. Checked BEFORE the legacy
+  // path (Andy oct22 "when u equip archivist it unequips the other gear"): ARCHIVIST / LEGEND / ETERNAL / HIGH ROLLER are
+  // ALSO season-1 marks (markById), so they fell to marks.equipMark, which judges the season-1 claimed list, refused, and
+  // answered with the legacy-only reader — the slot read empty (or the old gear) though the ladder was maxed.
+  if (permanentMarkById(id) && ownsLadderGear(id)) {
+    try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
+    return wornMarkId();
+  }
   if (permanentMarkById(id) && !markById(id)) { // a SEASON-2 EARNED gear (a maxed ladder): worn straight onto taw.mark
     try { localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
     return wornMarkId(); // wornMarkId only reads it back when the save owns it
@@ -44,7 +53,8 @@ export function wearMark(id, earned = []) {
     try { if (JSON.parse(localStorage.getItem(UNLISTED_KEY) || '{}').owned?.[id]) localStorage.setItem('taw.mark', id); } catch { /* blocked */ }
     return wornMarkId();
   }
-  return equipMark(id, earned);
+  // a refused legacy mark keeps whatever is worn — never the legacy-only reader, which reads a worn ROLLED gear as none
+  return equipMark(id, earned) === id ? id : wornMarkId();
 }
 
 /**
