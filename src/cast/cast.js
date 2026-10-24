@@ -410,6 +410,9 @@ export const CAST_FRAMES = {
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
   // 6 frames: thumbs up → tips the bottle → a big swig → cheeks puff, eyes water → breathes FIRE, hat flies → sweating, grinning
   sizzle: { n: 6, seq: [[1, 260], [2, 520], [3, 460], [4, 800], [5, 1000]], rest: 1800 },
+  // HOLLOW (oct24, the LIMITED hero finally moves): flicks the candy corn up → watches it fall → CHOMP, cheeks bulging →
+  // chews, the carved face glowing, the fuse flaring → an evil cackle, fists up
+  hollow: { n: 6, seq: [[1, 320], [2, 420], [3, 560], [4, 760], [5, 1000]], rest: 1800 },
   // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
   // full-res frames, each a small step from the last, so the beats flow instead of jumping
   // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
