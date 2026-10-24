@@ -51,6 +51,10 @@ export function buildAnswers(n, data, tallies = null) {
     const cat = data && data.cats ? data.cats[name] : null;
     const list = cat ? cat.a : [];
     const byKey = new Map(list.map(([k, d, p]) => [k, { key: k, display: d, prior: p }]));
+    const keys = list.map((r) => r[0]);
+    // short forms / nicknames of a longer entry ("Cali" for California, "Was" for Washington) are valid answers,
+    // but neither a fair "most said" estimate nor what anyone would call a rare answer
+    const nickname = (r) => r.display.length <= 3 || keys.some((k) => k !== r.key && k.startsWith(r.key));
     let said = [];
     let estimated = false;
     const t = plays && tallies.prompts ? tallies.prompts[i] : null;
@@ -62,18 +66,26 @@ export function buildAnswers(n, data, tallies = null) {
       // one entry per display name (aliases share a display), most familiar first
       const seen = new Set();
       said = [...byKey.values()].sort((a, b) => a.prior - b.prior || a.display.localeCompare(b.display))
-        .filter((r) => (seen.has(r.display) ? false : seen.add(r.display))).slice(0, 3)
+        .filter((r) => !nickname(r) && (seen.has(r.display) ? false : seen.add(r.display))).slice(0, 3)
         .map((r) => ({ ...r, pct: priorPct(r.prior) }));
     }
     const shown = new Set(said.map((r) => r.display));
     const seenRare = new Set();
-    const rare = [...byKey.values()].filter((r) => !shown.has(r.display))
-      .sort((a, b) => b.prior - a.prior || a.display.localeCompare(b.display))
+    // rare picks: the highest prior, ties broken by a per-day hash (a list's priors plateau — 45 US states share
+    // one — so alphabetical would print Alabama every time)
+    const rare = [...byKey.values()].filter((r) => !shown.has(r.display) && !nickname(r))
+      .sort((a, b) => b.prior - a.prior || tieHash(`${n}|${name}|${a.key}`) - tieHash(`${n}|${name}|${b.key}`))
       .filter((r) => (seenRare.has(r.display) ? false : seenRare.add(r.display))).slice(0, 4);
     const total = new Set(list.map((r) => r[1])).size;
     return { name, said, estimated, rare, total };
   });
   return { n, dateKey: dateKeyFor(n), plays, prompts };
+}
+
+function tieHash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return h >>> 0;
 }
 
 const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -95,7 +107,7 @@ export function renderAnswersPage(model, { nowMs = Date.now(), canonicalPath } =
       <h2><span class="k">${i + 1}</span>${esc(p.name)}</h2>
       <h3>MOST SAID${p.estimated ? ' <small>(estimated)</small>' : ''}</h3>
       <ol class="said">${p.said.map((r) => `<li><b>${esc(r.display)}</b><i>${p.estimated ? '~' : ''}${esc(formatPct(r.pct))}</i></li>`).join('')}</ol>
-      <h3>RARE ANSWERS THAT SCORED BIG</h3>
+      <h3>RARE ANSWERS (THEY SCORE MOST)</h3>
       <ul class="rare">${p.rare.map((r) => `<li>${esc(r.display)}</li>`).join('')}</ul>
       <p class="tot">${p.total} valid answers on this list</p>
     </section>`).join('');
