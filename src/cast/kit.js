@@ -45,6 +45,8 @@ export const WIN_FX = [
   { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
   { id: 'splat', name: 'INK SPLAT', tag: 'MESSY WINNER', color: '#9A1AFF', wins: 45, price: 700 },
   { id: 'thunder', name: 'THUNDERSTRUCK', tag: 'STRUCK BY GREATNESS', color: '#FFE94A', wins: 90, price: 900 },
+  // the rare one: a bomb game's own finish
+  { id: 'blast', name: 'KABOOM', tag: 'THE ONLY WAY TO WIN', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
 ].map((k) => ({ ...k, slot: 'fx' }));
 const ALL_KIT = [...SIDEKICKS, ...FRAMES, ...WIN_FX];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
