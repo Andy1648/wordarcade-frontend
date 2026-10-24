@@ -54,7 +54,10 @@
 
 /* CHIP: the paged desktop's right column, under the CONTRACTS chip (Homepage .hp-main). */
 .hp-main .dbt--chip { --fs-dbtk: 16px; }
-.hp-main .dbt--chip { margin-top: max(10px, calc(14 * var(--u, 1px))); height: max(56px, calc(70 * var(--u, 1px))); }
+.hp-main .dbt--chip { margin-top: max(8px, calc(10 * var(--u, 1px))); height: max(52px, calc(58 * var(--u, 1px))); }
+/* oct23: the column also holds the BOOST timers (bottom-aligned, up to six) — at 1280x720 the old 70u chip left them
+   8px of air and CI caught the touch; the slimmer chip + face keep ~24px (e2e/boost-dock-fit.spec.js) */
+.hp-main .dbt--chip .dbt-face { height: 100%; margin: 0; }
 /* Andy oct22 "a bit of overlapping on card": in the ~220px chip the flame + count sat on the right edge, on top of
    NEW TODAY / PLAYED · 351. The streak now badges the brain's corner (the CONTRACTS chip's flame-and-count pose),
    so the text owns the full width. */

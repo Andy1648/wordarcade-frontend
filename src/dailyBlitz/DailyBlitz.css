@@ -268,6 +268,9 @@
   .dbz.is-results .dbz-total { font-size: var(--fs-k38); }
   .dbz.is-results .dbz-go, .dbz.is-results .dbz-copy { min-height: 44px; }
   .dbz.is-results .dbz-row { padding-top: 1px; padding-bottom: 1px; }
+  /* oct23: CI's Linux fonts sit taller than Windows', and three 16px lines no longer fit a 568px row — the MOST SAID
+     line yields on an SE-size phone (the answer's own % stays) */
+  .dbz.is-results .dbz-row-top { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
