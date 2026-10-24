@@ -389,7 +389,10 @@ for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
 export const CAST_FRAMES = {
   // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
   // 6 frames (oct19, Andy: "a bit too choppy"): cocks the can → shakes it (twice) → aims, a first puff → full spray → blows the nozzle
-  riot: { n: 6, seq: [[1, 140], [2, 150], [1, 120], [2, 160], [3, 300], [4, 760], [5, 980]], rest: 1500 },
+  // 12 frames (oct24, Andy: "the quality and addictiveness of the heros would be much bigger if they were in smoother
+  // motion"): frames 6-11 are painted IN-BETWEENS (ChatGPT, the 6-frame sheet attached, each halfway between two of its
+  // frames: 6 = 0→1, 7 = 1→2, 8 = 2→3, 9 = 3→4, 10 = 4→5, 11 = 5→0), so every old step now passes through its middle
+  riot: { n: 12, seq: [[6, 70], [1, 70], [7, 75], [2, 75], [7, 60], [1, 60], [7, 80], [2, 80], [8, 150], [3, 150], [9, 380], [4, 380], [10, 490], [5, 490], [11, 200]], rest: 1500 },
   // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
   // 6 frames: chew → the bubble grows (fist → head → HUGE) → POP → gum peeled half off, deadpan
   glitch: { n: 6, seq: [[1, 300], [2, 320], [3, 520], [4, 380], [5, 1200]], rest: 2000 },
