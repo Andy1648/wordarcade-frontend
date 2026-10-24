@@ -7,6 +7,7 @@
 // once that moment has passed everywhere, so no time zone can ever read the answers to its live puzzle.
 import { promptsForDay, PROMPTS, CROWD_MIN, formatPct, priorPct } from './engine.js';
 import { dateKeyFor } from './day.js';
+import { formatNum } from '../format.js';
 
 const DAY_MS = 86400000;
 const EPOCH = Date.UTC(2026, 0, 1); // #1 (day.js)
@@ -100,7 +101,7 @@ export function renderAnswersPage(model, { nowMs = Date.now(), canonicalPath } =
   const first = prompts.map((p) => p.name).join(', ');
   const desc = `Daily Blitz #${n} (${longDate(n)}) answers: the most-said and the rarest answers for ${first}. Play today's #${live} free.`;
   const crowdLine = plays
-    ? `${plays.toLocaleString('en-US')} players · % = share of players who gave that answer`
+    ? `${formatNum(plays)} players · % = share of players who gave that answer`
     : 'A quiet day — % are estimates (~) from how familiar each answer is';
   const items = prompts.map((p, i) => `
     <section class="p">
