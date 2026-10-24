@@ -1,7 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": { "deploymentEnabled": { "**": false, "main": true, "preview/**": true } },
+  "functions": {
+    "api/daily-answers.js": { "includeFiles": "src/dailyBlitz/data.json" }
+  },
   "rewrites": [
+    { "source": "/daily/answers", "destination": "/api/daily-answers?path=/daily/answers" },
+    { "source": "/daily/:n([0-9]{1,5})", "destination": "/api/daily-answers?path=/daily/:n" },
     { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
   ]
 }

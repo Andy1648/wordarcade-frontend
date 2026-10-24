@@ -388,9 +388,13 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
         <button type="button" className="dbz-go" data-testid="daily-blitz-share" onClick={share}>SHARE</button>
         <button type="button" className="dbz-copy" data-testid="daily-blitz-copy" onClick={copy}>COPY</button>
       </div>
-      <p className="dbz-foot" role="status">{shareNote || (
-        <>{plays ? <>{plays} PLAYED<span className="dbz-wide"> TODAY</span> · </> : null}NEW<span className="dbz-wide"> PROMPTS</span> IN {formatLeft(msToMidnight())}</>
-      )}</p>
+      <div className="dbz-foot-row">
+        <p className="dbz-foot" role="status">{shareNote || (
+          <>{plays ? <>{plays} PLAYED<span className="dbz-wide"> TODAY</span> · </> : null}NEW<span className="dbz-wide"> PROMPTS</span> IN {formatLeft(msToMidnight())}</>
+        )}</p>
+        {/* the server-rendered answers page (api/daily-answers.js) — the newest day that is over everywhere */}
+        <a className="dbz-ans" href="/daily/answers">YESTERDAY'S ANSWERS →</a>
+      </div>
     </div>
   );
 }
