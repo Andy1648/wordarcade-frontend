@@ -19,7 +19,7 @@ const SIZES = [[360, 640], [375, 667], [390, 664], [360, 740], [390, 844], [412,
 for (const [w, h] of SIZES) {
   test(`phone TITLE at ${w}x${h} (season 2, brand-new save): one PLAY, fits, no overlap`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
-    await installBackendMock(page);
+    await installBackendMock(page, { freshReveal: true });
     await page.goto('/?portal=1&season2=1');
     await menuReady(page);
     await page.waitForTimeout(400);

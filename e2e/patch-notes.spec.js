@@ -9,7 +9,7 @@ const S2_ROLL_PRICE = 75; // v3/econ.js ROLL_PRICE
 
 async function boot(page, w, h, returning = true, brandNew = false) {
   await page.setViewportSize({ width: w, height: h });
-  await installBackendMock(page, { patchNotes: true });
+  await installBackendMock(page, { patchNotes: true, freshReveal: brandNew });
   await page.addInitScript(({ ret, brandNew }) => {
     if (sessionStorage.getItem('pn.seeded')) return;
     sessionStorage.setItem('pn.seeded', '1');

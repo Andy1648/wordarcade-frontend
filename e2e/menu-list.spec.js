@@ -12,9 +12,9 @@ import { menuReady } from './support/menu.js';
 const RAIL = ['shop', 'gears', 'rebirth', 'stats'];
 const btn = (page, id) => page.locator(`.hp-rail .hp-nav.is-${id} > button`).first();
 
-async function boot(page, seed, { season2 = false, w = 1366, h = 768 } = {}) {
+async function boot(page, seed, { season2 = false, w = 1366, h = 768, fresh = false } = {}) {
   await page.setViewportSize({ width: w, height: h });
-  await installBackendMock(page);
+  await installBackendMock(page, { freshReveal: fresh });
   await page.addInitScript((seed) => {
     if (sessionStorage.getItem('ml.seeded')) return;
     sessionStorage.setItem('ml.seeded', '1');
@@ -87,7 +87,7 @@ test('season 1, marks revealed: GEARS shows no roll count — just its dot while
 // FIRST-RUN REVEAL (progress/reveal.js, feat/first-run-reveal): a brand-new season-2 save is the TITLE — no rail at all;
 // after its first game the core opens (UPGRADES · STATS) with GEARS as the ONE padlocked teaser (LV6) and REBIRTH hidden.
 test('season 2, a BRAND-NEW save: the TITLE (one PLAY), no rail; after a first game UPGRADES + STATS, GEARS padlocked LV6, no REBIRTH', async ({ page }) => {
-  await boot(page, { 'taw.s2.conv': JSON.stringify({ v: 1, st: 'shown', had: false, srv: 1 }) }, { season2: true });
+  await boot(page, { 'taw.s2.conv': JSON.stringify({ v: 1, st: 'shown', had: false, srv: 1 }) }, { season2: true, fresh: true });
   await expect(page.locator('.tp-play')).toBeVisible();
   await expect(page.locator('.hp-rail')).toHaveCount(0);
   await page.evaluate(() => { localStorage.setItem('wa_has_played', '1'); });
