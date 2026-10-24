@@ -16,7 +16,7 @@
 // DAY: the player's LOCAL calendar date (dailySeed.localDateKey — it flips at their midnight, like Wordle),
 // numbered from 2026-01-01 = #1 (the same epoch as the old Daily Challenge's day numbers).
 import { dailyRng } from '../daily/dailySeed.js';
-import { DAILY_POOL, PER_TIER, TIER_ORDER } from './pool.js';
+import { DAILY_POOL, PER_TIER, TIER_ORDER, RETIRED } from './pool.js';
 import { answerKey } from './answerKey.js';
 import { PROMPTS } from './day.js';
 
@@ -43,8 +43,9 @@ function shuffled(arr, tier, cycle) {
  * The day's prompts (category names), in play order: EASY, EASY, MEDIUM, MEDIUM, NICHE, NICHE.
  * Each tier walks a seeded permutation of its pool in CYCLES (floor(pool / PER_TIER) days long), so a
  * category never repeats inside a cycle — a week of dailies never shows the same list twice.
+ * A RETIRED name (pool.js) is swapped for its replacement from its `fromDay` on — earlier days are unchanged.
  */
-export function promptsForDay(dayNumber, pool = DAILY_POOL) {
+export function promptsForDay(dayNumber, pool = DAILY_POOL, retired = RETIRED) {
   const out = [];
   for (const tier of TIER_ORDER) {
     const names = pool[tier] || [];
@@ -54,7 +55,10 @@ export function promptsForDay(dayNumber, pool = DAILY_POOL) {
     const at = (d % len) * PER_TIER;
     out.push(...shuffled(names, tier, cycle).slice(at, at + PER_TIER));
   }
-  return out;
+  return out.map((name) => {
+    const r = retired && Object.prototype.hasOwnProperty.call(retired, name) ? retired[name] : null;
+    return r && Math.floor(dayNumber) >= r.fromDay ? r.replacement : name;
+  });
 }
 
 // ---- judging -----------------------------------------------------------------------------------------

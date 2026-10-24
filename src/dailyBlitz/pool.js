@@ -38,3 +38,15 @@ export const DAILY_POOL = {
 };
 
 export const TIER_ORDER = ['easy', 'medium', 'niche'];
+
+// RETIRED prompts. The schedule is a seeded permutation of the WHOLE pool, so deleting a name from
+// DAILY_POOL would reshuffle every day — including past days shown on /daily/answers and /daily/<n> and
+// the day being played right now. A retired name therefore STAYS in DAILY_POOL (and in data.json, so past
+// answers pages still judge), and promptsForDay swaps it for its same-tier `replacement` on every day
+// >= `fromDay`. The replacement must NOT be in DAILY_POOL (so it can't repeat inside a cycle); the
+// generator copies it into data.json alongside the pool.
+//   Studio Ghibli Movies: "no one knows it" (Andy, 2026-10-24). Day 298 (2026-10-25) was the newest day
+//   live anywhere (UTC+14) when it was retired, so days <= 298 are untouched.
+export const RETIRED = {
+  'Studio Ghibli Movies': { fromDay: 299, replacement: 'DreamWorks animated films' },
+};

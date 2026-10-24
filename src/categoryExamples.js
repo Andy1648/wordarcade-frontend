@@ -340,7 +340,6 @@ export const CATEGORY_EXAMPLES = {
   "Shakespeare plays": "Hamlet",
   "Star Wars theatrical films": "A New Hope",
   "Street Fighter fighters": "Ryu",
-  "Studio Ghibli Movies": "Spirited Away",
   "Summer Olympic sports": "Fencing",
   "Super Smash Bros. fighters": "Kirby",
   "Types of human teeth": "Molar",
