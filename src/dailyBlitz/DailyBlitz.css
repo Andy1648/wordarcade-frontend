@@ -105,8 +105,11 @@
 .dbz-secs { font: 400 max(40px, calc(6.4 * var(--dz)))/1 'Bungee', cursive; color: var(--blue); -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
 .dbz-secs.is-low { color: #FF6B3D; }
 .dbz-stamp {
-  position: absolute;
-  inset: auto 10% 12% 10%;
+  /* in the card's flow, in the countdown's place (oct22: floating over the lower card it covered the prompt
+     once it also carried the points + the % line) */
+  position: relative;
+  width: min(92%, 560px);
+  margin-top: 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,9 +123,13 @@
   transform: rotate(-4deg);
   pointer-events: none;
 }
+.dbz-card:has(.dbz-stamp) .dbz-secs { display: none; }
 .dbz-stamp.is-miss { background: #FF6B3D; font: 400 max(30px, calc(4.4 * var(--dz)))/1 'Bungee', cursive; }
 .dbz-stamp-k { font: 400 max(28px, calc(4.2 * var(--dz)))/1 'Bungee', cursive; }
 .dbz-stamp-w { font: 700 max(18px, calc(2.6 * var(--dz)))/1.1 'Space Mono', monospace; overflow-wrap: anywhere; }
+.dbz-stamp-n { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 4px 10px; }
+.dbz-stamp-pts { font: 400 max(28px, calc(4 * var(--dz)))/1 'Bungee', cursive; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+.dbz-stamp-pct { font: 700 max(16px, calc(2 * var(--dz)))/1.1 'Space Mono', monospace; }
 .dbz-form { flex: none; display: flex; gap: 10px; }
 .dbz-input {
   flex: 1 1 auto;
@@ -233,6 +240,18 @@
   .dbz-wide { display: none; } /* the footer stays one line: "120 PLAYED · NEW IN 2H 27M" */
   .dbz-row-cat, .dbz-row-pct, .dbz-row-top { letter-spacing: -0.3px; }
 }
+/* PHONE PLAY (oct22 launch polish): the six pips + #N + the sound cog overran a 390px top bar (the cog was cut off
+   at the right edge) — the pips already say which prompt this is, so #N waits for the cover / results. The card hugs
+   its content at the TOP (the phone keyboard owns the bottom half), and the reveal stamp takes the countdown's place
+   in the flow instead of floating over the card's lower half. */
+@media (max-width: 699px) {
+  .dbz[data-phase="play"] .dbz-day { display: none; }
+  .dbz[data-phase="play"] .dbz-top { gap: 8px; }
+  .dbz-prog { gap: 4px; min-width: 0; }
+  .dbz-prog i { width: 16px; }
+  .dbz-card { flex: 0 1 auto; justify-content: flex-start; padding-top: 18px; padding-bottom: 18px; }
+}
+
 /* a short phone: the RAREST line repeats the gold-bordered row, so it yields its height to the rows */
 @media (max-width: 699px) and (max-height: 720px) {
   .dbz.is-results .dbz-rarest { display: none; }
