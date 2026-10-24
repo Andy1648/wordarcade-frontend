@@ -29,11 +29,11 @@ export const ROAD_LEVELS = {
 // Each mode's own content: its name, colour (= the mode dialog's accent, modeDialogConfig.js), the hero its road hands out (a crew member that otherwise costs WINS or
 // gems — the road is a second, free way in), and the badge / pose names.
 export const ROAD_MODES = {
-  'word-bomb': { name: 'WORD BOMB', color: '#FF6B3D', hero: 'sizzle', badge: 'BOMB SQUAD', pose: 'SHORT FUSE' },
-  'category-blitz': { name: 'BLITZ', color: '#3DA8FF', hero: 'shh', badge: 'QUICK THINKER', pose: 'SPEED ROUND' },
-  'sat-rush': { name: 'SAT RUSH', color: '#FFE94A', hero: 'lexi', badge: 'SCHOLAR', pose: 'CUM LAUDE' },
-  chain: { name: 'CHAIN', color: '#2EFFE0', hero: 'quill', badge: 'UNBROKEN', pose: 'ENCORE' },
-  fuse: { name: 'FUSE', color: '#FFE94A', hero: 'dud', badge: 'DEFUSER', pose: 'DUD NO MORE' },
+  'word-bomb': { name: 'WORD BOMB', color: '#FF6B3D', hero: 'sizzle', badge: 'BOMB SQUAD', pose: 'SHORT FUSE', frame: 'bomb' },
+  'category-blitz': { name: 'BLITZ', color: '#3DA8FF', hero: 'shh', badge: 'QUICK THINKER', pose: 'SPEED ROUND', frame: 'bolt' },
+  'sat-rush': { name: 'SAT RUSH', color: '#FFE94A', hero: 'lexi', badge: 'SCHOLAR', pose: 'CUM LAUDE', frame: 'scholar' },
+  chain: { name: 'CHAIN', color: '#2EFFE0', hero: 'quill', badge: 'UNBROKEN', pose: 'ENCORE', frame: 'chain' },
+  fuse: { name: 'FUSE', color: '#FFE94A', hero: 'dud', badge: 'DEFUSER', pose: 'DUD NO MORE', frame: 'defuser' },
 };
 
 // The ORDER of the road (same shape on every mode). gems = a chest's size; a ticket pays one roll's price.
@@ -79,7 +79,8 @@ export function rewardInfo(mode, shape) {
       return { kind: 'hero', name: h ? h.name : 'HERO', art: `/cast/${m.hero}-hero.webp`, heroId: m.hero, size: 'l' };
     }
     case 'frame':
-      return { kind: 'frame', name: `${m.name} FRAME`, art: '/cards/frame-legend.webp', size: 'l' };
+      // the mode's own painted frame (cast/kit.js FRAMES `road`) — claimed here, it is yours to wear in CUSTOMIZE
+      return { kind: 'frame', name: `${m.name} FRAME`, art: `/cards/frame-${m.frame}.webp`, size: 'l' };
     case 'pose':
       return { kind: 'pose', name: m.pose, art: `/cast/${m.hero}-win.webp`, size: 'l' };
     default:
