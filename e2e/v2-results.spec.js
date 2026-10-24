@@ -242,5 +242,5 @@ test('WIN with a SIDEKICK worn: it celebrates at your hero\'s feet (kit.js); a l
   await play(page, { outcome: 'win', seed: { 'taw.main': 'hype', 'taw.s2.kit': JSON.stringify({ own: [], pet: 'pup' }) } });
   await expect(page.locator('.rs2-char [data-sidekick="pup"]')).toBeVisible();
   await page.waitForTimeout(2600);
-  if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/sidekicks/results-win.png' });
+  if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/hero-kit/results-win.png' });
 });

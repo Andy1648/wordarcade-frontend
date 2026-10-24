@@ -16,6 +16,7 @@
 .pf-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: start; }
 .pf-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .pf-left .hs { max-width: 400px; }
+.pf-left .pf-card { width: min(280px, calc((100dvh - 250px) * .6)); }
 .pf-hero {
   width: 100%; text-align: center; font: 400 var(--fs-k30) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
@@ -46,6 +47,7 @@
 @media (max-width: 760px) {
   .pf-body { grid-template-columns: minmax(0, 1fr); }
   .pf-left .hs { max-width: 240px; }
+  .pf-left .pf-card { width: 170px; }
   .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pf-stat > :first-child { grid-row: 1; }
   .pf-stat-k { grid-column: 1 / -1; white-space: normal; }

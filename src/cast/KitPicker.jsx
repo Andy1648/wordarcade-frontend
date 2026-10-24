@@ -1,0 +1,101 @@
+// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): two tabs, SIDEKICK and FRAME. Left: YOUR hero with the
+// piece you're looking at already on it (the sidekick at its feet, or your hero as a card in that frame) — you try it on
+// before you wear it, with whatever you wear in the other slot. Right: the pieces as painted tiles (the art is the
+// button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
+// TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
+import { useEffect, useState } from 'react';
+import { SIDEKICKS, FRAMES, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+import HeroShowcase from './HeroShowcase.jsx';
+import FramedCard from './FramedCard.jsx';
+import { heroById, CAST } from './cast.js';
+import { KitHoldButton, KitIcon } from '../components/kit/index.js';
+import FitText from '../components/kit/FitText.jsx';
+import { getGems, subscribeGems } from '../progress/gemsCore';
+import { formatNum } from '../format';
+import { sndPurchase } from '../audio/gameSounds';
+import './KitPicker.css';
+
+const TABS = [['pet', 'SIDEKICK', SIDEKICKS], ['frame', 'FRAME', FRAMES]];
+
+/** @param hero your MAIN's id · @param kit { pet, frame } worn · @param onKit(slot, id|null) a slot changed
+ *  @param slot0 the tab to open on */
+export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
+  const [slot, setSlot] = useState(slot0);
+  const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
+  const [look, setLook] = useState({ pet: kit.pet || SIDEKICKS[0].id, frame: kit.frame || FRAMES[0].id });
+  const [gems, setGems] = useState(getGems);
+  const [, bump] = useState(0);
+  useEffect(() => subscribeGems(setGems), []);
+  const s = kitById(look[slot]) || list[0];
+  const worn = kit[slot];
+  const own = ownsKit(s.id);
+  const prog = own ? null : kitProgress(s.id);
+  const h = heroById(hero) || CAST[0];
+  const wear = (id) => { if (wearKit(slot, id)) onKit(slot, id); };
+  const buy = () => {
+    const r = buyKit(s.id);
+    if (r.ok) { try { sndPurchase(); } catch { /* audio blocked */ } onKit(slot, s.id); bump((n) => n + 1); }
+  };
+  let cta;
+  if (own) {
+    cta = s.id === worn
+      ? <button type="button" className="skp-cta is-off" onClick={() => wear(null)}>TAKE OFF</button>
+      : <button type="button" className="skp-cta" onClick={() => wear(s.id)}>WEAR {s.name}</button>;
+  } else if (s.road) {
+    cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />ON THE {s.tag.replace(/ MASTERY$/, '')} MASTERY ROAD</span>;
+  } else if (!kitGateMet(s.id)) {
+    cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />REBIRTH {s.reb}, THEN {formatNum(s.price)} GEMS</span>;
+  } else {
+    cta = (
+      <KitHoldButton tone="gold" width={300} labelSize={gems >= s.price ? 28 : 22} label={gems >= s.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
+        sub={gems >= s.price ? `${formatNum(s.price)} GEMS` : `NEED ${formatNum(s.price - gems)} MORE`}
+        disabled={gems < s.price} confirmText="YOURS!" onConfirm={buy} ariaLabel={`Hold to buy ${s.name} for ${formatNum(s.price)} gems`} />
+    );
+  }
+  // the try-on: the piece you're looking at, plus whatever you wear in the other slot
+  const pet = slot === 'pet' ? s.id : kit.pet;
+  const frame = slot === 'frame' ? s.id : kit.frame;
+  const stage = <HeroShowcase id={hero} pet={pet} />;
+  return (
+    <div className={`skp is-${slot}`} style={{ '--sk-c': s.color }} data-testid="kit-picker">
+      <div className="skp-stage">
+        {frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
+      </div>
+      <div className="skp-side">
+        <div className="skp-tabs" role="tablist" aria-label="Customize">
+          {TABS.map(([k, label]) => (
+            <button key={k} type="button" role="tab" aria-selected={k === slot} className={`skp-tab${k === slot ? ' is-on' : ''}`} onClick={() => setSlot(k)}>{label}</button>
+          ))}
+        </div>
+        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={slot === 'pet' ? 'Sidekicks' : 'Frames'}>
+          {list.map((k) => {
+            const mine = ownsKit(k.id);
+            return (
+              <button key={k.id} type="button" role="radio" aria-checked={k.id === s.id}
+                className={`skp-tile${k.id === s.id ? ' is-look' : ''}${k.id === worn ? ' is-worn' : ''}${mine ? '' : ' is-locked'}${k.rare ? ' is-rare' : ''}`}
+                style={{ '--t-c': k.color }} onClick={() => setLook((l) => ({ ...l, [slot]: k.id }))} aria-label={`${k.name}${k.id === worn ? ', worn' : mine ? '' : ', locked'}`}>
+                <img src={kitSrc(k.id, 0)} alt="" aria-hidden="true" draggable="false" />
+                {!mine ? <span className="skp-lock"><KitIcon name="lock" size={18} shadow={1} extras={false} /></span> : null}
+                {k.id === worn ? <span className="skp-worn">WORN</span> : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="skp-info">
+          <FitText className="skp-name">{s.name}</FitText>
+          <span className="skp-tag">{s.rare ? `RARE · ${s.tag}` : s.tag}</span>
+          {prog ? (
+            <span className="skp-prog" aria-label={`${prog.have} of ${prog.need} ${prog.label.toLowerCase()}`}>
+              <span className="skp-prog-bar"><span className="skp-prog-fill" style={{ transform: `scaleX(${Math.min(1, prog.have / prog.need)})` }} /></span>
+              <span className="skp-prog-n">{formatNum(prog.have)} / {formatNum(prog.need)} {prog.label}{prog.gate ? '' : ' · FREE'}</span>
+            </span>
+          ) : null}
+          <div className="skp-act">
+            {cta}
+            {!own && !s.road ? <span className="skp-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span> : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
