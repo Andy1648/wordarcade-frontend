@@ -44,6 +44,8 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
 import { CAST, castFor, heroById } from '../cast/cast.js';
+import Sidekick from '../cast/Sidekick.jsx';
+import { equippedPet } from '../cast/kit.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
@@ -318,6 +320,7 @@ export default function LeaderboardV2({ onBack }) {
   const [tab, setTab] = useState('all');
   const [peek, setPeek] = useState(null); // the row whose profile card is open
   const [heroes, setHeroes] = useState({}); // 053: { profile_id: equipped hero id } for the podium
+  const [pets, setPets] = useState({}); // 064: { profile_id: worn sidekick } — the podium heroes bring their pets
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -406,7 +409,7 @@ export default function LeaderboardV2({ onBack }) {
     const ids = podIds.split(',').filter(Boolean);
     if (!ids.length) return undefined;
     let live = true;
-    import('../leaderboard/showcase.js').then((m) => m.fetchHeroes(ids)).then((h) => { if (live) setHeroes(h || {}); }).catch(() => {});
+    import('../leaderboard/showcase.js').then((m) => m.fetchPodium(ids)).then((h) => { if (live && h) { setHeroes(h.heroes); setPets(h.pets); } }).catch(() => {});
     return () => { live = false; };
   }, [podIds]);
   // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
@@ -561,6 +564,7 @@ export default function LeaderboardV2({ onBack }) {
                   <span className="lb2-stand" aria-hidden="true">
                     <span className="lb2-buddy-wrap">
                       <CastArt className="lb2-buddy" id={who.id} live={!!p} />
+                      {p && (mine ? equippedPet() : pets[p.id]) ? <Sidekick id={mine ? equippedPet() : pets[p.id]} className="lb2-pet" /> : null}
                     </span>
                   </span>
                   <span className="lb2-pod-name">

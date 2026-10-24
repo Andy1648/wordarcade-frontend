@@ -12,13 +12,15 @@ import { getKeyTier } from '../progress/xp.js';
 import { mark2Id, readClaimed, readCounters } from '../progress/v3/store.js';
 import { readRecords } from '../progress/records.js';
 import { readMain } from '../cast/cast.js';
+import { readKit } from '../cast/kit.js';
 
 const SENT_KEY = 'taw.s2.showcase3'; // the JSON last sent, so an unchanged showcase is never re-sent. '2' (042, oct13): every browser re-sends ONCE so a card an old audit blanked comes back
 // '3' (oct19, Andy: "why has 一鸣惊人 equipped the boo hero but on leaderboard it still shows him as hex?"): that row's hero
 // was NULL — its last send was taken by the pre-053 function (the hero dropped) yet stamped "stored for good" (v 50), and
 // an unchanged showcase is never re-sent, so the board fell back to the id-hashed member (HEX). Every browser re-sends
 // ONCE, and a send only counts as stored for good once the DB answers v >= STORED_V (it keeps the hero).
-const STORED_V = 53;
+// 064 (oct24): the worn HERO COMPONENTS ride along — a send counts as stored once the DB answers v >= 64 (keeps them)
+const STORED_V = 64;
 // The DB drops a write that lands within 20 s of the row's last one (053's upsert `where updated_at < now() - 20 s`) yet
 // still answers ok — so a hero picked right after a game's push silently never landed. A send inside that window waits
 // it out instead (one timer; the latest showcase is read when it fires). The last send's time is kept in storage so a
@@ -46,7 +48,14 @@ export function myShowcase() {
     ...flex(),
     title: null, // 050's TITLE slot — titles were removed (Andy oct17); null clears any title already stored
     hero: readMain(), // 053: the equipped hero, so the board shows YOUR pick to everyone (an older DB just ignores the key)
+    ...kit(), // 064: the worn components (sidekick / frame / WIN FX); an older DB ignores the keys
   };
+}
+
+/** 064: the worn HERO COMPONENTS (cast/kit.js), null for an empty slot. */
+function kit() {
+  const k = readKit();
+  return { pet: k.pet, frame: k.frame, fx: k.fx };
 }
 
 /** 046: the badges (top claimed tier per achievement), the SIGNATURE WORD (rarest ever accepted), the best CHAIN. */
@@ -114,20 +123,24 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 053: the equipped HERO of each board row in one read — { profile_id: hero id } ({} when 053 is not run, offline …). */
-export async function fetchHeroes(ids) {
+/** 053 + 064: the podium's looks in one read — { heroes: { id: hero }, pets: { id: sidekick } }. `select=*` so a DB
+ *  before 064 (no pet column) still answers the heroes. */
+export async function fetchPodium(ids) {
   const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 80);
-  if (!BASE || !KEY || !list.length) return {};
+  const out = { heroes: {}, pets: {} };
+  if (!BASE || !KEY || !list.length) return out;
   try {
     const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
-    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=profile_id,hero&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
-    if (!r.ok) return {};
-    const rows = await r.json();
-    const out = {};
-    for (const row of rows || []) if (row && row.profile_id && typeof row.hero === 'string') out[row.profile_id] = row.hero;
+    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=*&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
+    if (!r.ok) return out;
+    for (const row of (await r.json()) || []) {
+      if (!row || !row.profile_id) continue;
+      if (typeof row.hero === 'string') out.heroes[row.profile_id] = row.hero;
+      if (typeof row.pet === 'string') out.pets[row.profile_id] = row.pet;
+    }
     return out;
   } catch {
-    return {};
+    return out;
   }
 }
 
