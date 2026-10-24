@@ -127,8 +127,18 @@ const SITEMAP_URLS = [
   { loc: 'https://typeaword.com/fuse/', changefreq: 'monthly', priority: '0.8' },
 ]
 
+// DAILY BLITZ ANSWERS (api/daily-answers.js): /daily/answers + one page per finished day since launch. The build
+// date bounds the range; the newest days are picked up by the next deploy (the evergreen /daily/answers covers them).
+const DAILY_ANSWERS_LAUNCH = 295 // = answers.js LAUNCH_DAY (2026-10-22)
+function dailyAnswerUrls(nowMs = Date.now()) {
+  const latest = Math.floor((nowMs - 12 * 3600000 - Date.UTC(2026, 0, 1)) / 86400000) // = answers.js latestPublishedDay
+  const out = [{ loc: 'https://typeaword.com/daily/answers', changefreq: 'daily', priority: '0.7' }]
+  for (let n = latest; n >= DAILY_ANSWERS_LAUNCH; n--) out.push({ loc: `https://typeaword.com/daily/${n}`, changefreq: 'weekly', priority: '0.5' })
+  return out
+}
+
 function renderSitemap(lastmod) {
-  const urls = SITEMAP_URLS.map(
+  const urls = [...SITEMAP_URLS, ...dailyAnswerUrls()].map(
     (u) =>
       `  <url>\n` +
       `    <loc>${u.loc}</loc>\n` +

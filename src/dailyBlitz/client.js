@@ -6,6 +6,7 @@
 // the migration not run yet), and the results screen simply scores on the prior and shows no percentages.
 import { rpc, getSecret, LEADERBOARD_ENABLED } from '../leaderboard/client.js';
 import { PROMPTS } from './engine.js';
+import { parseTallies } from './tallies.js';
 
 const TIMEOUT_MS = 4000;
 
@@ -13,20 +14,8 @@ function withTimeout(p) {
   return Promise.race([p, new Promise((resolve) => setTimeout(() => resolve(null), TIMEOUT_MS))]);
 }
 
-/** The server's tallies, normalised (or null when the payload is not the 062 shape). */
-export function parseTallies(data) {
-  if (!data || typeof data !== 'object' || !Array.isArray(data.prompts)) return null;
-  const plays = Math.max(0, Number(data.plays) || 0);
-  const prompts = [];
-  for (let i = 0; i < PROMPTS; i++) {
-    const p = data.prompts[i] || {};
-    const top = Array.isArray(p.top)
-      ? p.top.filter((t) => Array.isArray(t) && typeof t[0] === 'string').map((t) => [t[0], Math.max(0, Number(t[1]) || 0)])
-      : [];
-    prompts.push({ mine: Number.isFinite(p.mine) ? p.mine : null, top });
-  }
-  return { plays, prompts };
-}
+// parseTallies lives in tallies.js (no leaderboard import) so the server-rendered answers page can use it too
+export { parseTallies };
 
 function answersArg(keys) {
   const out = [];
