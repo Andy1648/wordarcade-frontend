@@ -222,6 +222,9 @@
   transition: transform 80ms;
 }
 .dbz-copy:active { transform: translate(6px, 6px); box-shadow: none; }
+.dbz-foot-row { flex: none; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: 18px; }
+.dbz-ans { font: 700 max(16px, calc(1.6 * var(--dz))) 'Space Mono', monospace; color: #FFE94A; text-underline-offset: 3px; padding: 12px 4px; margin: -12px 0; } /* a 44px hit area without the height */
+.dbz-ans:focus-visible { outline: 3px solid #FFE94A; outline-offset: 3px; }
 .dbz-foot { flex: none; margin: 0; text-align: center; font: 700 max(16px, calc(1.6 * var(--dz))) 'Space Mono', monospace; color: #9fc8ff; }
 
 /* PHONE: the band square goes (the points carry the band colour, the rarest row its border) so the answer gets
