@@ -147,13 +147,25 @@ export function scoreDay(rows, tallies = null) {
     const count = t && Number.isFinite(t.mine) ? Math.max(1, t.mine) : null;
     const crowd = plays && count ? { count, plays } : null;
     const points = scoreAnswer(r, crowd);
-    return { ...r, points, band: bandFor(points), pct: crowd ? count / plays : null };
+    // a quiet day (< CROWD_MIN plays) shows no real %: 1 of 3 players is not "33% said it" — the screen falls back
+    // to the prior's "~X%" (priorPct) exactly as the score falls back to the prior
+    return { ...r, points, band: bandFor(points), pct: crowd && plays >= CROWD_MIN ? count / plays : null };
   });
   let rarest = -1;
   out.forEach((r, i) => {
     if (r.points > 0 && (rarest < 0 || r.points > out[rarest].points)) rarest = i;
   });
   return { rows: out, total: out.reduce((s, r) => s + r.points, 0), rarest };
+}
+
+/**
+ * The share of players an answer's PRIOR implies (0..1) — crowdPoints() run backwards, so a prior of 20 reads
+ * ~52% and 80 reads ~8%. It is what the screen shows (as "~X%") at the reveal and on a quiet day (< CROWD_MIN
+ * plays), so the stat is never blank; the real tally replaces it once the day has one.
+ */
+export function priorPct(prior) {
+  const pts = Math.min(MAX_POINTS, Math.max(10, Number(prior) || 0));
+  return 1 - Math.cbrt((pts - 10) / 90);
 }
 
 /** "31%" / "<1%" for a share 0..1. */

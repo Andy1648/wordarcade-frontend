@@ -10,6 +10,7 @@ import { localDateKey } from '../daily/dailySeed.js';
 import {
   PROMPTS, ROUND_MS, MAX_POINTS, dayNumberFor, promptsForDay, judge, displayFor, scoreDay, bandFor, formatPct,
   buildShareText,
+  priorPct, CROWD_MIN,
 } from './engine.js';
 import { loadRun, saveRun, resumeAt, finishDay, currentStreak } from './store.js';
 import { submitDay, fetchTallies } from './client.js';
@@ -183,7 +184,9 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
     const rows = [...r.rows, { key: j.key, display: j.display, prior: j.prior, typed: text.trim().slice(0, 48) }];
     persist({ ...r, rows });
     const band = bandFor(j.prior);
-    setReveal({ band, display: j.display });
+    // the reveal shows what this answer is worth NOW (its prior — the day's tallies arrive at the end) and the
+    // share of players that prior implies, marked "~" because it is an estimate until the crowd is in
+    setReveal({ band, display: j.display, points: Math.round(j.prior), pct: priorPct(j.prior) });
     setMsg('');
     sndWordAccepted(Math.round(j.prior / 20));
     requestAnimationFrame(() => kitPlay(stampRef.current, STAMP, { duration: 260, easing: 'cubic-bezier(.2,1.4,.4,1)' }));
@@ -262,7 +265,13 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
           <div className={`dbz-secs${secs <= 5 ? ' is-low' : ''}`} aria-live="off">{secs}</div>
           {reveal ? (
             <div ref={stampRef} className={`dbz-stamp${reveal.miss ? ' is-miss' : ''}`} style={reveal.band ? { '--band': reveal.band.color } : undefined} role="status">
-              {reveal.miss ? 'TIME!' : <><span className="dbz-stamp-k">{reveal.band.name}</span><span className="dbz-stamp-w">{reveal.display}</span></>}
+              {reveal.miss ? 'TIME!' : (
+                <>
+                  <span className="dbz-stamp-k">{reveal.band.name}</span>
+                  <span className="dbz-stamp-w">{reveal.display}</span>
+                  <span className="dbz-stamp-n"><b className="dbz-stamp-pts">+{formatNum(reveal.points)}</b><span className="dbz-stamp-pct">~{formatPct(reveal.pct)} SAID IT</span></span>
+                </>
+              )}
             </div>
           ) : null}
         </div>
@@ -346,14 +355,15 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
       <p className="dbz-rarest">
         {rarest >= 0 ? (
           <>RAREST: <b style={{ color: rows[rarest].band.color }}>{rows[rarest].display}</b>
-            {rows[rarest].pct != null ? <> — ONLY {formatPct(rows[rarest].pct)} SAID IT</> : <> — {rows[rarest].band.name}</>}</>
+            {rows[rarest].pct != null ? <> — ONLY {formatPct(rows[rarest].pct)} SAID IT</> : <> — ONLY ~{formatPct(priorPct(rows[rarest].prior))} SAID IT</>}</>
         ) : 'NO ANSWERS TODAY — TOMORROW IS A NEW BOARD'}
       </p>
       <ol className="dbz-rows" data-testid="daily-blitz-rows">
         {rows.map((r, i) => {
           const t = run.tallies && run.tallies.prompts[i];
           const c = data ? data.cats[today.prompts[i]] : null;
-          const top = t && c ? t.top.map(([k, n]) => [displayFor(c, k), n]).filter(([d]) => d).slice(0, 2) : [];
+          // MOST SAID needs a real crowd too: below CROWD_MIN its percentages are a handful of players
+          const top = t && c && plays >= CROWD_MIN ? t.top.map(([k, n]) => [displayFor(c, k), n]).filter(([d]) => d).slice(0, 2) : [];
           return (
             <li key={i} className={`dbz-row is-${r.band.id}${i === rarest ? ' is-rarest' : ''}`} style={{ '--band': r.band.color }}>
               <i className="dbz-sq" aria-hidden="true" />
@@ -363,7 +373,7 @@ export default function DailyBlitzGame({ onExit, audioSlot = null }) {
               </span>
               <span className="dbz-row-side">
                 <b className="dbz-row-pts">{formatNum(r.points)}</b>
-                <span className="dbz-row-pct">{r.pct != null ? <>{formatPct(r.pct)}<span className="dbz-said"> SAID IT</span></> : r.band.name}</span>
+                <span className="dbz-row-pct">{r.key ? <>{r.pct != null ? '' : '~'}{formatPct(r.pct != null ? r.pct : priorPct(r.prior))}<span className="dbz-said"> SAID IT</span></> : r.band.name}</span>
               </span>
               {top.length ? (
                 <span className="dbz-row-top">MOST SAID: {top.map(([d, n], j) => (
