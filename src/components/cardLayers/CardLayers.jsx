@@ -15,6 +15,7 @@ function Part({ p, refs }) {
     <img
       ref={(el) => { refs.current[p.id] = el; }}
       className="gc-p"
+      data-part={p.id}
       src={p.src}
       alt=""
       aria-hidden="true"

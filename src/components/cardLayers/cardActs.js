@@ -35,7 +35,7 @@ export function flingFrames(dx, dy, spin) {
 // Each act is data: which layer moves, how, when. `hero` = the actor wrapper around the hero (its CSS pose stays on
 // the img inside, so the act composes with the hover lean); anything else is a part id from gameData artLayers.parts.
 export const ACTS = {
-  // CHAIN — the link WHIPS its lasso: a wind-up, the crack (the vault flash blows out behind it), two links fly off.
+  // CHAIN — the link WHIPS its lasso: a wind-up, the crack (the vault flash blows out behind it), two broken links fly off.
   chain: [
     { el: 'hero', at: 0, ms: 760, ease: 'cubic-bezier(.3,1.25,.5,1)', frames: [
       { transform: 'translate(0,0) rotate(0deg) scale(1)' },
@@ -46,10 +46,9 @@ export const ACTS = {
     ] },
     { el: 'flash', at: 260, ms: 520, ease: EASE_POP, frames: burstFrames(1.12, 24) },
     { el: 'link', at: 300, ms: 760, ease: EASE_OUT, frames: flingFrames(-170, 40, -260) },
-    { el: 'links', at: 340, ms: 780, ease: EASE_OUT, frames: flingFrames(170, 70, 240) },
-    { el: 'shards', at: 280, ms: 460, ease: EASE_POP, frames: burstFrames(1.05, -30) },
+    { el: 'link2', at: 340, ms: 780, ease: EASE_OUT, frames: flingFrames(170, 70, 240) },
   ],
-  // FUSE — the firecracker SNEAKS: a tiptoe two-step in place, the fuse FLARES (a gold flash, the spark bursts, a puff of smoke).
+  // FUSE — the firecracker SNEAKS: a tiptoe two-step in place, the fuse FLARES.
   fuse: [
     { el: 'hero', at: 0, ms: 900, ease: 'ease-in-out', frames: [
       { transform: 'translate(0,0) rotate(0deg)' },
@@ -59,10 +58,7 @@ export const ACTS = {
       { transform: 'translate(-0.5%,0) rotate(-1deg)', offset: 0.82 },
       { transform: 'translate(0,0) rotate(0deg)' },
     ] },
-    { el: 'flash', at: 330, ms: 440, ease: EASE_POP, frames: burstFrames(1, 30) },
-    { el: 'spark', at: 360, ms: 560, ease: EASE_POP, frames: burstFrames(1.25, 70) },
-    { el: 'shards', at: 420, ms: 480, ease: EASE_POP, frames: burstFrames(1.05, 20) },
-    { el: 'smoke', at: 520, ms: 900, ease: EASE_OUT, frames: flingFrames(-40, -120, -25) },
+    { el: 'flash', at: 340, ms: 560, ease: EASE_POP, frames: burstFrames(1.15, 40) },
   ],
 };
 
