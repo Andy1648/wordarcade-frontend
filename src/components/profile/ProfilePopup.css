@@ -12,21 +12,24 @@
   background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
 }
 .pf-x { margin-left: auto; }
-.pf-x:focus-visible, .pf-back:focus-visible, .pf-change:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.pf-x:focus-visible, .pf-back:focus-visible, .pf-change:focus-visible, .pf-kit:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 .pf-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: start; }
 .pf-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .pf-left .hs { max-width: 400px; }
+.pf-left .pf-card { width: min(280px, calc((100dvh - 250px) * .6)); }
 .pf-hero {
   width: 100%; text-align: center; font: 400 var(--fs-k30) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
 }
 .pf-hero-tag { font: 700 var(--fs-k16) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
-.pf-change {
+.pf-change, .pf-kit {
   min-height: 48px; padding: 0 20px; margin-top: 4px; cursor: pointer;
   font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
   border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
 }
-.pf-change:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.pf-change-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.pf-kit { background: #2EFFE0; }
+.pf-change:active, .pf-kit:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 .pf-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .pf-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pf-name { font: 400 var(--fs-k44) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
@@ -44,6 +47,7 @@
 @media (max-width: 760px) {
   .pf-body { grid-template-columns: minmax(0, 1fr); }
   .pf-left .hs { max-width: 240px; }
+  .pf-left .pf-card { width: 170px; }
   .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pf-stat > :first-child { grid-row: 1; }
   .pf-stat-k { grid-column: 1 / -1; white-space: normal; }

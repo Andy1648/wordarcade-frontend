@@ -1,0 +1,12 @@
+/* FramedCard — the painted frame over two flat window fills; the caller sizes .fc (width), the frame keeps its ratio. */
+.fc { position: relative; width: 100%; }
+.fc-art, .fc-plate { position: absolute; z-index: 1; }
+.fc-art { overflow: hidden; background: var(--fc-d); display: flex; align-items: flex-end; justify-content: center; }
+.fc .fc-art .hs { width: 112%; max-width: none; flex: none; margin-bottom: -6%; }
+.fc-plate { background: var(--fc-c); }
+.fc-frame { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(6px 6px 0 #000); }
+.fc-name {
+  position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 0 4%;
+  font: 400 var(--fs-k26) 'Bungee', sans-serif; line-height: 1; color: #fff; white-space: nowrap;
+  -webkit-text-stroke: 5px #000; paint-order: stroke fill;
+}
