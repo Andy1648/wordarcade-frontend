@@ -241,6 +241,11 @@ const AURAS = {
   mecha: { ms: 2100, f: CRACKLE, e: 'linear', at: [
     ['/cast/props/bolt.webp', 5, 30, 6], ['/cast/props/bolt.webp', 88, 50, 6], ['/cast/props/bolt.webp', 25, 56, 5],
   ] },
+  // NOVA's own LEGEND aura (oct24): a starfield — stars twinkle on around it, one after another
+  nova: { ms: 1800, f: TWINKLE, e: 'ease-in-out', at: [
+    ['/cast/props/spark-big.webp', 6, 22, 10], ['/cast/props/spark-sm.webp', 84, 14, 7], ['/cast/props/spark-big.webp', 80, 56, 9],
+    ['/cast/props/spark-sm.webp', 10, 62, 6], ['/cast/props/spark-sm.webp', 46, 2, 6],
+  ] },
   legend: { ms: 2600, f: TRAIL, e: 'cubic-bezier(.3,.5,.5,1)', at: [
     ['/cast/props/ghost-trail.webp', 4, 58, 16], ['/cast/props/ghost-trail.webp', 70, 64, 14], ['/cast/props/ghost-trail.webp', 10, 30, 12],
   ] },
