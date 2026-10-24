@@ -79,12 +79,12 @@ test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () =
 }));
 
 test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s seat member', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
-  for (const id of ['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx']) {
+  for (const id of ['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'nova']) {
     for (const pose of ['hero', 'win', 'ko']) assert.equal(castSrc(id, pose), `/cast/${id}-${pose}.webp`);
     assert.equal(ownsHero(id), false);
     assert.ok(CAST_BEATS[id]);
   }
-  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx'].includes(castFor(`p${i}`).id));
+  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'nova'].includes(castFor(`p${i}`).id));
   map.set(REBIRTH_KEY_FOR_TEST, '5');
   assert.equal(ownsHero('boo'), false, 'oct19: REBIRTH 5 only unlocks the BUY — a LEGEND is never free');
   assert.equal(ownsHero('lexi'), false);
@@ -131,7 +131,7 @@ test('oct19: DUD / LEXI / SHH / SIZZLE are earned at a WINS count (bots + online
 
 test('oct19: a LEGEND needs its rebirth AND gems — locked (no gems taken) until the rebirth, then bought', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(20000) }, (map) => {
   const { HERO_PRICE, heroGateMet } = CASTMOD;
-  assert.ok(HERO_PRICE.boo > 5000 && HERO_PRICE.mecha > HERO_PRICE.boo);
+  assert.ok(HERO_PRICE.boo > 5000 && HERO_PRICE.mecha > HERO_PRICE.boo && HERO_PRICE.nova > HERO_PRICE.mecha);
   map.set(REBIRTH_KEY_FOR_TEST, '9');
   assert.equal(heroGateMet('mecha'), false);
   assert.deepEqual(buyHero('mecha'), { ok: false, reason: 'locked' });
