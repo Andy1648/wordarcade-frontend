@@ -15,7 +15,7 @@ const VPS = [
   { w: 1366, h: 650, tag: 'chromebook-1366x650' },
   { w: 1280, h: 600, tag: 'chromebook-1280x600' },
 ];
-const HEROES = ['glitch', 'hex', 'dud', 'lexi', 'shh', 'sizzle', 'quill', 'jinx', 'boo', 'mecha', 'riot-elite', 'glitch-elite', 'hype-elite', 'brawl-elite', 'hex-elite'];
+const HEROES = ['glitch', 'hex', 'dud', 'lexi', 'shh', 'sizzle', 'quill', 'jinx', 'salty', 'boo', 'mecha', 'riot-elite', 'glitch-elite', 'hype-elite', 'brawl-elite', 'hex-elite'];
 
 async function seed(page) {
   await page.addInitScript((heroes) => {

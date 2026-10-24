@@ -22,6 +22,8 @@ export const NEW_CREW = [
   // oct19 wave 3 (Andy: "not to mention making new heros"): QUILL (the dramatic poet) and JINX (the unlucky black cat)
   { id: 'quill', name: 'QUILL', tag: 'SPEAKS ONLY IN VERSE', color: '#8B4DFF', dark: '#3A1580' },
   { id: 'jinx', name: 'JINX', tag: 'NINE LIVES. ZERO LUCK.', color: '#A8F03C', dark: '#1E1A2B' },
+  // oct24 (Andy: "cooler heroes"): SALTY, the pirate cannonball — eyepatch, gold tooth, hook, spyglass and cutlass
+  { id: 'salty', name: 'SALTY', tag: 'SEVEN SEAS. ZERO MANNERS.', color: '#2D6CDF', dark: '#122E66' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
 // of a bomb that already went off) needs REBIRTH 5 and then gems (oct19, HERO_PRICE / HERO_UNLOCK below).
@@ -75,11 +77,12 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, hollow: 1500, boo: 7500, mecha: 10000 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, hollow: 1500, boo: 7500, mecha: 10000 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
   quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
+  salty: { wins: 160, label: '160 WINS', icon: 'wins' },
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
   hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true } };
@@ -164,7 +167,8 @@ const PAINTED = new Set([
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
   'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
   'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
-  'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
+  'hollow-hero', 'hollow-win', 'hollow-ko',
+  'salty-hero', 'salty-win', 'salty-ko', // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -230,6 +234,7 @@ export const CAST_BEATS = {
   sizzle: { ms: 640, k: [[0, 1, 1], [0.25, 1.06, 0.94], [0.5, 0.96, 1.05], [0.75, 1.03, 0.97], [1, 1, 1]] }, // hot and jumpy
   quill: { ms: 1300, k: [[0, 1, 1], [0.4, 0.97, 1.04], [0.75, 1.02, 0.98], [1, 1, 1]] }, // a theatrical inhale
   jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
+  salty: { ms: 1100, k: [[0, 1, 1], [0.35, 1.04, 0.95], [0.7, 0.98, 1.03], [1, 1, 1]] }, // a sea-legs sway, heavy iron
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
 };
 for (const e of [...ELITE, ...GOLD]) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE / GOLD keeps its member's tempo
@@ -419,6 +424,9 @@ export const CAST_FRAMES = {
   quill: { n: 6, seq: [[1, 220], [2, 260], [3, 520], [4, 420], [5, 460]], rest: 1700 },
   // JINX: admires the mirror shard → it CRACKS → fur puffs, tail bottle-brushed, HISS → licks a paw, over it → smug
   jinx: { n: 6, seq: [[1, 420], [2, 260], [3, 700], [4, 520], [5, 420]], rest: 1600 },
+  // SALTY: spyglass up → spots something → lowers it, gold tooth glint → whips out the cutlass → points it at you → rests it
+  // on the shoulder, wink
+  salty: { n: 6, seq: [[1, 420], [2, 520], [3, 260], [4, 700], [5, 1000]], rest: 1800 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
@@ -460,6 +468,7 @@ registerWinFrames('dud', WIN_SEQ6);
 registerWinFrames('lexi', WIN_SEQ6);
 registerWinFrames('shh', WIN_SEQ6);
 registerWinFrames('jinx', WIN_SEQ6);
+registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the treasure chest → over its head → hook salute
 // QUILL's sheet lost two frames to cleanup (a feather cut out, a collar pocket) — four clean beats: heart → verse → quill high → the smug nod
 registerWinFrames('quill', { n: 4, seq: [[1, 520], [2, 620], [3, 900]], rest: 700 });
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
@@ -487,6 +496,7 @@ export const CAST_IDLE = {
   // MECHA powers up: the hydraulics squat, the jets lift it, it hangs, then lands heavy
   mecha: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 1.06, 0.93, 0, 1], [0.38, 0.97, 1.04, 0, -6], [0.62, 0.97, 1.04, 0, -6], [0.78, 1.08, 0.92, 0, 1], [0.9, 0.99, 1.01, 0, 0], [1, 1, 1, 0, 0]] },
   quill: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.3, 0.97, 1.04, 0, -3], [0.6, 1, 1, 0, -3], [0.8, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
+  salty: { ms: 2200, rest: 0, k: [[0, 1, 1, 0, 0], [0.25, 1.03, 0.97, -2, 0], [0.5, 1, 1, 0, 0], [0.75, 1.03, 0.97, 2, 0], [1, 1, 1, 0, 0]] },
   jinx: { ms: 2000, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 1.04, 0.95, 0, 1], [0.35, 0.96, 1.05, 0, -4], [0.5, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
