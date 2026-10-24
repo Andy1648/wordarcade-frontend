@@ -7,14 +7,16 @@ import { useEffect, useRef, useState } from 'react';
 import { heroById, CAST } from './cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import CastArt from './CastArt.jsx';
+import Sidekick from './Sidekick.jsx';
 import './HeroShowcase.css';
 
 const LAND = [{ opacity: 0 }, { opacity: 1 }]; // oct18: a fade, no squash
 const CHEER = [{ opacity: 0 }, { opacity: 1 }];
 const WIN_HOLD_MS = 1300;
 
-/** `cheer` (a number) bumps from outside to play the WIN pose (a purchase landing). */
-export default function HeroShowcase({ id, cheer = 0, className = '' }) {
+/** `cheer` (a number) bumps from outside to play the WIN pose (a purchase landing). `pet` = the SIDEKICK at its feet
+ *  (kit.js; null = none). */
+export default function HeroShowcase({ id, cheer = 0, className = '', pet = null }) {
   const [cheering, setCheering] = useState(false);
   const artRef = useRef(null);
   const first = useRef(true);
@@ -47,6 +49,7 @@ export default function HeroShowcase({ id, cheer = 0, className = '' }) {
       <button type="button" className="hs-hero" onClick={() => setCheering(true)} aria-label={`${h.name}: tap to cheer`}>
         <CastArt artRef={artRef} key={h.id} className="hs-art" id={h.id} pose={cheering ? 'win' : 'hero'} alt={h.name} />
       </button>
+      {pet ? <Sidekick key={pet} id={pet} className="hs-pet" /> : null}
     </div>
   );
 }

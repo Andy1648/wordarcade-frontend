@@ -236,3 +236,11 @@ test('SEASON 2 (PROGRESSION FINAL v2): the chain shows REBIRTH ×3^R and no ★ 
   expect(shown.total).toBe(shown.sum);
   expect(shown.total).toBeGreaterThan(0);
 });
+
+test('WIN with a SIDEKICK worn: it celebrates at your hero\'s feet (kit.js); a loss leaves it out', async ({ page }) => {
+  test.setTimeout(90_000);
+  await play(page, { outcome: 'win', seed: { 'taw.main': 'hype', 'taw.s2.kit': JSON.stringify({ own: [], pet: 'pup' }) } });
+  await expect(page.locator('.rs2-char [data-sidekick="pup"]')).toBeVisible();
+  await page.waitForTimeout(2600);
+  if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/sidekicks/results-win.png' });
+});
