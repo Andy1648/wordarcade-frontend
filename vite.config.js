@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import reduceMotionScope from './scripts/postcss-reduce-motion.js'
 
@@ -154,6 +154,55 @@ function sitemapPlugin(outDir) {
   }
 }
 
+// DAILY BLITZ LINK CARD (oct22 launch polish): crawlers (Reddit, Discord, iMessage, X) never run JS, so the link
+// card for typeaword.com/daily comes from the HTML the server sends. /daily is an SPA route, so it cannot have a
+// hand-written public/daily/index.html (that would shadow the app — routeShadow.test.js); instead the build
+// writes dist/daily/index.html = the built app shell (same hashed assets, same boot) with /daily's own title,
+// description, canonical, og:* and twitter:* tags. Vercel matches the filesystem before the SPA rewrite, so
+// /daily (and /daily?s=share) serve this copy; vercelStaticParity does the same under vite preview.
+export const DAILY_META = {
+  path: '/daily',
+  title: 'DAILY BLITZ — one answer each, rarer = more points | TYPE A WORD',
+  ogTitle: 'DAILY BLITZ',
+  description: '6 prompts, one answer each, 20 seconds a prompt. The rarer your answer, the more it scores. Same prompts for everyone today — free, no account.',
+  image: 'https://typeaword.com/og-daily.png',
+  imageAlt: 'DAILY BLITZ — 6 prompts, one answer each, rarer = more points',
+}
+export function withPageMeta(html, m) {
+  const url = `https://typeaword.com${m.path}`
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+  const set = (re, val) => {
+    if (!re.test(html)) throw new Error(`withPageMeta: no match for ${re}`)
+    html = html.replace(re, (_, pre, post) => `${pre}${esc(val)}${post}`)
+  }
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(m.title)}</title>`)
+  set(/(<meta name="description" content=")[^"]*(")/, m.description)
+  set(/(<link rel="canonical" href=")[^"]*(")/, url)
+  set(/(<meta property="og:title" content=")[^"]*(")/, m.ogTitle)
+  set(/(<meta property="og:description" content=")[^"]*(")/, m.description)
+  set(/(<meta property="og:url" content=")[^"]*(")/, url)
+  set(/(<meta property="og:image" content=")[^"]*(")/, m.image)
+  set(/(<meta property="og:image:alt" content=")[^"]*(")/, m.imageAlt)
+  set(/(<meta name="twitter:title" content=")[^"]*(")/, m.ogTitle)
+  set(/(<meta name="twitter:description" content=")[^"]*(")/, m.description)
+  set(/(<meta name="twitter:image" content=")[^"]*(")/, m.image)
+  set(/(<meta name="twitter:image:alt" content=")[^"]*(")/, m.imageAlt)
+  return html
+}
+function pageMetaPlugin(outDir) {
+  return {
+    name: 'page-meta-shells',
+    apply: 'build',
+    closeBundle() {
+      const shell = resolve(outDir, 'index.html')
+      if (!existsSync(shell)) return
+      const dir = resolve(outDir, DAILY_META.path.slice(1))
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(resolve(dir, 'index.html'), withPageMeta(readFileSync(shell, 'utf8'), DAILY_META))
+    },
+  }
+}
+
 // `portal` mode produces an ISOLATED build for iframe embedding on game portals
 // (itch.io / Newgrounds / CrazyGames): relative asset paths (base './') so it
 // loads from any nested iframe URL, emitted to dist-portal/ so it never touches
@@ -173,7 +222,7 @@ export default defineConfig(({ mode }) => {
       // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —
       // the middleware is handed both roots and takes whichever exists, build output first.
       ...(isPortal ? [] : [vercelStaticParity([outDir, 'public'])]),
-      ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin()]),
+      ...(isPortal ? [] : [sitemapPlugin(outDir), pwaPlugin(), pageMetaPlugin(outDir)]),
     ],
     base: isPortal ? './' : '/',
     // The v2 kit gallery (src/main.jsx, /?kit=1) — a DEV-ONLY page. ON for the dev server and for a

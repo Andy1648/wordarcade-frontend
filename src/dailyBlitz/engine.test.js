@@ -119,6 +119,9 @@ test('scoreDay: totals, rarest pick, crowd % per answer', () => {
   assert.equal(withCrowd.rows[0].pct, 0.5);
   assert.equal(withCrowd.rows[0].points, crowdPoints(0.5));
   assert.equal(withCrowd.rarest, 4); // 1% beats 2%
+  const quiet = scoreDay(rows, { plays: 5, prompts: [{ mine: 2 }, { mine: null }, { mine: 1 }, { mine: 1 }, { mine: 1 }, { mine: 1 }] });
+  assert.equal(quiet.rows[0].pct, null, 'below CROWD_MIN the % is the prior estimate, not 2 of 5');
+  assert.equal(quiet.rows[0].points, 20);
 });
 
 test('formatPct', () => {
@@ -179,4 +182,13 @@ test('migration 062: private tables, two granted doors, no PII columns', () => {
   assert.match(sql, /revoke all on private\.daily_blitz_tally from anon, authenticated/);
   assert.doesNotMatch(sql, /\b(ip|email|username|name)\b\s+text/i);
   assert.ok([...sql].every((ch) => ch.charCodeAt(0) < 128), 'ASCII only');
+});
+
+test('priorPct runs crowdPoints backwards (the reveal / quiet-day estimate)', async () => {
+  const { priorPct, crowdPoints } = await import('./engine.js');
+  for (const prior of [20, 35, 55, 80]) {
+    assert.ok(Math.abs(crowdPoints(priorPct(prior)) - prior) <= 1, `prior ${prior}`);
+  }
+  assert.ok(priorPct(20) > priorPct(80), 'a familiar answer reads as more-said');
+  assert.equal(priorPct(100), 0);
 });
