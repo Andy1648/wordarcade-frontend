@@ -1,6 +1,6 @@
 // kit.js — HERO COMPONENTS (oct24, Andy: "cooler heroes, frames, and SO MUCH MORE … components? we def lacking
 // components rn"). A component is owned ONCE and worn on ANY hero, so a few painted pieces make many looks (Among Us
-// pets, Fortnite back bling, Rocket League borders). Two slots:
+// pets, Fortnite back bling, Rocket League borders + goal explosions). Three slots:
 //  · SIDEKICK — a small painted pet that stands at your hero's feet wherever your hero is drawn big (profile showcase,
 //    the WIN results card). Two painted frames each (public/cast/kit/<id>-0/1.webp — rest + action, ChatGPT, one
 //    matched 3x2 sheet per frame) that it flips between now and then.
@@ -8,6 +8,8 @@
 //    reference) that turns your hero in the PROFILE into a framed card. Each frame's art + name-plate windows were
 //    measured off the cut (% of the frame). The five MODE frames are the MASTERY ROAD's frame node (masteryRoad.js
 //    ROAD_SHAPE[6]) made real: claim it on that mode's road and the frame is yours.
+//  · WIN FX — a painted burst (public/fx/win/<id>.webp, Gemini) that blasts behind your hero when you WIN (the results
+//    card's impact burst) — Rocket League's goal explosion.
 // Earned with WINS like the crew (gems skip the wait); the rare ones sit behind a rebirth, then gems. Looks only:
 // nothing here changes how a game plays or pays.
 import { getRebirths } from '../progress/xp.js';
@@ -39,11 +41,18 @@ export const FRAMES = [
   F('chain', 'CHAIN', 'CHAIN MASTERY', '#2EFFE0', 499 / 808, [14.63, 19.93, 67.94, 54.7], [18.04, 79.08, 63.93, 10.27], { road: 'chain' }),
   F('defuser', 'DEFUSER', 'FUSE MASTERY', '#B8F632', 562 / 854, [20.82, 19.2, 58.36, 53.16], [21.17, 76.46, 57.47, 8.78], { road: 'fuse' }),
 ];
-const ALL_KIT = [...SIDEKICKS, ...FRAMES];
+export const WIN_FX = [
+  { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
+  { id: 'splat', name: 'INK SPLAT', tag: 'MESSY WINNER', color: '#9A1AFF', wins: 45, price: 700 },
+  { id: 'thunder', name: 'THUNDERSTRUCK', tag: 'STRUCK BY GREATNESS', color: '#FFE94A', wins: 90, price: 900 },
+].map((k) => ({ ...k, slot: 'fx' }));
+const ALL_KIT = [...SIDEKICKS, ...FRAMES, ...WIN_FX];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
 export const kitSrc = (id, frame = 0) => {
   const k = kitById(id);
-  return k && k.slot === 'frame' ? `/cards/frame-${id}.webp` : `/cast/kit/${id}-${frame}.webp`;
+  if (k && k.slot === 'frame') return `/cards/frame-${id}.webp`;
+  if (k && k.slot === 'fx') return `/fx/win/${id}.webp`;
+  return `/cast/kit/${id}-${frame}.webp`;
 };
 
 // a season-2 key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
@@ -53,8 +62,9 @@ export function readKit() {
   try {
     const v = JSON.parse(localStorage.getItem(KIT_KEY) || '{}');
     const own = Array.isArray(v && v.own) ? v.own.filter((id) => kitById(id)) : [];
-    return { own, pet: v && SLOT_OK('pet', v.pet) ? v.pet : null, frame: v && SLOT_OK('frame', v.frame) ? v.frame : null };
-  } catch { return { own: [], pet: null, frame: null }; }
+    const slot = (k) => (v && SLOT_OK(k, v[k]) ? v[k] : null);
+    return { own, pet: slot('pet'), frame: slot('frame'), fx: slot('fx') };
+  } catch { return { own: [], pet: null, frame: null, fx: null }; }
 }
 function writeKit(k) {
   try { localStorage.setItem(KIT_KEY, JSON.stringify(k)); } catch { /* blocked storage */ }
@@ -104,7 +114,9 @@ export function kitProgress(id) {
 export const equippedPet = () => readKit().pet;
 /** The frame you wear (null = none). */
 export const equippedFrame = () => readKit().frame;
-/** Wear a component you own in its slot, or clear a slot ('pet' | 'frame', id null). Returns false when it isn't yours. */
+/** The WIN FX you wear (null = the default burst). */
+export const equippedFx = () => readKit().fx;
+/** Wear a component you own in its slot, or clear a slot ('pet' | 'frame' | 'fx', id null). Returns false when it isn't yours. */
 export function wearKit(slot, id) {
   if (id != null && (!SLOT_OK(slot, id) || !ownsKit(id))) return false;
   const k = readKit();
@@ -122,7 +134,7 @@ export function buyKit(id) {
     if (!spendGems(s.price)) return { ok: false, reason: 'unaffordable' };
     const k = readKit();
     writeKit({ ...k, own: [...k.own, id] });
-    itemPurchased(id, s.slot === 'frame' ? 'frame' : 'sidekick');
+    itemPurchased(id, { pet: 'sidekick', frame: 'frame', fx: 'winfx' }[s.slot]);
   }
   wearKit(s.slot, id);
   return { ok: true };

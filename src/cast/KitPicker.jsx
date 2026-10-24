@@ -1,11 +1,13 @@
-// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): two tabs, SIDEKICK and FRAME. Left: YOUR hero with the
+// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): three tabs, SIDEKICK, FRAME and WIN FX. Left: YOUR hero with the
 // piece you're looking at already on it (the sidekick at its feet, or your hero as a card in that frame) — you try it on
 // before you wear it, with whatever you wear in the other slot. Right: the pieces as painted tiles (the art is the
 // button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
 // TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
-import { useEffect, useState } from 'react';
-import { SIDEKICKS, FRAMES, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+import { useEffect, useRef, useState } from 'react';
+import { SIDEKICKS, FRAMES, WIN_FX, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
 import HeroShowcase from './HeroShowcase.jsx';
+import CastArt from './CastArt.jsx';
+import { kitPlay } from '../components/kit/motion.js';
 import FramedCard from './FramedCard.jsx';
 import { heroById, CAST } from './cast.js';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
@@ -15,14 +17,26 @@ import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './KitPicker.css';
 
-const TABS = [['pet', 'SIDEKICK', SIDEKICKS], ['frame', 'FRAME', FRAMES]];
+const TABS = [['pet', 'SIDEKICK', SIDEKICKS], ['frame', 'FRAME', FRAMES], ['fx', 'WIN FX', WIN_FX]];
+// the WIN FX try-on: the burst slams out behind your WIN pose each time you pick one (the results card's KIT_BURST)
+const FX_BURST = [{ transform: 'scale(.2) rotate(-30deg)', opacity: 1 }, { transform: 'scale(1.12) rotate(4deg)', opacity: 1, offset: 0.16 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0.26 }, { transform: 'scale(1.04) rotate(8deg)', opacity: 1, offset: 0.8 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
+function FxStage({ hero, fx }) {
+  const ref = useRef(null);
+  useEffect(() => { kitPlay(ref.current, FX_BURST, { duration: 1500, easing: 'cubic-bezier(.2,.9,.3,1)' }); }, [fx]);
+  return (
+    <div className="skp-fx" data-fx={fx}>
+      <img ref={ref} className="skp-fx-burst" src={`/fx/win/${fx}.webp`} alt="" aria-hidden="true" draggable="false" />
+      <CastArt className="skp-fx-hero" id={hero} pose="win" />
+    </div>
+  );
+}
 
 /** @param hero your MAIN's id · @param kit { pet, frame } worn · @param onKit(slot, id|null) a slot changed
  *  @param slot0 the tab to open on */
 export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
   const [slot, setSlot] = useState(slot0);
   const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
-  const [look, setLook] = useState({ pet: kit.pet || SIDEKICKS[0].id, frame: kit.frame || FRAMES[0].id });
+  const [look, setLook] = useState({ pet: kit.pet || SIDEKICKS[0].id, frame: kit.frame || FRAMES[0].id, fx: kit.fx || WIN_FX[0].id });
   const [gems, setGems] = useState(getGems);
   const [, bump] = useState(0);
   useEffect(() => subscribeGems(setGems), []);
@@ -59,7 +73,8 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
   return (
     <div className={`skp is-${slot}`} style={{ '--sk-c': s.color }} data-testid="kit-picker">
       <div className="skp-stage">
-        {frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
+        {slot === 'fx' ? <FxStage hero={hero} fx={s.id} />
+          : frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
       </div>
       <div className="skp-side">
         <div className="skp-tabs" role="tablist" aria-label="Customize">
@@ -67,7 +82,7 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
             <button key={k} type="button" role="tab" aria-selected={k === slot} className={`skp-tab${k === slot ? ' is-on' : ''}`} onClick={() => setSlot(k)}>{label}</button>
           ))}
         </div>
-        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={slot === 'pet' ? 'Sidekicks' : 'Frames'}>
+        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={{ pet: 'Sidekicks', frame: 'Frames', fx: 'Win effects' }[slot]}>
           {list.map((k) => {
             const mine = ownsKit(k.id);
             return (

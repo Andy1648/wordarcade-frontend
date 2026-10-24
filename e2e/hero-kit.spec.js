@@ -47,13 +47,14 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await page.waitForTimeout(500);
     await shot(page, `${vn}-2-pixel-locked`);
     const hold = pk.getByRole('button', { name: /Hold to buy PIXEL/ });
+    await hold.scrollIntoViewIfNeeded();
     const box = await hold.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible({ timeout: 5000 });
     await page.mouse.up();
     const kit = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')));
-    expect(kit).toEqual({ own: ['pixel'], pet: 'pixel', frame: null });
+    expect(kit).toEqual({ own: ['pixel'], pet: 'pixel', frame: null, fx: null });
     // TURBO is rebirth-gated: no buy button
     await pk.getByRole('radio', { name: /TURBO/ }).click();
     await expect(pk.locator('.skp-locked')).toContainText('REBIRTH 3');
@@ -91,6 +92,25 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await shot(page, `${vn}-5-profile-card`);
   });
 }
+
+test('WIN FX: try one on (the burst replays behind the WIN pose), buy it, it is worn', async ({ page }) => {
+  await openKit(page, { width: 1366, height: 768 }, 600);
+  const pk = page.getByTestId('kit-picker');
+  await pk.getByRole('tab', { name: 'WIN FX' }).click();
+  await expect(pk.locator('.skp-fx[data-fx="firework"]')).toBeVisible();
+  await expect(pk.locator('.skp-prog-n')).toContainText('20 / 25 WINS');
+  await page.waitForTimeout(700);
+  await shot(page, 'cb-6-winfx');
+  const hold = pk.getByRole('button', { name: /Hold to buy FIREWORKS/ });
+  const box = await hold.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible({ timeout: 5000 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).fx)).toBe('firework');
+  await pk.getByRole('radio', { name: /INK SPLAT/ }).click();
+  await expect(pk.locator('.skp-fx[data-fx="splat"]')).toBeVisible();
+});
 
 test('sidekicks: the hop is a finite one-shot (no infinite animation)', async ({ page }) => {
   await openKit(page, { width: 1366, height: 768 }, 0);

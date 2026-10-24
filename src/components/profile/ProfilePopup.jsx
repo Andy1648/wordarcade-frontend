@@ -58,7 +58,7 @@ function Stat({ icon, glyph, tone, value, label }) {
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
   const [view, setView] = useState('profile'); // 'profile' | 'pick' | 'kit' (CUSTOMIZE: sidekick + frame)
-  const [kit, setKit] = useState(readKit); // the worn components { pet, frame }
+  const [kit, setKit] = useState(readKit); // the worn components { pet, frame, fx }
   const [peekId, setPeekId] = useState(null); // the picker can open straight onto one hero's preview
   const [cheer, setCheer] = useState(0);
   const [titles, setTitles] = useState(false); // ALL TITLES open over the profile

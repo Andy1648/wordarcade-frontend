@@ -41,3 +41,16 @@ test('a road frame: never for sale, earned by claiming its node', () => withStor
 test('TURBO waits for REBIRTH 3, then costs gems', () => withStorage({ 'taw.s2.gems': JSON.stringify({ bal: 5000 }) }, () => {
   assert.equal(buyKit('turbo').reason, 'locked');
 }));
+
+test('a WIN FX: earned at its wins, only fits the fx slot', () => withStorage({ 'taw.s2.count': JSON.stringify({ mp: 30 }) }, () => {
+  assert.equal(ownsKit('firework'), true);
+  assert.equal(wearKit('pet', 'firework'), false);
+  assert.equal(wearKit('fx', 'firework'), true);
+  assert.equal(readKit().fx, 'firework');
+}));
+
+test('every component id is unique across the slots (one id, one piece)', async () => {
+  const { SIDEKICKS, FRAMES, WIN_FX } = await import('./kit.js');
+  const ids = [...SIDEKICKS, ...FRAMES, ...WIN_FX].map((k) => k.id);
+  assert.equal(new Set(ids).size, ids.length);
+});
