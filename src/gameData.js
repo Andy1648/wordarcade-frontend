@@ -93,6 +93,19 @@ const SAT_RUSH_GAME = {
 const CHAIN_GAME = {
   id: 'chain',
   artKey: 'ChainArt',
+  // Andy oct24 "redesign chain and fuse game cards" — the painted, COMPONENT card: the vault backdrop, the chain-link
+  // brawler, hover FX, and PARTS for its act (cardLayers/cardActs.js ACTS.chain): the lasso whips, the vault flash
+  // blows out where the chain snapped, two links fly off. Parts sit in card % (centre x / y, width).
+  artLayers: {
+    bg: '/cards/ch-bg.webp', hero: '/cards/ch-hero.webp', fx: '/cards/ch-fx.webp', heroY: '-9%', heroScale: 0.74,
+    act: 'chain',
+    parts: [
+      { id: 'flash', src: '/cards/ch-flash.webp', x: 49, y: 19, w: 62, under: true },
+      { id: 'shards', src: '/cards/ch-shards.webp', x: 50, y: 21, w: 34, under: true },
+      { id: 'link', src: '/cards/ch-link.webp', x: 40, y: 22, w: 30 },
+      { id: 'links', src: '/cards/ch-links.webp', x: 60, y: 20, w: 30 },
+    ],
+  },
   name: 'CHAIN',
   description: "EACH WORD STARTS ON THE LAST ONE'S LETTER.",
   // LOWERED 20 -> 2 (was 15 before 150a885 raised it). The LV15->20 / LV22->25 raise was
@@ -117,6 +130,19 @@ const CHAIN_GAME = {
 const FUSE_GAME = {
   id: 'fuse',
   artKey: 'FuseArt',
+  // Andy oct24: the painted, COMPONENT card — the fireworks storeroom, the sneaky firecracker (shh), hover FX, and
+  // PARTS for its act (ACTS.fuse): a tiptoe two-step, the fuse FLARES and puffs smoke. The spark / shards / smoke
+  // ride the hero's frame (onHero), placed on its fuse tip.
+  artLayers: {
+    bg: '/cards/fu-bg.webp', hero: '/cards/fu-hero.webp', fx: '/cards/fu-fx.webp', heroY: '-4%', heroScale: 0.66,
+    act: 'fuse',
+    parts: [
+      { id: 'flash', src: '/cards/fu-flash.webp', x: 72.6, y: 6, w: 44, onHero: true },
+      { id: 'spark', src: '/cards/fu-spark.webp', x: 72.6, y: 6, w: 36, onHero: true },
+      { id: 'shards', src: '/cards/fu-shards.webp', x: 76, y: 2, w: 40, onHero: true },
+      { id: 'smoke', src: '/cards/fu-smoke.webp', x: 68, y: 9, w: 24, onHero: true },
+    ],
+  },
   name: 'FUSE',
   description: 'SNEAK THE LETTERS INTO A WORD. BEAT THE FUSE.',
   unlockLevel: 50, // Andy oct9: EXACTLY LV50 (was LV100, N1 oct2) — Andy's number. Played = never locked (modeAccess.js).
