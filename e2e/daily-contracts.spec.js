@@ -23,6 +23,7 @@ async function seed(page, { picks = null, done = [], prog = {}, streak = 5, leve
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.seenGameSpotlight', '1');
+    localStorage.setItem('taw.reveal', 'all'); // the whole menu (the first-run reveal opens contracts after a first game)
     if (picks) localStorage.setItem('taw.contracts', JSON.stringify({ v: 1, day, picks, prog, seen: {}, done, rerolled: false, sweep: false, kept: done.length > 0 }));
   }, { picks, done, prog, streak, level });
 }

@@ -53,7 +53,7 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, new
           title="Leaderboard"
         />
       )}
-      {achSlot || <KitIconButton
+      {achSlot || (ach && <KitIconButton
         icon="achievements"
         tone="gold"
         className="hp-ico is-ach"
@@ -63,7 +63,7 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, new
         onClick={ach.onClick}
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
-      />}
+      />)}
       {/* UPDATE LOG (Andy oct12): re-opens this release's PATCH NOTES — joins the cluster, never its own fixed spot */}
       {news && (
         <KitIconButton

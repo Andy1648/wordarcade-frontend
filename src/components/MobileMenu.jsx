@@ -160,6 +160,7 @@ export default function MobileMenu({
   wins = 0,
   gems = null,
   claimSlot = null,
+  title = null, // STAGE 0 of the reveal (TitlePlay, variant phone): the hero + ONE PLAY instead of the rows + the rail
 }) {
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
@@ -169,7 +170,7 @@ export default function MobileMenu({
     .filter(Boolean);
 
   return (
-    <div className="hp-m">
+    <div className={`hp-m${title ? ' is-first' : ''}`}>
       {/* 1. TITLE + the v2 LEADERBOARD / STATS / ACHIEVEMENTS tiles, sharing one row. */}
       <div className="hp-m-top">
         <h1 className="hp-m-title">
@@ -198,6 +199,16 @@ export default function MobileMenu({
       {/* 1b. (oct21, Andy: "no one's really gonna be typing. I should just be tapping … I don't want a text box") the
              first-visit TYPE A WORD input is gone: a phone menu is taps only. */}
 
+      {title}
+      {title && (
+        <div className="hp-m-foot">
+          <button type="button" className={`hp-m-credits${navigating ? ' is-disabled' : ''}`} onClick={onCredits} disabled={navigating}>
+            CREDITS
+          </button>
+        </div>
+      )}
+
+      {!title && <>
       {/* 2. The three mode rows. They flex-grow to share whatever height is left, so the
              screen always fills exactly one viewport with no scroll at any phone height. */}
       <nav className="hp-m-modes" aria-label="Game modes">
@@ -315,6 +326,7 @@ export default function MobileMenu({
           </button>
         }
       />
+      </>}
     </div>
   );
 }

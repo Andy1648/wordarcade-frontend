@@ -142,6 +142,8 @@ test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', a
 test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×5 for its minutes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page);
+  // a season-2 save past the first-run reveal (UPGRADES opens after a first game — progress/reveal.js)
+  await page.addInitScript(() => { try { localStorage.setItem('taw.reveal', 'all'); } catch { /* blocked */ } });
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
   await navControl(page, 'shop').click();

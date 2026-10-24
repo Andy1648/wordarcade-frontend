@@ -123,7 +123,7 @@ export async function mirrorReduceMotion(page) {
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false, autoName = false } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false, autoName = false, freshReveal = false } = opts;
 
   // EVERY VISITOR GETS A NAME (Andy oct13): the menu claims a generated board name on the first key / tap. Every spec
   // written before it expects an UNCLAIMED browser (the CLAIM prompt, "named: false" boards), so it is off unless a
@@ -158,6 +158,26 @@ export async function installBackendMock(page, opts = {}) {
       }
     }, { patchId: PATCH_ID });
   }
+  // FIRST-RUN REVEAL (src/progress/reveal.js): a brand-new season-2 save shows only the TITLE. The suite's specs are about
+  // the full menu, so the default visitor is a save PAST the reveal (taw.reveal = all — also in playwright.config's
+  // storageState, and re-applied after a clear). A spec about the first run passes { freshReveal: true }: the key is
+  // dropped once per test (the reveal then writes and grows its own record across reloads).
+  await page.addInitScript((fresh) => {
+    try {
+      if (fresh) {
+        if (!sessionStorage.getItem('e2e.freshReveal')) { sessionStorage.setItem('e2e.freshReveal', '1'); localStorage.removeItem('taw.reveal'); }
+        return;
+      }
+      if (localStorage.getItem('taw.reveal') == null) localStorage.setItem('taw.reveal', 'all');
+      const clear = Storage.prototype.clear;
+      Storage.prototype.clear = function clearKeepReveal() {
+        clear.call(this);
+        if (this === window.localStorage) { try { localStorage.setItem('taw.reveal', 'all'); } catch { /* blocked */ } }
+      };
+    } catch {
+      /* storage blocked */
+    }
+  }, freshReveal);
   if (!newTutorials) {
     await page.addInitScript(() => {
       const seen = () => {

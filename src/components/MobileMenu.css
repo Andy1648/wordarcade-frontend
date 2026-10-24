@@ -514,3 +514,12 @@
 /* GEM FRIENDLY (Andy oct10): the row's 1–3 mini gems, before the chevron */
 .hp-m-gems { flex: 0 0 auto; display: flex; gap: 1px; margin-left: auto; margin-right: 6px; }
 .hp-m-gems .is-dim { opacity: 0.25; }
+
+/* ---- STAGE 0 (the reveal's TITLE, TitlePlay variant phone): the wordmark big on its own row, the hero + PLAY under
+   it, CREDITS as a quiet foot. Only the settings cog shares the title row. ---- */
+@media (max-width: 480px) {
+  .hp-m.is-first { gap: 10px; }
+  .hp-m.is-first .hp-m-title { font-size: var(--fs-hero); line-height: 0.86; }
+  .hp-m.is-first .hp-m-per:empty { display: none; }
+  .hp-m-foot { flex: 0 0 auto; display: flex; justify-content: center; }
+}

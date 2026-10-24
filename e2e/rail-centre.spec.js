@@ -89,7 +89,9 @@ async function measure(page) {
 
 const STATES = {
   open: { 'taw.s2.rebirths': '2', 'taw.s2.xp': JSON.stringify({ lv: 18, f: 0, rc: 0, v: 10 }) },
-  fresh: {}, // R0: REBIRTH is LOCKED — its padlock is the icon, its gate the number
+  // R0: REBIRTH is LOCKED — its padlock is the icon, its gate the number. A save past the first-run reveal (a brand-new
+  // one shows the TITLE, no rail — progress/reveal.js); this test is about the tiles' layout.
+  fresh: { 'taw.reveal': 'all' },
 };
 
 for (const [w, h] of VIEWPORTS) {

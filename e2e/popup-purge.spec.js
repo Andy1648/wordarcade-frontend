@@ -161,7 +161,9 @@ test('SEASON2: played words (a WINS gain + the TYPE WORDS I unlock) → the menu
   await page.setViewportSize({ width: 1280, height: 720 });
   // 96 season words: five CHAIN links make TYPE WORDS I (100) ready, and pass CHAIN's 3-word "start earning" gate
   await boot(page, {
-    seed: { 'taw.s2.count': JSON.stringify({ words: 96 }), 'taw.s2.rankShown': '0', 'taw.s2.unlocksShown': '[]', 'taw.chain.runs': '5', 'taw.seenTeach.chain': '1', 'taw.seenGameSpotlight': '1' },
+    // 'taw.reveal' all: a save past the first-run reveal — a brand-new one returns from its first game to a menu that
+    // has GROWN (the title → the cards), which this purge check would read as new large things in the middle
+    seed: { 'taw.reveal': 'all', 'taw.s2.count': JSON.stringify({ words: 96 }), 'taw.s2.rankShown': '0', 'taw.s2.unlocksShown': '[]', 'taw.chain.runs': '5', 'taw.seenTeach.chain': '1', 'taw.seenGameSpotlight': '1' },
   });
   // the settled menu's own centred layout (the cards, the logo …) = the baseline for the return below
   await menuReady(page);
