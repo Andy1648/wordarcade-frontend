@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { answerKey } from '../src/dailyBlitz/answerKey.js';
-import { DAILY_POOL } from '../src/dailyBlitz/pool.js';
+import { DAILY_POOL, RETIRED } from '../src/dailyBlitz/pool.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -110,7 +110,14 @@ function canonicalize(keys, good) {
 
 const byName = new Map(lists.map((c) => [c.name, c]));
 const cats = {};
-for (const [tier, names] of Object.entries(DAILY_POOL)) {
+// A RETIRED name's replacement plays in its tier from its fromDay on, so it needs its list too.
+const SOURCES = Object.fromEntries(Object.entries(DAILY_POOL).map(([tier, names]) => [tier, names.slice()]));
+for (const [old, r] of Object.entries(RETIRED)) {
+  const tier = Object.keys(DAILY_POOL).find((t) => DAILY_POOL[t].includes(old));
+  if (!tier) throw new Error(`RETIRED names "${old}" but it is not in DAILY_POOL`);
+  if (!SOURCES[tier].includes(r.replacement)) SOURCES[tier].push(r.replacement);
+}
+for (const [tier, names] of Object.entries(SOURCES)) {
   for (const name of names) {
     const c = byName.get(name);
     if (!c) throw new Error(`pool.js names "${name}" but it is not in ${listsPath}`);

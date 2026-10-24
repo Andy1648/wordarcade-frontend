@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { answerKey } from './answerKey.js';
-import { DAILY_POOL, TIER_ORDER, PER_TIER } from './pool.js';
+import { DAILY_POOL, TIER_ORDER, PER_TIER, RETIRED } from './pool.js';
 import {
   PROMPTS, dayNumberFor, dateKeyFor, promptsForDay, judge, displayFor, crowdPoints, crowdWeight, scoreAnswer,
   bandFor, scoreDay, formatPct, buildShareText, shareLink, CROWD_MIN, CROWD_FULL,
@@ -59,6 +60,33 @@ test('promptsForDay: six, deterministic, ramped by tier, no repeats inside a cyc
     }
   }
   for (let d = 1; d < 400; d++) assert.equal(new Set(promptsForDay(d)).size, PROMPTS);
+});
+
+test('RETIRED: days <= 298 are byte-identical to the pre-retirement schedule; no future day shows Studio Ghibli', () => {
+  // sha256 of "d:p1|p2|..|p6" for days 1..298 joined by newlines, computed from origin/main's engine BEFORE any
+  // retirement existed. Past answers pages and the day being played (298 = 2026-10-25, UTC+14) must not move.
+  const past = [];
+  for (let d = 1; d <= 298; d++) past.push(`${d}:${promptsForDay(d).join('|')}`);
+  assert.equal(createHash('sha256').update(past.join('\n')).digest('hex'),
+    '6a77133e9c5e923306b13c6eaf87db1df7bf7dfee98594b5b513ef9bd4e41df8');
+  // the retirement map never touches a day before its fromDay (the same schedule with no retirements)
+  for (let d = 1; d <= 298; d++) assert.deepEqual(promptsForDay(d), promptsForDay(d, DAILY_POOL, {}), `day ${d}`);
+  assert.ok(promptsForDay(297).includes('Studio Ghibli Movies'), 'the live day still has it');
+  for (const [old, r] of Object.entries(RETIRED)) {
+    assert.equal(r.fromDay, 299);
+    assert.ok(!Object.values(DAILY_POOL).some((names) => names.includes(r.replacement)), `${r.replacement} not in the pool`);
+    assert.ok(data.cats[r.replacement], `${r.replacement} is in data.json`);
+    assert.ok(data.cats[old], `${old} stays in data.json for past answers pages`);
+    assert.equal(data.cats[r.replacement].tier, data.cats[old].tier, 'same tier');
+    let swapped = 0;
+    for (let d = r.fromDay; d < r.fromDay + 400; d++) {
+      const p = promptsForDay(d);
+      assert.ok(!p.includes(old), `day ${d} still schedules ${old}`);
+      assert.equal(new Set(p).size, PROMPTS);
+      if (p.includes(r.replacement)) swapped++;
+    }
+    assert.ok(swapped > 0, 'the replacement actually plays');
+  }
 });
 
 test('judge: on the list, aliases fold to the canonical key, misses explain themselves', () => {
