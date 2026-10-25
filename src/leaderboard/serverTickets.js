@@ -5,11 +5,14 @@
 //   rollTicket(t)        lb_ticket_roll → the reserved pick (asking again returns the SAME one — no re-rolls)
 //   claimTicket(id)      lb_ticket_claim on the reveal's landing (a failure is kept and retried on the next list)
 //   streakCheckin(day)   lb_streak_checkin — the STREAK CALENDAR's server-checked step (DAY 4 / DAY 7 mint tickets)
+//   buyTicket(tier)      065 lb_ticket_buy — the SHOP's sealed EPIC+ / LEGENDARY+ ROLL (gems → a server ticket)
 // The floor tier is never sent: the server reads it from its own ticket row.
 import { getSecret, rpc } from './client.js';
 import { serverRollOn } from './serverRoll.js';
-import { normalizeTickets, spendPick } from '../progress/rollTickets.js';
+import { normalizeTickets, spendPick, TICKET_SHOP, buyOutcome } from '../progress/rollTickets.js';
+import { loadGemState, saveGemState, tellBalance } from '../progress/gemsCore.js';
 
+const BUY_KEY = 'taw.s2.ticketbuy'; // 065: a PAID buy whose answer is not in yet — { req, tier, price } (retried, never re-charged)
 const LANDED_KEY = 'taw.s2.ticketland'; // a ticket whose reveal LANDED in this save but whose claim is unanswered
 let off = false; // lb_tickets is not there (pre-060): stop asking this page load
 
@@ -52,6 +55,7 @@ export async function listTickets() {
   try {
     const landed = readLanded();
     if (landed) await claimTicket(landed);
+    if (readBuy()) await settleBuy(); // a paid buy whose answer got lost: asked again with the SAME request id
     const r = await rpc('lb_tickets', { p_secret: getSecret() });
     const list = normalizeTickets(r);
     const still = readLanded();
@@ -83,4 +87,74 @@ export async function streakCheckin(day) {
     if (missing(e)) off = true;
     return null;
   }
+}
+
+// ---- 065 SEALED ROLLS: the SHOP buy ------------------------------------------------------------------------------------
+// The gem WALLET lives in the browser; the SERVER owns the ticket, the price, the stock and the floor (and caps the spend
+// at the account's gem budget). So: pay locally FIRST, remember the paid request, ask the server with that request id
+// (idempotent — a retry returns the SAME ticket and never charges the budget twice), then: ok → done; a definite no →
+// the gems go back; no answer → the paid request is kept and asked again on the next buy / ticket list (never re-paid).
+function readBuy() {
+  try {
+    const o = JSON.parse(localStorage.getItem(BUY_KEY) || 'null');
+    return o && typeof o.req === 'string' && TICKET_SHOP[o.tier] && Number.isFinite(o.price) ? o : null;
+  } catch { return null; }
+}
+function writeBuy(o) {
+  try { if (o) localStorage.setItem(BUY_KEY, JSON.stringify(o)); else localStorage.removeItem(BUY_KEY); } catch { /* blocked */ }
+}
+function payGems(n) {
+  const g = loadGemState();
+  if (g.bal < n) return false;
+  g.bal -= n;
+  saveGemState(g);
+  tellBalance(g.bal);
+  return true;
+}
+function refundGems(n) { // the buy never happened: the wallet gets its gems back (not a grant — nothing was earned)
+  const g = loadGemState();
+  g.bal += n;
+  saveGemState(g);
+  tellBalance(g.bal);
+}
+const newReq = () => (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16)));
+
+async function settleBuy() {
+  const b = readBuy();
+  if (!b) return { ok: false, reason: 'none' };
+  let r;
+  try {
+    r = await rpc('lb_ticket_buy', { p_secret: getSecret(), p_tier: b.tier, p_request: b.req });
+  } catch (e) {
+    if (missing(e)) { off = true; writeBuy(null); refundGems(b.price); return { ok: false, reason: 'soon' }; }
+    return { ok: false, reason: 'offline' }; // kept: asked again later with the same request id
+  }
+  const o = buyOutcome(r);
+  if (o.kind === 'retry') return { ok: false, reason: 'offline' };
+  writeBuy(null);
+  if (o.kind === 'refund') { refundGems(b.price); return { ok: false, reason: o.reason }; }
+  return { ok: true, ticket: o.ticket, left: o.left, again: !!(r && r.again), price: b.price };
+}
+
+/** Is a paid buy still waiting on its answer? */
+export const buyPending = () => !!readBuy();
+
+/**
+ * BUY a sealed `tier` ROLL ('epic' | 'legendary') for its gems. Resolves { ok: true, ticket: { id, tier }, left } or
+ * { ok: false, reason: 'soon' | 'offline' | 'gems' | 'sold_out' | 'budget' | ... , short? }.
+ */
+export async function buyTicket(tier) {
+  const item = TICKET_SHOP[tier];
+  if (!item) return { ok: false, reason: 'bad_tier' };
+  if (!ticketsOn()) return { ok: false, reason: off ? 'soon' : 'offline' };
+  if (readBuy()) { // an earlier paid buy is unanswered: settle it first (it IS this purchase if it was the same tier)
+    const prev = await settleBuy();
+    if (prev.ok || prev.reason === 'offline') return prev;
+  }
+  const bal = loadGemState().bal;
+  if (bal < item.price) return { ok: false, reason: 'gems', short: item.price - bal };
+  if (!payGems(item.price)) return { ok: false, reason: 'gems', short: item.price };
+  writeBuy({ req: newReq(), tier, price: item.price });
+  return settleBuy();
 }

@@ -529,13 +529,16 @@ body:has(.claim-pop:not(.claim-pop--inline)) .homepage-cards-region { margin-bot
 /* THE PLAY-ZONE PANEL (feat/menu-centre, Andy oct7 "have like a border around it"): one plum box holds the LV +
    XP bar, the per-letter row, the three cards and the pager — the "console". It is the stage's ::before placed
    by grid (rows 2-4, cols 2-3), under the content (z 0), so the fit-math's region is untouched: the cards keep
-   their width, the panel just closes around them. Hard ink edge + offset shadow, like every kit box. */
+   their width, the panel just closes around them. Hard ink edge + offset shadow, like every kit box.
+   HOLLOW (feat/menu-panel-hollow, Andy oct25 "the inner screen has a blank background — make it hollow"): the frame
+   keeps its ink edge + hard shadow but has NO fill, so the menu's wall art shows through the console. Every block
+   inside already sits on its own plate (profile chip, XP bar, cards, pager, TitlePlay PLAY + OR PICK chips). */
 .homepage-stage[data-paged]::before {
   content: '';
   grid-area: 2 / 2 / 5 / 3;
   z-index: 0;
   margin: calc(-10 * var(--u)) calc(-18 * var(--u));
-  background: #1a0b2e;
+  background: transparent;
   border: var(--b4) solid #000;
   border-radius: 8px;
   box-shadow: var(--b6) var(--b6) 0 #000;

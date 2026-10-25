@@ -3,7 +3,7 @@
 //   1. KEY with wins: a tap does nothing, a full hold buys T0 → T1 for 150 wins (FINAL v2 150 × 5^T);
 //   2. a gem item: +50% XP for 45 gems, ×5 → ×4 LEFT, the effect is running;
 //   3. SOLD OUT: ×5 OVERDRIVE ×2 → two buys → the stamp; a third try charges nothing;
-//   4. short on gems / the visual-only FREE EPIC+ ROLL charge nothing;
+//   4. short on gems charges nothing (a SEALED EPIC+ ROLL too);
 //   5. the phone gets the same screen.
 // Date is pinned 60 s into an hourly restock window, so a restock never lands mid-test.
 import { test, expect } from '@playwright/test';
@@ -80,8 +80,8 @@ test('KEY is bought with WINS on a 1 s hold — a tap does nothing; 150 wins →
 test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
-  await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(6); // + the +50% WINS BOOST (Andy oct8); gems never scale
-  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['45', '60', '120', '300', '150', 'SOON']);
+  await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(7); // 065: + the SEALED EPIC+ / LEGENDARY+ ROLLS // + the +50% WINS BOOST (Andy oct8); gems never scale
+  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['45', '60', '120', '300', '150', '150', '750']);
   // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
   await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
@@ -115,15 +115,15 @@ test('SOLD OUT: two ×5 OVERDRIVEs empty it, the stamp lands, a third try charge
   expect(boost.mult, 'OVERDRIVE runs as a ×5 boost').toBe(5);
 });
 
-test('short on gems, and the visual-only FREE EPIC+ ROLL: nothing charged, nothing taken', async ({ page }) => {
+test('short on gems (a boost, and a SEALED EPIC+ ROLL): nothing charged, nothing taken', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   const shop = await boot(page, { gems: 100 });
   const luck = card(shop, 'luck2');
   await luck.click();
   await expect(shop.locator('.kp-tone-cyan .kp-need')).toContainText('NEED 20 MORE'); // the GEMS pill says the gap
   await expect(luck.locator('.sp2-left')).toHaveText('×3 LEFT');
-  await card(shop, 'epicroll').click();
-  await expect(shop.locator('.sp2-note')).toContainText('COMES WITH THE ROLL SCREEN');
+  await card(shop, 'epicroll').click(); // 150 gems, 100 held: the pill says the gap, the server is never asked
+  await expect(shop.locator('.kp-tone-cyan .kp-need')).toContainText('NEED 50 MORE');
   const st = await s2(page);
   expect(st.gems).toBe(100);
   expect(st.stock).toBeNull();

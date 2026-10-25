@@ -13,8 +13,8 @@
 //                                                  directly, never the R3 2nd slot (that multiplied ×10 × ×10 = ×100)
 //   RARE       +5 MIN BOOSTS           150  ×2   → +5 min on the running XP / WINS / LUCK boosts ONLY — never OVERDRIVE
 //                                                  (Andy oct8)
-//   LEGENDARY  1 FREE EPIC+ ROLL       495  ×1   → VISUAL ONLY for now (buyable: false) — the roll's reveal belongs
-//                                                  to the ROLL screen (P6); the card shows, the purchase is disabled
+//   EPIC       SEALED EPIC+ ROLL       150  ×2   → a SERVER ticket (065 lb_ticket_buy) — guaranteed EPIC or better
+//   LEGENDARY  SEALED LEGENDARY+ ROLL  750  ×1   → a SERVER ticket — guaranteed LEGENDARY or better (Andy oct24)
 //
 // Every write is a no-op with the SEASON2 flag OFF (store.js set()). LEAF-ish: imports store.js, boost.js and
 // gemsCore.js only (never hooks.js / unlocks.js — they import THIS).
@@ -41,7 +41,11 @@ export const STOCK = [
   // Andy oct12: EVERYTHING BOOST — was TIME BOOST (+5 MIN on a running boost, useless with none). Now it STARTS the XP,
   // WINS and LUCK boosts together for 5 min (a running one gains 5 min). Never OVERDRIVE. id kept (saves' stock counts).
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
-  { id: 'epicroll', rarity: 'legendary', icon: 'roll', name: 'EPIC+ ROLL', big: '1', what: 'FREE EPIC+ ROLL', time: 'COMING SOON', price: 495, max: 1, buyable: false },
+  // 065 SEALED ROLLS (Andy oct24): a guaranteed EPIC+ / LEGENDARY+ gear roll. NOT bought here: the SERVER sells it
+  // (lb_ticket_buy — price, hourly stock and the floor are its own; rollTickets.js TICKET_SHOP mirrors them) and the shop
+  // card routes the tap there (buyStock answers 'ticket'). the card draws the vessel (VesselArt).
+  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 150, max: 2 },
+  { id: 'legroll', rarity: 'legendary', ticket: 'legendary', name: 'SEALED ROLL', big: 'LEGENDARY+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 750, max: 1 },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },
@@ -78,6 +82,16 @@ export const windowOf = (now = Date.now()) => Math.floor(now / RESTOCK_MS);
 export function restockIn(now = Date.now()) {
   return Math.max(1, Math.ceil((RESTOCK_MS - (now - windowOf(now) * RESTOCK_MS)) / 1000));
 }
+/** 065: the server's word on a SEALED ROLL's stock this window (its `left`, or 0 on sold out) — the card shows it. */
+export function setStockLeft(id, n, now = Date.now()) {
+  const it = STOCK.find((x) => x.id === id);
+  if (!it || !Number.isFinite(n)) return stockLeft(now);
+  const left = stockLeft(now);
+  left[id] = Math.max(0, Math.min(it.max, Math.floor(n)));
+  writeJson(STOCK_KEY, { w: windowOf(now), left });
+  return left;
+}
+
 /** Units left of each item in THIS window: { id: n } (a new window = full stock). */
 export function stockLeft(now = Date.now()) {
   const s = readJson(STOCK_KEY);
@@ -171,6 +185,7 @@ export function buyStock(id, now = Date.now()) {
   if (!SEASON2) return { ok: false, reason: 'season', gems: g.bal, left };
   if (!it) return { ok: false, reason: 'unknown', gems: g.bal, left };
   if (it.buyable === false) return { ok: false, reason: 'soon', gems: g.bal, left };
+  if (it.ticket) return { ok: false, reason: 'ticket', gems: g.bal, left }; // sold by the server (serverTickets.buyTicket)
   if (left[id] <= 0) return { ok: false, reason: 'sold_out', gems: g.bal, left };
   if (g.bal < it.price) return { ok: false, reason: 'gems', short: it.price - g.bal, gems: g.bal, left };
   if (!applyEffect(it, now)) return { ok: false, reason: 'storage', gems: g.bal, left };
