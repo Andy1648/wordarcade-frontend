@@ -766,7 +766,6 @@ function App() {
   // above before `sound` exists); this hook owns the cosmetic bar-wipe + shop/stats/rebirth/solo
   // nav helpers. Placed here because runTransition needs `sound`. goHome stays in App (cross-cutting).
   const {
-    transition,
     runTransition,
     shopViewRef,
     overlayReturnRef,
@@ -2830,11 +2829,7 @@ function App() {
     bgIntensity = ratio > 0.6 ? 'calm' : ratio >= 0.3 ? 'warning' : 'critical';
   }
 
-  // The bar wipe is the only motion the transition adds; honour REDUCE MOTION by
-  // skipping the overlay entirely (the screen has already swapped underneath, so
-  // nothing is lost but the animation). Read live - it's a cached boolean and
-  // the overlay is purely cosmetic.
-  const prefersReducedMotion = reduceMotion();
+  // REDUCE MOTION for the wipe is checked inside lib/navWipe (playWipe never starts one).
 
   // The bomb-fuse loading screen is the very first thing shown. It's now a
   // FIXED-DURATION timed intro: it burns the fuse, explodes and hands off on its
@@ -2937,9 +2932,8 @@ function App() {
               <Suspense fallback={<RouteFallback />}>{screen}</Suspense>
             </main>
           </div>
-          {transition && !prefersReducedMotion && (
-            <TransitionOverlay key={transition.key} word={transition.word} dir={transition.dir} />
-          )}
+          {/* ONE pooled wipe node, mounted once and replayed by lib/navWipe (it skips itself under REDUCE MOTION) */}
+          <TransitionOverlay />
           {/* Bonus-wins announcements (achievements, collection milestones, the return bonus).
               Transient, pointer-events:none, docked under the wins pill's column. */}
           <WinsCreditToast />

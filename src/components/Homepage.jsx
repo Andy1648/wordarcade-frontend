@@ -4,6 +4,7 @@ import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import { playWipe } from '../lib/navWipe';
 import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
@@ -166,6 +167,9 @@ const barSeen = { level: null, frac: 0 };
 
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
+
+// the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
+const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -1259,6 +1263,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
   useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
 
+  // NAV WIPE for the menu's own full-screen sheets (Andy oct24 "transition screens for all buttons (or at least
+  // major ones)"): GEARS / INDEX / YOUR GEAR, REWARDS and PROFILE open + close under the SAME pooled wipe as a view
+  // change. Fired from an effect, i.e. AFTER the sheet has already committed — purely cosmetic, never gating.
+  const sheetKey = showMarks || (showClaims ? 'claims' : showProfile ? 'profile' : null);
+  const lastSheetRef = useRef(sheetKey);
+  useEffect(() => {
+    const prev = lastSheetRef.current;
+    lastSheetRef.current = sheetKey;
+    if (prev === sheetKey) return;
+    const word = sheetKey ? SHEET_WIPE_WORDS[sheetKey] || '' : '';
+    if (playWipe(word, sheetKey ? 'forward' : 'back')) sound.whoosh();
+  }, [sheetKey]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
+
   // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
   // ROLL + INDEX: the REAL gate per season. Season 1: the MARKS layer reveals at LV10 (or any rebirth / an owned mark).
   // Season 2 (PROGRESSION FINAL): v3/unlocks 'rollScreen' — open from the start (at 0); a gate above 0 shows "R<n>".
@@ -1446,11 +1463,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  // NEAR MISS (Andy oct22): the keys left to the next level at THIS save's XP per key (statsMult = letterXpNow, read on
-  // render) — shown by the bar only in its last stretch. Keys, not words: a level is hundreds of keys, so "1 MORE WORD"
-  // would lie. Game words pay keys too (a 5-letter game word ≈ 1 key).
-  const keysLeft = barLive && SEASON2 && statsMult > 0 ? Math.max(1, Math.ceil((xpProgress.cost * (1 - (xpProgress.frac || 0))) / statsMult)) : 0;
-  const xpNearText = keysLeft ? { k: `${formatNum(keysLeft)} ${keysLeft === 1 ? 'KEY' : 'KEYS'}`, to: `TO LV ${formatNum(barLevel + 1)}` } : null;
+  // NO KEYS-LEFT LINE (Andy oct24 "remove how many keys to next lvl… bc there's crit and stuff"): crits, boosts and gear
+  // make a key's pay vary, so any countdown lies. The bar's fill and the next level's plate carry the pull.
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1460,7 +1474,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       lvInside={SEASON2}
       lead={rankPlate}
       goal={xpGoal}
-      nearText={xpNearText}
     />
   );
 
