@@ -1446,11 +1446,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  // NEAR MISS (Andy oct22): the keys left to the next level at THIS save's XP per key (statsMult = letterXpNow, read on
-  // render) — shown by the bar only in its last stretch. Keys, not words: a level is hundreds of keys, so "1 MORE WORD"
-  // would lie. Game words pay keys too (a 5-letter game word ≈ 1 key).
-  const keysLeft = barLive && SEASON2 && statsMult > 0 ? Math.max(1, Math.ceil((xpProgress.cost * (1 - (xpProgress.frac || 0))) / statsMult)) : 0;
-  const xpNearText = keysLeft ? { k: `${formatNum(keysLeft)} ${keysLeft === 1 ? 'KEY' : 'KEYS'}`, to: `TO LV ${formatNum(barLevel + 1)}` } : null;
+  // NO KEYS-LEFT LINE (Andy oct24 "remove how many keys to next lvl… bc there's crit and stuff"): crits, boosts and gear
+  // make a key's pay vary, so any countdown lies. The bar's fill and the next level's plate carry the pull.
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1460,7 +1457,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       lvInside={SEASON2}
       lead={rankPlate}
       goal={xpGoal}
-      nearText={xpNearText}
     />
   );
 
