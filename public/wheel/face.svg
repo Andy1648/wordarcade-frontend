@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!-- face.svg: THE DAILY WHEEL face - 8 exact 45deg flat wedges (slot 0 centred at 12 o'clock, clockwise = src/progress/wheel.js WHEEL_SLOTS). Geometry is code-exact on purpose (the painted rim / hub / pointer / pegs / prize icons sit on top). Flat fills + a darker band of the same hue, ink dividers. -->
+<path d="M512 512 L332.14 77.78 A470 470 0 0 1 691.86 77.78 Z" fill="#2EFFE0"/>
+<path d="M351.27 123.97 A420 420 0 0 1 672.73 123.97 L691.86 77.78 A470 470 0 0 0 332.14 77.78 Z" fill="#12A99A"/>
+<path d="M512 512 L691.86 77.78 A470 470 0 0 1 946.22 332.14 Z" fill="#FFE94A"/>
+<path d="M672.73 123.97 A420 420 0 0 1 900.03 351.27 L946.22 332.14 A470 470 0 0 0 691.86 77.78 Z" fill="#F2A900"/>
+<path d="M512 512 L946.22 332.14 A470 470 0 0 1 946.22 691.86 Z" fill="#2EFFE0"/>
+<path d="M900.03 351.27 A420 420 0 0 1 900.03 672.73 L946.22 691.86 A470 470 0 0 0 946.22 332.14 Z" fill="#12A99A"/>
+<path d="M512 512 L946.22 691.86 A470 470 0 0 1 691.86 946.22 Z" fill="#3D8BFF"/>
+<path d="M900.03 672.73 A420 420 0 0 1 672.73 900.03 L691.86 946.22 A470 470 0 0 0 946.22 691.86 Z" fill="#1f4fa8"/>
+<path d="M512 512 L691.86 946.22 A470 470 0 0 1 332.14 946.22 Z" fill="#FF6B3D"/>
+<path d="M672.73 900.03 A420 420 0 0 1 351.27 900.03 L332.14 946.22 A470 470 0 0 0 691.86 946.22 Z" fill="#D9381E"/>
+<path d="M512 512 L332.14 946.22 A470 470 0 0 1 77.78 691.86 Z" fill="#FFC23D"/>
+<path d="M351.27 900.03 A420 420 0 0 1 123.97 672.73 L77.78 691.86 A470 470 0 0 0 332.14 946.22 Z" fill="#E09A12"/>
+<path d="M512 512 L77.78 691.86 A470 470 0 0 1 77.78 332.14 Z" fill="#9A1AFF"/>
+<path d="M123.97 672.73 A420 420 0 0 1 123.97 351.27 L77.78 332.14 A470 470 0 0 0 77.78 691.86 Z" fill="#6a1aa8"/>
+<path d="M512 512 L77.78 332.14 A470 470 0 0 1 332.14 77.78 Z" fill="#FF4FA3"/>
+<path d="M123.97 351.27 A420 420 0 0 1 351.27 123.97 L332.14 77.78 A470 470 0 0 0 77.78 332.14 Z" fill="#C2187A"/>
+<path d="M512 512 L332.14 77.78" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L691.86 77.78" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L946.22 332.14" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L946.22 691.86" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L691.86 946.22" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L332.14 946.22" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L77.78 691.86" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<path d="M512 512 L77.78 332.14" stroke="#0d0618" stroke-width="9" stroke-linecap="round"/>
+<circle cx="512" cy="512" r="470" fill="none" stroke="#0d0618" stroke-width="14"/>
+</svg>

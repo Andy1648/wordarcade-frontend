@@ -127,7 +127,7 @@ const selectAll = (e) => {
 };
 const loud = (s) => String(s || 'THAT CODE DID NOT WORK').toUpperCase();
 
-function SaveRow() {
+function SaveRow({ onCredits = null }) {
   const [code, setCode] = useState('');
   const [draft, setDraft] = useState('');
   const [msg, setMsg] = useState('');
@@ -170,6 +170,8 @@ function SaveRow() {
     <div className="sp-save" style={{ '--sp-c': '#2EFFE0' }}>
       <div className="sp-text">
         <span className="sp-label">SAVE PROGRESS</span>
+        {/* phones: CREDITS sits in this header's empty right end (the top bar is CLOSE's corner of the SOUND row there) */}
+        {onCredits ? <button type="button" className="sp-credits sp-credits--phone" onClick={onCredits}>CREDITS</button> : null}
         <span className="sp-sub">COPY YOUR SAVE CODE · PASTE IT ON ANY DEVICE TO GET EVERYTHING BACK</span>
       </div>
       {ask ? (
@@ -231,7 +233,7 @@ function ResetRow() {
   );
 }
 
-export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose, onChange }) {
+export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet = false, sfxMuted = false, onToggleSfx = null, onClose, onChange, onCredits = null }) {
   const [vol, setVol] = useState(() => (isEventSoundsEnabled() ? Math.round(getMasterVolume() * STEPS) : 0));
   // the level MUTE returns to (the last one heard; a fresh save un-mutes to the stored master volume)
   const [back, setBack] = useState(() => Math.max(1, Math.round(getMasterVolume() * STEPS)) || STEPS);
@@ -291,7 +293,7 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
       <Row tone="#FF4FA3" label="BEAT SYNC" sub="MENU BOUNCES TO THE MUSIC">
         <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
       </Row>
-      <SaveRow />
+      <SaveRow onCredits={onCredits ? () => { if (onClose) onClose(); onCredits(); } : null} />
       <ResetRow />
     </div>
   );
@@ -300,7 +302,16 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
   return createPortal(
     <div className="audio-panel--v2 sp-sheet" role="group" aria-label="Sound settings">
       {/* Andy oct14: CLOSE sits on TOP (was bottom-right, under every row) */}
-      <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
+      {/* CREDITS (Andy oct24 "put credits in settings"): beside CLOSE on the top bar — its menu link gave its corner to
+          NEWS + SETTINGS; the top bar already exists, so the sheet grows no taller */}
+      {onCredits ? (
+        <div className="sp-top">
+          <button type="button" className="sp-credits sp-credits--top" onClick={() => { if (onClose) onClose(); onCredits(); }}>CREDITS</button>
+          <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
+        </div>
+      ) : (
+        <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
+      )}
       {rows}
       {onToggleSfx ? (
         <Row tone="#FF6B3D" label="GAME SFX" sub="THIS MATCH">
