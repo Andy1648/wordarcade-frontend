@@ -200,6 +200,14 @@ html[data-beat='true'] .homepage-logo {
 .homepage-credits-link:hover { color: #C9B8E8; text-decoration: underline; }
 .homepage-credits-link.disabled { opacity: 0.5; pointer-events: none; }
 .hp-extras .homepage-live { flex-basis: 100%; text-align: right; }
+/* oct24: NEWS + SETTINGS (MenuUtility) — the bottom-right pair once the DAILY WHEEL took their top-right slot; same tiles */
+.hp-util { display: flex; align-items: center; gap: calc(14 * var(--u)); }
+.hp-util .kb--icon { width: var(--hp-tr); height: calc(var(--hp-tr) + 8px); }
+.hp-util .kb-iface { width: var(--hp-tr); height: var(--hp-tr); }
+.hp-util .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
+.hp-util .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
+.hp-icons .is-wheel .kb-art { width: calc(var(--hp-tr-ico) * 1.2); height: calc(var(--hp-tr-ico) * 1.2); overflow: visible; }
+.hp-icons .is-wheel .kb-art img { left: 0; top: 0; width: 100%; height: 100%; translate: none; object-fit: contain; }
 
 /* ---- the left rail: WINS / GEMS pills + SHOP · ROLL · INDEX · REBIRTH (kit, sized to the mockup) ---- */
 .hp-rail {

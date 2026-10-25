@@ -41,7 +41,8 @@ async function boot(page, seed, vp) {
   await menuReady(page);
 }
 async function openSettings(page) {
-  await page.locator('.hp-icons [data-nav="settings"]:visible').first().click();
+  // oct24 DAILY WHEEL: the cog is in the top-right cluster before the core reveal, the bottom-right one after
+  await page.locator('[data-nav="settings"]:visible').first().click();
   await page.locator('.sp-sheet').waitFor({ state: 'visible' });
 }
 const rebirths = (page) => page.evaluate(() => localStorage.getItem('taw.s2.rebirths')).catch(() => null);

@@ -55,6 +55,8 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
     cta = s.id === worn
       ? <button type="button" className="skp-cta is-off" onClick={() => wear(null)}>TAKE OFF</button>
       : <button type="button" className="skp-cta" onClick={() => wear(s.id)}>WEAR {s.name}</button>;
+  } else if (s.wheel) {
+    cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />WON ON THE DAILY WHEEL</span>;
   } else if (s.road) {
     cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />ON THE {s.tag.replace(/ MASTERY$/, '')} MASTERY ROAD</span>;
   } else if (!kitGateMet(s.id)) {
@@ -107,7 +109,7 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
           ) : null}
           <div className="skp-act">
             {cta}
-            {!own && !s.road ? <span className="skp-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span> : null}
+            {!own && !s.road && !s.wheel ? <span className="skp-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span> : null}
           </div>
         </div>
       </div>

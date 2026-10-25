@@ -32,7 +32,7 @@ const warm = () => { AudioPanel.preload(); };
 // the row is not rendered (the menu and every non-game screen have no SFX engine mounted).
 export default function AudioControls({
   accent = '#2EFFE0', musicMuted = false, onToggleMusic, variant = 'fixed',
-  sfxMuted = false, onToggleSfx = null,
+  sfxMuted = false, onToggleSfx = null, onCredits = null,
 }) {
   const [open, setOpen] = useState(false);
   const [snd, setSnd] = useState(() => ({ events: isEventSoundsEnabled(), clack: isClackEnabled() }));
@@ -48,6 +48,7 @@ export default function AudioControls({
         sfxMuted={sfxMuted}
         onToggleSfx={onToggleSfx}
         onSound={setSnd}
+        onCredits={onCredits}
         onClose={() => setOpen(false)}
       />
     </Suspense>

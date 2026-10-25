@@ -20,7 +20,7 @@
 // SVG. There is no CSS-drawn art and no character illustration — the <Mascot> PNG component is
 // untouched and simply has no place on this screen.
 import AudioControls from './AudioControls';
-import { MenuIcons, MenuRail } from './MenuNav';
+import { MenuIcons, MenuRail, MenuUtility } from './MenuNav';
 import BoostPill from '../frenzy/BoostPill';
 import LayeredWord from './LayeredWord';
 import { formatNum } from '../format';
@@ -152,6 +152,7 @@ export default function MobileMenu({
   ach,
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
+  wheel = null, // { onClick, dot } — THE DAILY WHEEL tile (oct24): takes the top row's NEWS + SETTINGS slot
   daily = null, // the DAILY CONTRACTS icon (contracts/DailyTile variant icon) — the icon cluster's first tile (oct21)
   dailyBlitz = null, // the DAILY BLITZ row (dailyBlitz/DailyBlitzTile variant row) — the mode list's first row
   railItems,
@@ -162,6 +163,8 @@ export default function MobileMenu({
   claimSlot = null,
   title = null, // STAGE 0 of the reveal (TitlePlay, variant phone): the hero + ONE PLAY instead of the rows + the rail
 }) {
+  // oct24: with the WHEEL up top, NEWS + SETTINGS join the rail row by the pills (CREDITS moves inside SETTINGS)
+  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? onCredits : null} />;
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
     .filter(Boolean);
@@ -179,7 +182,7 @@ export default function MobileMenu({
           WORD
         </h1>
         <div className="hp-m-topr">
-          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={news} daily={daily} settingsSlot={<AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />} navigating={navigating} />
+          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={wheel ? null : news} daily={daily} settingsSlot={wheel ? null : settingsSlot} wheel={wheel} navigating={navigating} />
         </div>
       </div>
 
@@ -320,11 +323,11 @@ export default function MobileMenu({
         gems={gems}
         navigating={navigating}
         className="hp-m-rail"
-        extra={
+        extra={wheel ? <MenuUtility news={news} settingsSlot={settingsSlot} navigating={navigating} className="hp-m-util" /> : (
           <button type="button" className={`hp-m-credits${navigating ? ' is-disabled' : ''}`} onClick={onCredits} disabled={navigating}>
             CREDITS
           </button>
-        }
+        )}
       />
       </>}
     </div>

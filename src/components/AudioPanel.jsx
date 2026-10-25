@@ -33,7 +33,7 @@ function Toggle({ on, onClick, glyph, label, accent }) {
   );
 }
 
-export default function AudioPanel({ accent, musicMuted, onToggleMusic, sfxMuted, onToggleSfx, onSound, onClose }) {
+export default function AudioPanel({ accent, musicMuted, onToggleMusic, sfxMuted, onToggleSfx, onSound, onClose, onCredits = null }) {
   const [events, setEvents] = useState(() => isEventSoundsEnabled());
   const [clack, setClack] = useState(() => isClackEnabled());
   const [vol, setVol] = useState(() => getMasterVolume());
@@ -52,6 +52,7 @@ export default function AudioPanel({ accent, musicMuted, onToggleMusic, sfxMuted
         sfxMuted={sfxMuted}
         onToggleSfx={onToggleSfx}
         onChange={tell}
+        onCredits={onCredits}
         onClose={() => { tell(); onClose(); }}
       />
     );

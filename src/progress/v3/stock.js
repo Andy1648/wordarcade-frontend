@@ -129,6 +129,17 @@ export function grantOverdrive(mult = 5, min = 5, now = Date.now()) {
   return startOverdrive(mult, min, now);
 }
 
+/** A free XP / WINS / LUCK boost (THE DAILY WHEEL's BOOST slots): the SAME timer a STOCK buy starts (a running one is
+ *  extended). Returns true when it applied. */
+export function grantStockFx(kind, min, now = Date.now()) {
+  if (!SEASON2 || !EXTENDABLE_FX.includes(kind) || !(min > 0)) return false;
+  const f = readFx();
+  f[kind] = Math.max(f[kind], now) + Math.floor(min) * 60000;
+  const ok = writeJson(STOCK_FX_KEY, f);
+  if (ok) announceTimers();
+  return ok;
+}
+
 function applyEffect(it, now) {
   if (it.fx) {
     const f = readFx();
