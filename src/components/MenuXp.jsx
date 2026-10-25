@@ -421,17 +421,23 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     if (!look || !look.art || prefersReducedMotion()) { img.style.display = 'none'; return; }
     if (img.getAttribute('src') !== look.art) img.setAttribute('src', look.art);
     img.style.display = 'block'; // the CSS rests it at display:none
+    // the number must read ON the painted burst: white, a heavy black outline + hard shadow (the burst carries the look)
+    const num = pop.children[1];
+    num.style.color = '#FFFFFF';
+    num.style.webkitTextStroke = '5px #000';
+    num.style.textShadow = '3px 3px 0 #000';
     const rot = Math.random() * 60 - 30;
     if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
     img.style.willChange = 'transform, opacity'; // only for the burst's life
     img.__burst = img.animate([
-      // the easing lives on each step (a whole-run ease-out raced it through its hold): slam in, HOLD, then fade
-      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 10}deg) scale(1.12)`, opacity: 1, offset: 0.14, easing: 'ease-out' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 18}deg) scale(1)`, opacity: 1, offset: 0.3, easing: 'linear' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 26}deg) scale(1.02)`, opacity: 1, offset: 0.62, easing: 'ease-in' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 34}deg) scale(1.1)`, opacity: 0 },
-    ], { duration: 820, easing: 'linear' });
+      // a crisp slam (easing per step — a whole-run ease-out raced it through its hold): pops to 1.18 at full opacity,
+      // settles, HOLDS, then a quick fade — 420 ms, finite
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.35)`, opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 8}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 12}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 16}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 22}deg) scale(1.12)`, opacity: 0 },
+    ], { duration: 420, delay: 90, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
   function dressPop(node, look, colour, hardShadow) {
