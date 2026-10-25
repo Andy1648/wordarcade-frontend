@@ -1,17 +1,47 @@
-// TransitionOverlay.jsx — the ONE screen-change transition (Job 12). A single directional wipe
-// panel, TRANSFORM + OPACITY only, <=240ms, fired over every view change (the screen has already
-// swapped underneath — this is purely cosmetic, position:fixed, pointer-events:none, so it can
-// never gate which screen is shown). Direction encodes the nav sense:
-//   forward (menu -> deeper: a mode, a dialog, the game) — the panel sweeps in from the RIGHT,
-//   back    (returning to the menu)                       — the panel sweeps in from the LEFT.
-// The small word keeps the app's character but is opacity-only. One enter + one exit, one language.
+// TransitionOverlay.jsx — the ONE pooled screen-change wipe. Mounted ONCE by App (never keyed, never
+// remounted); lib/navWipe.js replays this same node through WAAPI for every major navigation: every
+// `view` change (shop / stats / leaderboard / daily blitz / the games …) and the menu's own sheets
+// (GEARS / ROLL, CONTRACTS, REWARDS, PROFILE). Purely cosmetic: position:fixed, pointer-events:none,
+// laid over a screen that has ALREADY swapped — it can never gate which screen is shown.
+//   forward (menu -> deeper) — the band slaps in from the LEFT and clears to the right;
+//   back    (returning)      — mirrored (the track flips; the word never does).
+// ART: the band is flat house-colour slabs + the mascot-run PNG riding its leading edge. A painted band
+// (public/fx/transition/wipe-band.webp — requested from the hero-art session) drops into WIPE_ART.
+import { useEffect, useRef } from 'react';
+import { registerWipe } from '../lib/navWipe';
 import './TransitionOverlay.css';
 
-export default function TransitionOverlay({ word, dir = 'forward' }) {
+// Painted wipe band (transparent webp, drawn travelling left→right). null until the art lands.
+const WIPE_ART = null;
+
+export default function TransitionOverlay() {
+  const root = useRef(null);
+  const track = useRef(null);
+  const band = useRef(null);
+  const mascot = useRef(null);
+  const word = useRef(null);
+  useEffect(
+    () => registerWipe({ root: root.current, track: track.current, band: band.current, mascot: mascot.current, word: word.current }),
+    [],
+  );
   return (
-    <div className="transition-overlay" data-dir={dir} aria-hidden="true">
-      <div className="transition-panel" />
-      {word && <div className="transition-word">{word}</div>}
+    <div ref={root} className="transition-overlay" data-state="idle" data-dir="forward" aria-hidden="true">
+      <div ref={track} className="tw-track">
+        <div ref={band} className={`tw-band${WIPE_ART ? ' has-art' : ''}`}>
+          {WIPE_ART ? (
+            <img className="tw-art" src={WIPE_ART} alt="" decoding="async" draggable="false" />
+          ) : (
+            <>
+              <span className="tw-slab tw-slab--lead" />
+              <span className="tw-slab tw-slab--main" />
+              <span className="tw-slab tw-slab--trail" />
+            </>
+          )}
+          {/* src is set on the first gesture (navWipe.warmMascot) — never fetched before one */}
+          <img ref={mascot} className="tw-mascot" data-src="/mascot-run.webp" alt="" decoding="async" draggable="false" />
+        </div>
+      </div>
+      <div className="tw-word-wrap"><div ref={word} className="tw-word" /></div>
     </div>
   );
 }

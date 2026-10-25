@@ -4,10 +4,12 @@
 // exists, and several App effects/renders depend on it); this hook RECEIVES `view`/`setView` and owns
 // everything around them — the Persona-5 bar wipe, its refs, and the shop/stats/rebirth/solo nav
 // helpers. Nothing here changes behaviour: same words, same 240ms clear, same nav-depth direction.
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from '../satRush/config';
 import { CHAIN_VIEW, CHAIN_TRANSITION_WORD, FUSE_VIEW, FUSE_TRANSITION_WORD } from '../solo/config';
 import { CG_ENTRY } from '../cg/cgEntry';
+import { DAILY_BLITZ_VIEW } from '../dailyBlitz/launch.js';
+import { playWipe } from '../lib/navWipe';
 
 // The word flashed mid-wipe when navigating to each view. (Moved verbatim from App.jsx.)
 const TRANSITION_WORDS = {
@@ -18,6 +20,13 @@ const TRANSITION_WORDS = {
   browse: 'JOIN ROOM',
   room: 'SQUAD UP',
   credits: 'CREDITS',
+  // the menu's major doors (Andy oct24 "transition screens for all buttons (or at least major ones)")
+  shop: 'SHOP',
+  stats: 'STATS',
+  leaderboard: 'TOP DOGS',
+  collection: 'STASH',
+  achievements: 'BADGES',
+  [DAILY_BLITZ_VIEW]: 'DAILY BLITZ',
   [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
   [CHAIN_VIEW]: CHAIN_TRANSITION_WORD,
   [FUSE_VIEW]: FUSE_TRANSITION_WORD,
@@ -31,51 +40,31 @@ const NAV_DEPTH = {
   credits: 1, stats: 1, leaderboard: 1, shop: 1, collection: 1, achievements: 1,
   browse: 1, lobby: 1,
   room: 2, game: 2, 'cg-arm': 2,
-  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
+  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2, [DAILY_BLITZ_VIEW]: 2,
 };
 
-const COALESCE_MS = 900;
-
 export function useOverlays({ view, setView, sound, gameType }) {
-  // The COSMETIC diagonal-bar wipe overlay. `transition` is the active overlay ({ word, key, dir })
-  // or null; the key re-keys the overlay so each wipe replays.
-  const [transition, setTransition] = useState(null);
-  const transitionKeyRef = useRef(0);
-  const transitionClearRef = useRef(null);
-
   // Which menu control ('shop' | 'stats' | 'rebirth' | null) opened the overlay we're in, so the
   // homepage can restore focus to it on close (a11y). A ref: read once by the remounting Homepage.
   const overlayReturnRef = useRef(null);
   // Which view the shared Shop/Rebirth overlay opens into ('shop' | 'rebirth'). A ref: never renders.
   const shopViewRef = useRef('shop');
 
-  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
-  // Every transition is fired through this single helper, so they all look and sound identical (same
-  // five bars, same whoosh, same <=250ms). The overlay is purely cosmetic — the screen has already
-  // swapped underneath — so this only lays the bars on top and clears them.
+  // ---- ONE consistent wipe for EVERY screen change ----
+  // Every transition is fired through this single helper (and lib/navWipe for the menu's sheets), so they
+  // all look and sound identical. The overlay is purely cosmetic — the screen has already swapped
+  // underneath — so this only lays the band on top.
   // ONE WIPE PER JOURNEY (Andy oct14 "word race has this weird yellow column at the start"): a quick match
   // changes view three times in ~2 s (READY? → SQUAD UP → LET'S GO!), and the last wipe ran while the race
   // mounted — on a busy phone the panel stalled mid-screen as a bright column over the countdown. A view
   // change within COALESCE_MS of the last wipe now swaps without one (the screen still swaps instantly).
-  const lastWipeAtRef = useRef(-Infinity);
+  // POOLED (oct24): the wipe is ONE always-mounted node (TransitionOverlay) replayed by lib/navWipe — no
+  // state, no re-render, no node per transition. playWipe owns the coalesce clock + reduce-motion check.
   const runTransition = useCallback(
     (word, dir = 'forward') => {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (now - lastWipeAtRef.current < COALESCE_MS) return;
-      lastWipeAtRef.current = now;
-      transitionKeyRef.current += 1;
-      setTransition({ word, key: transitionKeyRef.current, dir });
-      sound.whoosh(); // the wipe sweeps across
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-      transitionClearRef.current = setTimeout(() => setTransition(null), 240); // one language, <=250ms
+      if (playWipe(word, dir)) sound.whoosh(); // the wipe sweeps across
     },
     [sound]
-  );
-  useEffect(
-    () => () => {
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-    },
-    []
   );
 
   // Fire the wipe on every real view change. The screen has already swapped (it renders off `view`);
@@ -121,7 +110,6 @@ export function useOverlays({ view, setView, sound, gameType }) {
   const goToFuse = () => setView(FUSE_VIEW);
 
   return {
-    transition,
     runTransition,
     shopViewRef,
     overlayReturnRef,

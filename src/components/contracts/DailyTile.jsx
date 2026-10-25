@@ -10,6 +10,8 @@ import { getStreak } from '../../progress/streak.js';
 import { kitPlay } from '../kit/motion.js';
 import { KitIconButton } from '../kit/KitNavButton.jsx';
 import { formatNum } from '../../format';
+import { playWipe } from '../../lib/navWipe';
+import { useSound } from '../../contexts/SoundContext';
 
 const ContractsSheet = lazy(() => import('./ContractsSheet.jsx'));
 const EMPTY = { picks: ['a', 'b', 'c'], done: [] }; // three empty pips until today is dealt
@@ -20,6 +22,15 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
   const [streak, setStreak] = useState(() => getStreak().count);
   const [open, setOpen] = useState(false);
   const flame = useRef(null);
+  // NAV WIPE (oct24): the CONTRACTS sheet opens/closes under the same pooled wipe as every major door — after
+  // the commit (an effect), so the sheet is already there; purely cosmetic.
+  const { sound } = useSound();
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (wasOpen.current === open) return;
+    wasOpen.current = open;
+    if (playWipe(open ? 'CONTRACTS' : '', open ? 'forward' : 'back')) sound.whoosh();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
   const doneRef = useRef(s.done.length);
   useEffect(() => {
     const on = () => {
