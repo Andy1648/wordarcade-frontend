@@ -13,7 +13,7 @@
 .dw {
   --dw-c: var(--k-pink, #FF4FA3);
   /* the wheel's diameter: fits 360x640 phones and 1280x600 laptops with the head + foot, never scrolls */
-  --wd: min(400px, 84vw, calc(100dvh - 300px));
+  --wd: min(440px, 84vw, calc(100dvh - 272px));
   position: relative;
   width: min(480px, 100%);
   max-height: 100%;
@@ -81,15 +81,17 @@
 .dw-streak-b { color: #fff; }
 
 /* ---- the wheel ---- */
-.dw-stage { position: relative; padding-top: calc(var(--wd) * 0.07); }
+.dw-stage { position: relative; }
 .dw-wheel {
   position: relative;
   width: var(--wd);
   height: var(--wd);
   container-type: size;
 }
-.dw-rotor, .dw-face, .dw-rim { position: absolute; inset: 0; width: 100%; height: 100%; }
-.dw-rotor { transform: rotate(0deg); }
+/* the painted RIM is the whole wheel box; its open centre is 0.309 of its width (radius), so the code-exact FACE
+   (face.svg: disc = 0.918 of its box) sits in a rotor box of 0.62 / 0.918 = 67.5% of the wheel, centred, under the rim */
+.dw-face, .dw-rim { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dw-rotor { position: absolute; inset: 16.24%; transform: rotate(0deg); container-type: size; }
 .dw-face, .dw-rim { pointer-events: none; user-select: none; }
 .dw-slice {
   position: absolute;
@@ -124,8 +126,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 26cqw;
-  height: 26cqw;
+  width: 17.5cqw;
+  height: 17.5cqw;
   min-width: 64px;
   min-height: 64px;
   margin: 0;
@@ -139,10 +141,10 @@
 .dw-hub-l {
   position: relative;
   font-family: 'Bungee', cursive;
-  font-size: 6.4cqw;
+  font-size: 4.3cqw;
   text-transform: uppercase;
   color: #fff;
-  -webkit-text-stroke: 0.8cqw #000;
+  -webkit-text-stroke: 0.55cqw #000;
   paint-order: stroke fill;
 }
 .dw-hub:disabled { cursor: default; }
@@ -150,9 +152,10 @@
 .dw-pointer {
   position: absolute;
   left: 50%;
-  top: -8cqw;
-  width: 10cqw;
-  margin-left: -5cqw;
+  top: 12cqw; /* the tip lands on the face's top edge, just inside the rim */
+  width: 7cqw;
+  margin-left: -3.5cqw;
+  z-index: 1;
   transform-origin: 50% 12%;
   pointer-events: none;
 }
