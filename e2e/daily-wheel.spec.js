@@ -228,3 +228,34 @@ for (const [id, name, tab, slotKey] of [['lucky', 'LUCKY', 'SIDEKICK', 'pet'], [
     });
   }
 }
+
+// Andy oct25: "idk why u didnt add click outside of spin wheel to exit (that's a default)". Tap outside / Escape / ✕
+// close it — but never mid-spin: the result lands (pays + claims) before anything can close the panel.
+test('CLOSE: tap outside + Escape + ✕ close the wheel; mid-spin all three are ignored until the result lands', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const db = await boot(page, { gems: 200, slot: 2 });
+  const wheel = page.getByTestId('daily-wheel');
+  // tap outside (the scrim, not the panel)
+  await page.locator('[data-nav="wheel"]').click();
+  await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+  await page.mouse.click(12, 12);
+  await expect(wheel).toHaveCount(0);
+  // Escape
+  await page.locator('[data-nav="wheel"]').click();
+  await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(wheel).toHaveCount(0);
+  // mid-spin: a slow server keeps the wheel in its spin; outside / Escape / ✕ do nothing
+  await page.route('https://lb.e2e.invalid/**/rpc/lb_wheel_spin', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return route.fallback(); });
+  await page.locator('[data-nav="wheel"]').click();
+  await wheel.getByTestId('wheel-spin').click();
+  await page.mouse.click(12, 12);
+  await page.keyboard.press('Escape');
+  await expect(wheel.getByTestId('wheel-close')).toBeDisabled();
+  await expect(wheel).toBeVisible();
+  await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 15000 });
+  expect(await gemBal(page)).toBe(260);
+  await expect.poll(() => db.calls.claim).toBe(1);
+  await page.mouse.click(12, 12);
+  await expect(wheel).toHaveCount(0);
+});

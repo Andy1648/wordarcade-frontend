@@ -43,6 +43,7 @@
   cursor: pointer;
 }
 .dw-close:active { transform: translate(2px, 2px); }
+.dw-close:disabled { opacity: 0.35; cursor: default; } /* mid-spin: the result lands before anything closes */
 .dw-head {
   display: flex;
   flex-direction: column;
@@ -155,7 +156,9 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  min-height: 92px;
+  /* ONE height for every phase (ready: SPIN + ODDS = 156, landed: result + next + ODDS = 159): the foot used to shrink
+     to 92 while spinning, so the centred panel re-centred and the wheel JUMPED 32px the instant it started to turn */
+  min-height: 160px;
 }
 .dw-msg {
   margin: 0;
@@ -286,5 +289,4 @@
 }
 @media (max-height: 560px) {
   .dw { --wd: min(300px, 84vw, calc(100dvh - 250px)); gap: 6px; padding-top: 8px; }
-  .dw-foot { min-height: 70px; }
 }

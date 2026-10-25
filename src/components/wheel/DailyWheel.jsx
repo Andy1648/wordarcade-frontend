@@ -3,10 +3,13 @@
 // chunk, off the menu's first paint.
 //
 //   SPIN → the server rolls (lb_wheel_spin) while the wheel winds back; then ONE finite WAAPI rotate (transform only,
-//   ~5 s ease-out) lands on the server's slot at a random point inside it. The pointer ticks on every peg crossing —
-//   the crossings are precomputed from the angle + the easing (no per-frame reads), and each tick replays ONE pooled
-//   WAAPI flick on the single pointer node + a Web Audio click. Landed → the result pops, the save is paid
+//   wheel.js spinPlan: a long friction decel a hair past the landing point, then the flapper nudges it home — one
+//   timeline, no seam, no end snap). The POINTER is a flapper baked off that SAME curve (wheel.js flapperTrack) into
+//   one composited WAAPI track sharing the rotor's start time — pegs push it up, it snaps home after each — and every
+//   peg's click is scheduled on the Web Audio clock at its exact moment (no timers, no per-frame main-thread work). Landed → the result pops, the save is paid
 //   (payLanded, once) and the server hears the claim.
+//   CLOSE: ✕, Escape, or a tap outside the panel — all ignored mid-spin (the result must land before it can close).
+//   Every wheel image is decoded before SPIN is offered, and the prize art is decoded while the wheel turns.
 //   ODDS — the published table, one tap away (the server's own weights).
 //   AD SPIN — behind WHEEL_AD_ON (client) AND the server's ad_on; OFF until rewarded ads are approved.
 // Nothing loops: at rest the wheel is still. REDUCE MOTION parks the wheel on the result with no spin.
@@ -19,7 +22,7 @@ import { reduceMotion } from '../../lib/reduceMotion.js';
 import { ready as sfxReady } from '../../audio/gameSounds';
 import { tone, pentFreq, NOTE } from '../../audio/audioCore.js';
 import {
-  WHEEL_SLOTS, SLICE_DEG, WHEEL_AD_ON, artSrc, oddsRows, landAngle, pegCrossings, timeAtProgress, SPIN_EASE,
+  WHEEL_SLOTS, SLICE_DEG, WHEEL_AD_ON, artSrc, oddsRows, landAngle, spinPlan, flapperTrack,
   resultText, bonusText, nextBonus, payLanded, noteSpun, readWheel, wheelDay,
 } from '../../progress/wheel.js';
 import { wheelState, spinWheel, claimWheel } from '../../leaderboard/serverWheel.js';
@@ -27,14 +30,17 @@ import { grantGems } from '../../progress/gemsCore.js';
 import { grantStockFx } from '../../progress/v3/stock.js';
 import { grantKit, kitById, kitSrc } from '../../cast/kit.js';
 import { showRewarded, rewardedReady } from '../../ads/rewarded.js';
+import { holdBeats } from '../../hooks/useBeatSync';
 
-const SPIN_MS = 5200;
+// the panel's own pointer moves never reach the menu's window listeners (wall parallax / magnetic cards): each one
+// restyled ~350 menu nodes a frame UNDER the wheel while it spun (measured: 400 ms of style recalc per spin at 1x CPU)
+const stopMenuPointer = (e) => e.stopPropagation();
+
 const PAY = { grantGems, grantFx: grantStockFx, grantKit };
 
-function sndTick(i) {
-  const ctx = sfxReady();
-  if (!ctx) return;
-  tone(ctx.currentTime, { freq: pentFreq(NOTE.G4 + (i % 2)), type: 'square', dur: 0.03, gain: 0.05, attack: 0.002 });
+// one peg click, scheduled on the audio clock at `when` (s)
+function sndTickAt(when, i) {
+  tone(when, { freq: pentFreq(NOTE.G4 + (i % 2)), type: 'square', dur: 0.03, gain: 0.05, attack: 0.002 });
 }
 function sndLand(big) {
   const ctx = sfxReady();
@@ -55,6 +61,14 @@ function turnIcons(els, from, to, opts) {
     return el.animate([{ transform: icoPose(i, from) }, { transform: icoPose(i, to) }], opts);
   });
 }
+// the same, riding a multi-leg keyframe plan (each icon's keyframes mirror the rotor's, offsets + easings kept)
+function turnIconsKf(els, kf, angles, opts) {
+  return els.map((el, i) => {
+    if (!el) return null;
+    el.style.willChange = 'transform';
+    return el.animate(kf.map((k, j) => ({ ...k, transform: icoPose(i, angles[j]) })), opts);
+  });
+}
 function settleIcons(els, anims, rotor) {
   anims.forEach((a) => { if (a) a.cancel(); });
   els.forEach((el) => { if (el) el.style.willChange = ''; });
@@ -68,6 +82,15 @@ function prizeArt(s) {
   return artSrc(WHEEL_SLOTS[s.slot].icon);
 }
 
+// decode an image before its moment (a decode mid-animation = a dropped frame)
+const decodeSrc = (src) => {
+  if (typeof Image === 'undefined' || !src) return Promise.resolve();
+  const im = new Image();
+  im.src = src;
+  return im.decode ? im.decode().catch(() => {}) : Promise.resolve();
+};
+const WHEEL_ART = ['face', 'rim', 'hub', 'pointer', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc);
+
 export default function DailyWheel({ onClose }) {
   const [st, setSt] = useState({ phase: 'load' }); // load | off | ready | spinning | landed | done
   const [odds, setOdds] = useState(false);
@@ -78,6 +101,27 @@ export default function DailyWheel({ onClose }) {
   const restRef = useRef(0); // the wheel's current angle (deg)
   const timers = useRef([]);
   const live = useRef(true);
+  const phaseRef = useRef('load');
+  phaseRef.current = st.phase;
+  // close: never mid-spin (the landing pays + claims; it must be seen)
+  const tryClose = useCallback(() => { if (phaseRef.current !== 'spinning') onClose?.(); }, [onClose]);
+  // while the wheel is up: hold the music-beat pops (each restyles the whole document) and tell the wall to stop its
+  // cursor glide (WallScene reads html[data-modal-cover]) — nothing under the scrim may restyle per frame mid-spin
+  useEffect(() => {
+    const release = holdBeats();
+    const de = document.documentElement;
+    de.setAttribute('data-modal-cover', '');
+    return () => { release(); de.removeAttribute('data-modal-cover'); };
+  }, []);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      if (odds) setOdds(false); else tryClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [odds, tryClose]);
 
   const poseIcons = useCallback((rotor) => poseAll(icoRefs.current, rotor), []);
 
@@ -92,7 +136,7 @@ export default function DailyWheel({ onClose }) {
   useEffect(() => {
     live.current = true;
     const pending = timers.current;
-    wheelState().then((r) => {
+    Promise.all([wheelState(), Promise.race([Promise.all(WHEEL_ART.map(decodeSrc)), new Promise((ok) => setTimeout(ok, 1500))])]).then(([r]) => {
       if (!live.current) return;
       if (r.off) { setSt({ phase: 'off' }); return; }
       const paid = readWheel().paid;
@@ -170,24 +214,26 @@ export default function DailyWheel({ onClose }) {
       return;
     }
     const start = from - 14;
-    const so = { duration: SPIN_MS, easing: SPIN_EASE, fill: 'forwards' };
-    const a = rotor.animate([{ transform: `rotate(${start}deg)` }, { transform: `rotate(${to}deg)` }], so);
-    const spinIcons = turnIcons(icoRefs.current, start, to, so);
+    decodeSrc(prizeArt(s)); // the result chip's art: decoded while the wheel turns
+    const plan = spinPlan(start, to);
+    const so = { duration: plan.ms, fill: 'forwards' };
+    const a = rotor.animate(plan.keyframes, so);
+    const spinIcons = turnIconsKf(icoRefs.current, plan.keyframes, [start, plan.peak, to], so);
     if (wind) wind.cancel();
     windIcons.forEach((w) => { if (w) w.cancel(); });
-    // the pointer ticks: precomputed peg crossings → setTimeouts; ONE pooled flick on the one pointer node
+    // THE FLAPPER: baked off the SAME curve into one composited WAAPI track, started with the rotor; the ticks go on the
+    // AUDIO clock at their exact peg moments (no timers, no per-frame main-thread work: a busy page can't hitch either)
     const ptr = pointerRef.current;
-    pegCrossings(start, to).forEach((deg, i) => {
-      const at = timeAtProgress((deg - start) / (to - start)) * SPIN_MS;
-      timers.current.push(setTimeout(() => {
-        if (!live.current) return;
-        sndTick(i);
-        if (ptr) {
-          const prev = ptr.__tick;
-          if (prev) prev.cancel();
-          ptr.__tick = ptr.animate([{ transform: 'rotate(-22deg)' }, { transform: 'rotate(0deg)' }], { duration: 140, easing: 'ease-out' });
-        }
-      }, at));
+    const track = flapperTrack(plan);
+    const flap = ptr ? ptr.animate(track.frames, { duration: plan.ms, easing: 'linear' }) : null;
+    if (ptr) ptr.style.willChange = 'transform';
+    a.ready.then(() => {
+      if (!live.current) return;
+      if (flap && a.startTime != null) flap.startTime = a.startTime; // one clock for both
+      const ctx = sfxReady();
+      if (!ctx) return;
+      const t0 = ctx.currentTime - (Number(a.currentTime) || 0) / 1000;
+      track.ticks.forEach((ms, i) => { try { sndTickAt(t0 + ms / 1000, i); } catch { /* audio */ } });
     });
     a.onfinish = () => {
       if (!live.current) return;
@@ -195,6 +241,7 @@ export default function DailyWheel({ onClose }) {
       a.cancel();
       settleIcons(icoRefs.current, spinIcons, to % 360);
       rotor.style.willChange = '';
+      if (ptr) ptr.style.willChange = ''; // the track ends at rest (rotate 0)
       land(s, to % 360);
     };
   }, [st.phase, land]);
@@ -212,9 +259,9 @@ export default function DailyWheel({ onClose }) {
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="dw-scrim" role="dialog" aria-modal="true" aria-label="Daily wheel" data-testid="daily-wheel">
+    <div className="dw-scrim" role="dialog" aria-modal="true" aria-label="Daily wheel" data-testid="daily-wheel" onClick={(e) => { if (e.target === e.currentTarget) tryClose(); }} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="dw">
-        <button type="button" className="dw-close" onClick={onClose} aria-label="Close the daily wheel">✕</button>
+        <button type="button" className="dw-close" onClick={tryClose} disabled={st.phase === 'spinning'} aria-label="Close the daily wheel" data-testid="wheel-close">✕</button>
         <div className="dw-head">
           <h2 className="dw-title">DAILY WHEEL</h2>
           <span className={`dw-streak${bonusNow ? ` is-${bonusNow}` : ''}`} aria-label={`Spin streak ${streak} days`}>

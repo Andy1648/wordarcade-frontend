@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  WHEEL_SLOTS, SLICE_DEG, WHEEL_COSMETICS, WHEEL_AD_ON, landAngle, slotAt, pegCrossings, timeAtProgress, normalizeSpin,
+  WHEEL_SLOTS, SLICE_DEG, WHEEL_COSMETICS, WHEEL_AD_ON, landAngle, slotAt, pegCrossings, timeAtProgress, normalizeSpin, spinPlan, pegsPast, flapperStep, bezierAt, flapperTrack,
   oddsRows, nextBonus, payLanded, readWheel, WHEEL_KEY,
 } from './wheel.js';
 import { kitById } from '../cast/kit.js';
@@ -110,4 +110,58 @@ test('payLanded pays a spin into the save ONCE; a claimed spin (another device) 
 test('the ad spin is OFF until rewarded ads are approved', () => {
   assert.equal(WHEEL_AD_ON, false);
   assert.match(SQL, /ad_on boolean not null default false/);
+});
+
+test('spinPlan: one continuous curve — starts at start, ends exactly on the landing angle, overshoot never changes the slot', () => {
+  for (const s of WHEEL_SLOTS) {
+    for (const r of [0, 0.5, 0.999]) {
+      const start = 37 - 14;
+      const to = landAngle(s.slot, 37, () => r, 5);
+      const p = spinPlan(start, to);
+      assert.equal(p.angleAt(0), start);
+      assert.ok(Math.abs(p.angleAt(p.ms) - to) < 1e-6);
+      assert.ok(p.over > 0 && p.over <= 3, `over ${p.over}`);
+      assert.equal(slotAt(p.peak), s.slot, 'the overshoot stays inside the won slice');
+      assert.equal(pegsPast(p.peak), pegsPast(to), 'no peg is crossed by the settle');
+      // monotonic until the peak, then a short settle back; no frame-to-frame jump bigger than the launch speed
+      let prev = start;
+      let maxStep = 0;
+      for (let t = 0; t <= p.ms; t += 16) {
+        const a = p.angleAt(t);
+        if (t <= p.ms * 0.9) assert.ok(a >= prev - 1e-9, 'decel never reverses');
+        maxStep = Math.max(maxStep, Math.abs(a - prev));
+        prev = a;
+      }
+      assert.ok(maxStep < 32, `fastest frame ${maxStep.toFixed(1)}° (no strobing)`);
+      // the last second is a crawl: under a slice in total
+      assert.ok(Math.abs(p.angleAt(p.ms * 0.9) - p.angleAt(p.ms * 0.9 - 1000)) < SLICE_DEG * 1.2);
+    }
+  }
+});
+
+test('bezierAt + the flapper: ease endpoints exact; the flapper is pushed by a peg and springs home', () => {
+  assert.equal(bezierAt([0.2, 0.62, 0.15, 1], 0), 0);
+  assert.equal(bezierAt([0.2, 0.62, 0.15, 1], 1), 1);
+  assert.ok(bezierAt([0.2, 0.62, 0.15, 1], 0.1) > 0.3, 'a fast launch');
+  const mid = SLICE_DEG / 2 + SLICE_DEG * 0.5; // halfway between pegs: free
+  assert.equal(flapperStep(0, mid, 16, false), 0);
+  const near = SLICE_DEG / 2 + SLICE_DEG * 0.95; // the next peg almost here: pushed up
+  assert.ok(flapperStep(0, near, 16, false) > 15);
+  const after = flapperStep(26, SLICE_DEG / 2 + 1, 120, false);
+  assert.ok(after < 26 * 0.2, 'springs home fast');
+});
+
+test('flapperTrack: one baked keyframe list (offsets 0..1, ends at rest) + one tick per peg, in order, inside the spin', () => {
+  const start = 10;
+  const to = landAngle(4, 24, () => 0.3, 5);
+  const p = spinPlan(start, to);
+  const f = flapperTrack(p);
+  assert.equal(f.frames[0].offset, 0);
+  assert.equal(f.frames.at(-1).offset, 1);
+  assert.equal(f.frames.at(-1).transform, 'rotate(0deg)');
+  assert.ok(f.frames.every((k, i) => i === 0 || k.offset > f.frames[i - 1].offset));
+  assert.equal(f.ticks.length, pegCrossings(start, p.peak).length);
+  assert.ok(f.ticks.every((t, i) => t >= 0 && t <= p.ms && (i === 0 || t >= f.ticks[i - 1])));
+  // ticks thin out: the last gap is far longer than the first (the wheel crawls at the end)
+  assert.ok(f.ticks.at(-1) - f.ticks.at(-2) > 6 * (f.ticks[1] - f.ticks[0]));
 });

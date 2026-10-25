@@ -36,7 +36,7 @@ test('the stock: seven items (no gem scaling) at the odd gem prices, rarity band
   assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'epic', 'legendary']);
   assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 2, legroll: 1 });
   // Andy oct8 "boost what?": every item says what it boosts and for how long
-  for (const it of ST.STOCK) assert.ok(it.name && it.what && (it.time || it.buyable === false), `${it.id} names what it boosts`);
+  for (const it of ST.STOCK) assert.ok(it.name && (it.ticket || (it.what && (it.time || it.buyable === false))), `${it.id} names what it boosts`);
   assert.equal(ST.restockIn(T0), 3600 - 37);
   assert.equal(ST.restockIn(T0 + 3_562_500), 1);
   assert.equal(ST.RESTOCK_MS, 60 * 60 * 1000, 'the stock restocks every hour (Andy oct16)');

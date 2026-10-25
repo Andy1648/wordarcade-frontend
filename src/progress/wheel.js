@@ -97,6 +97,92 @@ export function timeAtProgress(p) {
   return bz((lo + hi) / 2, x1, x2);
 }
 
+// ---- THE SPIN PLAN (Andy oct25: "the scroll wheel is a bit too AI slop … unsmooth") ---------------------------------
+// ONE continuous WAAPI rotate in two keyframe legs on ONE timeline: a long friction DECEL (fast launch, the last turn a
+// crawl) that runs a hair PAST the landing point, then the flapper nudges it back to rest (velocity is zero at the
+// joint, so there is no visible seam and no snap). The pointer + the tick sound read the SAME timeline each frame via
+// spinAngleAt() — pure math off anim.currentTime, never a timer and never a layout read.
+export const SPIN_MS = 5600;
+export const SPIN_DECEL = [0.2, 0.62, 0.15, 1]; // launch slope ~3.1x the average speed; the tail eases to a dead stop
+export const SPIN_SETTLE = [0.42, 0, 0.36, 1];
+const SETTLE_AT = 0.9; // the decel leg's share of the duration
+const bez = ([a, b, c, d]) => `cubic-bezier(${a}, ${b}, ${c}, ${d})`;
+/** A CSS cubic-bezier evaluated at time-fraction x (0..1) → progress (0..1). Bisection on the x curve. */
+export function bezierAt([x1, y1, x2, y2], x) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const f = (t, p, q) => 3 * p * t * (1 - t) ** 2 + 3 * q * t * t * (1 - t) + t ** 3;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 26; i += 1) {
+    const m = (lo + hi) / 2;
+    if (f(m, x1, x2) < x) lo = m; else hi = m;
+  }
+  return f((lo + hi) / 2, y1, y2);
+}
+/** The spin from `start` to the landing angle `to` (deg): { keyframes, ms, over, angleAt(ms) }. The overshoot stops
+ *  ≥ 2° short of the next peg, so it never crosses into the next slot (the result never changes after it shows). */
+export function spinPlan(start, to, ms = SPIN_MS) {
+  const nextPeg = pegCrossings(to, to + SLICE_DEG)[0] ?? to + SLICE_DEG;
+  const over = Math.max(0, Math.min(3, nextPeg - to - 2));
+  const peak = to + over;
+  const keyframes = [
+    { transform: `rotate(${start}deg)`, easing: bez(SPIN_DECEL) },
+    { transform: `rotate(${peak}deg)`, offset: SETTLE_AT, easing: bez(SPIN_SETTLE) },
+    { transform: `rotate(${to}deg)` },
+  ];
+  const angleAt = (t) => {
+    const x = Math.max(0, Math.min(1, t / ms));
+    if (x <= SETTLE_AT) return start + (peak - start) * bezierAt(SPIN_DECEL, x / SETTLE_AT);
+    return peak + (to - peak) * bezierAt(SPIN_SETTLE, (x - SETTLE_AT) / (1 - SETTLE_AT));
+  };
+  return { keyframes, ms, over, peak, angleAt };
+}
+/** How many pegs have passed the pointer at angle `deg` (a step function: the tick fires when it goes up). */
+export const pegsPast = (deg) => Math.floor((deg - SLICE_DEG / 2) / SLICE_DEG);
+/** THE FLAPPER: its deflection (deg, ≥ 0) one frame on — pushed up by the approaching peg over the last `zone` of each
+ *  slice, released at the crossing, then it springs home (exponential, τ ms). At speed it never gets home before the
+ *  next peg, so it flutters high — the way a real flapper does — instead of strobing. */
+export function flapperStep(prev, deg, dtMs, crossed, { max = 26, zone = 0.3, tau = 55 } = {}) {
+  const ph = (((deg - SLICE_DEG / 2) / SLICE_DEG) % 1 + 1) % 1; // 0 = just past a peg, → 1 = the next peg arriving
+  const push = ph > 1 - zone ? (max * (ph - (1 - zone))) / zone : 0;
+  const home = (crossed ? max : prev) * Math.exp(-Math.max(0, dtMs) / tau);
+  return Math.max(push, home);
+}
+
+/** THE FLAPPER TRACK for a spinPlan: the whole flapper motion baked into ONE keyframe list (sampled at `fps` off the
+ *  same angleAt the rotor rides) + every peg crossing's moment (ms). The pointer then runs as a single composited WAAPI
+ *  animation started with the rotor, and the ticks are scheduled on the AUDIO clock — nothing is driven by a timer or a
+ *  main-thread frame, so a busy page can't make the flapper hitch or a click land late. */
+export function flapperTrack(plan, fps = 60) {
+  const n = Math.max(2, Math.round((plan.ms / 1000) * fps));
+  const frames = [];
+  let defl = 0;
+  let pegs = pegsPast(plan.angleAt(0));
+  for (let i = 0; i <= n; i += 1) {
+    const t = (plan.ms * i) / n;
+    const deg = plan.angleAt(t);
+    const now = pegsPast(deg);
+    defl = flapperStep(defl, deg, plan.ms / n, now > pegs);
+    pegs = now;
+    frames.push({ transform: `rotate(${-defl.toFixed(2)}deg)`, offset: +(i / n).toFixed(5) });
+  }
+  frames[frames.length - 1] = { transform: 'rotate(0deg)', offset: 1 };
+  // each peg's exact moment: bisect the (monotonic until the peak) angle curve
+  const ticks = [];
+  const tPeak = plan.ms * 0.9;
+  for (const peg of pegCrossings(plan.angleAt(0), plan.peak)) {
+    let lo = 0;
+    let hi = tPeak;
+    for (let k = 0; k < 30; k += 1) {
+      const m = (lo + hi) / 2;
+      if (plan.angleAt(m) < peg) lo = m; else hi = m;
+    }
+    ticks.push(Math.round(hi));
+  }
+  return { frames, ticks };
+}
+
 // ---- the server's reply -------------------------------------------------------------------------------------------
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIERS = ['rare', 'epic', 'legendary', 'mythic'];

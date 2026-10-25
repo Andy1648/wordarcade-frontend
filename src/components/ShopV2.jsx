@@ -69,7 +69,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
-      ariaLabel={`${it.name || ''} ${it.big} ${it.what}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
+      ariaLabel={`${it.name || ''} ${it.big}${it.what ? ` ${it.what}` : ''}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
         <span className="sp2-band" title={R.name}>
@@ -78,7 +78,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
         </span>
         {it.ticket ? <VesselArt tier={it.ticket} size={null} label={false} className="sp2-art sp2-vessel" /> : SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
-        <span className="sp2-what">{it.what}</span>
+        {it.what ? <span className="sp2-what">{it.what}</span> : null}
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />

@@ -341,7 +341,15 @@ function WallScene({ intensity = 'calm', resetKey }) {
     let curY = 0;
     let rafId = null;
 
+    const de = document.documentElement;
     const tick = () => {
+      // A full-screen layer covers the wall (ROLL / the sealed reveal / the daily wheel): stop gliding. Each step
+      // restyled ~350 wall nodes per frame UNDER the wheel's spin (measured, oct25). An attribute read, not layout.
+      if (de.hasAttribute('data-roll-cover') || de.hasAttribute('data-srr-cover') || de.hasAttribute('data-modal-cover')) {
+        rafId = null;
+        hint('');
+        return;
+      }
       // Lerp toward the cursor target so the layers lag and glide into place
       // rather than snapping 1:1 - the one spot where smooth/floaty is correct.
       curX += (targetX - curX) * 0.08;
