@@ -1,49 +1,93 @@
-// TransitionOverlay.jsx — the ONE pooled screen-change wipe. Mounted ONCE by App (never keyed, never
-// remounted); lib/navWipe.js replays this same node through WAAPI for every major navigation: every
-// `view` change (shop / stats / leaderboard / daily blitz / the games …) and the menu's own sheets
-// (GEARS / ROLL, CONTRACTS, REWARDS, PROFILE). Purely cosmetic: position:fixed, pointer-events:none,
-// laid over a screen that has ALREADY swapped — it can never gate which screen is shown.
-//   forward (menu -> deeper) — the band slaps in from the LEFT and clears to the right;
-//   back    (returning)      — mirrored (the track flips; the word never does).
-// ART: the PAINTED band (public/fx/transition/wipe-band.webp — hot-pink swipe, purple dripping lead edge, torn
-// trail) over a flat pink slab that guarantees full cover, the pink ink SPLAT (wipe-splat.webp) slapped under the
-// word, and the mascot-run PNG riding the lead. All three are fetched on the first gesture (data-src), never on
-// first paint; until they decode the flat slabs alone still cover the screen.
+// TransitionOverlay.jsx — the ONE pooled screen-change transition. Mounted ONCE by App (never keyed, never
+// remounted); lib/navWipe.js replays this same node through WAAPI for every major navigation: every `view`
+// change (shop / stats / leaderboard / daily blitz / the games …) and the menu's own sheets (GEARS / ROLL,
+// CONTRACTS, REWARDS, PROFILE). Purely cosmetic: position:fixed, pointer-events:none, laid over a screen that
+// has ALREADY swapped — it can never gate which screen is shown.
+//
+// LOOK = the GAME TRANSITION SCREEN (TransitionIntro — "TYPE FAST. / DIE SLOW."), the transition screen Andy
+// said he's fine with (oct25, on the painted swipe: "doesnt cover edges, its too quick"): the flat black field
+// cuts in over the WHOLE screen, the destination word PUNCHES in letter-by-letter in the intro's vinyl-sticker
+// type (cyan line / pink line, crooked slots, chunky black stroke + hard drop shadow), a white impact frame +
+// shake sell the hit, it holds to be read, then the KNIFE-SPLIT (the intro → menu reveal) slashes the black
+// open along a 4° seam.
+//
+// POOL: three copies of a 2-line × MAX_LETTERS title are built ONCE here — the LIVE copy (animated) and the two
+// static halves' copies (the knife). navWipe only writes text into them; no node is ever created per transition.
 import { useEffect, useRef } from 'react';
-import { registerWipe } from '../lib/navWipe';
+import { registerWipe, MAX_LETTERS } from '../lib/navWipe';
 import './TransitionOverlay.css';
 
-// Painted wipe band (transparent webp, drawn travelling left→right) + the word's ink splat. null = flat slabs only.
-const WIPE_ART = '/fx/transition/wipe-band.webp';
-const WIPE_SPLAT = '/fx/transition/wipe-splat.webp';
+const SLOTS = [0, 1];
+const LETTERS = Array.from({ length: MAX_LETTERS }, (_, i) => i);
+
+function Title({ copy }) {
+  return (
+    <div className="nt-title" data-copy={copy}>
+      {SLOTS.map((s) => (
+        <div key={s} className={`nt-slot nt-slot--${s + 1}`}>
+          <div className="nt-line">
+            {LETTERS.map((i) => (
+              <span key={i} className="nt-letter" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// the static DOM the player drives: per copy, its two slots / lines / letter spans (queried once, on mount)
+function collect(root) {
+  return [...root.querySelectorAll('.nt-title')].map((t) => {
+    const slots = [...t.querySelectorAll('.nt-slot')];
+    return {
+      slots,
+      lines: slots.map((s) => s.querySelector('.nt-line')),
+      letters: slots.map((s) => [...s.querySelectorAll('.nt-letter')]),
+    };
+  });
+}
 
 export default function TransitionOverlay() {
   const root = useRef(null);
-  const track = useRef(null);
-  const band = useRef(null);
-  const mascot = useRef(null);
-  const word = useRef(null);
-  const splat = useRef(null);
-  useEffect(
-    () => registerWipe({ root: root.current, track: track.current, band: band.current, mascot: mascot.current, word: word.current, splat: splat.current, painted: !!WIPE_ART }),
-    [],
-  );
+  const live = useRef(null);
+  const stage = useRef(null);
+  const top = useRef(null);
+  const bottom = useRef(null);
+  const flash = useRef(null);
+  const slash = useRef(null);
+  useEffect(() => {
+    // DOM order: top half, bottom half, live
+    const [topCopy, bottomCopy, liveCopy] = collect(root.current);
+    return registerWipe({
+      root: root.current,
+      live: live.current,
+      stage: stage.current,
+      halves: [top.current, bottom.current],
+      flash: flash.current,
+      slash: slash.current,
+      copies: [liveCopy, topCopy, bottomCopy],
+    });
+  }, []);
   return (
-    <div ref={root} className="transition-overlay" data-state="idle" data-dir="forward" aria-hidden="true">
-      <div ref={track} className="tw-track">
-        <div ref={band} className={`tw-band${WIPE_ART ? ' has-art' : ''}`}>
-          {/* the flat slabs are ALWAYS there: full cover before the art decodes, and under the art's torn edges */}
-          <span className="tw-slab tw-slab--lead" />
-          <span className="tw-slab tw-slab--main" />
-          <span className="tw-slab tw-slab--trail" />
-          {WIPE_ART ? <img className="tw-art" data-src={WIPE_ART} alt="" decoding="async" draggable="false" /> : null}
-          {/* every data-src art is set on the first gesture (navWipe.warmMascot) — never fetched before one */}
-          <img ref={mascot} className="tw-mascot" data-src="/mascot-run.webp" alt="" decoding="async" draggable="false" />
+    <div ref={root} className="transition-overlay" data-state="idle" aria-hidden="true">
+      {/* the knife halves: two full-screen black covers clipped to either side of one 4° seam, each carrying a
+          STATIC copy of the settled title — revealed when the live layer cuts out, then they part */}
+      <div ref={top} className="nt-half nt-half--top">
+        <Title copy="top" />
+      </div>
+      <div ref={bottom} className="nt-half nt-half--bottom">
+        <Title copy="bottom" />
+      </div>
+      {/* the live fight-card: an UNCLIPPED black field (no seam hairline while it holds) + the animated title */}
+      <div ref={live} className="nt-live">
+        <div ref={stage} className="nt-stage">
+          <Title copy="live" />
         </div>
       </div>
-      <div className="tw-word-wrap">
-        {WIPE_SPLAT ? <img ref={splat} className="tw-splat" data-src={WIPE_SPLAT} alt="" decoding="async" draggable="false" /> : null}
-        <div ref={word} className="tw-word" />
+      <div ref={flash} className="nt-flash" />
+      <div className="nt-slash-track">
+        <div ref={slash} className="nt-slash" />
       </div>
     </div>
   );
