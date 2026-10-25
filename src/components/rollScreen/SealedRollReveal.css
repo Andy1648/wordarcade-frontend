@@ -1,0 +1,130 @@
+/* SealedRollReveal — the SEALED ROLL capsule opening (065). A modal moment, not persistent UI. Flat colours, the tier's
+   colour on the frame; motion = finite WAAPI one-shots in the JSX (transform / opacity only). Every node's REST style is
+   its end state, so a skipped / reduced-motion open simply shows the result. Nothing loops. */
+.srr {
+  --srr-tier: #B04BFF;
+  --srr-shade: #7A1FC4;
+  --srr-pick: var(--srr-tier);
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(13, 6, 24, .94);
+  overflow: hidden;
+  font-family: var(--k-display, 'Bungee', system-ui, sans-serif);
+  color: #fff;
+  text-transform: uppercase;
+}
+.srr.is-legendary { --srr-tier: #FFC23D; --srr-shade: #B8860B; }
+
+/* the tier's ray fan behind everything: the house rays asset as a mask, tinted with the PICK's colour */
+.srr-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150vmax;
+  height: 150vmax;
+  margin: -75vmax 0 0 -75vmax;
+  background: var(--srr-pick);
+  -webkit-mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+  mask: url(/art/rolls/rays.svg) center / contain no-repeat;
+  opacity: 0;
+  pointer-events: none;
+}
+.srr.is-open .srr-rays { opacity: .7; }
+.srr.is-sealed .srr-rays, .srr.is-opening .srr-rays { opacity: .18; background: var(--srr-tier); }
+.srr-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+
+.srr-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  row-gap: 14px;
+  width: min(420px, 100%);
+}
+.srr-floor {
+  font-size: var(--fs-k44);
+  line-height: 1;
+  color: var(--srr-tier);
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
+  transform: rotate(-3deg);
+}
+.srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
+
+.srr-pod { position: relative; width: 260px; min-height: 290px; display: grid; place-items: center; }
+.srr-cap {
+  position: relative;
+  grid-area: 1 / 1;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.srr-cap:disabled { cursor: default; }
+.srr-half { grid-area: 1 / 1; width: 250px; height: 250px; pointer-events: none; user-select: none; }
+.srr.is-open .srr-half { opacity: 0; } /* the burst's end state (the halves have flown) */
+.srr-cap:not(:disabled):hover .srr-half { transform: translateY(-4px); transition: transform 160ms ease-out; }
+.srr-cap:not(:disabled):active .srr-half { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
+
+.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; }
+.srr-stamp {
+  position: absolute;
+  right: -64px;
+  top: 22%;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 4px solid #8A1E10;
+  background: #FF6B3D;
+  color: #fff;
+  font-size: var(--fs-k20);
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(-8deg);
+}
+
+.srr-line { min-height: 40px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; text-align: center; }
+.srr-chip {
+  padding: 3px 9px;
+  border-radius: 8px;
+  border: 3px solid #12A99A;
+  background: #2EFFE0;
+  color: #0d0618;
+  font-size: var(--fs-k16);
+  box-shadow: 3px 3px 0 #000;
+}
+.srr-chip.is-dupe { border-color: #7A6A20; background: #FFE94A; }
+.srr-later { font-size: var(--fs-k20); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+
+.srr-btn {
+  min-width: 200px;
+  min-height: 56px;
+  padding: 8px 26px;
+  border-radius: 8px;
+  border: 5px solid var(--srr-shade);
+  background: var(--srr-tier);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-k28);
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.srr-btn:hover { transform: translate(-1px, -2px); }
+.srr-btn:active { transform: translate(4px, 4px); }
+.srr-btn:disabled { opacity: .55; cursor: default; }
+.srr-btn:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 4px; }
+
+@media (max-width: 420px) {
+  .srr-pod { width: 220px; min-height: 250px; }
+  .srr-half { width: 210px; height: 210px; }
+}

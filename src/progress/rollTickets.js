@@ -9,6 +9,16 @@
 import { ROLL_MARKS, tierRank } from './markRollsCore.js';
 
 export const TICKET_TIERS = ['rare', 'epic', 'legendary', 'mythic'];
+/**
+ * 065 SEALED ROLLS in the SHOP — the server's price table (065_buy_tier_rolls.sql private.ticket_shop), mirrored so the
+ * card can show the price. The SERVER decides the price, the stock and the floor; this copy only draws the card
+ * (guaranteedRolls.test.js pins the two together). Priced by claude/econ-oct2/tier-roll-price-sim.mjs: ~1.6–1.7× what
+ * rolling for that tier costs at luck ×1 (EPIC+ ~90, LEGENDARY+ ~465 gems).
+ */
+export const TICKET_SHOP = Object.freeze({
+  epic: Object.freeze({ price: 150, perHour: 2 }),
+  legendary: Object.freeze({ price: 750, perHour: 1 }),
+});
 const STATES = ['owned', 'reserved'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MARK_IDS = new Set(ROLL_MARKS.map((m) => m.id));
@@ -34,6 +44,23 @@ export function normalizeTickets(reply) {
     out.push({ id: String(t.id), tier: t.tier, state: t.state, source: typeof t.source === 'string' ? t.source : '', pick });
   }
   return out;
+}
+
+/**
+ * 065: what a lb_ticket_buy reply means for the (already paid) wallet → { kind: 'ok', ticket, left } | { kind: 'refund',
+ * reason } (a definite no: the gems go back) | { kind: 'retry' } (no usable answer: keep the paid request, ask again).
+ * An ok reply is only trusted with a well-formed id and a tier the shop sells.
+ */
+export function buyOutcome(reply) {
+  if (!reply || typeof reply !== 'object') return { kind: 'retry' };
+  if (reply.ok === true) {
+    const t = reply.ticket;
+    if (!t || !UUID.test(String(t.id)) || !TICKET_SHOP[t.tier]) return { kind: 'retry' };
+    const left = Number.isFinite(reply.left) ? Math.max(0, Math.floor(reply.left)) : null;
+    return { kind: 'ok', ticket: { id: String(t.id), tier: t.tier, state: 'owned', source: 'shop', pick: null }, left };
+  }
+  if (reply.ok === false && typeof reply.reason === 'string') return { kind: 'refund', reason: reply.reason };
+  return { kind: 'retry' };
 }
 
 /** The ticket to offer: a RESERVED one first (an interrupted reveal finishes before anything else), then the highest floor. */

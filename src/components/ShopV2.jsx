@@ -8,10 +8,10 @@
 //     per hold). The plate is a tilted square carrying the kit POWER key.
 //   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
 //   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
-//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. FREE EPIC+ ROLL is shown but not sold
-//     yet (its reveal is the ROLL screen's, P6).
+//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. The SEALED EPIC+ / LEGENDARY+ ROLLS
+//     (065) are sold by the SERVER (serverTickets.buyTicket) and open in place (SealedRollReveal).
 // Motion: kit one-shots only (pill count / deny, stamp slam, BOUGHT! float, plate bump); nothing loops at rest.
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
@@ -28,6 +28,11 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
 import DailyDrop from './DailyDrop';
+import { lazyWithReload } from '../lib/chunkReload';
+// 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
+import { buyTicket } from '../leaderboard/serverTickets';
+
+const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
@@ -39,7 +44,9 @@ const SHOP_ART = {
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
-  soon: 'FREE EPIC+ ROLL — COMES WITH THE ROLL SCREEN',
+  soon: 'SEALED ROLLS OPEN SOON',
+  offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
+  budget: 'NOT YET — PLAY A LITTLE MORE',
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
 };
 
@@ -63,7 +70,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
           <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
-        {SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
+        {SHOP_ART[it.id] || it.art ? <img className={`sp2-art${it.ticket ? ' sp2-capsule' : ''}`} src={SHOP_ART[it.id] || it.art} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
@@ -142,8 +149,12 @@ export default function ShopV2({ onBack }) {
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
+  const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
+  const buying = useRef(false);
   const chestRef = useRef(chest);
   chestRef.current = chest;
+  const sealedRef = useRef(sealed);
+  sealedRef.current = sealed;
   const rootRef = useRef(null);
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
@@ -161,6 +172,7 @@ export default function ShopV2({ onBack }) {
     rootRef.current?.focus();
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
+      if (sealedRef.current) return; // the SEALED ROLL opening owns the screen until NICE
       if (chestRef.current) setChest(false); // Esc closes the chest popup first
       else onBackRef.current();
     };
@@ -210,8 +222,32 @@ export default function ShopV2({ onBack }) {
     fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
   };
 
+  // ---- 065 SEALED ROLL: the server sells it; the wallet pays (refunded on a definite no) ----
+  const onBuyTicket = async (it) => {
+    if (buying.current) return;
+    const short = it.price - getGems();
+    if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
+    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); return; }
+    buying.current = true;
+    const r = await buyTicket(it.ticket);
+    buying.current = false;
+    if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
+    if (!r.ok) {
+      fx(cards.current[it.id], FX.deny);
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short || short);
+      else if (r.reason === 'sold_out') { setLeft(V3.stock.setStockLeft(it.id, 0)); setNote(NOTE.sold_out); }
+      else setNote(NOTE[r.reason] || NOTE.offline);
+      return;
+    }
+    sndPurchase();
+    evItemPurchased(`stock_${it.id}`);
+    fx(floats.current[it.id], FX.float);
+    setSealed(r.ticket);
+  };
+
   // ---- STOCK: gems ----
   const onBuy = (it) => {
+    if (it.ticket) { onBuyTicket(it); return; }
     const r = buyStock(it.id);
     setLeft(r.left);
     if (!r.ok) {
@@ -228,6 +264,11 @@ export default function ShopV2({ onBack }) {
   return (
     <div className="sp2" role="dialog" aria-modal="true" aria-label="Upgrades" tabIndex={-1} ref={rootRef}>
       <div className="sp2-stripes" aria-hidden="true" />
+      {sealed ? (
+        <Suspense fallback={null}>
+          <SealedRollReveal ticket={sealed} onDone={() => setSealed(null)} />
+        </Suspense>
+      ) : null}
       {chest && V3.drop ? (
         <div className="sp2-pop" role="dialog" aria-modal="true" aria-label="Daily chest" onClick={(e) => { if (e.target === e.currentTarget) setChest(false); }}>
           <div className="sp2-pop-in">
