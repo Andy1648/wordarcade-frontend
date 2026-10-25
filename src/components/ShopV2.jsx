@@ -13,6 +13,7 @@
 // Motion: kit one-shots only (pill count / deny, stamp slam, BOUGHT! float, plate bump); nothing loops at rest.
 import { useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
+import { powerForm, nextPowerForm } from '../progress/powerArt.js';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -42,6 +43,9 @@ const NOTE = {
   soon: 'FREE EPIC+ ROLL — COMES WITH THE ROLL SCREEN',
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
 };
+
+const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
+const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
@@ -148,6 +152,16 @@ export default function ShopV2({ onBack }) {
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
   const plateRef = useRef(null);
+  const evolveRef = useRef(null);
+  const artRef = useRef(null);
+  const [evolve, setEvolve] = useState(0); // bumps when a buy reaches a NEW POWER FORM
+  // EVOLVE (oct24): a buy that reaches a new form flashes the plate white and SLAMS the new art in — one finite
+  // WAAPI run each (transform / opacity only, will-change only while it plays, reduce motion = the new art at rest)
+  useEffect(() => {
+    if (!evolve) return;
+    fx(evolveRef.current, { frames: EVOLVE_FLASH, opts: { duration: 520, easing: 'ease-out' } });
+    fx(artRef.current, { frames: EVOLVE_SLAM, opts: { duration: 620, easing: 'cubic-bezier(.2,1.4,.4,1)' } });
+  }, [evolve]);
   const nowRef = useRef(null);
   const floats = useRef({});
   const cards = useRef({});
@@ -188,6 +202,8 @@ export default function ShopV2({ onBack }) {
   }, [note]);
 
   // ---- POWER: wins only, one per 1 s hold ----
+  const form = powerForm(tier);
+  const next = nextPowerForm(tier);
   const cost = keyTierCost(tier);
   const canPower = Number.isFinite(cost) && wins >= cost;
   // XP / KEY now → after the buy: the SAME number the menu's rate line and STATS show (letterXpNow — the worn mark,
@@ -205,8 +221,10 @@ export default function ShopV2({ onBack }) {
     }
     sndPurchase();
     evItemPurchased('key_power', r.tier);
+    const evolved = powerForm(r.tier).n !== powerForm(r.tier - 1).n;
     setTier(r.tier);
     fx(plateRef.current, FX.bump);
+    if (evolved) setEvolve((n) => n + 1); // a NEW FORM: the plate slams the new art in (below)
     fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
   };
 
@@ -249,12 +267,20 @@ export default function ShopV2({ onBack }) {
         </header>
 
         <section className="sp2-power" aria-label="Power">
-          <div className="sp2-forever">FOREVER</div>
-          <div className="sp2-plate" ref={plateRef} aria-hidden="true">
+          {/* THE POWER LADDER (oct24, powerArt.js): the plate shows the FORM this level has reached — a new painted icon
+              every two levels, each with its own plate colour — and the next form waits, blacked out, in the corner */}
+          <div className="sp2-forever" data-testid="sp2-form">FORM {form.n} · {form.name}</div>
+          <div className="sp2-plate" ref={plateRef} aria-hidden="true" style={{ '--pf-plate': form.plate, '--pf-inner': form.inner }} data-form={form.n}>
             <span className="sp2-plate-a" />
             <span className="sp2-plate-b" />
-            {/* the POWER plate: the painted battery (art run oct16) */}
-            <img className="sp2-plate-ico sp2-plate-art" src="/shop/power.webp" width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+            <span className="sp2-evolve" ref={evolveRef} />
+            <img key={form.n} ref={artRef} className="sp2-plate-ico sp2-plate-art" src={form.src} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+            {next ? (
+              <span className="sp2-next" title={`Next form at POWER ${next.at}`}>
+                <img src={next.src} width="256" height="256" alt="" draggable="false" />
+                <span className="sp2-next-at">P{next.at}</span>
+              </span>
+            ) : null}
           </div>
           <div className="sp2-pw">
             <span className="sp2-pw-lab">POWER</span>
