@@ -81,7 +81,7 @@ test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the e
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
   await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(7); // 065: + the SEALED EPIC+ / LEGENDARY+ ROLLS // + the +50% WINS BOOST (Andy oct8); gems never scale
-  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['45', '60', '120', '300', '150', '150', '750']);
+  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['150', '750', '45', '60', '120', '300', '150']); // the SEALED ROLLS lead the shelf (first view)
   // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
   await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
