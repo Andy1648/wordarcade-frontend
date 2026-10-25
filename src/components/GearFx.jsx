@@ -334,9 +334,13 @@ export default function GearFx({ tier, scale = 1, live = true }) {
         </span>
       ) : null}
       {fx.waves && !still ? Array.from({ length: fx.waves }, (_, k) => <span key={`w${k}`} className={`gfx-wave${k % 2 ? ' is-2' : ''}`} />) : null}
-      {fx.streaks && !still ? STREAKS.slice(0, fx.streaks).map((s, k) => (
-        <span key={`s${k}`} className={`gfx-streak is-${s.side}`} style={{ '--gfx-sx': s.x, width: `${s.w}px`, height: `${s.h}%`, background: s.c }} />
-      )) : null}
+      {fx.streaks && !still ? (
+        <span className="gfx-streaks">
+          {STREAKS.slice(0, fx.streaks).map((s, k) => (
+            <span key={`s${k}`} className={`gfx-streak is-${s.side}`} style={{ '--gfx-sx': s.x, width: `${s.w}px`, height: `${s.h}%`, background: s.c }} />
+          ))}
+        </span>
+      ) : null}
       {!still && SPOTS.slice(0, fx.motes).map((s, k) => (
         <span key={k} className={`gfx-mote is-${s.side}`} style={{ top: s.top, background: fx.m[k % fx.m.length] }} />
       ))}

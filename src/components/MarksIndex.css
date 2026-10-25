@@ -143,9 +143,11 @@
 .mx-tile:hover { transform: translate(-2px, -2px); }
 .mx-tile:active { transform: translate(3px, 3px); }
 .mx-tile:focus-visible { outline: 4px solid #FFE94A; outline-offset: 4px; }
+/* EQUIPPED rides the card's FOOT (audit oct25: at the top-right it sat on the tier banner — "LEGENDARY" read "LEGEND…"
+   on every screen size; the foot is the empty perk line) */
 .mx-tile-main {
   position: absolute;
-  top: -12px;
+  bottom: -12px;
   right: -10px;
   padding: 2px 8px;
   background: #FFE94A;
