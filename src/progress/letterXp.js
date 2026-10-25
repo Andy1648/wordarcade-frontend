@@ -24,6 +24,7 @@ import { MARK_TIERS } from './marks.js';
 import { letterPerkMult } from './markPerks.js';
 import { emitMidGameLevelUp } from './levelUpSignal.js';
 import { boostMult } from './boost.js';
+import { equippedPopMult } from './shop.js'; // read at CALL time only: shop → wins → letterXp is a cycle
 import { notePlay } from './overdrive.js';
 // SEASON 2 (PROGRESSION v4 "SIMPLE", Andy Oct 7 23:20 — "games pay wins only"): a game letter pays NO XP. Game
 // letters still count (no rate cap) and still feed OVERDRIVE's play clock, but nothing here credits the bar — the
@@ -56,10 +57,24 @@ export function markXpBoost(markId) {
 // The worn +N BASE XP/LETTER, read by levelXpPerLetter for every letter path (menu keys included).
 setLetterBaseAdd(() => markBaseXp());
 
+// THE POP STYLE's XP multiplier (oct24): read once, then again only when a cosmetic is equipped — never per key
+let popMultCache = null;
+let popListening = false;
+/** The equipped POP STYLE's XP multiplier (×1 CLASSIC … ×3 LEGEND, shop.js POP_STYLES). */
+export function popXpMult() {
+  if (!popListening && typeof window !== 'undefined') {
+    // shop.js EQUIP_CHANGE, spelled out (its binding may not exist yet while the import cycle evaluates); an equip drops the cache
+    popListening = true;
+    window.addEventListener('taw:equip-change', () => { popMultCache = null; });
+  }
+  if (popMultCache == null) { try { popMultCache = equippedPopMult(); } catch { popMultCache = 1; } }
+  return popMultCache;
+}
+
 /** XP per letter for the live save (season 2: XP per MENU KEY — game letters pay none): (BASE 10 + MARK BASE XP) × KEY × REBIRTH 5^R × MARK × BOOST (code boost ×
- *  OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2). */
+ *  OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN: letters count ×2) × the worn POP STYLE (oct24). */
 export function letterXpNow() {
-  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * letterPerkMult() * boostMult();
+  return levelXpPerLetter(getKeyTier(), getRebirths(), markXpBoost()) * letterPerkMult() * boostMult() * popXpMult();
 }
 
 const LETTER = /[a-z]/gi;

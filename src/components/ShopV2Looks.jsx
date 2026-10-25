@@ -11,6 +11,8 @@ import { sndPurchase } from '../audio/gameSounds';
 import { LEADERBOARD_ENABLED } from '../leaderboard/client.js';
 import RedeemCodes from './RedeemCodes';
 
+// a pop style's XP multiplier as the card reads it (oct24: pops pay again): +5% … +95%, then ×2.2 … ×3
+const xpTag = (m) => (m >= 2 ? `×${+m.toFixed(2)} XP` : `+${Math.round((m - 1) * 100)}% XP`);
 const priceOf = (it) => (V3.hooks && typeof V3.hooks.itemGemPrice === 'function' ? V3.hooks.itemGemPrice(it.id) : it.price);
 
 function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip }) {
@@ -27,7 +29,7 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip }) {
       {/* SOUND PACK ART (oct17 night): one painted keycap per pack, all 12 as one set (Gemini, public/shop/snd/) */}
       {type === 'soundPack' ? <img className="sp2-look-art" src={`/shop/snd/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" /> : null}
       <span className="sp2-look-name">{it.name}</span>
-      <span className="sp2-look-what">{it.blurb}</span>
+      {type === 'popStyle' && it.xpMult > 1 ? <span className="sp2-look-xp" data-testid={`pop-xp-${it.id}`}>{xpTag(it.xpMult)}</span> : <span className="sp2-look-what">{it.blurb}</span>}
       {isOn ? (
         <span className="sp2-look-act sp2-look-on">EQUIPPED</span>
       ) : isOwned ? (
@@ -72,7 +74,7 @@ export default function ShopV2Looks({ tab, gems, onNote }) {
   }
   return (
     <div className="sp2-looks">
-      <h3 className="sp2-looks-h">POP STYLES <span>— THE COLOUR + BURST OF YOUR +XP POPS ON THE MENU · LOOKS ONLY</span></h3>
+      <h3 className="sp2-looks-h">POP STYLES <span>— YOUR +XP POPS ON THE MENU · EACH ONE MULTIPLIES YOUR XP</span></h3>
       <div className="sp2-looks-grid">
         {POP_STYLES.map((it) => <LookCard key={it.id} it={it} type="popStyle" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} />)}
       </div>

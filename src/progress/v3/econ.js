@@ -183,3 +183,12 @@ export function cosmeticGemPrice(rung) {
   const i = Math.max(1, int0(rung));
   return Math.max(5, Math.round((COSMETIC_GEM_BASE * Math.pow(COSMETIC_GEM_STEP, i - 1)) / 5) * 5);
 }
+// POP STYLES climb harder (oct24, Andy: "prices go MORE EXPONENTIAL in gems") now that each pays an XP multiplier:
+// 75 × 2^(i−1) → 75, 150, 300 … 153,600 (LEGEND, ×3 XP). Measured (claude/econ-oct2/final-sim.mjs with a forced pop):
+// wearing ×1.25 from minute 0 = the median ~13% faster to R1/R3/R5 (inside the ±20% HARD CHECK); ×3 halves it — so the
+// top rungs sit hundreds of gem-hours out, where the jackpot rebirths dwarf them. Sound packs keep the 1.5 step.
+export const POP_GEM_STEP = 2;
+export function popGemPrice(rung) {
+  const i = Math.max(1, int0(rung));
+  return Math.max(5, Math.round((COSMETIC_GEM_BASE * Math.pow(POP_GEM_STEP, i - 1)) / 5) * 5);
+}

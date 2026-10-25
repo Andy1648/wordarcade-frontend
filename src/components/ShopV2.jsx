@@ -306,7 +306,7 @@ export default function ShopV2({ onBack }) {
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
           <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'COSMETICS — LOOKS ONLY, BOUGHT ONCE, KEPT FOREVER' : 'REDEEM A CODE'}
+            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'BOUGHT ONCE, KEPT FOREVER · POP STYLES MULTIPLY YOUR XP' : 'REDEEM A CODE'}
           </div>
           {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>

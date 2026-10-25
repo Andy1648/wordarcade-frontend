@@ -443,6 +443,7 @@
   box-shadow: 4px 4px 0 var(--k-ink);
 }
 .sp2-look.is-on { border-color: #12A99A; }
+.sp2-look-xp { font-family: var(--k-display); font-size: var(--fs-k16); color: var(--k-yellow); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .sp2-look-name { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp2-look-what { font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k14); color: var(--k-dim); }
 .sp2-look-act {
