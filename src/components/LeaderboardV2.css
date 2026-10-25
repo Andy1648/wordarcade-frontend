@@ -459,7 +459,6 @@
   flex-direction: column;
   gap: calc(6px * var(--lb2-k));
 }
-.lb2-chase { border-right: 4px solid #000; }
 .lb2-panel-top {
   display: flex;
   align-items: baseline;
@@ -1060,3 +1059,25 @@
 /* NO SIDEWAYS SCROLL (oct21 no-scroll sweep): the lifted YOU row is 6px wider than the list, so with a player card open
    the board's list scrolled sideways 3–4px. The list keeps a lip on the right for the lift and never scrolls sideways. */
 .lb2-scroll { overflow-x: hidden; padding-right: 6px; }
+
+/* YOUR ROW FITS (overnight audit oct25): the yellow row's who-cell is a column flex with align-items:flex-start, so the
+   name line took its CONTENT width — YOU + name + the "N TO TOP 10" tag ran 300px+ into a ~190px cell and the tag sat
+   on top of R12 at every laptop size. The line is now capped to its cell (the phone row may borrow the ▲▼ column like
+   the chase line below it), the tag steps aside when the cell can't hold it, and on a phone the row's YOU pill goes
+   (the yellow row IS you, and the YOU pill heads the board) so a 14-letter name keeps its size instead of shrinking. */
+.lb2-row.is-me .lb2-name-line { max-width: 100%; }
+.lb2--narrow .lb2-row.is-me .lb2-name-line { max-width: calc(100% + 40px); }
+.lb2--narrow .lb2-row.is-me .lb2-you { display: none; }
+@container (max-width: 320px) { .lb2-row.is-me .lb2-band-tag { display: none; } }
+/* the chase names the rival in FULL: a long rival scales the line down (FitText) instead of ending in "…" */
+.lb2-chase .fit-box.lb2-chase-fit { overflow: visible; }
+/* PHONE PODIUM NAMES (audit oct25): the name plate was a content-sized flex item, so FitText's own shrink (a negative
+   margin) narrowed its box, the box re-measured smaller, and the name spiralled down to the 0.5 floor — "ZED1" printed
+   at 7px in a 109px column. The plate now spans its column, so a name only shrinks when it is really wider than it. */
+.lb2--narrow .lb2-who > .lb2-pod-name { align-self: stretch; justify-content: center; }
+.lb2--narrow .lb2-who > .lb2-pod-name .fit-box.lb2-pod-name-t { flex: 1 1 0; text-align: center; }
+/* the RIVAL pill ran into R12 on a phone row (~120px name cell): there the row's pink edge + YOUR "PASS <rival>" line
+   already mark it, so the pill steps aside; every row's name line is capped to its cell */
+.lb2-who-cell > .lb2-name-line { max-width: 100%; }
+.lb2--narrow .lb2-row.is-me .lb2-who-cell > .lb2-name-line { max-width: calc(100% + 40px); }
+.lb2--narrow .lb2-row .lb2-rival { display: none; }
