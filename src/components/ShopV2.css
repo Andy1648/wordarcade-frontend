@@ -643,3 +643,10 @@
 .sp2-card-in > .sp2-chest-art { flex: 0 1 auto; min-height: 28px; }
 .sp2-chest-art img { object-fit: contain; }
 @media (max-width: 999px) { .sp2-grid { grid-auto-rows: 224px; } }
+
+/* POP STYLE stage (oct24): the painted burst sits behind the letter swatch, a touch bigger and turned, so every card
+   shows what its pop does on the menu. Static (the burst's motion lives on the menu pop, MenuXp dressArt). */
+.sp2-look-stage { position: relative; display: grid; place-items: center; }
+.sp2-look-stage .sp2-look-art { position: relative; z-index: 1; }
+.sp2-look-burst { position: absolute; z-index: 0; width: 118%; height: 118%; object-fit: contain; transform: rotate(-12deg); opacity: .95; pointer-events: none; }
+.sp2-look.is-locked .sp2-look-burst { opacity: .45; }

@@ -414,6 +414,25 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // coloured outline and hard offset shadow (static styles on the pooled node, set per spawn — no animated property).
   // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
   const lookNextRef = useRef(0);
+  // the painted burst under the number: shown + slammed in for a look, hidden otherwise (a pooled child, finite WAAPI)
+  function dressArt(pop, look) {
+    const img = pop.children[2];
+    if (!img) return;
+    if (!look || !look.art || prefersReducedMotion()) { img.style.display = 'none'; return; }
+    if (img.getAttribute('src') !== look.art) img.setAttribute('src', look.art);
+    img.style.display = 'block'; // the CSS rests it at display:none
+    const rot = Math.random() * 60 - 30;
+    if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
+    img.style.willChange = 'transform, opacity'; // only for the burst's life
+    img.__burst = img.animate([
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0 },
+      { transform: `translate(-50%, -50%) rotate(${rot + 10}deg) scale(1.15)`, opacity: 1, offset: 0.12 },
+      { transform: `translate(-50%, -50%) rotate(${rot + 18}deg) scale(1)`, opacity: 1, offset: 0.3 },
+      { transform: `translate(-50%, -50%) rotate(${rot + 24}deg) scale(1.02)`, opacity: 1, offset: 0.55 },
+      { transform: `translate(-50%, -50%) rotate(${rot + 34}deg) scale(1.1)`, opacity: 0 },
+    ], { duration: 760, easing: 'cubic-bezier(.2,1.1,.4,1)' });
+    img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
+  }
   function dressPop(node, look, colour, hardShadow) {
     if (!look) {
       node.style.color = colour;
@@ -453,6 +472,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
       const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
       dressPop(el.children[1], lk, tierColour, feelTier >= 3);
+      dressArt(el, lk);
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
@@ -520,6 +540,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].style.color = '';
       el.children[1].style.textShadow = '';
       el.children[1].style.webkitTextStroke = ''; // a LOOK's outline never rides into the crit dress
+      if (el.children[2]) el.children[2].style.display = 'none'; // nor its painted burst
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
@@ -577,6 +598,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
       el.children[1].textContent = plusText;
       dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
+      dressArt(el, look);
       if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
@@ -739,6 +761,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         >
           <span className="menu-xp-pop-letter" />
           <span className="menu-xp-pop-plus" />
+          {/* [2] the worn POP STYLE's painted burst (popLooks art) — src set per spawn, hidden without a look */}
+          <img className="menu-xp-pop-art" alt="" draggable="false" />
         </span>
       ))}
       {Array.from({ length: EDGE_POOL }, (_, i) => (
