@@ -91,7 +91,12 @@ test('060: lb_reset_ack keeps every 058 wipe and adds the tickets + the streak t
   assert.ok(body.includes('delete from private.streak_track where profile_id = pid;'));
   assert.ok(body.includes('length(p_blob) > 1048576'), '056\'s 1 MB cap kept');
   const last = readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort().filter((f) => read(f).includes('create or replace function public.lb_reset_ack(')).pop();
-  assert.equal(last, '060_guaranteed_rolls.sql', 'the latest lb_reset_ack is 060');
+  // a LATER migration may redefine it (067 the daily wheel) — it must keep every 058 + 060 wipe
+  const lastSql = read(last);
+  const lastBody = lastSql.slice(lastSql.indexOf('create or replace function public.lb_reset_ack('));
+  for (const w of [...wipes, 'delete from private.roll_tickets where profile_id = pid;', 'delete from private.streak_track where profile_id = pid;']) {
+    assert.ok(lastBody.includes(w), `${last} keeps: ${w}`);
+  }
 });
 
 test('060 is ASCII-only and write-only', () => {

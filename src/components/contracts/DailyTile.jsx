@@ -1,4 +1,5 @@
-// contracts/DailyTile.jsx — the menu's DAILY tile: the streak FLAME CHIP + today's three contracts as pips + "1/3".
+// contracts/DailyTile.jsx — the menu's DAILY tile: the streak FLAME CHIP + today's three contracts as pips (ONE readout —
+// Andy hates pips AND "1/3"; the phone icon face, with no room for pips, carries the 1/3 tag instead).
 // Two faces, both JOINING an existing cluster (never their own fixed spot — Andy oct21 "put the dailies on right side
 // where profile is"): `chip` (default) in the paged desktop's right column under the icons, `icon` as the icon
 // cluster's first tile (narrow desktop + phone). A tap opens the CONTRACTS sheet (lazy). Static at rest (MENU MOTION LAW); the flame pops once when a contract
@@ -87,7 +88,6 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
             <span className="hp-daily-pips">
               {s.picks.map((id) => <i key={id} className={s.done.includes(id) ? 'is-done' : ''} />)}
             </span>
-            <span className="hp-daily-count">{n}/{of}</span>
           </span>
         </span>
       </button>

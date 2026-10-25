@@ -1,8 +1,10 @@
-/* TransitionOverlay.css — the ONE pooled screen-change wipe (lib/navWipe.js plays it via WAAPI).
-   Flat house colours only (no gradient): a pink slab with a purple leading edge (the coloured outline)
-   and a hard black offset stripe, a yellow trailing stripe, the mascot-run PNG riding the lead.
-   At rest the node is hidden (visibility) and carries NO will-change; navWipe sets will-change on play
-   and clears it on finish. pointer-events:none + fixed, so it never blocks or gates the screen. */
+/* TransitionOverlay.css — the ONE pooled screen-change transition (lib/navWipe.js plays it via WAAPI).
+   The GAME TRANSITION SCREEN's look (TransitionIntro.css): a flat BLACK field over every edge, the word in the
+   intro's vinyl-sticker type (Bungee, cyan / pink, crooked slots, chunky black stroke + 8-way ring + hard drop
+   shadow), a plain white impact frame, then the knife-split (KnifeSplit.css) along a 4° seam. Flat colours only.
+   NOTHING here loops (the intro's breathe / glitch / drip idles are deliberately NOT carried over — a nav card
+   lives ~600ms) and NOTHING carries will-change at rest: navWipe sets it on play and clears it on finish.
+   pointer-events:none + fixed, so it never blocks or gates the screen. */
 .transition-overlay {
   position: fixed;
   inset: 0;
@@ -10,136 +12,142 @@
   pointer-events: none;
   overflow: hidden;
   visibility: hidden;
+  /* the knife seam's half-rise: (100vw / 2) · tan(4°) — the slash track below is rotated by the same 4° */
+  --nt-d: 3.5vw;
 }
 .transition-overlay[data-state='play'] {
   visibility: visible;
 }
-.tw-track {
+
+/* ---- the black field ---- */
+.nt-half,
+.nt-live {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+.nt-half--top {
+  z-index: 1;
+  clip-path: polygon(0 0, 100% 0, 100% calc(50% - var(--nt-d) + 1px), 0 calc(50% + var(--nt-d) + 1px));
+}
+.nt-half--bottom {
+  z-index: 1;
+  clip-path: polygon(0 calc(50% + var(--nt-d)), 100% calc(50% - var(--nt-d)), 100% 100%, 0 100%);
+}
+/* the live card sits over both halves, unclipped, until the split: no seam hairline while the word holds */
+.nt-live {
+  z-index: 2;
+}
+.nt-stage {
   position: absolute;
   inset: 0;
 }
-/* the band is wider than the screen so the skew never shows a bare corner */
-.tw-band {
-  position: absolute;
-  top: -10%;
-  bottom: -10%;
-  left: -12%;
-  width: 124%;
-  transform: translateX(-118%) skewX(-8deg);
-}
-.tw-slab {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-}
-.tw-slab--main {
-  left: 0;
-  right: 0;
-  background: #ff4fa3;
-}
-/* leading edge (right, in travel direction): purple outline + hard black offset stripe beyond it */
-.tw-slab--lead {
-  right: -46px;
-  width: 46px;
-  background: #9a1aff;
-  box-shadow: 18px 0 0 #000;
-}
-.tw-slab--trail {
-  left: -26px;
-  width: 26px;
-  background: #ffe94a;
-  box-shadow: -10px 0 0 #c9a800;
-}
-.tw-art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  /* the paint sits in the middle ~55% of the canvas (centre ~42%): a STATIC Y-scale makes it cover the full
-     height. Static, never animated — the band (its parent) is the only thing that moves. */
-  transform: scaleY(2.2);
-  transform-origin: 50% 42%;
-}
-.tw-art:not([src]) {
-  display: none;
-}
-/* PAINTED band: a wider box so the swipe keeps its proportions on a tall phone, the torn edges + drips are the
-   art's own; the flat slab shrinks to the art's solid centre (it only guarantees cover under the paint) and the
-   flat edge stripes stand down. */
-.tw-band.has-art {
-  --bw: max(124vw, 170vh);
-  width: var(--bw);
-  left: calc(50% - var(--bw) / 2);
-  transform: translateX(-118%);
-}
-.tw-band.has-art:has(.tw-art[src]) .tw-slab--lead,
-.tw-band.has-art:has(.tw-art[src]) .tw-slab--trail {
-  display: none;
-}
-.tw-band.has-art:has(.tw-art[src]) .tw-slab--main {
-  /* well inside the paint's solid core, so the slab's straight edges never show past the torn/dripping ones */
-  left: 20%;
-  right: 24%;
-  background: #fe2094;
-}
-.tw-splat {
-  --sw: clamp(240px, 52vmin, 520px);
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--sw);
-  height: var(--sw);
-  margin: calc(var(--sw) / -2) 0 0 calc(var(--sw) / -2);
-  opacity: 0;
-}
-.tw-splat:not([src]) {
-  display: none;
-}
-.tw-word {
-  position: relative;
-}
-/* the runner rides the band's leading edge (inside the band, so it travels with it) */
-.tw-mascot {
-  position: absolute;
-  top: 50%;
-  right: -170px;
-  width: clamp(96px, 16vw, 200px);
-  height: auto;
-  transform: translateY(-50%) rotate(-10deg);
-}
-.tw-mascot:not([src]) {
-  display: none;
-}
-.tw-word-wrap {
+
+/* ---- the title (identical in all three copies, so the live → knife swap is a visual no-op) ---- */
+.nt-title {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(48px, 8vh, 120px); /* = .intro-breathe's gap */
   padding: 0 16px;
 }
-/* the word is a STICKER: panel-dark plate, purple outline, hard black offset shadow */
-.tw-word {
-  max-width: 100%;
-  padding: 0.12em 0.45em 0.16em;
-  text-align: center;
+.nt-slot {
+  position: relative;
+  /* the intro's hard flat sticker shadow (static — never animated) */
+  filter: drop-shadow(9px 10px 0 #000);
+}
+.nt-slot--1 {
+  transform: translate(-6px, -8px) rotate(-5deg);
+}
+.nt-slot--2 {
+  transform: translate(8px, 10px) rotate(6deg);
+}
+.nt-slot[hidden] {
+  display: none;
+}
+.nt-line {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  line-height: 0.98;
   letter-spacing: -0.02em;
-  font-size: var(--fs-hero);
-  color: #ffe94a;
-  -webkit-text-stroke: 3px #000;
+  /* the intro's hero size, with a WIDTH guard by letter count (--nt-n, written per play) so LEADERBOARD /
+     ACHIEVEMENTS still fit a 360px phone without wrapping */
+  font-size: min(max(var(--fs-hero), 13vw), 15vh, calc(112vw / var(--nt-n, 6)));
+  line-height: 1;
+  -webkit-text-stroke: 14px #000;
   paint-order: stroke fill;
-  background: #1a0b2e;
-  border: 5px solid #9a1aff;
-  border-radius: 8px;
-  box-shadow: 8px 8px 0 #000;
+  text-shadow:
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000;
+  white-space: nowrap;
+  color: #2effe0; /* TYPE FAST cyan */
+}
+.nt-slot--2 .nt-line,
+.transition-overlay[data-tone='pink'] .nt-slot--1 .nt-line {
+  color: #ff4fa3; /* DIE SLOW pink */
+}
+.nt-letter {
+  display: inline-block;
+  position: relative;
+}
+.nt-letter:empty {
+  display: none;
+}
+
+/* ---- impact frame + the knife's slash ---- */
+.nt-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #fff;
   opacity: 0;
 }
-.tw-word:empty {
-  display: none;
+/* the slash runs along the SAME 4° seam the halves are clipped to (rotated about the screen centre) */
+.nt-slash-track {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 50%;
+  height: 0;
+  z-index: 4;
+  transform: rotate(-4deg);
+}
+.nt-slash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 8px;
+  background: #fff;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+@media (max-width: 600px) {
+  .nt-title {
+    gap: clamp(40px, 7vh, 76px);
+  }
+  .nt-slot {
+    filter: drop-shadow(6px 7px 0 #000);
+  }
+  .nt-slot--1 {
+    transform: translate(-4px, -6px) rotate(-5deg);
+  }
+  .nt-slot--2 {
+    transform: translate(6px, 8px) rotate(6deg);
+  }
+  .nt-line {
+    -webkit-text-stroke-width: 10px; /* the intro's phone stroke (~5px visible edge) */
+    text-shadow:
+      2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+  }
+  .nt-slash {
+    top: -3px;
+    height: 6px;
+  }
 }
 
 /* REDUCE MOTION: navWipe never plays; belt-and-braces keep the node out of the tree. */

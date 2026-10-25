@@ -615,6 +615,9 @@
   .st2--narrow .st2-chip { min-height: 78px; }
   .st2--narrow .st2-hero { padding-top: 18px; gap: 6px; }
   .st2--narrow .st2-box { height: 96px; }
+  /* audit oct25: a 390x844 phone still scrolled 12px (the ALL TIME row's bottom cut) — the two life rows give 12px each */
+  .st2--narrow .st2-life-k,
+  .st2--narrow .st2-life-cell { min-height: 52px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

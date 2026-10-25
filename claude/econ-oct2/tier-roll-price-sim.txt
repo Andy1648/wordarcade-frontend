@@ -1,0 +1,7 @@
+gem drop per game word 0.0667 -> median bot (14 wpm x 70% games) ~39 gems/h from drops alone
+luck x1  EPIC+ by rolling: steady 87 gems, fresh pity 90 gems
+luck x1  LEGENDARY+ by rolling: steady 465 gems, fresh pity 465 gems
+luck x2  EPIC+ by rolling: steady 78 gems, fresh pity 80 gems
+luck x2  LEGENDARY+ by rolling: steady 373 gems, fresh pity 373 gems
+luck x6.6  EPIC+ by rolling: steady 49 gems, fresh pity 50 gems
+luck x6.6  LEGENDARY+ by rolling: steady 174 gems, fresh pity 173 gems

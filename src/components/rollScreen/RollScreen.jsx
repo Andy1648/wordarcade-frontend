@@ -24,6 +24,7 @@ import { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
+import VesselArt from './VesselArt';
 import RatesPop from './RatesPop.jsx';
 import { ChaseFan, CollectionStrip } from './RollShowcase.jsx';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
@@ -68,6 +69,9 @@ registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 export const stopMenuPointer = (e) => e.stopPropagation();
 
 const MarksIndex = lazyWithReload(() => import('../MarksIndex'), 'MarksIndex');
+// 065: an EPIC+ / LEGENDARY+ ticket opens as a SEALED CAPSULE (its own big reveal), not the reel
+const SealedRollReveal = lazyWithReload(() => import('./SealedRollReveal'), 'SealedRollReveal');
+const SEALED_TIERS = ['epic', 'legendary'];
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
 
 // REDUCE MOTION: the in-game toggle (PR #207, src/lib/reduceMotion.js) — live, never the OS media query.
@@ -168,6 +172,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   // 060: my tickets, from the server only (never cached — a ticket the server didn't list is never drawn)
   const [tickets, setTickets] = useState([]);
   const [ticketBusy, setTicketBusy] = useState(false);
+  const [sealed, setSealed] = useState(null); // 065: the ticket whose vessel is open
   const refreshTickets = () => listTickets().then((l) => { if (live.current.mounted) setTickets(l); });
   useEffect(() => { live.current.mounted = true; refreshTickets(); return () => { live.current.mounted = false; }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // this screen covers the whole menu: hold the menu's music-beat pops (each one restyled the whole document), and
@@ -297,6 +302,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const t = bestTicket(tickets);
     if (!t) return;
     stopAuto();
+    if (SEALED_TIERS.includes(t.tier)) { if (pending.current) commit(pending.current); setSealed(t); return; }
     setTicketBusy(true);
     const pick = t.pick || (await rollTicket(t));
     if (!live.current.mounted) return;
@@ -577,15 +583,24 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               data-tier={offer.tier}
               aria-label={`Use a ${ticketLabel(offer.tier)} ticket — a guaranteed ${tierName(offer.tier)} or better`}
             >
-              <span className="rs-ticket-k">USE</span>{' '}
+              {SEALED_TIERS.includes(offer.tier) ? <VesselArt tier={offer.tier} size={null} label={false} className="rs-ticket-vessel" /> : null}
+              <span className="rs-ticket-k">OPEN</span>{' '}
               <span className="rs-ticket-v">{ticketLabel(offer.tier)}</span>{' '}
-              <span className="rs-ticket-w">TICKET</span>{' '}
+              <span className="rs-ticket-w">{SEALED_TIERS.includes(offer.tier) ? 'ROLL' : 'TICKET'}</span>{' '}
               {countOf(tickets, offer.tier) > 1 ? <span className="rs-ticket-n">×{formatNum(countOf(tickets, offer.tier))}</span> : null}
             </button>
           ) : null}
         </div>
       </div>
 
+      {sealed ? (
+        <Suspense fallback={null}>
+          <SealedRollReveal
+            ticket={sealed}
+            onDone={() => { setSealed(null); setTickets((l) => l.filter((x) => x.id !== sealed.id)); refreshTickets(); setLanded((n) => n + 1); }}
+          />
+        </Suspense>
+      ) : null}
       {tut && tutDef && (
         <SpotlightTutorial tutorial={tutDef} onDone={() => { markTutorialSeen('markRolls'); setTut(false); }} />
       )}
