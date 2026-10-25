@@ -44,6 +44,23 @@ function sndLand(big) {
   run.forEach((k, i) => tone(t + i * 0.08, { freq: pentFreq(NOTE.C5 + k), type: 'triangle', dur: 0.18, gain: 0.16, attack: 0.004 }));
 }
 
+// each prize icon's upright pose for a rotor angle: undo its slice's turn AND the rotor's (pure writes, no reads)
+const icoPose = (slot, rotor) => `rotate(${-(slot * SLICE_DEG + rotor)}deg)`;
+function poseAll(els, rotor) { els.forEach((el, i) => { if (el) el.style.transform = icoPose(i, rotor); }); }
+// one finite WAAPI counter-turn per icon riding the rotor's own curve (transform only; will-change only while it runs)
+function turnIcons(els, from, to, opts) {
+  return els.map((el, i) => {
+    if (!el) return null;
+    el.style.willChange = 'transform';
+    return el.animate([{ transform: icoPose(i, from) }, { transform: icoPose(i, to) }], opts);
+  });
+}
+function settleIcons(els, anims, rotor) {
+  anims.forEach((a) => { if (a) a.cancel(); });
+  els.forEach((el) => { if (el) el.style.willChange = ''; });
+  poseAll(els, rotor);
+}
+
 /** The prize art for a landed spin (the cosmetic's own art once the server named it). */
 function prizeArt(s) {
   if (s.prize === 'cosmetic' && s.cosmetic) return kitSrc(s.cosmetic, 0);
@@ -55,17 +72,21 @@ export default function DailyWheel({ onClose }) {
   const [st, setSt] = useState({ phase: 'load' }); // load | off | ready | spinning | landed | done
   const [odds, setOdds] = useState(false);
   const rotorRef = useRef(null);
+  const icoRefs = useRef([]); // the 8 prize icons: counter-rotated so each one always stands upright to the viewer
   const pointerRef = useRef(null);
   const resultRef = useRef(null);
   const restRef = useRef(0); // the wheel's current angle (deg)
   const timers = useRef([]);
   const live = useRef(true);
 
+  const poseIcons = useCallback((rotor) => poseAll(icoRefs.current, rotor), []);
+
   const park = useCallback((slot) => {
     const a = landAngle(slot, 0, () => 0.5, 0) % 360;
     restRef.current = a;
     if (rotorRef.current) rotorRef.current.style.transform = `rotate(${a}deg)`;
-  }, []);
+    poseIcons(a);
+  }, [poseIcons]);
 
   // open: what does the server say about today?
   useEffect(() => {
@@ -95,13 +116,14 @@ export default function DailyWheel({ onClose }) {
   const land = useCallback((s, rest) => {
     restRef.current = rest;
     if (rotorRef.current) rotorRef.current.style.transform = `rotate(${rest}deg)`;
+    poseIcons(rest);
     const paidNow = payLanded(s, PAY);
     if (s.kind === 'free') noteSpun(s.day, s.streak);
     if (paidNow || !s.claimed) claimWheel(s.spin);
     const big = s.prize === 'ticket' || s.prize === 'cosmetic';
     try { sndLand(big); } catch { /* audio */ }
     setSt((p) => ({ ...p, phase: 'landed', spin: s, [s.kind === 'ad' ? 'ad' : 'freeSpin']: s }));
-  }, []);
+  }, [poseIcons]);
 
   // the result chip pops once when it lands
   useEffect(() => {
@@ -123,14 +145,18 @@ export default function DailyWheel({ onClose }) {
     const from = restRef.current;
     // the wind-up plays while the server answers (it never decides anything)
     let wind = null;
+    let windIcons = [];
     if (rotor && !reduceMotion()) {
       rotor.style.willChange = 'transform';
-      wind = rotor.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${from - 14}deg)` }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+      const wo = { duration: 260, easing: 'ease-out', fill: 'forwards' };
+      wind = rotor.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${from - 14}deg)` }], wo);
+      windIcons = turnIcons(icoRefs.current, from, from - 14, wo);
     }
     const r = await spinWheel(kind);
     if (!live.current) return;
     if (!r.spin) {
       if (wind) wind.cancel();
+      settleIcons(icoRefs.current, windIcons, from);
       if (rotor) rotor.style.willChange = '';
       setSt((p) => ({ ...p, phase: r.error === 'off' ? 'off' : 'ready', error: r.error }));
       return;
@@ -139,12 +165,16 @@ export default function DailyWheel({ onClose }) {
     const to = landAngle(s.slot, from, Math.random, 5);
     if (!rotor || reduceMotion()) {
       if (wind) wind.cancel();
+      settleIcons(icoRefs.current, windIcons, to % 360);
       land(s, to % 360);
       return;
     }
     const start = from - 14;
-    const a = rotor.animate([{ transform: `rotate(${start}deg)` }, { transform: `rotate(${to}deg)` }], { duration: SPIN_MS, easing: SPIN_EASE, fill: 'forwards' });
+    const so = { duration: SPIN_MS, easing: SPIN_EASE, fill: 'forwards' };
+    const a = rotor.animate([{ transform: `rotate(${start}deg)` }, { transform: `rotate(${to}deg)` }], so);
+    const spinIcons = turnIcons(icoRefs.current, start, to, so);
     if (wind) wind.cancel();
+    windIcons.forEach((w) => { if (w) w.cancel(); });
     // the pointer ticks: precomputed peg crossings → setTimeouts; ONE pooled flick on the one pointer node
     const ptr = pointerRef.current;
     pegCrossings(start, to).forEach((deg, i) => {
@@ -163,6 +193,7 @@ export default function DailyWheel({ onClose }) {
       if (!live.current) return;
       rotor.style.transform = `rotate(${to % 360}deg)`;
       a.cancel();
+      settleIcons(icoRefs.current, spinIcons, to % 360);
       rotor.style.willChange = '';
       land(s, to % 360);
     };
@@ -198,9 +229,15 @@ export default function DailyWheel({ onClose }) {
               <img className="dw-face" src={artSrc('face')} alt="" aria-hidden="true" draggable="false" />
               {WHEEL_SLOTS.map((p) => (
                 <div key={p.slot} className={`dw-slice${p.jackpot ? ' is-jackpot' : ''}`} style={{ transform: `rotate(${p.slot * SLICE_DEG}deg)` }} aria-hidden="true">
-                  <img className="dw-slice-ico" src={artSrc(p.icon)} alt="" draggable="false" />
-                  <span className="dw-slice-l">{p.label}</span>
-                  <span className="dw-slice-s">{p.sub}</span>
+                  {/* the painted prize carries the slice (no text: it can't reach 16px on a phone wedge — the ODDS sheet names it) */}
+                  <img
+                    ref={(el) => { icoRefs.current[p.slot] = el; }}
+                    className="dw-slice-ico"
+                    src={artSrc(p.icon)}
+                    alt=""
+                    draggable="false"
+                    style={{ transform: icoPose(p.slot, 0) }}
+                  />
                 </div>
               ))}
             </div>
@@ -213,7 +250,6 @@ export default function DailyWheel({ onClose }) {
               aria-label="Spin the wheel"
             >
               <img src={artSrc('hub')} alt="" aria-hidden="true" draggable="false" />
-              <span className="dw-hub-l">{st.phase === 'ready' ? 'SPIN' : ''}</span>
             </button>
             <img ref={pointerRef} className="dw-pointer" src={artSrc('pointer')} alt="" aria-hidden="true" draggable="false" />
           </div>

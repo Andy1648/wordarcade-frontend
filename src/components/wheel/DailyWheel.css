@@ -13,7 +13,7 @@
 .dw {
   --dw-c: var(--k-pink, #FF4FA3);
   /* the wheel's diameter: fits 360x640 phones and 1280x600 laptops with the head + foot, never scrolls */
-  --wd: min(440px, 84vw, calc(100dvh - 272px));
+  --wd: min(440px, 84vw, calc(100dvh - 308px)); /* 308 = head + foot (SPIN plate + ODDS) + padding: the ODDS button stays inside at 1280x600 */
   position: relative;
   width: min(480px, 100%);
   max-height: 100%;
@@ -99,37 +99,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 6cqw;
+  padding-top: 10cqw;
   pointer-events: none;
 }
 .dw-slice-ico {
-  order: 2;
-  margin: 0.6cqw 0 0.2cqw;
-  width: 18cqw;
-  height: 18cqw;
+  /* the painted prize IS the slice: big, centred in the wedge, always upright to the viewer (JSX counter-rotates it),
+     inked off the wedge with a static hard shadow */
+  margin-top: 0;
+  width: 21cqw;
+  height: 21cqw;
   object-fit: contain;
-  filter: drop-shadow(0.55cqw 0.55cqw 0 #0d0618);
+  filter: drop-shadow(0.6cqw 0.6cqw 0 #0d0618);
 }
-.dw-slice-s { display: none; } /* the painted icon names the kind now (gems / boost / ticket / gift) — one cue, not two */
-.dw-slice-l {
-  font-family: 'Bungee', cursive;
-  font-size: 5.6cqw;
-  line-height: 1;
-  text-transform: uppercase;
-  color: #fff;
-  -webkit-text-stroke: 0.7cqw #000;
-  paint-order: stroke fill;
-}
-.dw-slice-s {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 2.7cqw;
-  line-height: 1.1;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #0d0618;
-}
-.dw-slice.is-jackpot .dw-slice-l { color: var(--k-yellow-hi, #FFF9C9); }
 .dw-hub {
   position: absolute;
   left: 50%;
@@ -233,7 +214,7 @@
 /* ---- the odds sheet (inside the panel, over the wheel) ---- */
 .dw-odds {
   position: absolute;
-  inset: 8px;
+  inset: 0; /* the whole panel: nothing of the wheel's foot / close peeks around it */
   z-index: 2; /* over the wheel's pointer (z 1) */
   display: flex;
   flex-direction: column;
@@ -296,6 +277,13 @@
 }
 .dw-odds-x:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
 
+/* short screens (1280x600 laptops, 360x640 phones): the odds sheet tightens so all 8 rows + BACK fit, no scroll */
+@media (max-height: 700px) {
+  .dw-odds { gap: 6px; padding: 12px 14px; }
+  .dw-odds ul { gap: 4px; }
+  .dw-odds li { min-height: 32px; }
+  .dw-odds-ico { width: 28px; height: 28px; }
+}
 @media (max-height: 560px) {
   .dw { --wd: min(300px, 84vw, calc(100dvh - 250px)); gap: 6px; padding-top: 8px; }
   .dw-foot { min-height: 70px; }

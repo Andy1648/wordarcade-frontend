@@ -75,6 +75,14 @@ async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'lucky'
   await page.locator('.homepage-logo, .hp-m-title').first().waitFor();
   return db;
 }
+// every prize icon's NET on-screen tilt (rotor x slice x icon), degrees — upright means ~0 for all 8
+const iconTilts = (page) => page.evaluate(() => [...document.querySelectorAll('.dw-slice-ico')].map((ico) => {
+  const m = [document.querySelector('.dw-rotor'), ico.parentElement, ico]
+    .map((el) => new DOMMatrix(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform))
+    .reduce((acc, x) => acc.multiply(x));
+  return Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI);
+}));
+const artLoaded = (page) => page.waitForFunction(() => [...document.querySelectorAll('.dw img')].every((i) => i.complete && i.naturalWidth > 0));
 const gemBal = (page) => page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0);
 const noScroll = (page) => page.evaluate(() => ({
   y: document.documentElement.scrollHeight - innerHeight, x: document.documentElement.scrollWidth - innerWidth,
@@ -102,6 +110,7 @@ test('SPIN: one server spin, lands, pays +60 gems once, claims, clears the dot; 
   await page.locator('[data-nav="wheel"]').click();
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+  await artLoaded(page);
   if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-ready-1366x768.png` });
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 12000 });
@@ -148,11 +157,13 @@ test('phone 390x844: SPIN lands and pays (+ the PR shots)', async ({ page }) => 
   await page.locator('[data-nav="wheel"]').click();
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+  await artLoaded(page);
   if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-ready-390x844.png` });
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 12000 });
   if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${DIR}/wheel-landed-390x844.png` }); }
   expect(await gemBal(page)).toBe(260);
+  expect((await iconTilts(page)).every((t) => Math.abs(t) <= 1)).toBe(true); // still upright after the spin
 });
 
 for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 640]]) {
@@ -170,7 +181,23 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
     expect(b.y + b.height).toBeLessThanOrEqual(h + 0.5);
     expect(b.x + b.width).toBeLessThanOrEqual(w + 0.5);
     expect(await noScroll(page)).toEqual({ x: 0, y: 0 });
+    expect((await iconTilts(page)).every((t) => Math.abs(t) <= 1)).toBe(true);
+    // nothing in the panel is clipped by its bottom edge (the ODDS button was, at 1280x600)
+    const ob = await page.getByRole('button', { name: 'ODDS' }).boundingBox();
+    expect(ob.y + ob.height).toBeLessThanOrEqual(b.y + b.height - 4 + 0.5);
+    await artLoaded(page);
     if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-${w}x${h}.png` });
+    // the ODDS sheet: all 8 rows + BACK inside the sheet and the viewport, nothing clipped or scrolled
+    await page.getByRole('button', { name: 'ODDS' }).click();
+    const sheet = page.locator('.dw-odds');
+    await expect(sheet.locator('li')).toHaveCount(8);
+    expect(await sheet.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+    const back = await sheet.getByRole('button', { name: 'BACK' }).boundingBox();
+    const sb = await sheet.boundingBox();
+    expect(back.y + back.height).toBeLessThanOrEqual(Math.min(sb.y + sb.height, h) + 0.5);
+    const last = await sheet.locator('li').last().boundingBox();
+    expect(last.y + last.height).toBeLessThanOrEqual(back.y);
+    if (SHOTS) await page.screenshot({ path: `${DIR}/odds-${w}x${h}.png` });
   });
 }
 
