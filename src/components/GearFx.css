@@ -84,6 +84,9 @@
    LEGENDARY: light STREAKS (flat bars — rectangles, not drawn art) rising through the glow band on both sides, behind
    the card (this layer is z-index -2), so they never cross the stats. MYTHIC: SHOCKWAVES — copies of its own baked aura
    (the asset) pulsing out from the card edge. */
+/* the streaks rise INSIDE the glow box (audit oct25: they start 320% of their own height below it, so on a focused EQUIP
+   tile they flew as long gold bars through the empty screen under the card) */
+.gfx-streaks { position: absolute; inset: 0; overflow: hidden; }
 .gfx-streak {
   position: absolute;
   top: 0;
