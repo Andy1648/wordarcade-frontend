@@ -25,6 +25,12 @@ let parts = null; // { root, track, band, mascot, word, splat? }
 let running = [];
 let lastAt = -Infinity;
 let mascotWarm = false;
+let lastResult = 'skipped'; // 'played' | 'skipped' (no overlay / reduce motion) | 'coalesced'
+
+/** What the last playWipe call did — App's view-change whoosh plays unless the change was COALESCED. */
+export function lastWipeResult() {
+  return lastResult;
+}
 
 // The wipe's ART (painted band, splat, mascot) is fetched on the first GESTURE — never before one (payload
 // ratchet) — so it is cached and decoded by the time the first menu button is pressed. Every <img data-src> in
@@ -80,11 +86,15 @@ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date
  * Returns true when a wipe actually started (false: reduced motion, coalesced, no overlay, no WAAPI).
  */
 export function playWipe(word, dir = 'forward') {
-  if (!parts || reduceMotion()) return false;
+  // the coalesce clock runs FIRST and ticks even when nothing can be drawn (no overlay yet, reduce motion), exactly
+  // like the old App-side wipe: a journey is one journey whether or not it was animated
   const t = now();
-  if (t - lastAt < COALESCE_MS) return false;
-  if (typeof parts.band.animate !== 'function') return false;
+  if (t - lastAt < COALESCE_MS) { lastResult = 'coalesced'; return false; }
   lastAt = t;
+  lastResult = 'skipped';
+  if (!parts || reduceMotion()) return false;
+  if (typeof parts.band.animate !== 'function') return false;
+  lastResult = 'played';
   stop();
   const { root, track, band, mascot, word: wordEl } = parts;
   root.dataset.state = 'play';

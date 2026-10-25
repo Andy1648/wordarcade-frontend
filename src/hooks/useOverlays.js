@@ -9,7 +9,7 @@ import { SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from '../satRush/config';
 import { CHAIN_VIEW, CHAIN_TRANSITION_WORD, FUSE_VIEW, FUSE_TRANSITION_WORD } from '../solo/config';
 import { CG_ENTRY } from '../cg/cgEntry';
 import { DAILY_BLITZ_VIEW } from '../dailyBlitz/launch.js';
-import { playWipe } from '../lib/navWipe';
+import { playWipe, lastWipeResult } from '../lib/navWipe';
 import { peekStatsTab } from '../lib/statsTab';
 
 // The word flashed mid-wipe when navigating to each view. (Moved verbatim from App.jsx.)
@@ -73,7 +73,10 @@ export function useOverlays({ view, setView, sound, gameType }) {
   // state, no re-render, no node per transition. playWipe owns the coalesce clock + reduce-motion check.
   const runTransition = useCallback(
     (word, dir = 'forward') => {
-      if (playWipe(word, dir)) sound.whoosh(); // the wipe sweeps across
+      playWipe(word, dir);
+      // the whoosh keeps its old rule: every screen change that is not COALESCED into the last one sounds — even with no
+      // band drawn (reduce motion, or before the overlay mounts: the splash's READY? connect wipe)
+      if (lastWipeResult() !== 'coalesced') sound.whoosh();
     },
     [sound]
   );
