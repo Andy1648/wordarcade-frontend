@@ -1,5 +1,5 @@
 // e2e/guaranteed-rolls.spec.js — 060 GUARANTEED ROLLS (Andy oct22 "no source code bs"). A ticket is the SERVER's: the
-// ROLL screen shows OPEN LEGENDARY+ ROLL (a sealed capsule, 065) only for a ticket lb_tickets lists, spends it through lb_ticket_roll (the
+// ROLL screen shows OPEN LEGENDARY+ ROLL (a cog-locked vessel, 065) only for a ticket lb_tickets lists, spends it through lb_ticket_roll (the
 // browser sends only the ticket id — never a tier or luck), lands the server's pick with the full reveal, claims it,
 // costs no gems and leaves the pity countdown alone. A forged local ticket / a forged reply row / a pick below the
 // floor never renders or lands.
@@ -56,13 +56,13 @@ async function boot(page, { tickets = [{ id: TID, tier: 'legendary', state: 'own
 const gems = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.gems')).bal);
 const save = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls')));
 
-test('OPEN LEGENDARY+ ROLL: the sealed capsule opens on the server pick, free, pity untouched, claimed once', async ({ page }) => {
+test('OPEN LEGENDARY+ ROLL: the sealed vessel opens on the server pick, free, pity untouched, claimed once', async ({ page }) => {
   const calls = await boot(page);
   const btn = page.getByTestId('roll-ticket');
   await expect(btn).toBeVisible({ timeout: 6000 });
   await expect(btn).toContainText('LEGENDARY+');
   await expect(btn).toHaveAttribute('data-tier', 'legendary');
-  await expect(btn.locator('img.rs-ticket-cap')).toHaveAttribute('src', /capsule-legendary/); // a capsule, never a die
+  await expect(btn.locator('.va img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog/); // a vessel, never a die
   const gems0 = await gems(page);
   await btn.click();
   const sealed = page.getByTestId('sealed-roll');

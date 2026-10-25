@@ -24,7 +24,7 @@ export const ICON_ART = Object.freeze({
   settings: '/icons/settings.webp',
   lock: '/icons/lock.webp',
   news: '/icons/news.webp',
-  roll: '/rolls/capsule-roll.svg', // the sealed ROLL CAPSULE (Andy oct24: no dice) — placeholder until the painted webp lands
+  roll: '/rolls/vessel-icon.svg', // the COG-LOCKED GEAR CANISTER (Andy oct24: no dice) — placeholder until the painted webp lands
 });
 
 export function dropFor(size) {

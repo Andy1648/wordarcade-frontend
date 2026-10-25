@@ -24,6 +24,7 @@ import { registerMarkGlyphs } from '../MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from '../markGlyphsRolled.jsx';
 import Reel from './Reel';
 import ShinyBadge from './ShinyBadge';
+import VesselArt from './VesselArt';
 import RatesPop from './RatesPop.jsx';
 import { ChaseFan, CollectionStrip } from './RollShowcase.jsx';
 import SpotlightTutorial from '../../tutorials/SpotlightTutorial.jsx';
@@ -71,7 +72,6 @@ const MarksIndex = lazyWithReload(() => import('../MarksIndex'), 'MarksIndex');
 // 065: an EPIC+ / LEGENDARY+ ticket opens as a SEALED CAPSULE (its own big reveal), not the reel
 const SealedRollReveal = lazyWithReload(() => import('./SealedRollReveal'), 'SealedRollReveal');
 const SEALED_TIERS = ['epic', 'legendary'];
-const CAPSULE_ICON = { epic: '/rolls/capsule-epic.svg', legendary: '/rolls/capsule-legendary.svg' };
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
 
 // REDUCE MOTION: the in-game toggle (PR #207, src/lib/reduceMotion.js) — live, never the OS media query.
@@ -172,7 +172,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   // 060: my tickets, from the server only (never cached — a ticket the server didn't list is never drawn)
   const [tickets, setTickets] = useState([]);
   const [ticketBusy, setTicketBusy] = useState(false);
-  const [sealed, setSealed] = useState(null); // 065: the ticket whose capsule is open
+  const [sealed, setSealed] = useState(null); // 065: the ticket whose vessel is open
   const refreshTickets = () => listTickets().then((l) => { if (live.current.mounted) setTickets(l); });
   useEffect(() => { live.current.mounted = true; refreshTickets(); return () => { live.current.mounted = false; }; }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // this screen covers the whole menu: hold the menu's music-beat pops (each one restyled the whole document), and
@@ -583,7 +583,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               data-tier={offer.tier}
               aria-label={`Use a ${ticketLabel(offer.tier)} ticket — a guaranteed ${tierName(offer.tier)} or better`}
             >
-              {CAPSULE_ICON[offer.tier] ? <img className="rs-ticket-cap" src={CAPSULE_ICON[offer.tier]} width="44" height="44" alt="" draggable="false" /> : null}
+              {SEALED_TIERS.includes(offer.tier) ? <VesselArt tier={offer.tier} size={null} label={false} className="rs-ticket-vessel" /> : null}
               <span className="rs-ticket-k">OPEN</span>{' '}
               <span className="rs-ticket-v">{ticketLabel(offer.tier)}</span>{' '}
               <span className="rs-ticket-w">{SEALED_TIERS.includes(offer.tier) ? 'ROLL' : 'TICKET'}</span>{' '}

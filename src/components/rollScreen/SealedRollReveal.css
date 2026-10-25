@@ -1,4 +1,4 @@
-/* SealedRollReveal — the SEALED ROLL capsule opening (065). A modal moment, not persistent UI. Flat colours, the tier's
+/* SealedRollReveal — the SEALED ROLL vessel opening (065). A modal moment, not persistent UI. Flat colours, the tier's
    colour on the frame; motion = finite WAAPI one-shots in the JSX (transform / opacity only). Every node's REST style is
    its end state, so a skipped / reduced-motion open simply shows the result. Nothing loops. */
 .srr {
@@ -55,25 +55,30 @@
 }
 .srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
 
-.srr-pod { position: relative; width: 260px; min-height: 290px; display: grid; place-items: center; }
-.srr-cap {
+.srr-pod { position: relative; width: 260px; min-height: 300px; display: grid; place-items: center; }
+.srr-vessel {
   position: relative;
+  z-index: 1;
   grid-area: 1 / 1;
+  align-self: end;
   padding: 0;
   margin: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  line-height: 0;
 }
-.srr-cap:disabled { cursor: default; }
-.srr-half { grid-area: 1 / 1; width: 250px; height: 250px; pointer-events: none; user-select: none; }
-.srr.is-open .srr-half { opacity: 0; } /* the burst's end state (the halves have flown) */
-.srr-cap:not(:disabled):hover .srr-half { transform: translateY(-4px); transition: transform 160ms ease-out; }
-.srr-cap:not(:disabled):active .srr-half { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
+.srr-vessel:disabled { cursor: default; }
+.srr-vessel:not(:disabled):hover .va { transform: translateY(-4px); transition: transform 160ms ease-out; }
+.srr-vessel:not(:disabled):active .va { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
+/* the open phase's REST = the burst's end state: the cog + lid have flown, the glow sits behind the card */
+.srr.is-open .va-cog, .srr.is-open .va-lid { opacity: 0; }
+.srr-glow { grid-area: 1 / 1; align-self: start; width: 300px; height: 300px; margin-top: -40px; opacity: 0; pointer-events: none; }
+.srr.is-open .srr-glow { opacity: .85; }
+.srr-shards { grid-area: 1 / 1; position: relative; width: 0; height: 0; pointer-events: none; }
+.srr-shard { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; opacity: 0; }
 
-.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; }
+.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; margin-top: -30px; }
 .srr-stamp {
   position: absolute;
   right: -64px;
@@ -126,5 +131,4 @@
 
 @media (max-width: 420px) {
   .srr-pod { width: 220px; min-height: 250px; }
-  .srr-half { width: 210px; height: 210px; }
 }

@@ -43,9 +43,9 @@ export const STOCK = [
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
   // 065 SEALED ROLLS (Andy oct24): a guaranteed EPIC+ / LEGENDARY+ gear roll. NOT bought here: the SERVER sells it
   // (lb_ticket_buy — price, hourly stock and the floor are its own; rollTickets.js TICKET_SHOP mirrors them) and the shop
-  // card routes the tap there (buyStock answers 'ticket'). `art` = the sealed capsule (placeholder SVG until the webp lands).
-  { id: 'epicroll', rarity: 'epic', ticket: 'epic', art: '/rolls/capsule-epic.svg', name: 'SEALED ROLL', big: 'EPIC+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 150, max: 2 },
-  { id: 'legroll', rarity: 'legendary', ticket: 'legendary', art: '/rolls/capsule-legendary.svg', name: 'SEALED ROLL', big: 'LEGENDARY+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 750, max: 1 },
+  // card routes the tap there (buyStock answers 'ticket'). the card draws the vessel (VesselArt).
+  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 150, max: 2 },
+  { id: 'legroll', rarity: 'legendary', ticket: 'legendary', name: 'SEALED ROLL', big: 'LEGENDARY+', what: 'GUARANTEED GEAR', time: 'NEW GEAR FIRST', price: 750, max: 1 },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },

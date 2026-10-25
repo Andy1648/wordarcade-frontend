@@ -28,6 +28,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
 import DailyDrop from './DailyDrop';
+import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
@@ -70,7 +71,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
           <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
-        {SHOP_ART[it.id] || it.art ? <img className={`sp2-art${it.ticket ? ' sp2-capsule' : ''}`} src={SHOP_ART[it.id] || it.art} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
+        {it.ticket ? <VesselArt tier={it.ticket} size={null} className="sp2-art sp2-vessel" /> : SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
         {it.time ? <span className="sp2-time">{it.time}</span> : null}

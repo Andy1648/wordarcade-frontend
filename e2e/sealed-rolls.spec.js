@@ -1,7 +1,7 @@
 // e2e/sealed-rolls.spec.js — 065 SEALED ROLLS (Andy oct24 "you just totally didnt do the epic+, legendary+ rolls … i
 // don't want dice"). The SHOP sells a sealed EPIC+ / LEGENDARY+ ROLL: the tap pays the gems, asks lb_ticket_buy with ONLY
 // the secret, the tier and a request id (never a price, a floor or luck), and opens the bought ticket in place — the
-// capsule rattles, bursts, and the server's pick lands (060 lb_ticket_roll / lb_ticket_claim). A definite no from the
+// cog-locked vessel rattles, unlocks, blasts open, and the server's pick lands (060 lb_ticket_roll / lb_ticket_claim). A definite no from the
 // server (over the gem budget) gives the gems back. SHOTS=1 saves the seeded screenshots to claude/shots-rolls/.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -69,7 +69,8 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     const { shop, calls } = await boot(page);
     const leg = card(shop, 'legroll');
     await leg.scrollIntoViewIfNeeded();
-    await expect(leg.locator('img.sp2-capsule')).toHaveAttribute('src', /capsule-legendary/);
+    await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog/);
+    await expect(leg.locator('.sp2-vessel text')).toHaveText('LEGENDARY+'); // the tier on the blank badge, in code
     await expect(leg).toContainText('750');
     await shot(page, `${vp.tag}-1-shop`);
     await leg.click();
@@ -98,7 +99,7 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
   });
 }
 
-test('EPIC+ upgrade: a MYTHIC out of an EPIC+ capsule stamps UPGRADE!', async ({ page }) => {
+test('EPIC+ upgrade: a MYTHIC out of an EPIC+ vessel stamps UPGRADE!', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   const { shop } = await boot(page, { pick: { mark: 'mk-kraken', tier: 'mythic', shiny: false } });
   await card(shop, 'epicroll').click();
