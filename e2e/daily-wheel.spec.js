@@ -15,8 +15,9 @@ const SECRET = 'e'.repeat(48);
 const SPIN_ID = '11111111-2222-4333-8444-555555555555';
 const TICKET_ID = '99999999-8888-4777-8666-555555555555';
 const SHOTS = !!process.env.SHOTS;
+const DIR = process.env.SHOTS_DIR || 'claude/shots-wheel';
 
-async function boot(page, { gems = 200, slot = 2, streak = 0 } = {}) {
+async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'lucky' } = {}) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-wh', username: 'Spinner', level: 24, rebirths: 2, lifetime_words: 400, lifetime_letters: 2000, wins_per_word: 0, econ: 13 };
@@ -31,7 +32,7 @@ async function boot(page, { gems = 200, slot = 2, streak = 0 } = {}) {
     const amount = prize === 'gems' && hot ? Math.round(base * 1.5) : base; // = 067's HOT streak
     return {
       ok: true, again, spin: SPIN_ID, day, kind: 'free', slot, prize, amount, streak: streak + 1, bonus: hot ? 'hot' : null,
-      claimed: db.claimed, cosmetic: prize === 'cosmetic' ? 'lucky' : null,
+      claimed: db.claimed, cosmetic: prize === 'cosmetic' ? cosmetic : null,
       ticket: prize === 'ticket' ? { id: TICKET_ID, tier: slot === 5 ? 'legendary' : 'rare' } : null,
     };
   };
@@ -89,7 +90,7 @@ test('menu: the WHEEL takes the top-right slot; NEWS + SETTINGS sit bottom-right
   await expect(page.locator('.hp-util [data-nav="news"]')).toBeVisible();
   await expect(page.locator('.hp-util [data-nav="settings"]')).toBeVisible();
   await expect(page.locator('.homepage-credits-link')).toHaveCount(0);
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/menu-1366x768.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/menu-1366x768.png` });
   await page.locator('.hp-util [data-nav="settings"]').click();
   await page.locator('.sp-credits:visible').click();
   await expect(page.locator('.credits-wrap')).toBeVisible();
@@ -101,10 +102,10 @@ test('SPIN: one server spin, lands, pays +60 gems once, claims, clears the dot; 
   await page.locator('[data-nav="wheel"]').click();
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-ready-1366x768.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-ready-1366x768.png` });
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 12000 });
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-landed-1366x768.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-landed-1366x768.png` });
   expect(db.calls.spin).toBe(1);
   await expect.poll(() => db.calls.claim).toBe(1);
   expect(await gemBal(page)).toBe(260);
@@ -133,12 +134,12 @@ test('a LEGENDARY+ ticket pays nothing locally (the server owns it); the ODDS sh
   await expect(wheel.getByTestId('wheel-result')).toContainText('GEARS');
   expect(await gemBal(page)).toBe(200);
   expect(await noScroll(page)).toEqual({ x: 0, y: 0 });
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-jackpot-1280x600.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-jackpot-1280x600.png` });
   await wheel.getByRole('button', { name: 'ODDS' }).click();
   const pcts = await wheel.locator('.dw-odds-p').allTextContents();
   expect(pcts).toHaveLength(8);
   expect(pcts.reduce((a, t) => a + Number(t.replace('%', '')), 0)).toBe(100);
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-odds-1280x600.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-odds-1280x600.png` });
 });
 
 test('phone 390x844: SPIN lands and pays (+ the PR shots)', async ({ page }) => {
@@ -147,10 +148,10 @@ test('phone 390x844: SPIN lands and pays (+ the PR shots)', async ({ page }) => 
   await page.locator('[data-nav="wheel"]').click();
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
-  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-ready-390x844.png' });
+  if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-ready-390x844.png` });
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 12000 });
-  if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: 'claude/shots-wheel/wheel-landed-390x844.png' }); }
+  if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${DIR}/wheel-landed-390x844.png` }); }
   expect(await gemBal(page)).toBe(260);
 });
 
@@ -159,7 +160,7 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
     await page.setViewportSize({ width: w, height: h });
     await boot(page);
     expect(await noScroll(page)).toEqual({ x: 0, y: 0 });
-    if (SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: `claude/shots-wheel/menu-${w}x${h}.png` }); }
+    if (SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: `${DIR}/menu-${w}x${h}.png` }); }
     await page.locator('[data-nav="wheel"]').click();
     const panel = page.locator('.dw');
     await expect(page.getByTestId('wheel-spin')).toBeVisible();
@@ -169,6 +170,34 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
     expect(b.y + b.height).toBeLessThanOrEqual(h + 0.5);
     expect(b.x + b.width).toBeLessThanOrEqual(w + 0.5);
     expect(await noScroll(page)).toEqual({ x: 0, y: 0 });
-    if (SHOTS) await page.screenshot({ path: `claude/shots-wheel/wheel-${w}x${h}.png` });
+    if (SHOTS) await page.screenshot({ path: `${DIR}/wheel-${w}x${h}.png` });
   });
+}
+
+// the wheel-only cosmetics: the painted piece shows on the result card, lands in the save, and wears where its slot is worn
+for (const [id, name, tab, slotKey] of [['lucky', 'LUCKY', 'SIDEKICK', 'pet'], ['jackpot', 'JACKPOT', 'FRAME', 'frame'], ['confetti', 'PRIZE SHOWER', 'WIN FX', 'fx']]) {
+  for (const [vn, vp] of [['1366x768', { width: 1366, height: 768 }], ['390x844', { width: 390, height: 844 }]]) {
+    test(`cosmetic ${id} ${vn}: the result card shows its art, it is owned, WEAR equips it`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      await boot(page, { slot: 7, cosmetic: id });
+      await page.locator('[data-nav="wheel"]').click();
+      const wheel = page.getByTestId('daily-wheel');
+      await wheel.getByTestId('wheel-spin').click();
+      const res = wheel.getByTestId('wheel-result');
+      await expect(res).toContainText(name, { timeout: 12000 });
+      await expect(res.locator('img')).toHaveAttribute('src', id === 'jackpot' ? '/cards/frame-jackpot.webp' : id === 'confetti' ? '/fx/win/confetti.webp' : '/cast/kit/lucky-0.webp');
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).own)).toContain(id);
+      if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${DIR}/cosmetic-${id}-result-${vn}.png` }); }
+      await wheel.getByRole('button', { name: 'Close the daily wheel' }).click();
+      await page.locator('[data-nav="profile"]:visible').first().click();
+      await page.getByTestId('profile-kit').click();
+      const pk = page.getByTestId('kit-picker');
+      await pk.getByRole('tab', { name: tab }).click();
+      await pk.getByRole('radio', { name: new RegExp(name) }).click();
+      await pk.getByRole('button', { name: `WEAR ${name}` }).click();
+      await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible();
+      expect(await page.evaluate((k) => JSON.parse(localStorage.getItem('taw.s2.kit'))[k], slotKey)).toBe(id);
+      if (SHOTS) { await page.waitForTimeout(700); await page.screenshot({ path: `${DIR}/cosmetic-${id}-worn-${vn}.png` }); }
+    });
+  }
 }

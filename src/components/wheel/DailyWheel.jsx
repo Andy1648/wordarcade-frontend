@@ -249,7 +249,7 @@ export default function DailyWheel({ onClose }) {
             <ul>
               {oddsRows().map((o) => (
                 <li key={o.slot} style={{ '--o-c': o.color }}>
-                  <span className="dw-odds-sw" aria-hidden="true" />
+                  <img className="dw-odds-ico" src={artSrc(WHEEL_SLOTS[o.slot].icon)} alt="" aria-hidden="true" draggable="false" />
                   <span className="dw-odds-n">{o.name}</span>
                   <span className="dw-odds-p">{o.pct}%</span>
                 </li>

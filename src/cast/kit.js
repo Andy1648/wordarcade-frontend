@@ -25,7 +25,7 @@ export const SIDEKICKS = [
   { id: 'pixel', name: 'PIXEL', tag: 'RUNS ON 8 BITS OF JOY', color: '#2EFFE0', wins: 80, price: 900 },
   // the rare one: a rebirth gate, then gems (like a LEGEND hero)
   { id: 'turbo', name: 'TURBO', tag: 'FASTEST SNAIL ALIVE', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
-  // DAILY WHEEL only (067_daily_wheel.sql picks it; never sold). PLACEHOLDER art until the hero-art session paints it.
+  // DAILY WHEEL only (067_daily_wheel.sql picks it; never sold). Painted oct25 (both frames rest pose; the Sidekick hop is code).
   { id: 'lucky', name: 'LUCKY', tag: 'SPINS TO WIN', color: '#FFC23D', wheel: true, rare: true },
 ].map((k) => ({ ...k, slot: 'pet' }));
 
@@ -42,8 +42,8 @@ export const FRAMES = [
   F('scholar', 'SCHOLAR', 'SAT RUSH MASTERY', '#FFE94A', 544 / 858, [17.28, 16.78, 66.18, 54.55], [19.3, 75.41, 61.76, 8.51], { road: 'sat-rush' }),
   F('chain', 'CHAIN', 'CHAIN MASTERY', '#2EFFE0', 499 / 808, [14.63, 19.93, 67.94, 54.7], [18.04, 79.08, 63.93, 10.27], { road: 'chain' }),
   F('defuser', 'DEFUSER', 'FUSE MASTERY', '#B8F632', 562 / 854, [20.82, 19.2, 58.36, 53.16], [21.17, 76.46, 57.47, 8.78], { road: 'fuse' }),
-  // DAILY WHEEL only — PLACEHOLDER art (a copy of ARCADE, so its windows are ARCADE's) until the painted frame lands
-  F('jackpot', 'JACKPOT', 'HIT THE BIG ONE', '#FFC23D', 535 / 866, [17.38, 21.25, 64.11, 51.39], [17.76, 76.91, 63.36, 8.66], { wheel: true, rare: true }),
+  // DAILY WHEEL only — painted oct25; windows measured off the cut (its name plate is taller: FitText fills it)
+  F('jackpot', 'JACKPOT', 'HIT THE BIG ONE', '#FFC23D', 462 / 866, [19.48, 12.14, 61.04, 52.49], [19.48, 70.52, 61.04, 18.38], { wheel: true, rare: true }),
 ];
 export const WIN_FX = [
   { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
