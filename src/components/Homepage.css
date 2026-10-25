@@ -206,6 +206,12 @@ html[data-beat='true'] .homepage-logo {
 .hp-util .kb-iface { width: var(--hp-tr); height: var(--hp-tr); }
 .hp-util .kb-iface .kit-icon { width: var(--hp-tr-ico); height: var(--hp-tr-ico); }
 .hp-util .kb--icon:disabled { opacity: 0.5; pointer-events: none; }
+/* short laptops (1280x720): the pair steps down to the 44px floor so six boost timers above it never reach the
+   DAILY chip (it took CREDITS' 44px row — the full-size tiles cost the dock ~20px) */
+@media (min-width: 1200px) and (max-height: 800px) {
+  .homepage-stage[data-paged] .hp-util { --hp-tr: 44px; --hp-tr-ico: 30px; gap: 8px; }
+  .homepage-stage[data-paged] .hp-util .kb--icon { height: 44px; }
+}
 .hp-icons .is-wheel .kb-art { width: calc(var(--hp-tr-ico) * 1.2); height: calc(var(--hp-tr-ico) * 1.2); overflow: visible; }
 .hp-icons .is-wheel .kb-art img { left: 0; top: 0; width: 100%; height: 100%; translate: none; object-fit: contain; }
 

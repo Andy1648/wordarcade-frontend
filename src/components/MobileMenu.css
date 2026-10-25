@@ -358,6 +358,7 @@
   .hp-m-top .hp-icons .kb-iface { width: 46px; height: 46px; }
   .hp-m-top .hp-icons .kb-iface .kit-icon { width: 30px; height: 30px; }
   .hp-m-top .hp-icons .is-wheel .kb-art { width: 36px; height: 36px; }
+  .hp-m-top .hp-icons .is-wheel .kb-idot { right: -6px; } /* the row's last tile: its free-spin dot stays inside the phone's edge */
   .hp-m-top .hp-icons .kb-itag { left: -12px; bottom: 0; } /* oct22: at -8px the tilted 0/3 sticker sat on the PROFILE card below */
   .hp-m-xp { flex: 0 0 auto; }
   .hp-m-xp .kx { flex-wrap: nowrap; gap: 10px; padding-top: 0; }
