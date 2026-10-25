@@ -1,64 +1,148 @@
-/* TransitionOverlay.css — the single screen-change wipe (Job 12). Transform + opacity ONLY; one
-   directional panel; <=240ms. Shared timing tokens (see Transitions.css :root) so every transition
-   in the app speaks one language. pointer-events:none + fixed so it never blocks/gates the screen. */
+/* TransitionOverlay.css — the ONE pooled screen-change wipe (lib/navWipe.js plays it via WAAPI).
+   Flat house colours only (no gradient): a pink slab with a purple leading edge (the coloured outline)
+   and a hard black offset stripe, a yellow trailing stripe, the mascot-run PNG riding the lead.
+   At rest the node is hidden (visibility) and carries NO will-change; navWipe sets will-change on play
+   and clears it on finish. pointer-events:none + fixed, so it never blocks or gates the screen. */
 .transition-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
   pointer-events: none;
   overflow: hidden;
+  visibility: hidden;
 }
-.transition-panel {
+.transition-overlay[data-state='play'] {
+  visibility: visible;
+}
+.tw-track {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, #9A1AFF, #ff4fa3 55%, #FF6B3D);
-  will-change: transform, opacity;
 }
-/* FORWARD (entering deeper): the panel sweeps across left→right (covers, then clears to the right). */
-.transition-overlay[data-dir='forward'] .transition-panel {
-  animation: wipe-forward var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+/* the band is wider than the screen so the skew never shows a bare corner */
+.tw-band {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: -12%;
+  width: 124%;
+  transform: translateX(-118%) skewX(-8deg);
 }
-/* BACK (returning): mirror — sweeps right→left. */
-.transition-overlay[data-dir='back'] .transition-panel {
-  animation: wipe-back var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+.tw-slab {
+  position: absolute;
+  top: 0;
+  bottom: 0;
 }
-@keyframes wipe-forward {
-  0% { transform: translateX(-100%); opacity: 1; }
-  45% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(100%); opacity: 1; }
+.tw-slab--main {
+  left: 0;
+  right: 0;
+  background: #ff4fa3;
 }
-@keyframes wipe-back {
-  0% { transform: translateX(100%); opacity: 1; }
-  45% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(-100%); opacity: 1; }
+/* leading edge (right, in travel direction): purple outline + hard black offset stripe beyond it */
+.tw-slab--lead {
+  right: -46px;
+  width: 46px;
+  background: #9a1aff;
+  box-shadow: 18px 0 0 #000;
 }
-
-/* The word rides the cover peak — opacity + a small scale only. */
-.transition-word {
+.tw-slab--trail {
+  left: -26px;
+  width: 26px;
+  background: #ffe94a;
+  box-shadow: -10px 0 0 #c9a800;
+}
+.tw-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  /* the paint sits in the middle ~55% of the canvas (centre ~42%): a STATIC Y-scale makes it cover the full
+     height. Static, never animated — the band (its parent) is the only thing that moves. */
+  transform: scaleY(2.2);
+  transform-origin: 50% 42%;
+}
+.tw-art:not([src]) {
+  display: none;
+}
+/* PAINTED band: a wider box so the swipe keeps its proportions on a tall phone, the torn edges + drips are the
+   art's own; the flat slab shrinks to the art's solid centre (it only guarantees cover under the paint) and the
+   flat edge stripes stand down. */
+.tw-band.has-art {
+  --bw: max(124vw, 170vh);
+  width: var(--bw);
+  left: calc(50% - var(--bw) / 2);
+  transform: translateX(-118%);
+}
+.tw-band.has-art:has(.tw-art[src]) .tw-slab--lead,
+.tw-band.has-art:has(.tw-art[src]) .tw-slab--trail {
+  display: none;
+}
+.tw-band.has-art:has(.tw-art[src]) .tw-slab--main {
+  /* well inside the paint's solid core, so the slab's straight edges never show past the torn/dripping ones */
+  left: 20%;
+  right: 24%;
+  background: #fe2094;
+}
+.tw-splat {
+  --sw: clamp(240px, 52vmin, 520px);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--sw);
+  height: var(--sw);
+  margin: calc(var(--sw) / -2) 0 0 calc(var(--sw) / -2);
+  opacity: 0;
+}
+.tw-splat:not([src]) {
+  display: none;
+}
+.tw-word {
+  position: relative;
+}
+/* the runner rides the band's leading edge (inside the band, so it travels with it) */
+.tw-mascot {
+  position: absolute;
+  top: 50%;
+  right: -170px;
+  width: clamp(96px, 16vw, 200px);
+  height: auto;
+  transform: translateY(-50%) rotate(-10deg);
+}
+.tw-mascot:not([src]) {
+  display: none;
+}
+.tw-word-wrap {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 16px;
+}
+/* the word is a STICKER: panel-dark plate, purple outline, hard black offset shadow */
+.tw-word {
+  max-width: 100%;
+  padding: 0.12em 0.45em 0.16em;
+  text-align: center;
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
   line-height: 0.98;
   letter-spacing: -0.02em;
   font-size: var(--fs-hero);
-  color: #fff;
-  -webkit-text-stroke: 4px #000;
+  color: #ffe94a;
+  -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
+  background: #1a0b2e;
+  border: 5px solid #9a1aff;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
   opacity: 0;
-  will-change: transform, opacity;
-  animation: transition-word var(--transition-ms, 240ms) ease-out both;
 }
-@keyframes transition-word {
-  0% { opacity: 0; transform: scale(0.9); }
-  45% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.04); }
+.tw-word:empty {
+  display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .transition-panel,
-  .transition-word { animation-duration: 1ms; }
+/* REDUCE MOTION: navWipe never plays; belt-and-braces keep the node out of the tree. */
+html[data-reduce-motion] .transition-overlay {
+  display: none;
 }

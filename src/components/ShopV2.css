@@ -81,7 +81,7 @@
 .sp2-plate-a {
   position: absolute;
   inset: 0;
-  background: var(--k-gold);
+  background: var(--pf-plate, var(--k-gold)); /* the POWER FORM's own plate colour (powerArt.js) */
   border: var(--k-ink-xl) solid var(--k-ink);
   box-shadow: var(--k-sh-l) var(--k-sh-l) 0 var(--k-ink);
   transform: rotate(-6deg);
@@ -89,9 +89,21 @@
 .sp2-plate-b {
   position: absolute;
   inset: 20px;
-  background: #3d2a05;
+  background: var(--pf-inner, #3d2a05);
   border: var(--k-ink-l) solid var(--k-ink);
   transform: rotate(-6deg);
+}
+/* EVOLVE (oct24): the white flash a new POWER FORM lands on (one finite opacity run, ShopV2 EVOLVE_FLASH) */
+.sp2-evolve { position: absolute; inset: 0; background: #fff; border: var(--k-ink-xl) solid var(--k-ink); transform: rotate(-6deg); opacity: 0; pointer-events: none; }
+/* THE NEXT FORM, blacked out in the plate's corner: you can see there's more, not what it is */
+.sp2-next {
+  position: absolute; right: -22px; bottom: -16px; z-index: 2; width: 58px; height: 58px; display: grid; place-items: center;
+  background: #1a0b2e; border: 3px solid var(--k-ink); border-radius: 8px; box-shadow: 3px 3px 0 var(--k-ink); transform: rotate(5deg);
+}
+.sp2-next img { width: 44px; height: 44px; object-fit: contain; filter: brightness(0) drop-shadow(1px 1px 0 #6b5a8e); }
+.sp2-next-at {
+  position: absolute; left: 50%; bottom: -12px; translate: -50% 0; padding: 0 5px;
+  font: 400 var(--fs-k13) 'Bungee', sans-serif; color: #000; background: var(--k-yellow); border: 2px solid var(--k-ink); border-radius: 5px; white-space: nowrap;
 }
 .sp2-plate-ico { position: absolute; left: 23px; top: 23px; }
 .sp2-plate-art { width: 104px; height: 104px; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); } /* the painted battery (sized like the 104 kit icon it replaced; the phone rules below shrink it) */
@@ -357,6 +369,10 @@
   }
   .sp2-forever { display: none; }
   .sp2-plate { grid-area: plate; width: 76px; height: 76px; margin: 0; }
+  /* the next-form badge tucks onto the plate's bottom-right corner, smaller (the numbers sit right beside the plate) */
+  .sp2-next { right: -8px; bottom: -10px; width: 34px; height: 34px; border-width: 2px; }
+  .sp2-next img { width: 26px; height: 26px; }
+  .sp2-next-at { bottom: -10px; font-size: var(--fs-k13); padding: 0 3px; }
   .sp2-plate-b { inset: 10px; }
   .sp2-plate-ico { left: 8px; top: 8px; width: 60px; height: 60px; }
   .sp2-pw { grid-area: pw; margin-top: 0; }

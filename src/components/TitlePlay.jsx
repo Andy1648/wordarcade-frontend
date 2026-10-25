@@ -1,12 +1,13 @@
 // TitlePlay.jsx — THE TITLE (feat/first-run-reveal, Andy oct22 "title screen needs rework"): what a brand-new player's
 // menu is before any game — stage 0 of the progressive reveal (progress/reveal.js). One read, one path:
-//   your HERO (the cast PNG you will play as) on a painted burst · ONE big PLAY (Word Bomb vs a bot, no dialog) ·
+//   your HERO (the cast PNG you will play as) on a painted burst · ONE big PLAY — the painted sticker, PlayPlate (Word Bomb vs a bot, no dialog) ·
 //   a quiet "OR PICK" row of the open modes (each opens the same mode dialog its card does).
 // Everything else on the menu (wins, upgrades, gears, contracts, the board …) appears as it starts to mean something.
 //
 // ART VS MOTION: the hero is the cast's webp, the burst is /art/starburst.svg used as a mask (the SHAPE is the asset;
 // CSS only tints it). Motion = one finite enter pop (transform/opacity) — no loops.
 import ConnectingContent from './ConnectingContent';
+import PlayPlate from './playPlate/PlayPlate.jsx';
 import './TitlePlay.css';
 
 // each mode's chip wears its menu accent (MobileMenu ROW_STYLE / SOLO_STYLE), outline = a darker shade of the fill
@@ -39,19 +40,9 @@ export default function TitlePlay({ heroSrc, games = [], onPlay, onPick, connect
         <img className="tp-hero" src={heroSrc} width="384" height="384" alt="" draggable="false" decoding="async" fetchpriority="high" />
       </div>
       <div className="tp-side">
-        <button type="button" className="tp-play" data-nav="play" onClick={play} disabled={navigating && !connecting} aria-label="Play Word Bomb against a bot">
-          <span className="tp-play-shadow" aria-hidden="true" />
-          <span className="tp-play-face">
-            {connecting ? (
-              <span className="tp-play-s"><ConnectingContent cold={coldStart} /></span>
-            ) : (
-              <>
-                <span className="tp-play-k">PLAY</span>
-                <span className="tp-play-s">WORD BOMB · VS A BOT</span>
-              </>
-            )}
-          </span>
-        </button>
+        <PlayPlate className="tp-play" data-nav="play" onClick={play} disabled={navigating && !connecting} aria-label="Play Word Bomb against a bot" word={connecting ? null : 'PLAY'} nudge={!connecting}>
+          {connecting ? <span className="tp-play-s"><ConnectingContent cold={coldStart} /></span> : <span className="tp-play-s">WORD BOMB · VS A BOT</span>}
+        </PlayPlate>
         {games.length > 0 && (
           <div className="tp-pick" role="group" aria-label="Or pick a game">
             <span className="tp-pick-k">OR PICK</span>

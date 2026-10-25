@@ -4,10 +4,13 @@
 // exists, and several App effects/renders depend on it); this hook RECEIVES `view`/`setView` and owns
 // everything around them — the Persona-5 bar wipe, its refs, and the shop/stats/rebirth/solo nav
 // helpers. Nothing here changes behaviour: same words, same 240ms clear, same nav-depth direction.
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { SAT_RUSH_VIEW, SAT_RUSH_TRANSITION_WORD } from '../satRush/config';
 import { CHAIN_VIEW, CHAIN_TRANSITION_WORD, FUSE_VIEW, FUSE_TRANSITION_WORD } from '../solo/config';
 import { CG_ENTRY } from '../cg/cgEntry';
+import { DAILY_BLITZ_VIEW } from '../dailyBlitz/launch.js';
+import { playWipe, lastWipeResult } from '../lib/navWipe';
+import { peekStatsTab } from '../lib/statsTab';
 
 // The word flashed mid-wipe when navigating to each view. (Moved verbatim from App.jsx.)
 const TRANSITION_WORDS = {
@@ -18,6 +21,14 @@ const TRANSITION_WORDS = {
   browse: 'JOIN ROOM',
   room: 'SQUAD UP',
   credits: 'CREDITS',
+  // the menu's major doors (Andy oct24 "transition screens for all buttons (or at least major ones)") — each word is
+  // the TITLE of the screen it lands on (shop / stats resolve their sub-screen in viewWord below)
+  shop: 'UPGRADES',
+  stats: 'STATS',
+  leaderboard: 'LEADERBOARD',
+  collection: 'COLLECTION',
+  achievements: 'ACHIEVEMENTS',
+  [DAILY_BLITZ_VIEW]: 'DAILY BLITZ',
   [SAT_RUSH_VIEW]: SAT_RUSH_TRANSITION_WORD,
   [CHAIN_VIEW]: CHAIN_TRANSITION_WORD,
   [FUSE_VIEW]: FUSE_TRANSITION_WORD,
@@ -31,51 +42,43 @@ const NAV_DEPTH = {
   credits: 1, stats: 1, leaderboard: 1, shop: 1, collection: 1, achievements: 1,
   browse: 1, lobby: 1,
   room: 2, game: 2, 'cg-arm': 2,
-  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2,
+  [SAT_RUSH_VIEW]: 2, [CHAIN_VIEW]: 2, [FUSE_VIEW]: 2, [DAILY_BLITZ_VIEW]: 2,
 };
 
-const COALESCE_MS = 900;
-
 export function useOverlays({ view, setView, sound, gameType }) {
-  // The COSMETIC diagonal-bar wipe overlay. `transition` is the active overlay ({ word, key, dir })
-  // or null; the key re-keys the overlay so each wipe replays.
-  const [transition, setTransition] = useState(null);
-  const transitionKeyRef = useRef(0);
-  const transitionClearRef = useRef(null);
-
   // Which menu control ('shop' | 'stats' | 'rebirth' | null) opened the overlay we're in, so the
   // homepage can restore focus to it on close (a11y). A ref: read once by the remounting Homepage.
   const overlayReturnRef = useRef(null);
   // Which view the shared Shop/Rebirth overlay opens into ('shop' | 'rebirth'). A ref: never renders.
   const shopViewRef = useRef('shop');
+  // the Stats tab this open lands on, captured at the click (StatsScreen consumes the pending tab on mount, before
+  // the wipe effect runs) so the wipe can say ACHIEVEMENTS / COLLECTION when that is the screen's title
+  const statsTabRef = useRef(null);
+  const STATS_TAB_WORDS = { collection: 'COLLECTION', achievements: 'ACHIEVEMENTS' };
+  const viewWord = (v) => {
+    if (v === 'shop') return shopViewRef.current === 'rebirth' ? 'REBIRTH' : 'UPGRADES';
+    if (v === 'stats') return STATS_TAB_WORDS[statsTabRef.current] || 'STATS';
+    return TRANSITION_WORDS[v] || 'GO!';
+  };
 
-  // ---- ONE consistent Persona-5 bar wipe for EVERY screen change ----
-  // Every transition is fired through this single helper, so they all look and sound identical (same
-  // five bars, same whoosh, same <=250ms). The overlay is purely cosmetic — the screen has already
-  // swapped underneath — so this only lays the bars on top and clears them.
+  // ---- ONE consistent wipe for EVERY screen change ----
+  // Every transition is fired through this single helper (and lib/navWipe for the menu's sheets), so they
+  // all look and sound identical. The overlay is purely cosmetic — the screen has already swapped
+  // underneath — so this only lays the band on top.
   // ONE WIPE PER JOURNEY (Andy oct14 "word race has this weird yellow column at the start"): a quick match
   // changes view three times in ~2 s (READY? → SQUAD UP → LET'S GO!), and the last wipe ran while the race
   // mounted — on a busy phone the panel stalled mid-screen as a bright column over the countdown. A view
   // change within COALESCE_MS of the last wipe now swaps without one (the screen still swaps instantly).
-  const lastWipeAtRef = useRef(-Infinity);
+  // POOLED (oct24): the wipe is ONE always-mounted node (TransitionOverlay) replayed by lib/navWipe — no
+  // state, no re-render, no node per transition. playWipe owns the coalesce clock + reduce-motion check.
   const runTransition = useCallback(
     (word, dir = 'forward') => {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (now - lastWipeAtRef.current < COALESCE_MS) return;
-      lastWipeAtRef.current = now;
-      transitionKeyRef.current += 1;
-      setTransition({ word, key: transitionKeyRef.current, dir });
-      sound.whoosh(); // the wipe sweeps across
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-      transitionClearRef.current = setTimeout(() => setTransition(null), 240); // one language, <=250ms
+      playWipe(word, dir);
+      // the whoosh keeps its old rule: every screen change that is not COALESCED into the last one sounds — even with no
+      // band drawn (reduce motion, or before the overlay mounts: the splash's READY? connect wipe)
+      if (lastWipeResult() !== 'coalesced') sound.whoosh();
     },
     [sound]
-  );
-  useEffect(
-    () => () => {
-      if (transitionClearRef.current) clearTimeout(transitionClearRef.current);
-    },
-    []
   );
 
   // Fire the wipe on every real view change. The screen has already swapped (it renders off `view`);
@@ -90,7 +93,7 @@ export function useOverlays({ view, setView, sound, gameType }) {
     // WORD RACE starts its own countdown the instant the race mounts — a LET'S GO! wipe on top of it was
     // the "yellow column" (the panel stalling mid-screen over the 3-2-1). The race enters clean.
     if (view === 'game' && gameType === 'word-race') return;
-    runTransition(TRANSITION_WORDS[view] || 'GO!', dir);
+    runTransition(viewWord(view), dir);
     // gameType is read at the moment the view changes (set in the same game_started batch); it is not a trigger
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, runTransition]);
@@ -99,6 +102,7 @@ export function useOverlays({ view, setView, sound, gameType }) {
   // state, so they live with the overlay concern. (goHome is cross-cutting and stays in App.)
   const goToStats = () => {
     overlayReturnRef.current = 'stats'; // restore focus here when Stats closes
+    statsTabRef.current = peekStatsTab();
     setView('stats');
   };
   const goToLeaderboard = () => {
@@ -121,7 +125,6 @@ export function useOverlays({ view, setView, sound, gameType }) {
   const goToFuse = () => setView(FUSE_VIEW);
 
   return {
-    transition,
     runTransition,
     shopViewRef,
     overlayReturnRef,
