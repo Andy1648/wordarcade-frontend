@@ -73,10 +73,11 @@
 .srr-vessel:not(:disabled):active .va { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
 /* the open phase's REST = the burst's end state: the cog + lid have flown, the glow sits behind the card */
 .srr.is-open .va-cog, .srr.is-open .va-lid { opacity: 0; }
-.srr-glow { grid-area: 1 / 1; align-self: start; width: 300px; height: 300px; margin-top: -40px; opacity: 0; pointer-events: none; }
+/* the glow = a painted ray burst from its BOTTOM CENTRE, seated on the canister's open rim (~63% of the 250 vessel up) */
+.srr-glow { grid-area: 1 / 1; align-self: end; width: 320px; height: 320px; margin-bottom: 150px; transform-origin: 50% 100%; opacity: 0; pointer-events: none; }
 .srr.is-open .srr-glow { opacity: .85; }
-.srr-shards { grid-area: 1 / 1; position: relative; width: 0; height: 0; pointer-events: none; }
-.srr-shard { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; opacity: 0; }
+.srr-shards { grid-area: 1 / 1; align-self: end; position: relative; width: 0; height: 0; margin-bottom: 158px; pointer-events: none; }
+.srr-shard { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; opacity: 0; }
 
 .srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; }
 .srr-stamp {

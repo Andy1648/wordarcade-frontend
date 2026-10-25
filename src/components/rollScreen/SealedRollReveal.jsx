@@ -4,7 +4,7 @@
 //   1. RATTLE — EPIC+ once, LEGENDARY+ three times, each harder — while the server picks (060 lb_ticket_roll: the floor
 //      is ITS ticket row, the browser sends only the id);
 //   2. the COG SPINS two full turns (pure rotate about its hub), then POPS OFF;
-//   3. the LID BLASTS UP; the tier's GLOW + a pooled burst of SHARDS fire from the open top, a flat flash, the ray fan
+//   3. the LID BLASTS UP; the tier's painted GLOW (rays from its bottom centre, on the rim) + a pooled burst of painted SHARDS fire from the open top, a flat flash, the ray fan
 //      (/art/rolls/rays.svg mask in the PICK's colour);
 //   4. the GEAR CARD RISES out of the canister; a pick above the floor stamps UPGRADE!;
 //   5. the landing commits it (buyTicketRoll → the save, lb_ticket_claim → the server) and wears it if it is better.
@@ -106,7 +106,7 @@ export default function SealedRollReveal({ ticket, onDone }) {
     const big = tierRank(res.tier) >= tierRank('legendary');
     kitPlay(flashRef.current, [{ opacity: big ? 0.95 : 0.7 }, { opacity: 0 }], { duration: big ? 520 : 320, easing: 'ease-out', fill: 'forwards' });
     kitPlay(raysRef.current, [{ transform: 'scale(.2) rotate(-40deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(6deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.7 }], { duration: big ? 700 : 480, easing: 'cubic-bezier(.2,1,.3,1)', fill: 'forwards' });
-    kitPlay(glowRef.current, [{ transform: 'translateY(30px) scale(.2)', opacity: 0 }, { transform: 'translateY(-10px) scale(1.2)', opacity: 1, offset: 0.4 }, { transform: 'none', opacity: 0.85 }], { duration: big ? 640 : 460, easing: EASE_OUT, fill: 'backwards' });
+    kitPlay(glowRef.current, [{ transform: 'scale(.35,.05)', opacity: 0 }, { transform: 'scale(1.08,1.18)', opacity: 1, offset: 0.4 }, { transform: 'none', opacity: 0.85 }], { duration: big ? 640 : 460, easing: EASE_OUT, fill: 'backwards' });
     const k = big ? 1.25 : 1;
     SHARDS.forEach((sh, i) => {
       kitPlay(shardRefs.current[i], [

@@ -70,7 +70,7 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     const leg = card(shop, 'legroll');
     await leg.scrollIntoViewIfNeeded();
     await expect(leg.locator('.sp2-vessel img.va-base')).toHaveAttribute('src', /vessel-legendary-base\.webp/); // the painted gold canister
-    await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-epic-cog\.webp/); // epic lock parts until legendary's are painted
+    await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog\.webp/); // the crowned gold lock
     await expect(leg.locator('.sp2-vessel text')).toHaveText('LEGENDARY+'); // the tier on the blank badge, in code
     await expect(leg).toContainText('750');
     await shot(page, `${vp.tag}-1-shop`);
@@ -87,6 +87,7 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     if (SHOTS) { await page.waitForTimeout(1250); await shot(page, `${vp.tag}-2b-opening`); } // mid cog-spin
     await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 8000 });
     await expect(sealed).toHaveAttribute('data-tier', 'legendary');
+    if (SHOTS) { await page.waitForTimeout(260); await shot(page, `${vp.tag}-2c-burst`); } // glow + shards mid-flight
     await page.waitForTimeout(900);
     await shot(page, `${vp.tag}-3-open`);
     expect(Object.keys(calls.roll[0]).sort()).toEqual(['p_secret', 'p_ticket']);
