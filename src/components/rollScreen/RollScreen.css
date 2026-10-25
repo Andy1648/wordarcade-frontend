@@ -450,6 +450,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-ticket-btn:disabled { cursor: progress; }
 .rs-ticket-k, .rs-ticket-v, .rs-ticket-w, .rs-ticket-n { line-height: 1; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .rs-ticket-k { color: #FFE94A; }
+.rs-ticket-btn .va { width: 48px; height: 48px; margin: -8px 0; } /* 065: the sealed vessel, not a die */
 .rs-ticket-n { color: #2EFFE0; }
 .rs-overlay.is-reduced .rs-ticket-btn { transition: none; }
 .rs-chip.is-ticket { background: #FFE94A; font-family: 'Bungee', sans-serif; text-transform: uppercase; transform: rotate(-3deg); }
@@ -738,6 +739,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   /* phones: TIER+ on top, TICKET ×N under it (one line clipped at 360 wide); USE goes — the plate is the verb */
   .rs-ticket-btn { flex: 1 1 0; min-width: 0; flex-wrap: wrap; justify-content: center; align-content: center; min-height: 48px; padding: 3px 8px; gap: 2px 6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
   .rs-ticket-k { display: none; }
+  .rs-ticket-btn .va { width: 30px; height: 30px; margin: 0; }
   .rs-ticket-v { flex: 0 0 100%; text-align: center; }
   .rs-ticket-v, .rs-ticket-w, .rs-ticket-n { font-size: var(--fs-k16); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   .rs-cut { --mc-w: 180px; --mc-s: 1; }

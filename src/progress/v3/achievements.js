@@ -32,7 +32,7 @@ export const ACHIEVEMENTS_V3 = [
   { id: 'bots', name: 'BEAT BOTS', g: 'bot', counter: 'bots', T: [10, 50, 250, 1000, 5000], R: R5 },
   { id: 'reb', name: 'REBIRTH', g: 'loop', counter: 'reb', T: [5, 25, 100, 500, 2500], R: [50, 75, 110, 150, 200] },
   // `what` (Andy oct8 "what is CHAIN 35?"): one line for the ladders whose name alone does not say what counts
-  { id: 'roll', name: 'ROLL EPIC+', g: 'die', counter: 'epic', T: [3, 15, 75, 300, 1500], R: R5, what: 'EPIC+ GEAR ROLLS' },
+  { id: 'roll', name: 'ROLL EPIC+', g: 'roll', counter: 'epic', T: [3, 15, 75, 300, 1500], R: R5, what: 'EPIC+ GEAR ROLLS' },
   { id: 'win', name: 'WIN ONLINE', g: 'cup', counter: 'mp', T: [5, 25, 100, 500, 2000], R: [45, 70, 100, 150, 200] },
   { id: 'chain', name: 'WORD CHAIN', g: 'chain', counter: 'chain', T: [5, 10, 20, 35, 50], R: R5, what: 'WORDS IN A ROW' },
   { id: 'index', name: 'FIND GEARS', g: 'cards', counter: 'marks', T: [3, 6, 28], R: [60, 120, 200], what: 'GEARS FOUND' },
