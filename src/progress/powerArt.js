@@ -2,7 +2,7 @@
 // rage" — "progression must FEEL like progression"). POWER levels forever, so its icon EVOLVES: every two levels is a
 // new FORM, painted (ChatGPT, one image per form, the old battery as the style reference), from a nervous AA battery up
 // to cosmic. Each form also has its own plate colour (the tilted square behind it). Pure data + lookups; the shop draws it.
-// A form whose art isn't painted yet is simply not in the list — the top painted form holds until it lands.
+// All ten forms painted (oct24); POWER 18+ holds the BLACK HOLE.
 export const POWER_LEVELS_PER_FORM = 2;
 export const POWER_FORMS = [
   { name: 'AA BATTERY', plate: '#9aa3b5', inner: '#2b2f3a' },
@@ -11,6 +11,10 @@ export const POWER_FORMS = [
   { name: 'TESLA COIL', plate: '#2EFFE0', inner: '#063a36' },
   { name: 'GENERATOR', plate: '#FFB627', inner: '#3d2a05' },
   { name: 'REACTOR', plate: '#3DFFB0', inner: '#04361f' },
+  { name: 'STORM JAR', plate: '#3D8BFF', inner: '#0a1f45' },
+  { name: 'MINI SUN', plate: '#FF6B3D', inner: '#4a1404' },
+  { name: 'NEBULA ORB', plate: '#B04BFF', inner: '#2a0950' },
+  { name: 'BLACK HOLE', plate: '#FF4FA3', inner: '#0d0618' },
 ].map((f, i) => ({ ...f, n: i + 1, from: i * POWER_LEVELS_PER_FORM, src: `/shop/power/t${i + 1}.webp` }));
 
 /** The form for a POWER level (0-based levels; the top painted form holds above its range). */

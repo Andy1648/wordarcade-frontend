@@ -23,7 +23,7 @@ async function openShop(page, vp, tier, wins = 0) {
   await expect(page.locator('.sp2-plate')).toBeVisible();
 }
 
-for (const [tier, n, name] of [[0, 1, 'AA BATTERY'], [3, 2, 'POWER CELL'], [6, 4, 'TESLA COIL'], [11, 6, 'REACTOR']]) {
+for (const [tier, n, name] of [[0, 1, 'AA BATTERY'], [3, 2, 'POWER CELL'], [6, 4, 'TESLA COIL'], [11, 6, 'REACTOR'], [14, 8, 'MINI SUN'], [25, 10, 'BLACK HOLE']]) {
   test(`POWER ${tier}: form ${n} ${name}, its own painted icon`, async ({ page }) => {
     await openShop(page, { width: 1366, height: 768 }, tier);
     await expect(page.getByTestId('sp2-form')).toHaveText(`FORM ${n} · ${name}`);
