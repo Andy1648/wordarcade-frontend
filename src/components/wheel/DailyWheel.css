@@ -152,9 +152,9 @@
 .dw-pointer {
   position: absolute;
   left: 50%;
-  top: 12cqw; /* the tip lands on the face's top edge, just inside the rim */
-  width: 7cqw;
-  margin-left: -3.5cqw;
+  top: 10.6cqw; /* the tip lands on the face's top edge, just inside the rim */
+  width: 8cqw;
+  margin-left: -4cqw;
   z-index: 1;
   transform-origin: 50% 12%;
   pointer-events: none;

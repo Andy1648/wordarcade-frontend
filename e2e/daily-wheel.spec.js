@@ -141,6 +141,19 @@ test('a LEGENDARY+ ticket pays nothing locally (the server owns it); the ODDS sh
   if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-odds-1280x600.png' });
 });
 
+test('phone 390x844: SPIN lands and pays (+ the PR shots)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await boot(page, { gems: 200, slot: 2 });
+  await page.locator('[data-nav="wheel"]').click();
+  const wheel = page.getByTestId('daily-wheel');
+  await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+  if (SHOTS) await page.screenshot({ path: 'claude/shots-wheel/wheel-ready-390x844.png' });
+  await wheel.getByTestId('wheel-spin').click();
+  await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS', { timeout: 12000 });
+  if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: 'claude/shots-wheel/wheel-landed-390x844.png' }); }
+  expect(await gemBal(page)).toBe(260);
+});
+
 for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 640]]) {
   test(`fits ${w}x${h}: menu + open wheel, no scroll, the panel inside the viewport`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
