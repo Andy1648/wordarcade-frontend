@@ -168,8 +168,8 @@ const barSeen = { level: null, frac: 0 };
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
 
-// the word the nav wipe flashes as each menu sheet opens (closing wipes back with no word)
-const SHEET_WIPE_WORDS = { roll: 'GEARS', index: 'INDEX', gear: 'YOUR GEAR', gear2: 'YOUR GEAR', claims: 'REWARDS', profile: 'PROFILE' };
+// the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
+const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the

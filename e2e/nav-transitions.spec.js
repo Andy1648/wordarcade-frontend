@@ -95,12 +95,12 @@ test('every major door wipes over an already-correct screen, through ONE pooled 
 
   const tag = info.project.name.replace(/\W+/g, '-');
   const shop = await door(page, 'shop', '.shop-panel', `${tag}-shop`);
-  expect(shop.word).toBe('SHOP');
+  expect(shop.word).toBe(await page.locator('.shop-title').innerText()); // the word names the screen it lands on (UPGRADES)
   await page.keyboard.press('Escape');
   await menuReady(page);
 
   const board = await door(page, 'leaderboard', '.lb-panel', `${tag}-board`);
-  expect(board.word).toBe('TOP DOGS');
+  expect(board.word).toBe(await page.locator('.lb-title').innerText()); // LEADERBOARD
   await page.keyboard.press('Escape');
   await menuReady(page);
 
@@ -108,7 +108,7 @@ test('every major door wipes over an already-correct screen, through ONE pooled 
   const gears = navControl(page, 'gears').first();
   if (await gears.isVisible()) {
     const g = await door(page, 'gears', '.marks-overlay', `${tag}-gears`, { sheet: true });
-    expect(g.word).toBe('GEARS');
+    expect(g.word).toBe('ROLL'); // the ROLL screen's own title (.rs-title)
   }
 });
 

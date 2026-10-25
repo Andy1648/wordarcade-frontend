@@ -29,7 +29,7 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
   useEffect(() => {
     if (wasOpen.current === open) return;
     wasOpen.current = open;
-    if (playWipe(open ? 'CONTRACTS' : '', open ? 'forward' : 'back')) sound.whoosh();
+    if (playWipe(open ? 'DAILY CONTRACTS' : '', open ? 'forward' : 'back')) sound.whoosh();
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
   const doneRef = useRef(s.done.length);
   useEffect(() => {
