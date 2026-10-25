@@ -425,12 +425,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
     img.style.willChange = 'transform, opacity'; // only for the burst's life
     img.__burst = img.animate([
-      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0 },
-      { transform: `translate(-50%, -50%) rotate(${rot + 10}deg) scale(1.15)`, opacity: 1, offset: 0.12 },
-      { transform: `translate(-50%, -50%) rotate(${rot + 18}deg) scale(1)`, opacity: 1, offset: 0.3 },
-      { transform: `translate(-50%, -50%) rotate(${rot + 24}deg) scale(1.02)`, opacity: 1, offset: 0.55 },
+      // the easing lives on each step (a whole-run ease-out raced it through its hold): slam in, HOLD, then fade
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 10}deg) scale(1.12)`, opacity: 1, offset: 0.14, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 18}deg) scale(1)`, opacity: 1, offset: 0.3, easing: 'linear' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 26}deg) scale(1.02)`, opacity: 1, offset: 0.62, easing: 'ease-in' },
       { transform: `translate(-50%, -50%) rotate(${rot + 34}deg) scale(1.1)`, opacity: 0 },
-    ], { duration: 760, easing: 'cubic-bezier(.2,1.1,.4,1)' });
+    ], { duration: 820, easing: 'linear' });
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
   function dressPop(node, look, colour, hardShadow) {
