@@ -28,6 +28,12 @@ async function openMenu(page, { reduce = false } = {}) {
   await page.goto('/?portal=1');
   await menuReady(page);
   await page.waitForTimeout(900); // arrival wipe + first-paint pops settle; the coalesce window clears
+  // a first GESTURE (a bare modifier key) warms the wipe art; wait for it to decode so frames show the real art
+  await page.keyboard.press('Shift');
+  if (!reduce) {
+    await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('.transition-overlay img')]
+      .every((i) => i.getAttribute('src') && i.complete && i.naturalWidth > 0)), { timeout: 8000 }).toBe(true);
+  }
   // tag the pooled node so a re-created one would be caught
   await page.evaluate(() => { document.querySelector('.transition-overlay').dataset.e2ePool = 'original'; });
 }
@@ -60,8 +66,14 @@ const armWipeProbe = (page, freeze) => page.evaluate((freeze) => {
 
 async function door(page, which, screenSel, label, { sheet = false } = {}) {
   await page.waitForTimeout(950); // outside the coalesce window
-  await armWipeProbe(page, SHOTS && !!label);
-  await navControl(page, which).first().click();
+  // a menu MOMENT (e.g. the phone's TAPED / NEW FRAME sticker) holds the menu's taps while it plays: re-tap until
+  // the door opens (each try re-arms the probe)
+  for (let i = 0; i < 8; i += 1) {
+    await armWipeProbe(page, SHOTS && !!label);
+    await navControl(page, which).locator('visible=true').first().click();
+    const opened = await page.waitForFunction(() => window.__wipeAtStart, null, { timeout: 900 }).then(() => true, () => false);
+    if (opened) break;
+  }
   await expect.poll(() => page.evaluate(() => window.__wipeAtStart), { timeout: 2000 }).not.toBeNull();
   const at = await page.evaluate(() => window.__wipeAtStart);
   // a VIEW door: the menu is already gone when the wipe starts — the wipe never gates/delays the swap
@@ -110,6 +122,15 @@ test('every major door wipes over an already-correct screen, through ONE pooled 
     const g = await door(page, 'gears', '.marks-overlay', `${tag}-gears`, { sheet: true });
     expect(g.word).toBe('ROLL'); // the ROLL screen's own title (.rs-title)
   }
+});
+
+test.describe('phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test('the painted wipe covers a tall screen', async ({ page }) => {
+    await openMenu(page);
+    const s = await door(page, 'shop', '.shop-panel', 'phone-shop');
+    expect(s.word).toBe(await page.locator('.shop-title').innerText());
+  });
 });
 
 test('REDUCE MOTION: the wipe never plays, the screen still swaps', async ({ page }) => {

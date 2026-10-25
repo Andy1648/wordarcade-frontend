@@ -21,18 +21,21 @@ const EASE_IN_SNAP = 'cubic-bezier(0.22, 1, 0.36, 1)'; // arrives hard, settles
 const EASE_OUT_WHIP = 'cubic-bezier(0.5, 0, 0.75, 0)'; // leaves accelerating
 const EASE_POP = 'cubic-bezier(0.34, 1.56, 0.64, 1)'; // a small overshoot
 
-let parts = null; // { root, track, band, mascot, word }
+let parts = null; // { root, track, band, mascot, word, splat? }
 let running = [];
 let lastAt = -Infinity;
 let mascotWarm = false;
 
-// The mascot art is fetched on the first GESTURE (never before one — payload ratchet), so it is cached
-// and decoded by the time the first menu button is pressed.
+// The wipe's ART (painted band, splat, mascot) is fetched on the first GESTURE — never before one (payload
+// ratchet) — so it is cached and decoded by the time the first menu button is pressed. Every <img data-src> in
+// the overlay is warmed at once.
 function warmMascot() {
-  if (mascotWarm || !parts || !parts.mascot) return;
+  if (mascotWarm || !parts || !parts.root) return;
   mascotWarm = true;
-  parts.mascot.src = parts.mascot.dataset.src || '';
+  const imgs = parts.root.querySelectorAll ? parts.root.querySelectorAll('img[data-src]') : [parts.mascot].filter(Boolean);
+  for (const img of imgs) if (!img.getAttribute || !img.getAttribute('src')) img.src = img.dataset.src || '';
 }
+const ready = (img) => !!img && mascotWarm && img.complete && img.naturalWidth > 0;
 
 /** Called once by TransitionOverlay on mount. Returns the unregister function. */
 export function registerWipe(p) {
@@ -67,6 +70,7 @@ function stop() {
   parts.band.style.willChange = '';
   parts.word.style.willChange = '';
   if (parts.mascot) parts.mascot.style.willChange = '';
+  if (parts.splat) parts.splat.style.willChange = '';
 }
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -94,12 +98,14 @@ export function playWipe(word, dir = 'forward') {
   // few frames and spend the hold on the exit. Cover = snap in (ease-out), hold, clear = whip out (ease-in).
   const timing = { duration: WIPE_MS, easing: 'linear', fill: 'both' };
   // cover fast, HOLD a beat on the word, clear fast — a slap, not a slide
+  // the flat fallback band leans (skew); the PAINTED band carries its own lean, so it travels straight
+  const sk = parts.painted ? '' : ' skewX(-8deg)';
   const bandAnim = band.animate(
     [
-      { transform: 'translateX(-118%) skewX(-8deg)', easing: EASE_IN_SNAP },
-      { transform: 'translateX(0) skewX(-8deg)', offset: 0.3 },
-      { transform: 'translateX(0) skewX(-8deg)', offset: 0.52, easing: EASE_OUT_WHIP },
-      { transform: 'translateX(118%) skewX(-8deg)' },
+      { transform: `translateX(-118%)${sk}`, easing: EASE_IN_SNAP },
+      { transform: `translateX(0)${sk}`, offset: 0.3 },
+      { transform: `translateX(0)${sk}`, offset: 0.52, easing: EASE_OUT_WHIP },
+      { transform: `translateX(118%)${sk}` },
     ],
     timing,
   );
@@ -113,7 +119,24 @@ export function playWipe(word, dir = 'forward') {
     timing,
   );
   running = [bandAnim, wordAnim];
-  if (mascot && mascotWarm && mascot.complete && mascot.naturalWidth > 0) {
+  const splat = parts.splat;
+  if (word && ready(splat)) {
+    splat.style.willChange = 'transform, opacity';
+    // the ink SLAPS down under the word as the band lands, then rides the exit out with it
+    running.push(
+      splat.animate(
+        [
+          { opacity: 0, transform: 'scale(0.3) rotate(-30deg)' },
+          { opacity: 0, transform: 'scale(0.3) rotate(-30deg)', offset: 0.18, easing: EASE_POP },
+          { opacity: 1, transform: 'scale(1) rotate(-12deg)', offset: 0.34 },
+          { opacity: 1, transform: 'scale(1.03) rotate(-12deg)', offset: 0.56, easing: EASE_OUT_WHIP },
+          { opacity: 0, transform: 'scale(1.15) rotate(-12deg)' },
+        ],
+        timing,
+      ),
+    );
+  }
+  if (ready(mascot)) {
     mascot.style.willChange = 'transform';
     // the runner leans into the sweep, lands, then kicks off the far edge (rides the band's leading edge)
     running.push(
