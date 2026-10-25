@@ -4,6 +4,7 @@ import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import { playWipe } from '../lib/navWipe';
 import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
@@ -166,6 +167,9 @@ const barSeen = { level: null, frac: 0 };
 
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
+
+// the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
+const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -1258,6 +1262,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
   useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
+
+  // NAV WIPE for the menu's own full-screen sheets (Andy oct24 "transition screens for all buttons (or at least
+  // major ones)"): GEARS / INDEX / YOUR GEAR, REWARDS and PROFILE open + close under the SAME pooled wipe as a view
+  // change. Fired from an effect, i.e. AFTER the sheet has already committed — purely cosmetic, never gating.
+  const sheetKey = showMarks || (showClaims ? 'claims' : showProfile ? 'profile' : null);
+  const lastSheetRef = useRef(sheetKey);
+  useEffect(() => {
+    const prev = lastSheetRef.current;
+    lastSheetRef.current = sheetKey;
+    if (prev === sheetKey) return;
+    const word = sheetKey ? SHEET_WIPE_WORDS[sheetKey] || '' : '';
+    if (playWipe(word, sheetKey ? 'forward' : 'back')) sound.whoosh();
+  }, [sheetKey]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
 
   // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
   // ROLL + INDEX: the REAL gate per season. Season 1: the MARKS layer reveals at LV10 (or any rebirth / an owned mark).

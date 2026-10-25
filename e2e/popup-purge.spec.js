@@ -34,6 +34,9 @@ const SAMPLER = () => {
       // the menu's WALL is background art (aria-hidden): its pieces re-form across the screen every 100 levels — that
       // re-form IS season 2's wall moment (only its centre LV stamp is purged, and that stamp is outside .wall-scene)
       if (el.closest('.wall-scene')) continue;
+      // the SCREEN-CHANGE WIPE (TransitionOverlay) is not a notice: a ≤320 ms cosmetic sweep over a screen that has
+      // already swapped (pointer-events:none) — its word sticker + ink splat ride the cover, then the node hides
+      if (el.closest('.transition-overlay')) continue;
       const r = el.getBoundingClientRect();
       const area = (r.width * r.height) / (vw * vh);
       if (r.width < 100 || area < 0.015 || area > 0.6) continue;
