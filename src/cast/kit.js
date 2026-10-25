@@ -25,6 +25,8 @@ export const SIDEKICKS = [
   { id: 'pixel', name: 'PIXEL', tag: 'RUNS ON 8 BITS OF JOY', color: '#2EFFE0', wins: 80, price: 900 },
   // the rare one: a rebirth gate, then gems (like a LEGEND hero)
   { id: 'turbo', name: 'TURBO', tag: 'FASTEST SNAIL ALIVE', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
+  // DAILY WHEEL only (067_daily_wheel.sql picks it; never sold). Painted oct25 (both frames rest pose; the Sidekick hop is code).
+  { id: 'lucky', name: 'LUCKY', tag: 'SPINS TO WIN', color: '#FFC23D', wheel: true, rare: true },
 ].map((k) => ({ ...k, slot: 'pet' }));
 
 // art / plate = the frame's two windows [x, y, w, h], % of the frame image; ar = its width / height
@@ -40,6 +42,8 @@ export const FRAMES = [
   F('scholar', 'SCHOLAR', 'SAT RUSH MASTERY', '#FFE94A', 544 / 858, [17.28, 16.78, 66.18, 54.55], [19.3, 75.41, 61.76, 8.51], { road: 'sat-rush' }),
   F('chain', 'CHAIN', 'CHAIN MASTERY', '#2EFFE0', 499 / 808, [14.63, 19.93, 67.94, 54.7], [18.04, 79.08, 63.93, 10.27], { road: 'chain' }),
   F('defuser', 'DEFUSER', 'FUSE MASTERY', '#B8F632', 562 / 854, [20.82, 19.2, 58.36, 53.16], [21.17, 76.46, 57.47, 8.78], { road: 'fuse' }),
+  // DAILY WHEEL only — painted oct25; windows measured off the cut (its name plate is taller: FitText fills it)
+  F('jackpot', 'JACKPOT', 'HIT THE BIG ONE', '#FFC23D', 462 / 866, [19.48, 12.14, 61.04, 52.49], [19.48, 70.52, 61.04, 18.38], { wheel: true, rare: true }),
 ];
 export const WIN_FX = [
   { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
@@ -47,6 +51,8 @@ export const WIN_FX = [
   { id: 'thunder', name: 'THUNDERSTRUCK', tag: 'STRUCK BY GREATNESS', color: '#FFE94A', wins: 90, price: 900 },
   // the rare one: a bomb game's own finish
   { id: 'blast', name: 'KABOOM', tag: 'THE ONLY WAY TO WIN', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
+  // DAILY WHEEL only — PLACEHOLDER art (a copy of FIREWORKS)
+  { id: 'confetti', name: 'PRIZE SHOWER', tag: 'EVERYBODY WINS (MOSTLY YOU)', color: '#FFC23D', wheel: true, rare: true },
 ].map((k) => ({ ...k, slot: 'fx' }));
 const ALL_KIT = [...SIDEKICKS, ...FRAMES, ...WIN_FX];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
@@ -89,13 +95,14 @@ export function kitEarned(id) {
   const k = kitById(id);
   if (!k) return false;
   if (k.road) return roadClaimed(k.road);
+  if (k.wheel) return false; // only ever won on the DAILY WHEEL (grantKit)
   if (!k.price) return true;
   try { return k.wins != null && totalWins() >= k.wins; } catch { return false; }
 }
 /** Can it be bought yet? A road frame never can; a rebirth-gated one once its rebirth is reached. */
 export function kitGateMet(id) {
   const k = kitById(id);
-  if (!k || k.road) return false;
+  if (!k || k.road || k.wheel) return false;
   if (k.reb == null) return true;
   try { return (getRebirths() || 0) >= k.reb; } catch { return false; }
 }
@@ -110,6 +117,15 @@ export function kitProgress(id) {
     if (k.wins != null) return { have: Math.min(totalWins(), k.wins), need: k.wins, label: 'WINS' };
   } catch { /* a broken store reads as zero */ }
   return null;
+}
+
+/** THE DAILY WHEEL's cosmetic slot paid out (progress/wheel.js payLanded): a wheel-only piece is now yours. */
+export function grantKit(id) {
+  const s = kitById(id);
+  if (!s || !s.wheel) return false;
+  const k = readKit();
+  if (!k.own.includes(id)) writeKit({ ...k, own: [...k.own, id] });
+  return true;
 }
 
 /** The sidekick you wear (null = none). */

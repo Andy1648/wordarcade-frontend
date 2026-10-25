@@ -276,6 +276,12 @@
   .hp-m-rail .kp-pop { left: 60%; }
   .hp-m-rail .kp-need { left: 50%; top: 44px; }
   .hp-m-rail .hp-m-credits { flex: 0 0 auto; margin-left: auto; }
+  /* oct24: NEWS + SETTINGS (MenuUtility) where CREDITS was — the phone top row's tile, a size down */
+  .hp-m-rail .hp-m-util { flex: 0 0 auto; margin-left: auto; display: flex; gap: 6px; }
+  .hp-m-rail .hp-m-util .kb--icon { width: 44px; height: 50px; }
+  .hp-m-rail .hp-m-util .kb-iface { width: 44px; height: 44px; }
+  .hp-m-rail .hp-m-util .kb-iface .kit-icon { width: 28px; height: 28px; }
+  .hp-m-rail:has(.hp-m-util) .kp { flex: 1 1 0; min-width: 0; } /* the pair is wider than CREDITS: the pills share what is left */
   /* 2 × 2: two slabs a row (the -14px pull-in on the first of each row keeps the kit's rail overlap) */
   .hp-m-rail .kb-rwrap { flex: 1 1 42%; min-width: 0; }
   .hp-m-rail .kb-rwrap.is-shop,
@@ -351,6 +357,8 @@
   .hp-m-top .hp-icons .kb--icon { width: 46px; height: 54px; }
   .hp-m-top .hp-icons .kb-iface { width: 46px; height: 46px; }
   .hp-m-top .hp-icons .kb-iface .kit-icon { width: 30px; height: 30px; }
+  .hp-m-top .hp-icons .is-wheel .kb-art { width: 36px; height: 36px; }
+  .hp-m-top .hp-icons .is-wheel .kb-idot { right: -6px; } /* the row's last tile: its free-spin dot stays inside the phone's edge */
   .hp-m-top .hp-icons .kb-itag { left: -12px; bottom: 0; } /* oct22: at -8px the tilted 0/3 sticker sat on the PROFILE card below */
   .hp-m-xp { flex: 0 0 auto; }
   .hp-m-xp .kx { flex-wrap: nowrap; gap: 10px; padding-top: 0; }

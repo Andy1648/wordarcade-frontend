@@ -227,3 +227,29 @@
   .sp-row--wide .sp-bar { width: 13px; }
   .sp-row--wide .sp-bars { gap: 2px; }
 }
+
+/* CREDITS (oct24): a plain press button in a settings row, the switch's look */
+.sp-credits {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 14px;
+  background: #0d0618;
+  color: #2EFFE0;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-k14);
+}
+.sp-credits:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
+.sp-top { align-self: flex-end; display: flex; gap: 10px; }
+.sp-top .sp-close { align-self: auto; }
+.sp-credits--phone { display: none; }
+.sp-save { position: relative; }
+@media (max-width: 480px) {
+  /* the phone's CLOSE keeps its corner of the SOUND row; CREDITS moves to SAVE PROGRESS's header (no new row) */
+  .sp-sheet .sp-top { display: contents; }
+  .sp-sheet .sp-credits--top { display: none; }
+  .sp-sheet .sp-credits--phone { display: block; position: absolute; top: 0; right: 6px; padding: 0 10px; }
+}

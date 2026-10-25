@@ -33,7 +33,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, wheel = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {/* DAILY CONTRACTS (oct21): the flame + today's count — joins this cluster where PROFILE was (the profile is the XP
@@ -64,20 +64,51 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, new
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
       />)}
-      {/* UPDATE LOG (Andy oct12): re-opens this release's PATCH NOTES — joins the cluster, never its own fixed spot */}
-      {news && (
+      {/* THE DAILY WHEEL (Andy oct24): the slot SETTINGS + NEWS freed when they moved to the bottom-right cluster */}
+      {wheel && (
         <KitIconButton
-          icon="news"
+          art="/wheel/icon.webp"
           tone="pink"
-          className="hp-ico is-news"
-          data-nav="news"
+          className="hp-ico is-wheel"
+          data-nav="wheel"
+          dot={wheel.dot || undefined}
           disabled={navigating}
-          onClick={news.onClick}
-          ariaLabel="Open the update log"
-          title="Update log"
+          onClick={wheel.onClick}
+          ariaLabel={wheel.dot ? 'Open the daily wheel — a free spin is waiting' : 'Open the daily wheel'}
+          title="Daily wheel"
         />
       )}
+      <NewsIcon news={news} navigating={navigating} />
       {/* SETTINGS (Andy oct9 "top right placement instead"): the cog joins this cluster as its last tile */}
+      {settingsSlot}
+    </div>
+  );
+}
+
+// UPDATE LOG (Andy oct12): re-opens this release's PATCH NOTES — joins a cluster, never its own fixed spot
+function NewsIcon({ news, navigating }) {
+  if (!news) return null;
+  return (
+    <KitIconButton
+      icon="news"
+      tone="pink"
+      className="hp-ico is-news"
+      data-nav="news"
+      disabled={navigating}
+      onClick={news.onClick}
+      ariaLabel="Open the update log"
+      title="Update log"
+    />
+  );
+}
+
+/** THE UTILITY PAIR (Andy oct24 "make setting and news icons on bottom right … bc we need more room for the spin"):
+ *  NEWS + SETTINGS, rendered INSIDE the bottom-right cluster (desktop: .hp-extras; phone: the rail's extra slot) once
+ *  the DAILY WHEEL takes their top-right slot. CREDITS lives inside SETTINGS now. Never a fixed element of its own. */
+export function MenuUtility({ news = null, settingsSlot = null, navigating, className }) {
+  return (
+    <div className={`hp-util${className ? ` ${className}` : ''}`} role="group" aria-label="Settings and news">
+      <NewsIcon news={news} navigating={navigating} />
       {settingsSlot}
     </div>
   );

@@ -34,6 +34,7 @@ import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
 
+const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
@@ -75,7 +76,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
           <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
-        {it.ticket ? <VesselArt tier={it.ticket} size={null} className="sp2-art sp2-vessel" /> : SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
+        {it.ticket ? <VesselArt tier={it.ticket} size={null} label={false} className="sp2-art sp2-vessel" /> : SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
@@ -379,12 +380,13 @@ export default function ShopV2({ onBack }) {
           {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (
-              <div className="sp2-cell">
+              <div className="sp2-cell is-chest">
                 <DailyChestCard now={now} onOpen={() => { sndPurchase(); setChest(true); }} />
               </div>
             ) : null}
-            {STOCK.map((it) => (
-              <div key={it.id} className="sp2-cell" ref={(el) => { cards.current[it.id] = el; }}>
+            {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
+            {SHELF_ORDER(STOCK).map((it) => (
+              <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
               </div>
             ))}

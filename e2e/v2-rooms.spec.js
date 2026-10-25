@@ -84,8 +84,8 @@ test('LOBBY: code tiles, 8 seats (3 players + 5 open), YOU + YOU ARE HOST, a big
 test('SETTINGS (trimmed, Andy oct9; oct14 BEAT SYNC in, RANK PLATE out to the rank menu): SOUND · MUSIC · REDUCE MOTION + BEAT SYNC + SAVE PROGRESS; MUTE + the bars; REDUCE MOTION flips live; a stored NUMBER STYLE / KEYBOARD SOUNDS still applies with no UI', async ({ page }) => {
   // a save that picked FULL numbers and the keyboard clack before those rows were cut
   await boot(page, { seed: { 'taw.s2.wins': '1234567', 'taw.numStyle': 'full', 'taw.clack': JSON.stringify({ enabled: true }) } });
-  // the cog is the top-right cluster's tile now (no longer under it / bottom corner)
-  const btn = page.locator('.hp-icons [data-nav="settings"]:visible').first();
+  // the cog: the bottom-right cluster (with NEWS) once the DAILY WHEEL takes its top-right slot (#518); top-right before
+  const btn = page.locator('.hp-util [data-nav="settings"]:visible, .hp-icons [data-nav="settings"]:visible').first();
   await expect(btn).toHaveAttribute('aria-label', /^Settings/);
   await btn.click();
   const panel = page.locator('.sp');
@@ -128,7 +128,7 @@ test('SETTINGS (trimmed, Andy oct9; oct14 BEAT SYNC in, RANK PLATE out to the ra
 
 test('SETTINGS → RESET ACCOUNT (Andy oct11): two steps — CANCEL keeps everything, YES wipes the progress and reloads; settings stay', async ({ page }) => {
   await boot(page, { seed: { 'taw.s2.wins': '1234567', 'taw.s2.xp': JSON.stringify({ lv: 40, f: 0.5, rc: 2, v: 10 }), 'taw.s2.rebirths': '2', 'taw.reduceMotion': '1' } });
-  await page.locator('.hp-icons [data-nav="settings"]:visible').first().click();
+  await page.locator('.hp-util [data-nav="settings"]:visible, .hp-icons [data-nav="settings"]:visible').first().click();
   const panel = page.locator('.sp');
   await panel.getByTestId('sp-reset-open').click();
   await expect(panel.getByRole('alertdialog', { name: 'Confirm account reset' })).toContainText('CANNOT BE UNDONE');
