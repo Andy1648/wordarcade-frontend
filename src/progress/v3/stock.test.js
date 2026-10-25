@@ -29,12 +29,12 @@ test('the boost keys match boost.js / hooks.js', () => {
   assert.equal(ST.BOOST2_KEY, 'taw.s2.boost2');
 });
 
-test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands, counts; an hourly restock window', () => {
+test('the stock: seven items (no gem scaling) at the odd gem prices, rarity bands, counts; an hourly restock window', () => {
   mem.clear();
-  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 300, 150, 495]); // OVERDRIVE 300 (Andy oct10)
+  assert.deepEqual(ST.STOCK.map((i) => i.price), [45, 60, 120, 300, 150, 150, 750]); // OVERDRIVE 300 (Andy oct10); 065 SEALED EPIC+ 150 / LEGENDARY+ 750
   assert.deepEqual(ST.STOCK.filter((i) => i.fx === 'xp' || i.fx === 'wins').map((i) => i.mult), [1.5, 1.5]);
-  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'legendary']);
-  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 1 });
+  assert.deepEqual(ST.STOCK.map((i) => i.rarity), ['common', 'common', 'rare', 'epic', 'rare', 'epic', 'legendary']);
+  assert.deepEqual(ST.stockLeft(T0), { xp25: 5, wins25: 5, luck2: 3, overdrive: 2, extend: 2, epicroll: 2, legroll: 1 });
   // Andy oct8 "boost what?": every item says what it boosts and for how long
   for (const it of ST.STOCK) assert.ok(it.name && it.what && (it.time || it.buyable === false), `${it.id} names what it boosts`);
   assert.equal(ST.restockIn(T0), 3600 - 37);
@@ -134,10 +134,16 @@ test('+25% WINS BOOST: ×1.25 on wins while it runs, ×1 after', () => {
   assert.equal(ST.stockWinsMult(T0 + 10 * 60_000 + 1), 1);
 });
 
-test('FREE EPIC+ ROLL is visual-only for now: never sold, never charged', () => {
+test('065 SEALED ROLLS are never sold locally (the server sells them) and never charged here', () => {
   mem.clear();
   setGems(1000);
-  const r = ST.buyStock('epicroll', T0);
-  assert.deepEqual([r.ok, r.reason], [false, 'soon']);
+  for (const id of ['epicroll', 'legroll']) {
+    const r = ST.buyStock(id, T0);
+    assert.deepEqual([r.ok, r.reason], [false, 'ticket']);
+  }
   assert.equal(G.getGems(), 1000);
+  // the server's stock word is what the card shows, clamped to the item's max
+  assert.equal(ST.setStockLeft('epicroll', 0, T0).epicroll, 0);
+  assert.equal(ST.setStockLeft('legroll', 9, T0).legroll, 1);
+  assert.equal(ST.stockLeft(T0 + 3_600_000).epicroll, 2, 'a new hour restocks it');
 });

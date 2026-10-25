@@ -1,5 +1,5 @@
 // e2e/guaranteed-rolls.spec.js — 060 GUARANTEED ROLLS (Andy oct22 "no source code bs"). A ticket is the SERVER's: the
-// ROLL screen shows USE LEGENDARY+ TICKET only for a ticket lb_tickets lists, spends it through lb_ticket_roll (the
+// ROLL screen shows OPEN LEGENDARY+ ROLL (a cog-locked vessel, 065) only for a ticket lb_tickets lists, spends it through lb_ticket_roll (the
 // browser sends only the ticket id — never a tier or luck), lands the server's pick with the full reveal, claims it,
 // costs no gems and leaves the pity countdown alone. A forged local ticket / a forged reply row / a pick below the
 // floor never renders or lands.
@@ -56,19 +56,22 @@ async function boot(page, { tickets = [{ id: TID, tier: 'legendary', state: 'own
 const gems = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.gems')).bal);
 const save = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls')));
 
-test('USE LEGENDARY+ TICKET: the server\'s pick lands with the full reveal, free, pity untouched, claimed once', async ({ page }) => {
+test('OPEN LEGENDARY+ ROLL: the sealed vessel opens on the server pick, free, pity untouched, claimed once', async ({ page }) => {
   const calls = await boot(page);
   const btn = page.getByTestId('roll-ticket');
   await expect(btn).toBeVisible({ timeout: 6000 });
-  await expect(btn).toContainText('LEGENDARY+ TICKET');
+  await expect(btn).toContainText('LEGENDARY+');
   await expect(btn).toHaveAttribute('data-tier', 'legendary');
+  await expect(btn.locator('.va img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog/); // a vessel, never a die
   const gems0 = await gems(page);
   await btn.click();
-  // the reveal: tap through it (LEGENDARY gets the cutscene) until the result line is up
-  const result = page.locator('[data-testid="mark-roll-result"]');
-  for (let i = 0; i < 8 && !(await result.count()); i += 1) { await page.mouse.click(640, 300); await page.waitForTimeout(400); }
-  await expect(result).toHaveAttribute('data-tier', 'legendary', { timeout: 8000 });
-  await expect(page.getByTestId('mark-roll-ticket')).toContainText('LEGENDARY+ TICKET');
+  const sealed = page.getByTestId('sealed-roll');
+  await expect(sealed).toHaveAttribute('data-phase', 'sealed');
+  expect(calls.roll, 'nothing is asked before OPEN').toHaveLength(0);
+  await page.getByTestId('sealed-roll-open').click();
+  await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 8000 });
+  await expect(sealed).toHaveAttribute('data-tier', 'legendary');
+  await expect(page.getByTestId('sealed-roll-card')).toBeVisible();
   expect(calls.roll).toHaveLength(1);
   expect(Object.keys(calls.roll[0]).sort()).toEqual(['p_secret', 'p_ticket']); // never a tier, never luck
   expect(calls.roll[0].p_ticket).toBe(TID);
@@ -79,6 +82,8 @@ test('USE LEGENDARY+ TICKET: the server\'s pick lands with the full reveal, free
   expect(st.rolls).toBe(40);
   expect(st.sinceEpic).toBe(3);
   expect(st.sinceLegendary).toBe(20); // pity untouched
+  await page.getByTestId('sealed-roll-done').click();
+  await expect(sealed).toHaveCount(0);
   await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 40'); // 60 − 20 (hard pity 60, oct22)
   await expect(btn).toHaveCount(0); // spent: the server no longer lists it
 });
@@ -96,8 +101,9 @@ test('ADVERSARIAL: no server ticket → no button (a forged local ticket and for
 test('ADVERSARIAL: a spend reply below the ticket floor lands nothing and spends no claim', async ({ page }) => {
   const calls = await boot(page, { pick: { mark: 'mk-detonator', tier: 'rare', shiny: false } });
   await page.getByTestId('roll-ticket').click();
-  await page.waitForTimeout(1200);
-  await expect(page.locator('[data-testid="mark-roll-result"]')).toHaveCount(0);
+  await page.getByTestId('sealed-roll-open').click();
+  await expect(page.getByTestId('sealed-roll')).toHaveAttribute('data-phase', 'later', { timeout: 8000 }); // stays sealed, waits in GEARS
+  await expect(page.getByTestId('sealed-roll-card')).toHaveCount(0);
   expect(calls.claim).toHaveLength(0);
   const st = await save(page);
   expect(st.marks['mk-detonator']).toBeUndefined();

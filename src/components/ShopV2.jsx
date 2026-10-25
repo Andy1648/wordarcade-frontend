@@ -8,11 +8,12 @@
 //     per hold). The plate is a tilted square carrying the kit POWER key.
 //   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
 //   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
-//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. FREE EPIC+ ROLL is shown but not sold
-//     yet (its reveal is the ROLL screen's, P6).
+//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. The SEALED EPIC+ / LEGENDARY+ ROLLS
+//     (065) are sold by the SERVER (serverTickets.buyTicket) and open in place (SealedRollReveal).
 // Motion: kit one-shots only (pill count / deny, stamp slam, BOUGHT! float, plate bump); nothing loops at rest.
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
+import { powerForm, nextPowerForm } from '../progress/powerArt.js';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -28,6 +29,12 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
 import DailyDrop from './DailyDrop';
+import VesselArt from './rollScreen/VesselArt';
+import { lazyWithReload } from '../lib/chunkReload';
+// 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
+import { buyTicket } from '../leaderboard/serverTickets';
+
+const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
@@ -39,9 +46,14 @@ const SHOP_ART = {
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
-  soon: 'FREE EPIC+ ROLL — COMES WITH THE ROLL SCREEN',
+  soon: 'SEALED ROLLS OPEN SOON',
+  offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
+  budget: 'NOT YET — PLAY A LITTLE MORE',
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
 };
+
+const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
+const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
@@ -63,7 +75,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
           <span className="sp2-name">{it.name || R.name}</span>
           <span className="sp2-left">×{formatNum(left)}<span className="sp2-left-w"> LEFT</span></span>
         </span>
-        {SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
+        {it.ticket ? <VesselArt tier={it.ticket} size={null} className="sp2-art sp2-vessel" /> : SHOP_ART[it.id] ? <img className="sp2-art" src={SHOP_ART[it.id]} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={it.icon} size={60} shadow={3} className="sp2-ico" />}
         <span className="sp2-big">{it.big}</span>
         <span className="sp2-what">{it.what}</span>
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
@@ -142,12 +154,26 @@ export default function ShopV2({ onBack }) {
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
+  const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
+  const buying = useRef(false);
   const chestRef = useRef(chest);
   chestRef.current = chest;
+  const sealedRef = useRef(sealed);
+  sealedRef.current = sealed;
   const rootRef = useRef(null);
   const winsPill = useRef(null);
   const gemsPill = useRef(null);
   const plateRef = useRef(null);
+  const evolveRef = useRef(null);
+  const artRef = useRef(null);
+  const [evolve, setEvolve] = useState(0); // bumps when a buy reaches a NEW POWER FORM
+  // EVOLVE (oct24): a buy that reaches a new form flashes the plate white and SLAMS the new art in — one finite
+  // WAAPI run each (transform / opacity only, will-change only while it plays, reduce motion = the new art at rest)
+  useEffect(() => {
+    if (!evolve) return;
+    fx(evolveRef.current, { frames: EVOLVE_FLASH, opts: { duration: 520, easing: 'ease-out' } });
+    fx(artRef.current, { frames: EVOLVE_SLAM, opts: { duration: 620, easing: 'cubic-bezier(.2,1.4,.4,1)' } });
+  }, [evolve]);
   const nowRef = useRef(null);
   const floats = useRef({});
   const cards = useRef({});
@@ -161,6 +187,7 @@ export default function ShopV2({ onBack }) {
     rootRef.current?.focus();
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
+      if (sealedRef.current) return; // the SEALED ROLL opening owns the screen until NICE
       if (chestRef.current) setChest(false); // Esc closes the chest popup first
       else onBackRef.current();
     };
@@ -188,6 +215,8 @@ export default function ShopV2({ onBack }) {
   }, [note]);
 
   // ---- POWER: wins only, one per 1 s hold ----
+  const form = powerForm(tier);
+  const next = nextPowerForm(tier);
   const cost = keyTierCost(tier);
   const canPower = Number.isFinite(cost) && wins >= cost;
   // XP / KEY now → after the buy: the SAME number the menu's rate line and STATS show (letterXpNow — the worn mark,
@@ -205,13 +234,39 @@ export default function ShopV2({ onBack }) {
     }
     sndPurchase();
     evItemPurchased('key_power', r.tier);
+    const evolved = powerForm(r.tier).n !== powerForm(r.tier - 1).n;
     setTier(r.tier);
     fx(plateRef.current, FX.bump);
+    if (evolved) setEvolve((n) => n + 1); // a NEW FORM: the plate slams the new art in (below)
     fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
+  };
+
+  // ---- 065 SEALED ROLL: the server sells it; the wallet pays (refunded on a definite no) ----
+  const onBuyTicket = async (it) => {
+    if (buying.current) return;
+    const short = it.price - getGems();
+    if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
+    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); return; }
+    buying.current = true;
+    const r = await buyTicket(it.ticket);
+    buying.current = false;
+    if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
+    if (!r.ok) {
+      fx(cards.current[it.id], FX.deny);
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short || short);
+      else if (r.reason === 'sold_out') { setLeft(V3.stock.setStockLeft(it.id, 0)); setNote(NOTE.sold_out); }
+      else setNote(NOTE[r.reason] || NOTE.offline);
+      return;
+    }
+    sndPurchase();
+    evItemPurchased(`stock_${it.id}`);
+    fx(floats.current[it.id], FX.float);
+    setSealed(r.ticket);
   };
 
   // ---- STOCK: gems ----
   const onBuy = (it) => {
+    if (it.ticket) { onBuyTicket(it); return; }
     const r = buyStock(it.id);
     setLeft(r.left);
     if (!r.ok) {
@@ -228,6 +283,11 @@ export default function ShopV2({ onBack }) {
   return (
     <div className="sp2" role="dialog" aria-modal="true" aria-label="Upgrades" tabIndex={-1} ref={rootRef}>
       <div className="sp2-stripes" aria-hidden="true" />
+      {sealed ? (
+        <Suspense fallback={null}>
+          <SealedRollReveal ticket={sealed} onDone={() => setSealed(null)} />
+        </Suspense>
+      ) : null}
       {chest && V3.drop ? (
         <div className="sp2-pop" role="dialog" aria-modal="true" aria-label="Daily chest" onClick={(e) => { if (e.target === e.currentTarget) setChest(false); }}>
           <div className="sp2-pop-in">
@@ -249,12 +309,20 @@ export default function ShopV2({ onBack }) {
         </header>
 
         <section className="sp2-power" aria-label="Power">
-          <div className="sp2-forever">FOREVER</div>
-          <div className="sp2-plate" ref={plateRef} aria-hidden="true">
+          {/* THE POWER LADDER (oct24, powerArt.js): the plate shows the FORM this level has reached — a new painted icon
+              every two levels, each with its own plate colour — and the next form waits, blacked out, in the corner */}
+          <div className="sp2-forever" data-testid="sp2-form">FORM {form.n} · {form.name}</div>
+          <div className="sp2-plate" ref={plateRef} aria-hidden="true" style={{ '--pf-plate': form.plate, '--pf-inner': form.inner }} data-form={form.n}>
             <span className="sp2-plate-a" />
             <span className="sp2-plate-b" />
-            {/* the POWER plate: the painted battery (art run oct16) */}
-            <img className="sp2-plate-ico sp2-plate-art" src="/shop/power.webp" width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+            <span className="sp2-evolve" ref={evolveRef} />
+            <img key={form.n} ref={artRef} className="sp2-plate-ico sp2-plate-art" src={form.src} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+            {next ? (
+              <span className="sp2-next" title={`Next form at POWER ${next.at}`}>
+                <img src={next.src} width="256" height="256" alt="" draggable="false" />
+                <span className="sp2-next-at">P{next.at}</span>
+              </span>
+            ) : null}
           </div>
           <div className="sp2-pw">
             <span className="sp2-pw-lab">POWER</span>

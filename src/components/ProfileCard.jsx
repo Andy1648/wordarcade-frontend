@@ -37,7 +37,7 @@ const UNKNOWN = '?'; // Andy oct11: "for anything thats not known … just put a
 // each achievement ladder, the Achievements screen's own glyph + tier colour). Rows from before 046 have none of these
 // fields → the sections are simply absent (no row of "?").
 const BADGES = [
-  ['type', 'key', 'TYPE WORDS'], ['bots', 'bot', 'BEAT BOTS'], ['reb', 'loop', 'REBIRTH'], ['roll', 'die', 'ROLL EPIC+'],
+  ['type', 'key', 'TYPE WORDS'], ['bots', 'bot', 'BEAT BOTS'], ['reb', 'loop', 'REBIRTH'], ['roll', 'roll', 'ROLL EPIC+'],
   ['win', 'cup', 'WIN ONLINE'], ['chain', 'chain', 'WORD CHAIN'], ['index', 'cards', 'FIND GEARS'], ['power', 'chev', 'BUY POWER'], // the achievement names (Andy oct17: 1–2 words)
 ];
 const MAX_TIER = { index: 3 };
