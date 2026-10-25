@@ -11,30 +11,14 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(13, 6, 24, .94);
+  background: rgba(22, 6, 44, .985); /* a deep tier-tinted scrim (EPIC violet) — the shop must not read through */
   overflow: hidden;
   font-family: var(--k-display, 'Bungee', system-ui, sans-serif);
   color: #fff;
   text-transform: uppercase;
 }
-.srr.is-legendary { --srr-tier: #FFC23D; --srr-shade: #B8860B; }
+.srr.is-legendary { --srr-tier: #FFC23D; --srr-shade: #B8860B; background: rgba(38, 22, 4, .985); /* gold-brown */ }
 
-/* the tier's ray fan behind everything: the house rays asset as a mask, tinted with the PICK's colour */
-.srr-rays {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 150vmax;
-  height: 150vmax;
-  margin: -75vmax 0 0 -75vmax;
-  background: var(--srr-pick);
-  -webkit-mask: url(/art/rolls/rays.svg) center / contain no-repeat;
-  mask: url(/art/rolls/rays.svg) center / contain no-repeat;
-  opacity: 0;
-  pointer-events: none;
-}
-.srr.is-open .srr-rays { opacity: .7; }
-.srr.is-sealed .srr-rays, .srr.is-opening .srr-rays { opacity: .18; background: var(--srr-tier); }
 .srr-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 
 .srr-stage {
@@ -45,6 +29,8 @@
   width: min(420px, 100%);
 }
 .srr-floor {
+  position: relative;
+  z-index: 3;
   font-size: var(--fs-k44);
   line-height: 1;
   color: var(--srr-tier);
@@ -55,7 +41,7 @@
 }
 .srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
 
-.srr-pod { position: relative; width: 260px; min-height: 400px; /* room for the card to RISE OUT of the open canister (its badge stays visible below) */ display: grid; place-items: center; }
+.srr-pod { position: relative; display: grid; grid-template-columns: 100%; place-items: center; } /* width / min-height / --srr-v / --srr-rim: the hero size, set once on mount in the JSX */
 .srr-vessel {
   position: relative;
   z-index: 1;
@@ -74,10 +60,12 @@
 /* the open phase's REST = the burst's end state: the cog + lid have flown, the glow sits behind the card */
 .srr.is-open .va-cog, .srr.is-open .va-lid { opacity: 0; }
 /* the glow = a painted ray burst from its BOTTOM CENTRE, seated on the canister's open rim (~63% of the 250 vessel up) */
-.srr-glow { grid-area: 1 / 1; align-self: end; width: 320px; height: 320px; margin-bottom: 150px; transform-origin: 50% 100%; opacity: 0; pointer-events: none; }
-.srr.is-open .srr-glow { opacity: .85; }
-.srr-shards { grid-area: 1 / 1; align-self: end; position: relative; width: 0; height: 0; margin-bottom: 158px; pointer-events: none; }
-.srr-shard { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; opacity: 0; }
+/* the painted fan's rays converge at 50% / 74.4% of its 512 canvas (the art's origin) — that point sits on the rim */
+.srr-glow { position: absolute; left: 50%; bottom: calc(var(--srr-rim) - var(--srr-v) * .512); width: calc(var(--srr-v) * 2); height: calc(var(--srr-v) * 2); max-width: none; margin-left: calc(var(--srr-v) * -1); transform-origin: 50% 74.4%; opacity: 0; pointer-events: none; }
+.srr.is-sealed .srr-glow, .srr.is-opening .srr-glow { opacity: .3; }
+.srr.is-open .srr-glow { opacity: .9; }
+.srr-shards { position: absolute; left: 50%; bottom: var(--srr-rim); width: 0; height: 0; pointer-events: none; }
+.srr-shard { position: absolute; left: -28px; top: -28px; width: 56px; height: 56px; opacity: 0; }
 
 .srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; }
 .srr-stamp {
@@ -130,6 +118,3 @@
 .srr-btn:disabled { opacity: .55; cursor: default; }
 .srr-btn:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 4px; }
 
-@media (max-width: 420px) {
-  .srr-pod { width: 220px; min-height: 380px; }
-}

@@ -4,8 +4,8 @@
 //   1. RATTLE — EPIC+ once, LEGENDARY+ three times, each harder — while the server picks (060 lb_ticket_roll: the floor
 //      is ITS ticket row, the browser sends only the id);
 //   2. the COG SPINS two full turns (pure rotate about its hub), then POPS OFF;
-//   3. the LID BLASTS UP; the tier's painted GLOW (rays from its bottom centre, on the rim) + a pooled burst of painted SHARDS fire from the open top, a flat flash, the ray fan
-//      (/art/rolls/rays.svg mask in the PICK's colour);
+//   3. the LID BLASTS UP; the tier's painted GLOW (rays from its bottom centre, on the rim, scaled big behind the
+//      canister over a deep tier-tinted scrim — no CSS stripes) + a pooled burst of painted SHARDS, a flat flash;
 //   4. the GEAR CARD RISES out of the canister; a pick above the floor stamps UPGRADE!;
 //   5. the landing commits it (buyTicketRoll → the save, lb_ticket_claim → the server) and wears it if it is better.
 // Every motion is a finite WAAPI one-shot on a node that already exists (the shard pool is fixed), transform / opacity
@@ -42,6 +42,15 @@ const SHARDS = [
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const done = (a) => (a && a.finished ? a.finished.catch(() => {}) : Promise.resolve());
 const EASE_OUT = 'cubic-bezier(.2,.8,.3,1)';
+// THE HERO SIZE (Andy: the canister is the screen's hero): ~half the viewport height, capped by the width. The card that
+// rises out of it scales with it; the pod is tall enough for the card + the canister's badge peeking out below it.
+const heroSize = () => {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1366;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+  const v = Math.round(Math.max(200, Math.min(vh * 0.5, vw * 0.88, 520)));
+  const card = Math.round(v * 0.6);
+  return { v, card, pod: Math.round(card * 1.63 + v * 0.36), rim: Math.round(v * 0.63), k: v / 250 };
+};
 
 export default function SealedRollReveal({ ticket, onDone }) {
   const floor = ticket ? ticket.tier : 'epic';
@@ -49,13 +58,13 @@ export default function SealedRollReveal({ ticket, onDone }) {
   const reduced = useReduceMotion();
   const [phase, setPhase] = useState('sealed'); // sealed → opening → open | later
   const [res, setRes] = useState(null);
+  const [hero] = useState(heroSize);
   const vesselRef = useRef(null);
   const lidRef = useRef(null);
   const cogRef = useRef(null);
   const glowRef = useRef(null);
   const shardRefs = useRef([]);
   const flashRef = useRef(null);
-  const raysRef = useRef(null);
   const cardRef = useRef(null);
   const stampRef = useRef(null);
   const btnRef = useRef(null);
@@ -90,9 +99,9 @@ export default function SealedRollReveal({ ticket, onDone }) {
     claimTicket(ticket.id);
     applyRollEquip(r); // wears it only if it beats the MAIN worn now
     // … then it pops off and the lid blasts up (their end state = the open phase's rest: gone)
-    kitPlay(cogRef.current, [{ transform: 'none', opacity: 1 }, { transform: 'translate(150px,-230px) rotate(400deg) scale(.7)', opacity: 0 }], { duration: 360, easing: EASE_OUT, fill: 'forwards', keep: true });
+    kitPlay(cogRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${150 * hero.k}px,${-230 * hero.k}px) rotate(400deg) scale(.7)`, opacity: 0 }], { duration: 360, easing: EASE_OUT, fill: 'forwards', keep: true });
     if (!reduced) await wait(110);
-    await done(kitPlay(lidRef.current, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-30px,-320px) rotate(-24deg)', opacity: 0 }], { duration: 400, easing: EASE_OUT, fill: 'forwards', keep: true }));
+    await done(kitPlay(lidRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${-30 * hero.k}px,${-320 * hero.k}px) rotate(-24deg)`, opacity: 0 }], { duration: 400, easing: EASE_OUT, fill: 'forwards', keep: true }));
     if (!alive.current) return;
     setRes(r);
     setPhase('open');
@@ -105,9 +114,8 @@ export default function SealedRollReveal({ ticket, onDone }) {
     if (phase !== 'open' || reduced || !res) return;
     const big = tierRank(res.tier) >= tierRank('legendary');
     kitPlay(flashRef.current, [{ opacity: big ? 0.95 : 0.7 }, { opacity: 0 }], { duration: big ? 520 : 320, easing: 'ease-out', fill: 'forwards' });
-    kitPlay(raysRef.current, [{ transform: 'scale(.2) rotate(-40deg)', opacity: 0 }, { transform: 'scale(1.08) rotate(6deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1) rotate(0deg)', opacity: 0.7 }], { duration: big ? 700 : 480, easing: 'cubic-bezier(.2,1,.3,1)', fill: 'forwards' });
     kitPlay(glowRef.current, [{ transform: 'scale(.35,.05)', opacity: 0 }, { transform: 'scale(1.08,1.18)', opacity: 1, offset: 0.4 }, { transform: 'none', opacity: 0.85 }], { duration: big ? 640 : 460, easing: EASE_OUT, fill: 'backwards' });
-    const k = big ? 1.25 : 1;
+    const k = (big ? 1.25 : 1) * hero.k;
     SHARDS.forEach((sh, i) => {
       kitPlay(shardRefs.current[i], [
         { transform: 'translate(0,0) rotate(0deg) scale(.5)', opacity: 1 },
@@ -118,7 +126,7 @@ export default function SealedRollReveal({ ticket, onDone }) {
     kitPlay(cardRef.current, [{ transform: 'translateY(170px) scale(.45)', opacity: 0 }, { transform: 'translateY(-16px) scale(1.06)', opacity: 1, offset: 0.6 }, { transform: 'translateY(4px) scale(.99)', offset: 0.82 }, { transform: 'none', opacity: 1 }], { duration: big ? 620 : 500, delay: 120, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
     if (stampRef.current) kitPlay(stampRef.current, [{ transform: 'scale(2.4) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.92) rotate(-8deg)', opacity: 1, offset: 0.7 }, { transform: 'rotate(-8deg)', opacity: 1 }], { duration: 300, delay: 640, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' });
     btnRef.current?.focus();
-  }, [phase, reduced, res]);
+  }, [phase, reduced, res, hero]);
 
   if (!ticket) return null;
   const m = res ? markEntry(res.markId) : null;
@@ -137,21 +145,20 @@ export default function SealedRollReveal({ ticket, onDone }) {
       style={pickLine ? { '--srr-pick': pickLine } : undefined}
       onClick={(e) => { if (e.target === e.currentTarget) close(); }}
     >
-      <div className="srr-rays" ref={raysRef} aria-hidden="true" />
       <div className="srr-flash" ref={flashRef} aria-hidden="true" />
       <div className="srr-stage">
         <div className="srr-floor">{ticketLabel(floor)}</div>
-        <div className="srr-pod">
+        <div className="srr-pod" style={{ width: hero.v, minHeight: hero.pod, '--srr-rim': `${hero.rim}px`, '--srr-v': `${hero.v}px` }}>
           <img className="srr-glow" ref={glowRef} src={vesselArt(vTier).glow.src} alt="" draggable="false" />
           <span className="srr-shards" aria-hidden="true">
             {SHARDS.map((sh, i) => <img key={i} className="srr-shard" ref={(el) => { shardRefs.current[i] = el; }} src={sh.src} alt="" draggable="false" />)}
           </span>
           <button type="button" className="srr-vessel" ref={vesselRef} onClick={open} disabled={phase !== 'sealed'} aria-label={`Open the ${ticketLabel(floor)} roll`} tabIndex={-1}>
-            <VesselArt tier={vTier} size={250} refs={{ lid: lidRef, cog: cogRef }} />
+            <VesselArt tier={vTier} size={hero.v} refs={{ lid: lidRef, cog: cogRef }} />
           </button>
           {res ? (
             <div className="srr-card" ref={cardRef} data-testid="sealed-roll-card">
-              <MarkCard id={res.markId} tier={res.tier} name={m ? m.name : ''} shiny={!!res.shiny} fx sheen w={190} />
+              <MarkCard id={res.markId} tier={res.tier} name={m ? m.name : ''} shiny={!!res.shiny} fx sheen w={hero.card} />
               {upgrade ? <span className="srr-stamp" ref={stampRef}>UPGRADE!</span> : null}
             </div>
           ) : null}

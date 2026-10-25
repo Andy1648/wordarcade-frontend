@@ -71,7 +71,7 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     await leg.scrollIntoViewIfNeeded();
     await expect(leg.locator('.sp2-vessel img.va-base')).toHaveAttribute('src', /vessel-legendary-base\.webp/); // the painted gold canister
     await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog\.webp/); // the crowned gold lock
-    await expect(leg.locator('.sp2-vessel text')).toHaveText('LEGENDARY+'); // the tier on the blank badge, in code
+    await expect(leg.locator('.sp2-big')).toHaveText('LEGENDARY+'); // the card word names the tier (the tiny badge stays blank in the shop)
     await expect(leg).toContainText('750');
     await shot(page, `${vp.tag}-1-shop`);
     await leg.click();
@@ -124,3 +124,30 @@ test('ADVERSARIAL: the server says no (over the gem budget) → the gems come ba
   await expect(page.getByTestId('sealed-roll')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('taw.s2.ticketbuy'))).toBeNull();
 });
+
+// Andy: nothing scrolls unless it is a list, and the new thing must be SEEN — both SEALED ROLLS sit in the shop's first view.
+for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
+  test(`${w}x${h}: both SEALED ROLLS are in the first view of BOOSTS (no scroll)`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    const { shop } = await boot(page);
+    await expect(card(shop, 'legroll')).toBeVisible();
+    if (SHOTS) { await page.waitForTimeout(700); await shot(page, `${w}x${h}-shop-first-view`); }
+    const m = await page.evaluate(() => {
+      const g = document.querySelector('.sp2-grid').getBoundingClientRect();
+      const box = (id) => document.querySelector(`.sp2-card:has([data-stock="${id}"])`).getBoundingClientRect();
+      const bottom = Math.min(innerHeight, g.bottom);
+      return ['epicroll', 'legroll'].map((id) => { const r = box(id); return { id, top: r.top, bottom: r.bottom, view: bottom, gTop: g.top }; });
+    });
+    const fit = await page.evaluate(() => [...document.querySelectorAll('.sp2-cell.is-ticket')].map((c) => { const b = c.querySelector('.sp2-big').getBoundingClientRect(); const k = c.querySelector('.kstc-card').getBoundingClientRect(); const v = c.querySelector('.sp2-vessel').getBoundingClientRect(); return { l: b.left - k.left, r: k.right - b.right, v: v.height, overlap: v.bottom - b.top }; }));
+    for (const f of fit) {
+      expect(f.l, 'the tier word stays inside its card').toBeGreaterThanOrEqual(0);
+      expect(f.r).toBeGreaterThanOrEqual(0);
+      expect(f.v, 'the canister keeps a readable size').toBeGreaterThanOrEqual(46);
+      expect(f.overlap, 'the canister never sits on the tier word').toBeLessThanOrEqual(4);
+    }
+    for (const r of m) {
+      expect(r.top, `${r.id} top`).toBeGreaterThanOrEqual(r.gTop - 1);
+      expect(r.bottom, `${r.id} fully on screen`).toBeLessThanOrEqual(r.view + 1);
+    }
+  });
+}
