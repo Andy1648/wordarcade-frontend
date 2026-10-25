@@ -10,8 +10,8 @@ import './VesselArt.css';
 import OFF from '../../../public/rolls/vessel-epic.json';
 
 const part = (src, box, o = '50% 50%') => Object.freeze({ src, x: box.x, y: box.y, w: box.w, o });
-const vessel = (tier, label, partsTier) => Object.freeze({
-  base: part(`/rolls/vessel-${tier}-base.webp`, OFF.base),
+const vessel = (tier, label, partsTier, baseSrc) => Object.freeze({
+  base: part(baseSrc, OFF.base),
   lid: part(`/rolls/vessel-${partsTier}-lid.webp`, OFF.lid),
   cog: part(`/rolls/vessel-${partsTier}-cog.webp`, OFF.cog),
   badge: part(`/rolls/vessel-${partsTier}-badge.webp`, OFF.badge),
@@ -20,8 +20,8 @@ const vessel = (tier, label, partsTier) => Object.freeze({
   label: Object.freeze({ text: label, x: 512 * (OFF.badge.x + OFF.badge.w / 2) / 100, y: 512 * (OFF.badge.y / 100) + 44, size: 32, fit: label.length > 6 ? 168 : null }),
 });
 export const VESSEL_ART = Object.freeze({
-  epic: vessel('epic', 'EPIC+', 'epic'),
-  legendary: vessel('legendary', 'LEGENDARY+', 'epic'),
+  epic: vessel('epic', 'EPIC+', 'epic', '/rolls/vessel-epic-base.webp'),
+  legendary: vessel('legendary', 'LEGENDARY+', 'epic', '/rolls/vessel-legendary-base.webp'),
 });
 export const SHARD_ART = Object.freeze([1, 2, 3].map((i) => `/rolls/vessel-shard-${i}.svg`));
 const RANK = { rare: 0, epic: 1, legendary: 2, mythic: 3, secret: 4 };
