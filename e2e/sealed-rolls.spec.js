@@ -2,7 +2,7 @@
 // don't want dice"). The SHOP sells a sealed EPIC+ / LEGENDARY+ ROLL: the tap pays the gems, asks lb_ticket_buy with ONLY
 // the secret, the tier and a request id (never a price, a floor or luck), and opens the bought ticket in place — the
 // cog-locked vessel rattles, unlocks, blasts open, and the server's pick lands (060 lb_ticket_roll / lb_ticket_claim). A definite no from the
-// server (over the gem budget) gives the gems back. SHOTS=1 saves the seeded screenshots to claude/shots-rolls/.
+// server (over the gem budget) gives the gems back. SHOTS=1 saves the seeded screenshots to claude/shots-canister/.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -61,7 +61,7 @@ async function boot(page, { gems = 2000, buy = null, pick = { mark: 'mk-eclipse'
 }
 const card = (shop, id) => shop.locator(`.sp2-card:has([data-stock="${id}"])`);
 const gemsOf = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.gems')).bal);
-const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `claude/shots-rolls/${name}.png` }); };
+const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `claude/shots-canister/${name}.png` }); };
 
 for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'phone' }]) {
   test(`${vp.tag}: buy a SEALED LEGENDARY+ ROLL — server-sold, paid once, opens on the server's pick`, async ({ page }) => {
@@ -69,7 +69,8 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     const { shop, calls } = await boot(page);
     const leg = card(shop, 'legroll');
     await leg.scrollIntoViewIfNeeded();
-    await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-legendary-cog/);
+    await expect(leg.locator('.sp2-vessel img.va-base')).toHaveAttribute('src', /vessel-legendary-base\.webp/); // the painted gold canister
+    await expect(leg.locator('.sp2-vessel img.va-cog')).toHaveAttribute('src', /vessel-epic-cog\.webp/); // epic lock parts until legendary's are painted
     await expect(leg.locator('.sp2-vessel text')).toHaveText('LEGENDARY+'); // the tier on the blank badge, in code
     await expect(leg).toContainText('750');
     await shot(page, `${vp.tag}-1-shop`);
@@ -83,6 +84,7 @@ for (const vp of [{ w: 1366, h: 768, tag: 'desktop' }, { w: 390, h: 844, tag: 'p
     await page.waitForTimeout(450);
     await shot(page, `${vp.tag}-2-sealed`);
     await page.getByTestId('sealed-roll-open').click();
+    if (SHOTS) { await page.waitForTimeout(1250); await shot(page, `${vp.tag}-2b-opening`); } // mid cog-spin
     await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 8000 });
     await expect(sealed).toHaveAttribute('data-tier', 'legendary');
     await page.waitForTimeout(900);

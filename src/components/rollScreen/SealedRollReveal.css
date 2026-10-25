@@ -55,7 +55,7 @@
 }
 .srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
 
-.srr-pod { position: relative; width: 260px; min-height: 300px; display: grid; place-items: center; }
+.srr-pod { position: relative; width: 260px; min-height: 400px; /* room for the card to RISE OUT of the open canister (its badge stays visible below) */ display: grid; place-items: center; }
 .srr-vessel {
   position: relative;
   z-index: 1;
@@ -78,7 +78,7 @@
 .srr-shards { grid-area: 1 / 1; position: relative; width: 0; height: 0; pointer-events: none; }
 .srr-shard { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; opacity: 0; }
 
-.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; margin-top: -30px; }
+.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; }
 .srr-stamp {
   position: absolute;
   right: -64px;
@@ -130,5 +130,5 @@
 .srr-btn:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 4px; }
 
 @media (max-width: 420px) {
-  .srr-pod { width: 220px; min-height: 250px; }
+  .srr-pod { width: 220px; min-height: 380px; }
 }
