@@ -169,41 +169,10 @@
   from { opacity: 0; transform: scale(0.8) rotate(-12deg); }
   to { opacity: 1; transform: scale(1) rotate(-4deg); }
 }
-.splash-play {
-  position: relative;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-.splash-play-shadow {
-  position: absolute;
-  inset: 0;
-  transform: translate(8px, 8px);
-  background: #000;
-  border-radius: 8px;
-}
-.splash-play-face {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: clamp(10px, 2vh, 18px) clamp(24px, 4vw, 52px);
-  background: #FFE94A;
-  border: 6px solid #B5A21E;
-  border-radius: 8px;
-  transition: transform 200ms cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-.splash-play:hover .splash-play-face { transform: translate(-3px, -3px) rotate(-1deg); }
-.splash-play:active .splash-play-face { transform: translate(6px, 6px); transition-duration: 80ms; }
-.splash-play-k {
-  font-family: 'Bungee', sans-serif;
-  text-transform: uppercase;
-  font-size: min(var(--fs-hero), 12vh);
-  line-height: 0.95;
-  color: #0d0618;
+/* the PLAY plate is the painted sticker (playPlate/PlayPlate.css owns its art + motion); the splash only sizes it */
+.pp.splash-play {
+  flex: 0 0 auto;
+  width: clamp(280px, 34vw, 460px);
 }
 
 /* ---- "CLICK ANYWHERE TO START" - classic INSERT COIN pulse ---- */
@@ -347,7 +316,7 @@
   /* phone: the hero stacks over the PLAY plate */
   .splash-main { flex-direction: column; gap: 10px; }
   .splash-hero { height: clamp(110px, 26vh, 220px); }
-  .splash-play-face { padding: 10px 40px; }
+  .pp.splash-play { width: min(88vw, 360px); }
 }
 
 /* Reduced motion: keep the title static, no looping/scale animations — the three
@@ -363,7 +332,6 @@
   .splash-hero {
     animation: none !important;
   }
-  .splash-play-face { transition: none; }
   .splash-logo::before,
   .splash-logo::after { opacity: 0; }
   .splash-embers { display: none; }
