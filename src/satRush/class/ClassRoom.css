@@ -691,3 +691,330 @@ button.fr-class-chip:focus-visible .fr-class-chip-x {
     font-size: var(--fs-hero);
   }
 }
+
+/* =====================================================================================================
+   TEACHER PASS (oct26, "whatever impresses the french teacher") — the console is read from the back row:
+   the page FILLS the screen on a laptop / projector (no more short strip in the middle of a 1080p wall),
+   the body centres in it, the counts and the code are display type, and the moments land as print EVENTS
+   (the answer stamps in at the reveal, each count that moves re-stamps). Finite, transform/opacity only.
+   ===================================================================================================== */
+@media (min-width: 900px) and (min-height: 600px) {
+  .fr-class-page.wide {
+    height: min(100%, 980px);
+  }
+  .fr-class-page.wide .fr-class-body {
+    justify-content: center;
+  }
+}
+
+/* lobby: the class count is the headline of its column */
+.fr-class-people {
+  align-items: center;
+  justify-content: center;
+}
+.fr-class-joined {
+  flex-direction: column;
+  gap: 0;
+}
+.fr-class-joined .fr-class-joined-n {
+  font-family: var(--font-head);
+  font-size: var(--fs-hero);
+  line-height: 1;
+}
+.fr-class-joined-label {
+  font-size: var(--fs-panel);
+  letter-spacing: 0.12em;
+}
+.fr-class-lobby.names .fr-class-joined {
+  flex-direction: row;
+  gap: 14px;
+}
+.fr-class-lobby.names .fr-class-joined .fr-class-joined-n {
+  font-size: var(--fs-h1);
+}
+@media (min-width: 820px) {
+  .fr-class-lobby {
+    align-items: center;
+  }
+}
+
+/* the reveal: the French answer stamps onto the page; the English of its example folds behind a tap */
+.fr-class-answer {
+  animation: fr-stamp-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+.fr-class-context-en {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  opacity: 0.75;
+}
+.fr-class-clue .sr-en-toggle {
+  align-self: center;
+}
+.fr-class-console.names .fr-class-context-en,
+.fr-class-console.names .fr-class-clue .sr-en-toggle {
+  display: none;
+}
+/* a count that moved */
+.fr-pop {
+  display: inline-block;
+  animation: fr-stamp-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.fr-class-joined-n {
+  display: inline-block;
+  animation: fr-stamp-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@keyframes fr-stamp-in {
+  from {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-class-answer,
+  .fr-pop,
+  .fr-class-joined-n {
+    animation: none;
+  }
+}
+
+/* ---- CLASS DONE: the class score beside the hardest words, every word whole (never ellipsized) ---- */
+.fr-class-done {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  min-height: 0;
+}
+@media (min-width: 900px) {
+  .fr-class-done {
+    grid-template-columns: minmax(280px, 0.75fr) minmax(0, 2fr);
+    gap: 24px;
+    align-items: center;
+  }
+}
+.fr-class-score {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  text-align: center;
+}
+.fr-class-score-n {
+  align-self: center;
+  font-family: var(--font-head);
+  font-size: min(var(--fs-hero), 5.6vw);
+  line-height: 1;
+  animation: fr-stamp-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1.3) 120ms both;
+}
+/* the score's legend reads as a column of three counts under the bar */
+.fr-class-score .fr-class-legend {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-class-score-n {
+    animation: none;
+  }
+}
+.fr-class-summary {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+}
+.fr-class-summary li {
+  grid-template-columns: minmax(0, 1fr) 4rem minmax(2.6rem, auto);
+  padding: 6px 0;
+}
+.fr-class-sum-word {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: break-word; /* breaks between words, never inside a French word */
+  line-height: 1.2;
+}
+.fr-class-sum-word b {
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: var(--fs-body);
+}
+.fr-class-sum-gloss {
+  font-weight: 400;
+  font-size: var(--fs-label);
+  opacity: 0.75;
+}
+/* a big set (20-30 words): the gloss goes, the rows tighten — the words still read whole */
+.fr-class-summary.dense .fr-class-sum-gloss {
+  display: none;
+}
+.fr-class-summary.mid li {
+  padding: 3px 0;
+}
+
+/* ---- a LAPTOP / Chromebook driving the board (≥1100 wide, ≥640 tall): the clue, the answer and the counts
+   step up a size so the projector copy of a laptop screen still reads from the back ---- */
+@media (min-width: 1100px) and (min-height: 640px) {
+  .fr-class-gloss {
+    font-size: var(--fs-h1);
+  }
+  .fr-class-answer {
+    font-size: var(--fs-hero);
+  }
+  .fr-class-legend {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-legend b {
+    font-size: var(--fs-h2);
+  }
+  .fr-class-bar {
+    height: 30px;
+  }
+  .fr-class-console .fr-class-clue {
+    padding: 20px 18px;
+  }
+  .fr-class-summary li {
+    font-size: var(--fs-body);
+  }
+  .fr-class-sum-gloss {
+    font-size: var(--fs-label);
+  }
+}
+
+/* ---- PROJECTOR: display type everywhere it counts ---- */
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-class-page.wide .sr-modeselect-head {
+    font-size: var(--fs-hero);
+  }
+  .fr-class-page.wide .fr-class-sub {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-gloss {
+    font-size: var(--fs-hero);
+  }
+  .fr-class-console .fr-class-clue {
+    padding: 28px 24px;
+    gap: 14px;
+  }
+  .fr-class-console .sr-panel-label {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-context,
+  .fr-class-context-en {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-legend b {
+    font-size: var(--fs-hero);
+  }
+  .fr-class-legend {
+    font-size: var(--fs-h2);
+    gap: 6px 26px;
+  }
+  .fr-class-bar {
+    height: 48px;
+    border-width: 4px;
+  }
+  .fr-class-joinat {
+    font-size: var(--fs-panel);
+    white-space: nowrap;
+  }
+  .fr-class-lobby {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+  .fr-class-lobby .fr-class-qr svg {
+    width: clamp(160px, 30vh, 330px);
+  }
+  .fr-class-qr figcaption,
+  .fr-class-names {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-joined .fr-class-joined-n {
+    font-size: calc(var(--fs-hero) * 1.6);
+  }
+  .fr-class-joined-label {
+    font-size: var(--fs-h2);
+  }
+  .fr-class-foot .sr-btn {
+    min-height: 72px;
+    font-size: var(--fs-panel);
+    white-space: nowrap;
+    max-width: 720px;
+  }
+  .fr-class-foot .sr-exit-chip {
+    font-size: var(--fs-body);
+    min-height: 56px;
+  }
+  .fr-class-score-n {
+    font-size: calc(var(--fs-hero) * 1.35);
+  }
+  .fr-class-score .fr-class-legend b {
+    font-size: var(--fs-h2);
+  }
+  .fr-class-score .fr-class-legend {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-summary:not(.mid):not(.dense) {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+  }
+  .fr-class-summary li {
+    font-size: var(--fs-panel);
+    padding: 8px 0;
+  }
+  .fr-class-sum-word b {
+    font-size: var(--fs-panel);
+  }
+  .fr-class-sum-gloss {
+    font-size: var(--fs-body);
+  }
+  .fr-class-summary .fr-class-bar.mini {
+    height: 18px;
+  }
+  .fr-class-summary.dense li {
+    font-size: var(--fs-body);
+    padding: 3px 0;
+  }
+  .fr-class-summary.dense .fr-class-sum-word b {
+    font-size: var(--fs-body);
+  }
+}
+
+/* the clue and the answer are sized off their panel and their LONGEST word (--len, set inline), so the
+   biggest type that fits is used and a French word is never broken in the middle ("multicult / urel") */
+.fr-class-clue {
+  container-type: inline-size;
+}
+.fr-class-console .fr-class-gloss,
+.fr-class-console .fr-class-answer {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.fr-class-console .fr-class-gloss {
+  font-size: min(var(--fs-h1), calc(125cqw / var(--len, 8)));
+}
+.fr-class-console .fr-class-answer {
+  font-size: min(var(--fs-hero), calc(125cqw / var(--len, 8)));
+}
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-class-console .fr-class-gloss {
+    font-size: min(var(--fs-hero), calc(125cqw / var(--len, 8)));
+  }
+  .fr-class-console .fr-class-answer {
+    font-size: min(calc(var(--fs-hero) * 1.25), calc(125cqw / var(--len, 8)));
+  }
+}
+@media (max-height: 560px) {
+  .fr-class-console .fr-class-gloss {
+    font-size: min(var(--fs-panel), calc(125cqw / var(--len, 8)));
+  }
+  .fr-class-console .fr-class-answer {
+    font-size: min(var(--fs-h2), calc(125cqw / var(--len, 8)));
+  }
+}

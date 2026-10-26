@@ -21,6 +21,7 @@
 // learning memory lives under its own storage keys.
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
+import './FrenchRush.css';
 import { useSatRushGame } from './useSatRushGame';
 import { setShakeTarget } from './juice';
 import Hud from './Hud';
@@ -34,6 +35,8 @@ import WordBank from './WordBank';
 import ClassFlow from './class/ClassRoom';
 import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
+import PressWipe from './PressWipe';
+import { usePressOnChange } from './press';
 
 // The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
 function Cover({ onPlay, onBank, onClass, wordCount }) {
@@ -73,6 +76,18 @@ function Cover({ onPlay, onBank, onClass, wordCount }) {
     </div>
   );
 }
+
+// the press sheet for each solo screen: [French headline, English line, direction]
+const PRESS_BY_SCREEN = {
+  start: ['FRENCH RUSH', 'home', 'back'],
+  mode: ['À TOI !', 'your turn'],
+  setup: ['RÉGLAGES', 'set it up'],
+  briefing: ['ÉTUDIE', 'study'],
+  playing: ["C'EST PARTI !", 'here we go'],
+  over: ['TERMINÉ !', 'done'],
+  bank: ['LES MOTS', 'word bank'],
+  class: null, // ClassFlow presses its own
+};
 
 // ?mode=&level=&n=&theme=&pace= — a teacher's set (CaseSetup's "copy a link")
 function readPreset() {
@@ -117,6 +132,11 @@ export default function FrenchRushGame() {
   const inClassRun = classOpen && classState.playing;
   const ui = (view.pack && view.pack.ui) || null;
 
+  // THE PRESS (oct26): every solo screen change pulls a fresh sheet off the press, titled in French with its
+  // English underneath. The class screens press their own sheets (ClassFlow); a class run starts here.
+  const soloScreen = bank ? 'bank' : classOpen && !inClassRun ? 'class' : view.phase === 'over' ? 'over' : view.phase;
+  usePressOnChange(soloScreen, PRESS_BY_SCREEN[soloScreen] || null);
+
   useEffect(() => {
     setShakeTarget(appRef.current);
     return () => setShakeTarget(null);
@@ -150,20 +170,6 @@ export default function FrenchRushGame() {
     if (classLeaveRef.current) classLeaveRef.current();
     else closeClass();
   };
-
-  if (bank) {
-    return (
-      <div className="sr-app fr-app" ref={appRef}>
-        <WordBank
-          words={(view.pack && view.pack.words) || []}
-          categories={(view.pack && view.pack.categories) || []}
-          masteryOf={game.masteryOf}
-          studiedOf={game.studiedOf}
-          onBack={() => setBank(false)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`} ref={appRef}>
@@ -214,7 +220,16 @@ export default function FrenchRushGame() {
           standbyRef={classStandbyRef}
         />
       )}
-      {!classOpen && view.phase === 'start' && (
+      {bank && (
+        <WordBank
+          words={(view.pack && view.pack.words) || []}
+          categories={(view.pack && view.pack.categories) || []}
+          masteryOf={game.masteryOf}
+          studiedOf={game.studiedOf}
+          onBack={() => setBank(false)}
+        />
+      )}
+      {!bank && !classOpen && view.phase === 'start' && (
         <Cover onPlay={game.startGame} onBank={() => setBank(true)} onClass={() => setClassOpen(true)} wordCount={view.packSize} />
       )}
       {!classOpen && view.phase === 'mode' && (
@@ -247,6 +262,7 @@ export default function FrenchRushGame() {
           onExit={inClassRun ? leaveClassRun : home}
         />
       )}
+      <PressWipe />
     </div>
   );
 }

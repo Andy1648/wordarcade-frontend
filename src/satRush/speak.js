@@ -55,9 +55,14 @@ if (canSpeak()) {
 }
 
 /** "la famille" / "le pays" / "l'école" — a noun with its article, so the gender is learned with it. */
+// a French teacher reads these on the board (oct26): an h ASPIRÉ never elides ("le héros", not "l'héros"),
+// and a plural-only noun takes "les" ("les vacances", not "la vacances")
+const H_ASPIRE = new Set(['héros', 'harcèlement', 'hasard', 'haine', 'handicap', 'honte', 'hauteur', 'hibou', 'homard', 'hockey']);
+const PLURAL_ONLY = new Set(['vacances', 'gens', 'fiançailles', 'mathématiques', 'environs', 'frais']);
 export function withArticle(word, pos, gender) {
   if (pos !== 'n' || !gender) return word;
-  if (/^[aeiouyàâäéèêëîïôöùûüœh]/i.test(word)) return `l'${word}`;
+  if (PLURAL_ONLY.has(word)) return `les ${word}`;
+  if (!H_ASPIRE.has(word) && /^[aeiouyàâäéèêëîïôöùûüœh]/i.test(word)) return `l'${word}`;
   if (gender === 'f') return `la ${word}`;
   if (gender === 'm') return `le ${word}`;
   return `le/la ${word}`;

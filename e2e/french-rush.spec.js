@@ -75,6 +75,31 @@ test('the word bank lists every word and searches without accents', async ({ pag
   await expect(page.locator('.sr-bank-row').first()).toContainText('école');
 });
 
+// oct26: the word bank's filters are printed pickers (no native <select>), driven by mouse AND keyboard
+test('the word bank filters are printed pickers — tap and keyboard both work', async ({ page }) => {
+  await installBackendMock(page);
+  await page.goto('/french-rush');
+  await page.getByRole('button', { name: 'Word bank' }).click();
+  await expect(page.locator('.sr-bank select')).toHaveCount(0);
+  const show = page.getByRole('button', { name: /^show/i });
+  await show.click();
+  await page.getByRole('option', { name: 'False friends' }).click();
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  const ff = WORDS.filter((w) => w.falseFriend).length;
+  await expect(page.locator('.sr-bank-row')).toHaveCount(ff);
+  // keyboard: ↓ opens on the chosen row, Home → ALL WORDS, Enter picks it, focus returns to the button
+  await show.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('listbox')).toBeVisible();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.sr-bank-row')).toHaveCount(WORDS.length);
+  await expect(show).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+});
+
 test('the arcade never downloads French Rush', async ({ page }) => {
   await installBackendMock(page);
   const french = [];
