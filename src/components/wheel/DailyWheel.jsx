@@ -77,7 +77,7 @@ function settleIcons(els, anims, rotor) {
 
 /** The prize art for a landed spin (the cosmetic's own art once the server named it). */
 function prizeArt(s) {
-  if (s.prize === 'cosmetic' && s.cosmetic) return kitSrc(s.cosmetic, 0);
+  if (s.prize === 'cosmetic' && s.cosmetic && kitSrc(s.cosmetic)) return kitSrc(s.cosmetic);
   if (s.prize === 'ticket') return artSrc(s.ticket.tier === 'legendary' || s.ticket.tier === 'mythic' ? 'prize-ticket-legendary' : 'prize-ticket-rare');
   return artSrc(WHEEL_SLOTS[s.slot].icon);
 }

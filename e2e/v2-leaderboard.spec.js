@@ -469,9 +469,9 @@ test('your own profile card: write a description — a dirty one is refused befo
   expect(sent).toEqual(['this exam is killing me, word bomb > homework']);
 });
 
-// 064 HERO COMPONENTS (oct24): the podium heroes bring their SIDEKICK (the showcase's `pet`); a row with none shows none,
-// and a DB before 064 (no pet column) still answers the heroes (select=*)
-test('@1366: podium heroes stand with their sidekicks (064 pet), and their own hero (053)', async ({ page }) => {
+// 053: the podium heroes stand as their own hero. The SIDEKICK slot was removed (oct26): a row that still stores a 064
+// `pet` shows no sidekick.
+test('@1366: podium heroes stand as their own hero (053); a stored 064 pet shows nothing', async ({ page }) => {
   await boot(page, { me: { rebirths: 0, level: 60 } });
   // registered AFTER the board mock (the newest route wins), then the board is opened again so the podium reads it
   await page.route('**/rest/v1/profile_showcase*', (route) => {
@@ -483,9 +483,8 @@ test('@1366: podium heroes stand with their sidekicks (064 pet), and their own h
   await navControl(page, 'leaderboard').click();
   const lb = page.locator('.lb2');
   await expect(lb.locator('.lb2-col--1')).toHaveAttribute('data-cast', 'mecha');
-  await expect(lb.locator('.lb2-col--1 [data-sidekick="turbo"]')).toBeVisible();
-  await expect(lb.locator('.lb2-col--2 [data-sidekick="inky"]')).toBeVisible();
-  await expect(lb.locator('.lb2-col--3 [data-sidekick]')).toHaveCount(0);
+  await expect(lb.locator('.lb2-col--2')).toHaveAttribute('data-cast', 'jinx');
+  await expect(lb.locator('[data-sidekick], .sk')).toHaveCount(0);
   await page.waitForTimeout(900);
-  if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/hero-kit/lb-podium-pets.png' });
+  if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/hero-kit/lb-podium-heroes.png' });
 });

@@ -1,7 +1,7 @@
 // FramedCard.jsx — your hero as a CARD in the FRAME you wear (kit.js FRAMES). The painted frame sits on top; behind its
 // two cut-out windows are plain fills (the art window in the hero's dark colour, the name plate in its colour) — flat
 // rectangles only, every shape is the painted frame. `children` fill the art window (the live HeroShowcase). Static: the
-// frame itself never moves (the hero / sidekick inside carry the life).
+// frame itself never moves (the hero inside carries the life).
 import { kitById } from './kit.js';
 import FitText from '../components/kit/FitText.jsx';
 import './FramedCard.css';

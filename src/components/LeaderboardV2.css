@@ -860,7 +860,6 @@
 /* #2 / #3 face inward toward #1 (a mirror on the wrapper, so the drop / hop keyframes on the image keep it) */
 .lb2-col--3 .lb2-buddy-wrap { transform: scaleX(-1); }
 /* 064: a podium hero brings its SIDEKICK (cast/kit.js), standing at its feet */
-.lb2-buddy-wrap .lb2-pet { left: -16%; bottom: -2%; width: 44%; }
 .lb2-col.is-open .lb2-buddy { opacity: .16; filter: none; }
 .lb2-col.is-open .lb2-emblem { opacity: .35; }
 /* the NAME RIBBON — the painted banner of the player's cast colour, the name riding its flat centre band */

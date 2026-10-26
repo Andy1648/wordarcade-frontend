@@ -34,8 +34,13 @@ export const WHEEL_SLOTS = [
   { slot: 7, kind: 'cosmetic', w: 4, label: 'WHEEL', sub: 'COSMETIC', icon: 'prize-cosmetic', color: '#FF4FA3' },
 ];
 export const SLICE_DEG = 360 / WHEEL_SLOTS.length;
-/** The wheel-only cosmetics (kit.js WHEEL_KIT ids — the server picks one you have not won; all three → an EPIC+ ROLL). */
-export const WHEEL_COSMETICS = ['lucky', 'jackpot', 'confetti'];
+/** The wheel-only cosmetics (kit.js wheel ids — the server picks one you have not won; both won → an EPIC+ ROLL).
+ *  068_wheel_no_sidekick.sql dropped LUCKY (the SIDEKICK slot is gone). */
+export const WHEEL_COSMETICS = ['jackpot', 'confetti'];
+/** Retired wheel cosmetics a server still on 067 can hand out: paid as the slot's best gem prize instead (never a
+ *  broken image, never a piece you can't wear). */
+export const RETIRED_COSMETICS = ['lucky'];
+export const RETIRED_COSMETIC_GEMS = 120;
 // the FACE is face.svg: 8 exact 45° flat wedges in code-true geometry (the hero-art session: wedges can't be painted to
 // register); rim / hub / pointer / prize icons are painted webps on top
 export const artSrc = (name) => `/wheel/${name}.${name === 'face' ? 'svg' : 'webp'}`;
@@ -194,6 +199,9 @@ export function normalizeSpin(r) {
   if (!Number.isInteger(slot) || slot < 0 || slot >= WHEEL_SLOTS.length) return null;
   const prize = String(r.prize || '');
   if (!['gems', 'xp', 'wins', 'ticket', 'cosmetic'].includes(prize)) return null;
+  if (prize === 'cosmetic' && RETIRED_COSMETICS.includes(r.cosmetic)) {
+    return normalizeSpin({ ...r, prize: 'gems', amount: RETIRED_COSMETIC_GEMS, cosmetic: null });
+  }
   const amount = Math.max(0, Math.floor(Number(r.amount) || 0));
   if (prize === 'gems' && (amount < 1 || amount > 1000)) return null;
   if ((prize === 'xp' || prize === 'wins') && (amount < 1 || amount > 60)) return null;
