@@ -1072,6 +1072,9 @@
    cell it steps aside (the rival is the nearer goal) so the rival line keeps a readable size. */
 .lb2-chase-fit .lb2-band-tag { display: inline-block; margin-left: 8px; padding: 0 5px; font-size: var(--fs-k14); line-height: 1.1; vertical-align: baseline; }
 @container (max-width: 300px) { .lb2-row.is-me .lb2-band-tag { display: none; } }
+/* a phone row: "FOR #n" steps aside (the rival's row sits right above it) so a 16-letter rival keeps a readable size
+   and the line never reaches REBIRTHS (CI's wider Linux mono ran a 360px chase 9px into R) */
+.lb2--narrow .lb2-chase-for { display: none; }
 /* the chase names the rival in FULL: a long rival scales the line down (FitText) instead of ending in "…" */
 .lb2-chase .fit-box.lb2-chase-fit { overflow: visible; }
 /* PHONE PODIUM NAMES (audit oct25): the name plate was a content-sized flex item, so FitText's own shrink (a negative
