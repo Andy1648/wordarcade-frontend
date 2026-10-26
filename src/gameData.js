@@ -130,13 +130,15 @@ const FUSE_GAME = {
   id: 'fuse',
   artKey: 'FuseArt',
   // Andy oct24: the painted, COMPONENT card — the fireworks storeroom, the sneaky firecracker (shh), hover FX, and
-  // PARTS for its act (ACTS.fuse): a tiptoe two-step and the fuse FLARES. The flash rides the hero's frame (onHero),
-  // placed on its fuse tip.
+  // PARTS for its act (ACTS.fuse): a tiptoe two-step, the fuse FLARES (flash + spark) and coughs a smoke puff. The
+  // pieces ride the hero's frame (onHero), placed on its fuse tip.
   artLayers: {
     bg: '/cards/fu-bg.webp', hero: '/cards/fu-hero.webp', fx: '/cards/fu-fx.webp', heroY: '-4%', heroScale: 0.66,
     act: 'fuse',
     parts: [
       { id: 'flash', src: '/cards/fu-flash.webp', x: 72.6, y: 6, w: 44, onHero: true },
+      { id: 'spark', src: '/cards/fu-spark.webp', x: 73, y: 5, w: 30, onHero: true },
+      { id: 'smoke', src: '/cards/fu-smoke.webp', x: 68, y: 9, w: 24, onHero: true },
     ],
   },
   name: 'FUSE',

@@ -48,7 +48,7 @@ export const ACTS = {
     { el: 'link', at: 300, ms: 760, ease: EASE_OUT, frames: flingFrames(-170, 40, -260) },
     { el: 'link2', at: 340, ms: 780, ease: EASE_OUT, frames: flingFrames(170, 70, 240) },
   ],
-  // FUSE — the firecracker SNEAKS: a tiptoe two-step in place, the fuse FLARES.
+  // FUSE — the firecracker SNEAKS: a tiptoe two-step in place, the fuse FLARES and coughs a smoke puff.
   fuse: [
     { el: 'hero', at: 0, ms: 900, ease: 'ease-in-out', frames: [
       { transform: 'translate(0,0) rotate(0deg)' },
@@ -59,6 +59,8 @@ export const ACTS = {
       { transform: 'translate(0,0) rotate(0deg)' },
     ] },
     { el: 'flash', at: 340, ms: 560, ease: EASE_POP, frames: burstFrames(1.15, 40) },
+    { el: 'spark', at: 380, ms: 520, ease: EASE_POP, frames: burstFrames(1.3, 90) },
+    { el: 'smoke', at: 520, ms: 900, ease: EASE_OUT, frames: flingFrames(-40, -120, -25) },
   ],
 };
 
