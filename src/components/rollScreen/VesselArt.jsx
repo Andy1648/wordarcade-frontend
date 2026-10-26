@@ -4,11 +4,16 @@
 //
 // Every part is a real PAINTED asset in /public/rolls, registered by the tier's own vessel-<tier>.json: each box is
 // { x, y, w } in % of the 512 base canvas (x,y = top-left, w = width; the height follows the image's own aspect). The
-// cog turns about its OWN centre. The BADGE is blank: the tier is set over its plate in Bungee (SVG text, 512 canvas —
-// `y` = the text baseline; textLength FITS it to the plate — EPIC white on purple, LEGENDARY dark ink on gold). The GLOW is a painted ray fan converging at 50% / 74.4% of its canvas (seated on the open rim).
+// cog turns about its OWN centre. The BADGE is blank: the tier is set over its plate in Bungee (SVG text, 512 canvas),
+// FITTED INSIDE THE PLATE'S SAFE WINDOW — `plate` in vessel-<tier>.json, measured off the painted badge: the flat face
+// between the rivets, ≥ 8% in from its painted border each side (Andy oct25: "LEGENDARY is taking out borders").
+// The text is sized DOWN to that window (FitText: the height cap, then the width with at most a 14% squeeze) and centred
+// on it, so it never touches the border or the ribbon ends. EPIC white on purple, LEGENDARY dark ink on gold. The GLOW is
+// a painted ray fan converging at 50% / 74.4% of its canvas (seated on the open rim).
 import './VesselArt.css';
 import EPIC_OFF from '../../../public/rolls/vessel-epic.json';
 import LEG_OFF from '../../../public/rolls/vessel-legendary.json';
+import { fitLabel } from './vesselLabel.js';
 
 const part = (src, box) => Object.freeze({ src, x: box.x, y: box.y, w: box.w });
 const vessel = (OFF, src, label) => Object.freeze({
@@ -17,17 +22,17 @@ const vessel = (OFF, src, label) => Object.freeze({
   cog: part(src.cog, OFF.cog),
   badge: part(src.badge, OFF.badge),
   glow: Object.freeze({ src: src.glow }),
-  label: Object.freeze({ ...label, x: 512 * (OFF.badge.x + OFF.badge.w / 2) / 100 }),
+  label: Object.freeze({ ...label, ...fitLabel(label.text, OFF.plate, label.stroke ? 6 : 0) }),
 });
 export const VESSEL_ART = Object.freeze({
   epic: vessel(EPIC_OFF, {
     base: '/rolls/vessel-epic-base.webp', lid: '/rolls/vessel-epic-lid.webp', cog: '/rolls/vessel-epic-cog.webp',
     badge: '/rolls/vessel-epic-badge.webp', glow: '/rolls/vessel-glow-epic.webp',
-  }, { text: 'EPIC+', y: 474, size: 44, fit: 150, ink: '#fff', stroke: '#2a0a4a' }),
+  }, { text: 'EPIC+', ink: '#fff', stroke: '#2a0a4a' }),
   legendary: vessel(LEG_OFF, {
     base: '/rolls/vessel-legendary-base.webp', lid: '/rolls/vessel-legendary-lid.webp', cog: '/rolls/vessel-legendary-cog.webp',
     badge: '/rolls/vessel-legendary-badge.webp', glow: '/rolls/vessel-glow-legendary.webp',
-  }, { text: 'LEGENDARY+', y: 459, size: 36, fit: 136, ink: '#3a2200', stroke: null }),
+  }, { text: 'LEGENDARY+', ink: '#3a2200', stroke: null }),
 });
 export const SHARD_ART = Object.freeze(['/rolls/vessel-shard-1.webp', '/rolls/vessel-shard-2.webp', '/rolls/vessel-shard-3.webp']);
 const RANK = { rare: 0, epic: 1, legendary: 2, mythic: 3, secret: 4 };

@@ -10,6 +10,12 @@
 //   5. the landing commits it (buyTicketRoll → the save, lb_ticket_claim → the server) and wears it if it is better.
 // Every motion is a finite WAAPI one-shot on a node that already exists (the shard pool is fixed), transform / opacity
 // only; each node's REST style is its end state, so REDUCE MOTION simply shows the result. Nothing loops.
+// ONE CHOREOGRAPHY (Andy oct25 "unsmooth"): anticipation (squash + a counter-turn of the cog) -> release (the cog pops,
+// the vessel stretches, the lid blasts 50 ms later) -> follow-through (the burst starts while the lid is still flying,
+// the vessel settles with a spring). Shake / spring curves, never linear. Every part is decoded before OPEN is offered,
+// and the landed card is mounted (hidden) + decoded while the cog turns, so no decode lands inside the burst.
+// CLOSE: the X / Escape / a tap outside -- only while sealed, or once the card has LANDED (never mid-open: the pick is
+// committed before the burst, so closing can never lose it; it just must be seen).
 // No pick (offline / the server said no): the ticket stays sealed and waits in GEARS (the roll screen's OPEN button).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import '../kit/tokens.css';
@@ -26,15 +32,25 @@ import { sndWordRejected } from '../../audio/gameSounds';
 import { kitPlay } from '../kit/motion';
 import { useReduceMotion } from '../../lib/useReduceMotion';
 import VesselArt, { vesselArt, SHARD_ART } from './VesselArt';
+import { holdBeats } from '../../hooks/useBeatSync';
 
 const RATTLES = { epic: 1, legendary: 3, mythic: 3 };
+// a rattle: a squat, then a decaying side-to-side shake about the base (each one harder)
 const rattle = (k) => [
-  { transform: 'translate(0,0) rotate(0deg)' },
-  { transform: `translate(${-6 - 4 * k}px,0) rotate(${-6 - 3 * k}deg)`, offset: 0.2 },
-  { transform: `translate(${6 + 4 * k}px,0) rotate(${6 + 3 * k}deg)`, offset: 0.45 },
-  { transform: `translate(${-3 - 2 * k}px,0) rotate(${-3 - k}deg)`, offset: 0.7 },
-  { transform: 'translate(0,0) rotate(0deg)' },
+  { transform: 'translate(0,0) rotate(0deg) scale(1,1)' },
+  { transform: `translate(0,${3 + k}px) rotate(0deg) scale(${1.03 + 0.01 * k},${0.95 - 0.01 * k})`, offset: 0.14 },
+  { transform: `translate(${-6 - 4 * k}px,0) rotate(${-6 - 3 * k}deg) scale(1,1.01)`, offset: 0.32 },
+  { transform: `translate(${6 + 4 * k}px,0) rotate(${6 + 3 * k}deg) scale(1,1.01)`, offset: 0.52 },
+  { transform: `translate(${-3 - 2 * k}px,0) rotate(${-3 - k}deg) scale(1,1)`, offset: 0.72 },
+  { transform: `translate(${1 + k}px,0) rotate(${1 + 0.5 * k}deg) scale(1,1)`, offset: 0.88 },
+  { transform: 'translate(0,0) rotate(0deg) scale(1,1)' },
 ];
+const SHAKE = 'cubic-bezier(.36,.07,.19,.97)';
+const SPRING = 'cubic-bezier(.2,1.25,.4,1)';
+const decodeImgs = (root) => Promise.all([...(root ? root.querySelectorAll('img') : [])].map((i) => (i.decode ? i.decode().catch(() => {}) : null)));
+const nextFrame = () => new Promise((r) => { requestAnimationFrame(() => r()); });
+// the reveal stops the menu's pointer listeners (wall parallax / magnetic cards) restyling the covered page each move
+const stopMenuPointer = (e) => e.stopPropagation();
 // THE SHARD POOL: fixed nodes, fixed flight paths (fanning up and out of the open top) — never a node per burst
 const SHARDS = [
   [-150, -190, -260], [150, -200, 300], [-70, -260, 200], [80, -250, -220], [-210, -60, 340], [210, -80, -320], [-20, -300, 180], [30, -150, -160],
@@ -58,6 +74,11 @@ export default function SealedRollReveal({ ticket, onDone }) {
   const reduced = useReduceMotion();
   const [phase, setPhase] = useState('sealed'); // sealed → opening → open | later
   const [res, setRes] = useState(null);
+  const [landed, setLanded] = useState(false); // the card has finished landing: only now can a tap outside close it
+  const [ready, setReady] = useState(false); // every vessel part decoded (OPEN waits for it, capped)
+  const rootRef = useRef(null);
+  const closeRef = useRef(null);
+  const chipRef = useRef(null);
   const [hero] = useState(heroSize);
   const vesselRef = useRef(null);
   const lidRef = useRef(null);
@@ -73,7 +94,13 @@ export default function SealedRollReveal({ ticket, onDone }) {
     alive.current = true;
     if (!reduced && vesselRef.current) kitPlay(vesselRef.current, [{ transform: 'translateY(-60px) scale(1.4)', opacity: 0 }, { transform: 'translateY(6px) scale(.95)', opacity: 1, offset: 0.6 }, { transform: 'none', opacity: 1 }], { duration: 340, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' });
     btnRef.current?.focus();
-    return () => { alive.current = false; };
+    // decode every part (vessel, glow, shards) before OPEN can start the sequence: a decode mid-burst is a dropped frame
+    Promise.race([decodeImgs(rootRef.current), wait(900)]).then(() => { if (alive.current) setReady(true); });
+    // the opaque scrim covers the page: hold the beat flips + skip rendering what it covers (SealedRollReveal.css)
+    const release = holdBeats();
+    const de = document.documentElement;
+    de.setAttribute('data-srr-cover', '');
+    return () => { alive.current = false; release(); de.removeAttribute('data-srr-cover'); };
   }, [reduced]);
 
   const open = async () => {
@@ -82,28 +109,39 @@ export default function SealedRollReveal({ ticket, onDone }) {
     const n = RATTLES[floor] || 1;
     // the server's pick, asked while the vessel rattles + unlocks (a reserved ticket hands back its SAME pick)
     const ask = ticket.pick ? Promise.resolve(ticket.pick) : rollTicket(ticket);
-    if (!reduced) sndRollTell(floor, 260 * n + 900);
-    for (let k = 0; k < n; k += 1) {
-      await done(kitPlay(vesselRef.current, rattle(k), { duration: 240, easing: 'linear' }));
-      if (k < n - 1 && !reduced) await wait(110);
+    if (!reduced) sndRollTell(floor, 300 * n + 900);
+    const v = vesselRef.current;
+    for (let i = 0; i < n; i += 1) {
+      await done(kitPlay(v, rattle(i), { duration: 300 + 40 * i, easing: SHAKE }));
+      if (i < n - 1 && !reduced) await wait(70);
     }
-    // THE LOCK: the cog turns twice about its hub (pure rotate) …
-    if (!reduced) sndRollCharge(700);
-    await done(kitPlay(cogRef.current, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(720deg)' }], { duration: 700, easing: 'cubic-bezier(.5,0,.3,1)' }));
-    const pick = await ask;
+    // THE LOCK: the cog counter-turns (anticipation), then winds two full turns about its hub while the canister tenses
+    if (!reduced) sndRollCharge(760);
+    kitPlay(v, [{ transform: 'scale(1,1)' }, { transform: 'scale(1.035,.955)', offset: 0.85 }, { transform: 'scale(1.035,.955)' }], { duration: 760, easing: 'cubic-bezier(.45,0,.55,1)', fill: 'forwards', keep: true });
+    const turn = kitPlay(cogRef.current, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-28deg)', offset: 0.16 }, { transform: 'rotate(720deg)' }], { duration: 760, easing: 'cubic-bezier(.45,0,.2,1)' });
+    const [pick] = await Promise.all([ask, done(turn)]);
     if (!alive.current) return;
-    if (!pick) { sndWordRejected(); setPhase('later'); return; }
+    const unclench = () => kitPlay(v, [{ transform: 'scale(1.035,.955)' }, { transform: 'scale(1,1)' }], { duration: 260, easing: SPRING });
+    if (!pick) { unclench(); sndWordRejected(); setPhase('later'); return; }
     const r = buyTicketRoll({ pick, floor });
-    if (!r) { setPhase('later'); return; }
+    if (!r) { unclench(); setPhase('later'); return; }
     noteLanded(ticket.id); // in this save now: a lost claim is retried, never replayed
     claimTicket(ticket.id);
     applyRollEquip(r); // wears it only if it beats the MAIN worn now
-    // … then it pops off and the lid blasts up (their end state = the open phase's rest: gone)
-    kitPlay(cogRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${150 * hero.k}px,${-230 * hero.k}px) rotate(400deg) scale(.7)`, opacity: 0 }], { duration: 360, easing: EASE_OUT, fill: 'forwards', keep: true });
-    if (!reduced) await wait(110);
-    await done(kitPlay(lidRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${-30 * hero.k}px,${-320 * hero.k}px) rotate(-24deg)`, opacity: 0 }], { duration: 400, easing: EASE_OUT, fill: 'forwards', keep: true }));
-    if (!alive.current) return;
+    // the card mounts HIDDEN now (.srr.is-opening .srr-card) so its art decodes before the burst shows it
     setRes(r);
+    await nextFrame();
+    await Promise.race([decodeImgs(cardRef.current), wait(240)]);
+    if (!alive.current) return;
+    // RELEASE: the cog pops off, the canister stretches up out of its squat, the lid blasts 50 ms later ...
+    const k = hero.k;
+    kitPlay(cogRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${60 * k}px,${-120 * k}px) rotate(220deg) scale(.9)`, opacity: 1, offset: 0.4 }, { transform: `translate(${150 * k}px,${-250 * k}px) rotate(430deg) scale(.7)`, opacity: 0 }], { duration: 460, easing: 'cubic-bezier(.12,.7,.3,1)', fill: 'forwards', keep: true });
+    kitPlay(v, [{ transform: 'scale(1.035,.955)' }, { transform: `translateY(${-10 * k}px) scale(.95,1.08)`, offset: 0.3 }, { transform: `translateY(${2 * k}px) scale(1.03,.97)`, offset: 0.62 }, { transform: 'translateY(0) scale(.995,1.005)', offset: 0.84 }, { transform: 'none' }], { duration: 620, easing: 'cubic-bezier(.25,.8,.35,1)' });
+    if (!reduced) await wait(50);
+    kitPlay(lidRef.current, [{ transform: 'none', opacity: 1 }, { transform: `translate(${-8 * k}px,${-130 * k}px) rotate(-9deg)`, opacity: 1, offset: 0.34 }, { transform: `translate(${-30 * k}px,${-330 * k}px) rotate(-26deg)`, opacity: 0 }], { duration: 520, easing: 'cubic-bezier(.12,.75,.3,1)', fill: 'forwards', keep: true });
+    // ... and the burst follows THROUGH the lid's flight (not after it)
+    if (!reduced) await wait(130);
+    if (!alive.current) return;
     setPhase('open');
     sndShardBurst(r.tier);
     sndRollSting(r.tier);
@@ -123,16 +161,38 @@ export default function SealedRollReveal({ ticket, onDone }) {
         { transform: `translate(${sh.dx * k * 1.1}px,${sh.dy * k * 1.1 + 40}px) rotate(${sh.r * 1.2}deg) scale(.8)`, opacity: 0 },
       ], { duration: 620 + (i % 3) * 80, delay: i * 18, easing: EASE_OUT, fill: 'backwards' });
     });
-    kitPlay(cardRef.current, [{ transform: 'translateY(170px) scale(.45)', opacity: 0 }, { transform: 'translateY(-16px) scale(1.06)', opacity: 1, offset: 0.6 }, { transform: 'translateY(4px) scale(.99)', offset: 0.82 }, { transform: 'none', opacity: 1 }], { duration: big ? 620 : 500, delay: 120, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
+    const rise = kitPlay(cardRef.current, [{ transform: 'translateY(170px) scale(.45)', opacity: 0 }, { transform: 'translateY(-16px) scale(1.06)', opacity: 1, offset: 0.58 }, { transform: 'translateY(4px) scale(.99)', offset: 0.8 }, { transform: 'none', opacity: 1 }], { duration: big ? 660 : 540, delay: 70, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+    done(rise).then(() => { if (alive.current) setLanded(true); });
+    // nothing appears without motion: the NEW / xN chip and the button rise in behind the card
+    if (chipRef.current) kitPlay(chipRef.current, [{ transform: 'translateY(14px) scale(.6)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 300, delay: big ? 620 : 520, easing: SPRING, fill: 'backwards' });
+    kitPlay(btnRef.current, [{ transform: 'translateY(18px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 280, delay: big ? 700 : 600, easing: SPRING, fill: 'backwards' });
     if (stampRef.current) kitPlay(stampRef.current, [{ transform: 'scale(2.4) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.92) rotate(-8deg)', opacity: 1, offset: 0.7 }, { transform: 'rotate(-8deg)', opacity: 1 }], { duration: 300, delay: 640, easing: 'cubic-bezier(.2,1.3,.4,1)', fill: 'backwards' });
     btnRef.current?.focus();
   }, [phase, reduced, res, hero]);
+  // REDUCE MOTION: the burst never plays, so the card has landed the moment the vessel is open
+  useEffect(() => { if (phase === 'open' && reduced) setLanded(true); }, [phase, reduced]);
+  // the X arrives with the landed card (a small pop, not a cut)
+  useLayoutEffect(() => {
+    if (landed && closeRef.current) kitPlay(closeRef.current, [{ transform: 'scale(.4) rotate(-20deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 240, easing: SPRING, fill: 'backwards' });
+  }, [landed]);
+  // Escape closes on the same terms as a tap outside
+  const closeRefFn = useRef(null);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); closeRefFn.current?.(); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   if (!ticket) return null;
   const m = res ? markEntry(res.markId) : null;
   const pickLine = res ? CARD_RAR[cardTier(res.tier)].line : null;
   const upgrade = res && tierRank(res.tier) > tierRank(floor);
-  const close = () => { if (phase !== 'opening') onDone?.(res); };
+  // closable while SEALED (the ticket waits in GEARS), LATER, or once the card has LANDED -- never mid-open
+  const canClose = phase === 'sealed' || phase === 'later' || (phase === 'open' && landed);
+  const close = () => { if (canClose) onDone?.(res); };
+  closeRefFn.current = close;
+  // NICE / OK: the explicit button (only drawn once the pick is committed) always finishes
+  const finish = () => { if (phase === 'open' || phase === 'later') onDone?.(res); };
   return (
     <div
       className={`srr is-${vTier} is-${phase}`}
@@ -143,8 +203,12 @@ export default function SealedRollReveal({ ticket, onDone }) {
       data-phase={phase}
       data-tier={res ? res.tier : undefined}
       style={pickLine ? { '--srr-pick': pickLine } : undefined}
-      onClick={(e) => { if (e.target === e.currentTarget) close(); }}
+      ref={rootRef}
+      onClick={(e) => { const c = e.target.classList; if (e.target === e.currentTarget || c.contains('srr-stage') || c.contains('srr-pod') || c.contains('srr-line')) close(); }}
+      onPointerMove={stopMenuPointer}
+      onMouseMove={stopMenuPointer}
     >
+      {canClose ? <button type="button" className="srr-x" ref={closeRef} onClick={close} aria-label="Close" data-testid="sealed-roll-close">✕</button> : null}
       <div className="srr-flash" ref={flashRef} aria-hidden="true" />
       <div className="srr-stage">
         <div className="srr-floor">{ticketLabel(floor)}</div>
@@ -153,7 +217,7 @@ export default function SealedRollReveal({ ticket, onDone }) {
           <span className="srr-shards" aria-hidden="true">
             {SHARDS.map((sh, i) => <img key={i} className="srr-shard" ref={(el) => { shardRefs.current[i] = el; }} src={sh.src} alt="" draggable="false" />)}
           </span>
-          <button type="button" className="srr-vessel" ref={vesselRef} onClick={open} disabled={phase !== 'sealed'} aria-label={`Open the ${ticketLabel(floor)} roll`} tabIndex={-1}>
+          <button type="button" className="srr-vessel" ref={vesselRef} onClick={open} disabled={phase !== 'sealed' || !ready} aria-label={`Open the ${ticketLabel(floor)} roll`} tabIndex={-1}>
             <VesselArt tier={vTier} size={hero.v} refs={{ lid: lidRef, cog: cogRef }} />
           </button>
           {res ? (
@@ -164,13 +228,13 @@ export default function SealedRollReveal({ ticket, onDone }) {
           ) : null}
         </div>
         <div className="srr-line" aria-live="polite">
-          {res ? (res.newMark ? <span className="srr-chip">NEW</span> : res.copies > 1 ? <span className="srr-chip is-dupe">×{res.copies}</span> : null)
+          {res && phase === 'open' ? (res.newMark ? <span className="srr-chip" ref={chipRef}>NEW</span> : res.copies > 1 ? <span className="srr-chip is-dupe" ref={chipRef}>×{res.copies}</span> : null)
             : phase === 'later' ? <span className="srr-later">IT WAITS IN GEARS</span> : null}
         </div>
         {phase === 'open' || phase === 'later' ? (
-          <button type="button" className="srr-btn" ref={btnRef} onClick={close} data-testid="sealed-roll-done">{phase === 'open' ? 'NICE' : 'OK'}</button>
+          <button type="button" className="srr-btn" ref={btnRef} onClick={finish} data-testid="sealed-roll-done">{phase === 'open' ? 'NICE' : 'OK'}</button>
         ) : (
-          <button type="button" className="srr-btn is-open" ref={btnRef} onClick={open} disabled={phase !== 'sealed'} data-testid="sealed-roll-open">OPEN</button>
+          <button type="button" className="srr-btn is-open" ref={btnRef} onClick={open} disabled={phase !== 'sealed' || !ready} data-testid="sealed-roll-open">OPEN</button>
         )}
       </div>
     </div>

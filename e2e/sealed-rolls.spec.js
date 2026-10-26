@@ -151,3 +151,29 @@ for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
     }
   });
 }
+
+// Andy oct25: tap outside closes — the reveal too, once the card has LANDED (never mid-open: the pick is committed
+// first, so nothing can be lost, but it has to be seen). ✕ and Escape follow the same rule.
+test('CLOSE: mid-open a tap outside / Escape do nothing; once the card lands, a tap outside closes it', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { shop, calls } = await boot(page);
+  await card(shop, 'legroll').click();
+  const sealed = page.getByTestId('sealed-roll');
+  await expect(sealed).toHaveAttribute('data-phase', 'sealed');
+  await expect(sealed.getByTestId('sealed-roll-close')).toBeVisible(); // sealed: the ticket just waits in GEARS
+  await expect(page.getByTestId('sealed-roll-open')).toBeEnabled();
+  await page.getByTestId('sealed-roll-open').click();
+  await expect(sealed).toHaveAttribute('data-phase', 'opening');
+  await expect(sealed.getByTestId('sealed-roll-close')).toHaveCount(0);
+  await page.mouse.click(10, 10);
+  await page.keyboard.press('Escape');
+  await expect(sealed).toBeVisible();
+  await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 8000 });
+  await expect(sealed.getByTestId('sealed-roll-close')).toBeVisible({ timeout: 4000 }); // = landed
+  await expect.poll(() => calls.claim.length).toBe(1);
+  await page.mouse.click(10, 10);
+  await expect(sealed).toHaveCount(0);
+  const st = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls')));
+  expect(st.marks['mk-eclipse'].n).toBe(1);
+});
