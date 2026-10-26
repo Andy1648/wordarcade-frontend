@@ -10,15 +10,17 @@ import { ROLL_MARKS, tierRank } from './markRollsCore.js';
 
 export const TICKET_TIERS = ['rare', 'epic', 'legendary', 'mythic'];
 /**
- * 065 SEALED ROLLS in the SHOP — the server's price table (065_buy_tier_rolls.sql private.ticket_shop), mirrored so the
+ * 065/069 SEALED ROLL in the SHOP — the server's price table (069_shop_epic_only.sql private.ticket_shop), mirrored so the
  * card can show the price. The SERVER decides the price, the stock and the floor; this copy only draws the card
- * (guaranteedRolls.test.js pins the two together). Priced by claude/econ-oct2/tier-roll-price-sim.mjs: ~1.6–1.7× what
- * rolling for that tier costs at luck ×1 (EPIC+ ~90, LEGENDARY+ ~465 gems).
+ * (sealedRolls.test.js pins the two together). EPIC+ ONLY, 500 gems (Andy oct26: a 750-gem LEGENDARY+ was "like 10x
+ * better than rolling" — nobody would roll). claude/econ-oct2/tier-roll-price-sim.mjs: an EPIC+ by rolling costs ~90
+ * gems at luck ×1, so 500 is a clear premium and rolling stays the efficient path.
  */
 export const TICKET_SHOP = Object.freeze({
-  epic: Object.freeze({ price: 150, perHour: 2 }),
-  legendary: Object.freeze({ price: 750, perHour: 1 }),
+  epic: Object.freeze({ price: 500, perHour: 2 }),
 });
+/** Tiers the shop has EVER sold: a paid buy still unanswered from before 069 (LEGENDARY+) is still settled, never lost. */
+export const SHOP_TIERS_EVER = Object.freeze(['epic', 'legendary']);
 const STATES = ['owned', 'reserved'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MARK_IDS = new Set(ROLL_MARKS.map((m) => m.id));
@@ -49,13 +51,13 @@ export function normalizeTickets(reply) {
 /**
  * 065: what a lb_ticket_buy reply means for the (already paid) wallet → { kind: 'ok', ticket, left } | { kind: 'refund',
  * reason } (a definite no: the gems go back) | { kind: 'retry' } (no usable answer: keep the paid request, ask again).
- * An ok reply is only trusted with a well-formed id and a tier the shop sells.
+ * An ok reply is only trusted with a well-formed id and a tier the shop sells (or sold: a pre-069 LEGENDARY+ retry).
  */
 export function buyOutcome(reply) {
   if (!reply || typeof reply !== 'object') return { kind: 'retry' };
   if (reply.ok === true) {
     const t = reply.ticket;
-    if (!t || !UUID.test(String(t.id)) || !TICKET_SHOP[t.tier]) return { kind: 'retry' };
+    if (!t || !UUID.test(String(t.id)) || !SHOP_TIERS_EVER.includes(t.tier)) return { kind: 'retry' };
     const left = Number.isFinite(reply.left) ? Math.max(0, Math.floor(reply.left)) : null;
     return { kind: 'ok', ticket: { id: String(t.id), tier: t.tier, state: 'owned', source: 'shop', pick: null }, left };
   }

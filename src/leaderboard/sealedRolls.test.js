@@ -24,11 +24,41 @@ test('065: ASCII only, and the only new public door is lb_ticket_buy', () => {
   assert.ok(!/create or replace function public\.[a-z_]*grant/i.test(sql), 'no public grant door');
 });
 
-test('065: the price + stock are the SERVER\'s, and the client mirror matches them exactly', () => {
+test('065: the original price table (superseded by 069) sold EPIC+ 150 / LEGENDARY+ 750', () => {
   const shop = fn('private.ticket_shop');
   const rows = Object.fromEntries([...shop.matchAll(/\('([a-z]+)', (\d+), (\d+)\)/g)].map((m) => [m[1], { price: Number(m[2]), perHour: Number(m[3]) }]));
   assert.deepEqual(rows, { epic: { price: 150, perHour: 2 }, legendary: { price: 750, perHour: 1 } });
+});
+
+// ---- 069_shop_epic_only.sql (Andy oct26): EPIC+ only, 500 gems -------------------------------------------------------
+const sql69 = readFileSync(join(process.cwd(), 'supabase', 'migrations', '069_shop_epic_only.sql'), 'utf8').replace(/\r\n/g, '\n');
+const fn69 = (name) => {
+  const at = sql69.indexOf(`create or replace function ${name}(`);
+  assert.ok(at >= 0, `069 defines ${name}`);
+  return sql69.slice(at, sql69.indexOf('$$;', sql69.indexOf('$$', at) + 2));
+};
+
+test('069: the price + stock are the SERVER\'s (EPIC+ 500 x2, no LEGENDARY+), and the client mirror matches exactly', () => {
+  const shop = fn69('private.ticket_shop');
+  const rows = Object.fromEntries([...shop.matchAll(/\('([a-z]+)', (\d+), (\d+)\)/g)].map((m) => [m[1], { price: Number(m[2]), perHour: Number(m[3]) }]));
+  assert.deepEqual(rows, { epic: { price: 500, perHour: 2 } });
   assert.deepEqual(JSON.parse(JSON.stringify(TICKET_SHOP)), rows);
+});
+
+test('069: ASCII, re-runnable, recreates only ticket_shop + lb_ticket_buy; LEGENDARY+ -> not_sold; a paid retry still answers', () => {
+  assert.ok([...sql69].every((ch) => ch.charCodeAt(0) < 128), 'ASCII only (the SQL editor paste)');
+  const made = [...sql69.matchAll(/create or replace function ([a-z_.]+)\(/g)].map((m) => m[1]);
+  assert.deepEqual(made, ['private.ticket_shop', 'public.lb_ticket_buy']);
+  assert.ok(!/^\s*(drop|delete|insert|alter)\b/im.test(sql69), 'nothing destructive');
+  assert.ok(!/lb_wheel|daily_wheel|grant_ticket\(pid, 'legendary'/.test(sql69), 'the wheel jackpot / grants are untouched');
+  const b = fn69('public.lb_ticket_buy');
+  assert.ok(b.includes("if not found then return json_build_object('ok', false, 'reason', 'not_sold')"));
+  assert.ok(b.indexOf("'again', true") < b.indexOf("'not_sold'"), 'a pre-069 paid buy (its request id) is answered BEFORE the not-sold check');
+  assert.ok(b.indexOf("'again', true") < b.indexOf('s2_roll_spent = coalesce(s2_roll_spent, 0) + sp.price'), 'a retry never charges');
+  for (const keep of ['budget := private.gem_budget(pid);', "'reason', 'sold_out'", 'for update', "private.grant_ticket(pid, p_tier, 'shop', k,"]) assert.ok(b.includes(keep), keep);
+  assert.ok(!/p_price|p_luck|p_floor|p_gems/.test(b), 'no price / luck / floor parameter');
+  assert.ok(sql69.includes('grant execute on function public.lb_ticket_buy(text, text, uuid) to anon, authenticated;'));
+  assert.ok(sql69.includes('revoke all on function private.ticket_shop(text) from anon, authenticated;'));
 });
 
 test('065 ADVERSARIAL: the browser sends no price / floor / luck; the floor is the ticket row; a buy pays once', () => {
@@ -58,6 +88,8 @@ test('buyOutcome: only a well-formed ok is trusted; a definite no refunds; anyth
   assert.equal(buyOutcome({ ok: true, ticket: { id: ID, tier: 'legendary' }, left: 0 }).ticket.tier, 'legendary');
   assert.equal(buyOutcome({ ok: true, ticket: { id: 'nope', tier: 'legendary' } }).kind, 'retry');
   assert.equal(buyOutcome({ ok: true, ticket: { id: ID, tier: 'mythic' } }).kind, 'retry', 'the shop sells no MYTHIC+');
+  assert.equal(buyOutcome({ ok: true, ticket: { id: ID, tier: 'epic' }, price: 150 }).kind, 'ok', 'a pre-069 server price is tolerated');
+  assert.deepEqual(buyOutcome({ ok: false, reason: 'not_sold' }), { kind: 'refund', reason: 'not_sold' });
   assert.deepEqual(buyOutcome({ ok: false, reason: 'budget' }), { kind: 'refund', reason: 'budget' });
   assert.deepEqual(buyOutcome({ ok: false, reason: 'sold_out' }), { kind: 'refund', reason: 'sold_out' });
   assert.equal(buyOutcome(null).kind, 'retry');

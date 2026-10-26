@@ -80,8 +80,8 @@ test('KEY is bought with WINS on a 1 s hold — a tap does nothing; 150 wins →
 test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the effect runs', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
-  await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(7); // 065: + the SEALED EPIC+ / LEGENDARY+ ROLLS // + the +50% WINS BOOST (Andy oct8); gems never scale
-  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['150', '750', '45', '60', '120', '300', '150']); // the SEALED ROLLS lead the shelf (first view)
+  await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(6); // 065: + the SEALED EPIC+ ROLL (069: LEGENDARY+ left the shop) // + the +50% WINS BOOST (Andy oct8); gems never scale
+  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['500', '45', '60', '120', '300', '150']); // the SEALED ROLL leads the shelf (first view)
   // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
   await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
@@ -122,8 +122,8 @@ test('short on gems (a boost, and a SEALED EPIC+ ROLL): nothing charged, nothing
   await luck.click();
   await expect(shop.locator('.kp-tone-cyan .kp-need')).toContainText('NEED 20 MORE'); // the GEMS pill says the gap
   await expect(luck.locator('.sp2-left')).toHaveText('×3 LEFT');
-  await card(shop, 'epicroll').click(); // 150 gems, 100 held: the pill says the gap, the server is never asked
-  await expect(shop.locator('.kp-tone-cyan .kp-need')).toContainText('NEED 50 MORE');
+  await card(shop, 'epicroll').click(); // 500 gems, 100 held: the pill says the gap, the server is never asked
+  await expect(shop.locator('.kp-tone-cyan .kp-need')).toContainText('NEED 400 MORE');
   const st = await s2(page);
   expect(st.gems).toBe(100);
   expect(st.stock).toBeNull();
