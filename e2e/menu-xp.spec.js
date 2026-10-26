@@ -225,7 +225,14 @@ test.describe('menu XP', () => {
     // lane. The invariant this test is really for - that the keystrokes were credited at all, and
     // credited in clean multiples of 10 - is unchanged and is what it now asserts.
     expect(result.lv).toBeGreaterThanOrEqual(1);
-    expect(result.into, `the burst credited no XP — ${JSON.stringify(result.diag)}`).toBeGreaterThan(0);
+    // LEVEL-WRAP AWARE (oct26): "credited" = a level was gained OR XP rose inside the level — the same test the poll
+    // above uses. Asserting `into > 0` alone was wrong at the wrap: need(1) is 100 and a fresh menu key pays +2, so a
+    // burst that clears exactly 50 keys through the 12/s limiter lands on LV2 with 0 into it — 100 XP credited and
+    // saved, yet `into` reads 0. That is what CI hit (its snapshot showed the LEVEL 2 celebration, which only fires
+    // after saveProgress). Not XP loss: the key's credit is written to localStorage synchronously before its pop.
+    const b0 = result.diag.before || { level: 1, into: 0 };
+    const gained = result.lv > b0.level || result.into > b0.into;
+    expect(gained, `the burst credited no XP — lv ${result.lv} into ${result.into} ${JSON.stringify(result.diag)}`).toBe(true);
     // v11: credits are WHOLE XP (menu letters of 2 XP at a fresh profile); no divisibility assumption — the
     // price is a tuning constant (MENU_LETTER_SHARE) and level carries leave any remainder.
     expect(Number.isInteger(result.into)).toBe(true);
