@@ -1,64 +1,156 @@
-/* TransitionOverlay.css — the single screen-change wipe (Job 12). Transform + opacity ONLY; one
-   directional panel; <=240ms. Shared timing tokens (see Transitions.css :root) so every transition
-   in the app speaks one language. pointer-events:none + fixed so it never blocks/gates the screen. */
+/* TransitionOverlay.css — the ONE pooled screen-change transition (lib/navWipe.js plays it via WAAPI).
+   The GAME TRANSITION SCREEN's look (TransitionIntro.css): a flat BLACK field over every edge, the word in the
+   intro's vinyl-sticker type (Bungee, cyan / pink, crooked slots, chunky black stroke + 8-way ring + hard drop
+   shadow), a plain white impact frame, then the knife-split (KnifeSplit.css) along a 4° seam. Flat colours only.
+   NOTHING here loops (the intro's breathe / glitch / drip idles are deliberately NOT carried over — a nav card
+   lives ~600ms) and NOTHING carries will-change at rest: navWipe sets it on play and clears it on finish.
+   pointer-events:none + fixed, so it never blocks or gates the screen. */
 .transition-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
   pointer-events: none;
   overflow: hidden;
+  visibility: hidden;
+  /* the knife seam's half-rise: (100vw / 2) · tan(4°) — the slash track below is rotated by the same 4° */
+  --nt-d: 3.5vw;
 }
-.transition-panel {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, #9A1AFF, #ff4fa3 55%, #FF6B3D);
-  will-change: transform, opacity;
-}
-/* FORWARD (entering deeper): the panel sweeps across left→right (covers, then clears to the right). */
-.transition-overlay[data-dir='forward'] .transition-panel {
-  animation: wipe-forward var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
-}
-/* BACK (returning): mirror — sweeps right→left. */
-.transition-overlay[data-dir='back'] .transition-panel {
-  animation: wipe-back var(--transition-ms, 240ms) var(--transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
-}
-@keyframes wipe-forward {
-  0% { transform: translateX(-100%); opacity: 1; }
-  45% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(100%); opacity: 1; }
-}
-@keyframes wipe-back {
-  0% { transform: translateX(100%); opacity: 1; }
-  45% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(-100%); opacity: 1; }
+.transition-overlay[data-state='play'] {
+  visibility: visible;
 }
 
-/* The word rides the cover peak — opacity + a small scale only. */
-.transition-word {
+/* ---- the black field ---- */
+.nt-half,
+.nt-live {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+.nt-half--top {
+  z-index: 1;
+  clip-path: polygon(0 0, 100% 0, 100% calc(50% - var(--nt-d) + 1px), 0 calc(50% + var(--nt-d) + 1px));
+}
+.nt-half--bottom {
+  z-index: 1;
+  clip-path: polygon(0 calc(50% + var(--nt-d)), 100% calc(50% - var(--nt-d)), 100% 100%, 0 100%);
+}
+/* the live card sits over both halves, unclipped, until the split: no seam hairline while the word holds */
+.nt-live {
+  z-index: 2;
+}
+.nt-stage {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- the title (identical in all three copies, so the live → knife swap is a visual no-op) ---- */
+.nt-title {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(48px, 8vh, 120px); /* = .intro-breathe's gap */
+  padding: 0 16px;
+}
+.nt-slot {
+  position: relative;
+  /* the intro's hard flat sticker shadow (static — never animated) */
+  filter: drop-shadow(9px 10px 0 #000);
+}
+.nt-slot--1 {
+  transform: translate(-6px, -8px) rotate(-5deg);
+}
+.nt-slot--2 {
+  transform: translate(8px, 10px) rotate(6deg);
+}
+.nt-slot[hidden] {
+  display: none;
+}
+.nt-line {
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  line-height: 0.98;
   letter-spacing: -0.02em;
-  font-size: var(--fs-hero);
-  color: #fff;
-  -webkit-text-stroke: 4px #000;
+  /* the intro's hero size, with a WIDTH guard by letter count (--nt-n, written per play) so LEADERBOARD /
+     ACHIEVEMENTS still fit a 360px phone without wrapping */
+  font-size: min(max(var(--fs-hero), 13vw), 15vh, calc(112vw / var(--nt-n, 6)));
+  line-height: 1;
+  -webkit-text-stroke: 14px #000;
   paint-order: stroke fill;
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: transition-word var(--transition-ms, 240ms) ease-out both;
+  text-shadow:
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000;
+  white-space: nowrap;
+  color: #2effe0; /* TYPE FAST cyan */
 }
-@keyframes transition-word {
-  0% { opacity: 0; transform: scale(0.9); }
-  45% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.04); }
+.nt-slot--2 .nt-line,
+.transition-overlay[data-tone='pink'] .nt-slot--1 .nt-line {
+  color: #ff4fa3; /* DIE SLOW pink */
+}
+.nt-letter {
+  display: inline-block;
+  position: relative;
+}
+.nt-letter:empty {
+  display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .transition-panel,
-  .transition-word { animation-duration: 1ms; }
+/* ---- impact frame + the knife's slash ---- */
+.nt-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #fff;
+  opacity: 0;
+}
+/* the slash runs along the SAME 4° seam the halves are clipped to (rotated about the screen centre) */
+.nt-slash-track {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 50%;
+  height: 0;
+  z-index: 4;
+  transform: rotate(-4deg);
+}
+.nt-slash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 8px;
+  background: #fff;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+@media (max-width: 600px) {
+  .nt-title {
+    gap: clamp(40px, 7vh, 76px);
+  }
+  .nt-slot {
+    filter: drop-shadow(6px 7px 0 #000);
+  }
+  .nt-slot--1 {
+    transform: translate(-4px, -6px) rotate(-5deg);
+  }
+  .nt-slot--2 {
+    transform: translate(6px, 8px) rotate(6deg);
+  }
+  .nt-line {
+    -webkit-text-stroke-width: 10px; /* the intro's phone stroke (~5px visible edge) */
+    text-shadow:
+      2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+      2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000;
+  }
+  .nt-slash {
+    top: -3px;
+    height: 6px;
+  }
+}
+
+/* REDUCE MOTION: navWipe never plays; belt-and-braces keep the node out of the tree. */
+html[data-reduce-motion] .transition-overlay {
+  display: none;
 }

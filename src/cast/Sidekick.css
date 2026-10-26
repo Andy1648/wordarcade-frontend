@@ -1,0 +1,11 @@
+/* Sidekick — sits in its parent's box (the caller places .sk); the frames are painted, the motion is the hop. */
+.sk { position: absolute; z-index: 2; width: 30%; aspect-ratio: 1; pointer-events: none; }
+.sk-tap {
+  display: block; width: 100%; height: 100%; padding: 0; margin: 0; background: none; border: 0; cursor: pointer;
+  pointer-events: auto; border-radius: 50%;
+}
+.sk-tap:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.sk-body { position: relative; display: block; width: 100%; height: 100%; transform-origin: 50% 96%; }
+.sk-f { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(4px 4px 0 #000); }
+.sk-f.is-act { opacity: 0; }
+.sk.is-right .sk-f { transform: scaleX(-1); }

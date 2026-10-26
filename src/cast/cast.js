@@ -34,6 +34,9 @@ export const LEGEND = [
   // LIMITED (oct21, the hero research: "nothing is limited — every hero is always for sale"): HOLLOW, the jack-o'-lantern
   // bomb, is sold for gems in OCTOBER 2026 ONLY (HOLLOW_UNTIL) and never again. Whoever bought it keeps it forever.
   { id: 'hollow', name: 'HOLLOW', tag: 'OCTOBER ONLY. NEVER AGAIN.', color: '#FF7A1A', dark: '#8A3A00', legend: true, limited: true },
+  // oct24 (Andy: "cooler heroes"): NOVA, the cosmic bomb — a night sky for a body, a planet ring, a comet for a fuse.
+  // The top of the LEGEND ladder: REBIRTH 15 (the third jackpot rebirth), then gems
+  { id: 'nova', name: 'NOVA', tag: 'BIGGER THAN THE SKY', color: '#2EFFE0', dark: '#1A1060', legend: true },
 ];
 /** HOLLOW's sale ends at the start of Nov 1 2026, US Pacific (07:00 UTC). */
 export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
@@ -77,13 +80,14 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, hollow: 1500, boo: 7500, mecha: 10000 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
   quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
   salty: { wins: 160, label: '160 WINS', icon: 'wins' },
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
+  nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
   hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true } };
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
@@ -167,8 +171,9 @@ const PAINTED = new Set([
   'dud-hero', 'dud-win', 'dud-ko', 'lexi-hero', 'lexi-win', 'lexi-ko', 'boo-hero', 'boo-win', 'boo-ko',
   'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
   'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
-  'hollow-hero', 'hollow-win', 'hollow-ko',
-  'salty-hero', 'salty-win', 'salty-ko', // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
+  'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
+  'salty-hero', 'salty-win', 'salty-ko', // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
+  'nova-hero', 'nova-win', 'nova-ko', // oct24 LEGEND (ChatGPT, RIOT / JINX / DUD as the style refs)
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -236,6 +241,7 @@ export const CAST_BEATS = {
   jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
   salty: { ms: 1100, k: [[0, 1, 1], [0.35, 1.04, 0.95], [0.7, 0.98, 1.03], [1, 1, 1]] }, // a sea-legs sway, heavy iron
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
+  nova: { ms: 2400, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // a slow orbit's breath (it floats; nothing to bounce on)
 };
 for (const e of [...ELITE, ...GOLD]) CAST_BEATS[e.id] = CAST_BEATS[e.base]; // an ELITE / GOLD keeps its member's tempo
 export const castBeatFrames = (b) => b.k.map(([offset, sx, sy]) => ({ offset, transform: `scale(${sx}, ${sy})` }));
@@ -380,53 +386,64 @@ for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
  *  sheet, cut + registered on the feet (public/cast/anim/<id>-<n>.webp) — that CastArt flips through like a Flash
  *  timeline (hard frame swaps, no tweening). `seq` = [frame, ms] steps from the resting frame 0 back to it; `rest` = the
  *  hold on frame 0 before the next play. While a hero has frames its painted HERO + prop streams are replaced by them. */
+// 12 FRAMES (oct24, Andy: "the quality and addictiveness of the heros would be much bigger if they were in smoother
+// motion"): every 6-frame idle got 6 painted IN-BETWEENS (ChatGPT, the hero's own sheet attached; frame 6 + k sits halfway
+// between frames k and k+1, frame 11 between 5 and 0), registered on frame 0's feet and checked one by one. Each step a→b
+// now passes through its middle for ~40% of b's hold (same routine, same length). A rejected in-between (it drew a prop
+// on the wrong hand: MECHA 6, NOVA 9) is never shown — that step keeps its old hard swap.
 export const CAST_FRAMES = {
   // RIOT: shake the can (twice), spray, blow the nozzle like a smoking gun
   // 6 frames (oct19, Andy: "a bit too choppy"): cocks the can → shakes it (twice) → aims, a first puff → full spray → blows the nozzle
-  riot: { n: 6, seq: [[1, 140], [2, 150], [1, 120], [2, 160], [3, 300], [4, 760], [5, 980]], rest: 1500 },
+  // 12 frames (oct24, Andy: "the quality and addictiveness of the heros would be much bigger if they were in smoother
+  // motion"): frames 6-11 are painted IN-BETWEENS (ChatGPT, the 6-frame sheet attached, each halfway between two of its
+  // frames: 6 = 0→1, 7 = 1→2, 8 = 2→3, 9 = 3→4, 10 = 4→5, 11 = 5→0), so every old step now passes through its middle
+  riot: { n: 12, seq: [[6, 70], [1, 70], [7, 75], [2, 75], [7, 60], [1, 60], [7, 80], [2, 80], [8, 150], [3, 150], [9, 380], [4, 380], [10, 490], [5, 490], [11, 200]], rest: 1500 },
   // GLITCH: bored chew → the bubble grows → huge → POP, gum all over its face, still unimpressed
   // 6 frames: chew → the bubble grows (fist → head → HUGE) → POP → gum peeled half off, deadpan
-  glitch: { n: 6, seq: [[1, 300], [2, 320], [3, 520], [4, 380], [5, 1200]], rest: 2000 },
+  glitch: { n: 12, seq: [[6, 120], [1, 180], [7, 128], [2, 192], [8, 208], [3, 312], [9, 152], [4, 228], [10, 480], [5, 504], [11, 216]], rest: 2000 },
   // HYPE: wind up → finger to the sky YELLING → wave it to the crowd (twice) → points right at you, wink
   // 6 frames: finger up → YELL → swings it across, tongue out → back down → points right at you, wink
-  hype: { n: 6, seq: [[1, 160], [2, 520], [3, 340], [4, 260], [5, 900]], rest: 1600 },
+  hype: { n: 12, seq: [[6, 64], [1, 96], [7, 208], [2, 312], [8, 136], [3, 204], [9, 104], [4, 156], [10, 360], [5, 378], [11, 162]], rest: 1600 },
   // BRAWL: guard up → jab jab → big uppercut → gloves bumped, cocky wink
   // 6 frames: guard → jab half → jab full (twice) → winds low → UPPERCUT → gloves bumped, wink
-  brawl: { n: 6, seq: [[1, 90], [2, 160], [1, 90], [0, 140], [1, 90], [2, 160], [3, 260], [4, 700], [5, 950]], rest: 1600 },
+  brawl: { n: 12, seq: [[6, 40], [1, 50], [7, 64], [2, 96], [7, 40], [1, 50], [6, 56], [0, 84], [6, 40], [1, 50], [7, 64], [2, 96], [8, 104], [3, 156], [9, 280], [4, 420], [10, 380], [5, 399], [11, 171]], rest: 1600 },
   // HEX: reading → looks up, fingers wiggling stars → the book FLARES, eyes glowing → snaps it shut, 'shh'
   // 6 frames: reading → looks up, a first star → fingers wiggle stars → the book FLARES → snaps shut → 'shh'
-  hex: { n: 6, seq: [[1, 360], [2, 520], [3, 820], [4, 360], [5, 1100]], rest: 1900 },
+  hex: { n: 12, seq: [[6, 144], [1, 216], [7, 208], [2, 312], [8, 328], [3, 492], [9, 144], [4, 216], [10, 440], [5, 462], [11, 198]], rest: 1900 },
   // BOO: sneaky grin → peeks through its fingers (twice) → arms wide, the big spook → doubled over laughing
   // 6 frames: sneaky grin → hands rise → peeks through its fingers → hands drop → the big SPOOK → doubled over laughing
-  boo: { n: 6, seq: [[1, 300], [2, 620], [3, 220], [4, 800], [5, 1000]], rest: 1800 },
+  boo: { n: 12, seq: [[6, 120], [1, 180], [7, 248], [2, 372], [8, 88], [3, 132], [9, 320], [4, 480], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // MECHA (oct21 repaint, Andy "what happened to its cool shooting arms?" — the old frame 3 carried a clipped fist from the
   // next cell): ready → the arm-cannon whirs → ROCKET PUNCH (the fist flies, flame trail, inside its cell) → flies back →
   // re-docks with a spark + shoulder steam → thumbs up ^ ^
-  mecha: { n: 6, seq: [[1, 380], [2, 460], [3, 300], [4, 560], [5, 1000]], rest: 1800 },
+  mecha: { n: 12, seq: [[1, 380], [7, 184], [2, 276], [8, 120], [3, 180], [9, 224], [4, 336], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // DUD: asleep → snot bubble swells → POP, jolts awake → giant yawn
   // 6 frames: asleep → head droops, bubble swells → POP, jolts awake → giant yawn → snuggles back down
-  dud: { n: 6, seq: [[1, 520], [2, 800], [3, 520], [4, 720], [5, 600]], rest: 2200 },
+  dud: { n: 12, seq: [[6, 208], [1, 312], [7, 320], [2, 480], [8, 208], [3, 312], [9, 288], [4, 432], [10, 240], [5, 252], [11, 108]], rest: 2200 },
   // LEXI: finger raised → pushes the glasses up, *glint* → book open, lecturing → hugs the book, smug
   // 6 frames: finger up → to the glasses → push up, *glint* → book swung open → taps the page, lecturing → hugs it, smug
-  lexi: { n: 6, seq: [[1, 260], [2, 620], [3, 420], [4, 780], [5, 1000]], rest: 1900 },
+  lexi: { n: 12, seq: [[6, 104], [1, 156], [7, 248], [2, 372], [8, 168], [3, 252], [9, 312], [4, 468], [10, 400], [5, 420], [11, 180]], rest: 1900 },
   // SHH: finger to lips → the invisible wall → the invisible rope → a smug bow
   // 6 frames: finger to lips → palms up → the invisible WALL → slides along it → the invisible rope → a smug bow
-  shh: { n: 6, seq: [[1, 260], [2, 620], [3, 520], [4, 620], [5, 1000]], rest: 1900 },
+  shh: { n: 12, seq: [[6, 104], [1, 156], [7, 248], [2, 372], [8, 208], [3, 312], [9, 248], [4, 372], [10, 400], [5, 420], [11, 180]], rest: 1900 },
   // SIZZLE: thumbs up → a big swig → breathes FIRE, hat flies → sweating, still grinning
   // 6 frames: thumbs up → tips the bottle → a big swig → cheeks puff, eyes water → breathes FIRE, hat flies → sweating, grinning
-  sizzle: { n: 6, seq: [[1, 260], [2, 520], [3, 460], [4, 800], [5, 1000]], rest: 1800 },
+  sizzle: { n: 12, seq: [[6, 104], [1, 156], [7, 208], [2, 312], [8, 184], [3, 276], [9, 320], [4, 480], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // HOLLOW (oct24, the LIMITED hero finally moves): flicks the candy corn up → watches it fall → CHOMP, cheeks bulging →
   // chews, the carved face glowing, the fuse flaring → an evil cackle, fists up
-  hollow: { n: 6, seq: [[1, 320], [2, 420], [3, 560], [4, 760], [5, 1000]], rest: 1800 },
+  hollow: { n: 12, seq: [[6, 128], [1, 192], [7, 168], [2, 252], [8, 224], [3, 336], [9, 304], [4, 456], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // 6-FRAME loops (oct19, Andy: "we can add in more frames bc currently its a bit too choppy"): a 3x2 wide sheet = six
   // full-res frames, each a small step from the last, so the beats flow instead of jumping
   // QUILL recites: breath in → unrolls the scroll → arm swept wide → quill flourish → rolls it up, a smug little bow
-  quill: { n: 6, seq: [[1, 220], [2, 260], [3, 520], [4, 420], [5, 460]], rest: 1700 },
+  quill: { n: 12, seq: [[6, 88], [1, 132], [7, 104], [2, 156], [8, 208], [3, 312], [9, 168], [4, 252], [10, 184], [5, 193], [11, 83]], rest: 1700 },
   // JINX: admires the mirror shard → it CRACKS → fur puffs, tail bottle-brushed, HISS → licks a paw, over it → smug
-  jinx: { n: 6, seq: [[1, 420], [2, 260], [3, 700], [4, 520], [5, 420]], rest: 1600 },
+  jinx: { n: 12, seq: [[6, 168], [1, 252], [7, 104], [2, 156], [8, 280], [3, 420], [9, 208], [4, 312], [10, 168], [5, 176], [11, 76]], rest: 1600 },
   // SALTY: spyglass up → spots something → lowers it, gold tooth glint → whips out the cutlass → points it at you → rests it
   // on the shoulder, wink
-  salty: { n: 6, seq: [[1, 420], [2, 520], [3, 260], [4, 700], [5, 1000]], rest: 1800 },
+  salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
+  // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
+  // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
+  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [4, 620], [10, 440], [5, 462], [11, 198]], rest: 2000 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
@@ -469,6 +486,7 @@ registerWinFrames('lexi', WIN_SEQ6);
 registerWinFrames('shh', WIN_SEQ6);
 registerWinFrames('jinx', WIN_SEQ6);
 registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the treasure chest → over its head → hook salute
+registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
 // QUILL's sheet lost two frames to cleanup (a feather cut out, a collar pocket) — four clean beats: heart → verse → quill high → the smug nod
 registerWinFrames('quill', { n: 4, seq: [[1, 520], [2, 620], [3, 900]], rest: 700 });
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
@@ -495,6 +513,8 @@ export const CAST_IDLE = {
   sizzle: { ms: 1500, rest: 0, k: [[0, 1, 1, 0, 0], [0.08, 1, 1, -1.5, 0], [0.16, 1, 1, 1.5, 0], [0.24, 1, 1, -1.5, 0], [0.32, 1, 1, 0, 0], [0.45, 1.08, 0.9, 0, 0], [0.6, 0.94, 1.08, 0, -7], [0.78, 1.05, 0.95, 0, 0], [1, 1, 1, 0, 0]] },
   // MECHA powers up: the hydraulics squat, the jets lift it, it hangs, then lands heavy
   mecha: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 1.06, 0.93, 0, 1], [0.38, 0.97, 1.04, 0, -6], [0.62, 0.97, 1.04, 0, -6], [0.78, 1.08, 0.92, 0, 1], [0.9, 0.99, 1.01, 0, 0], [1, 1, 1, 0, 0]] },
+  // NOVA drifts: a slow rise and settle above its halo, never touching down
+  nova: { ms: 3200, rest: 0, k: [[0, 1, 1, 0, 0], [0.5, 1, 1, 0, -4], [1, 1, 1, 0, 0]] },
   quill: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.3, 0.97, 1.04, 0, -3], [0.6, 1, 1, 0, -3], [0.8, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
   salty: { ms: 2200, rest: 0, k: [[0, 1, 1, 0, 0], [0.25, 1.03, 0.97, -2, 0], [0.5, 1, 1, 0, 0], [0.75, 1.03, 0.97, 2, 0], [1, 1, 1, 0, 0]] },
   jinx: { ms: 2000, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 1.04, 0.95, 0, 1], [0.35, 0.96, 1.05, 0, -4], [0.5, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },

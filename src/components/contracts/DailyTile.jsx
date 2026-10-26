@@ -1,4 +1,5 @@
-// contracts/DailyTile.jsx — the menu's DAILY tile: the streak FLAME CHIP + today's three contracts as pips + "1/3".
+// contracts/DailyTile.jsx — the menu's DAILY tile: the streak FLAME CHIP + today's three contracts as pips (ONE readout —
+// Andy hates pips AND "1/3"; the phone icon face, with no room for pips, carries the 1/3 tag instead).
 // Two faces, both JOINING an existing cluster (never their own fixed spot — Andy oct21 "put the dailies on right side
 // where profile is"): `chip` (default) in the paged desktop's right column under the icons, `icon` as the icon
 // cluster's first tile (narrow desktop + phone). A tap opens the CONTRACTS sheet (lazy). Static at rest (MENU MOTION LAW); the flame pops once when a contract
@@ -10,6 +11,8 @@ import { getStreak } from '../../progress/streak.js';
 import { kitPlay } from '../kit/motion.js';
 import { KitIconButton } from '../kit/KitNavButton.jsx';
 import { formatNum } from '../../format';
+import { playWipe } from '../../lib/navWipe';
+import { useSound } from '../../contexts/SoundContext';
 
 const ContractsSheet = lazy(() => import('./ContractsSheet.jsx'));
 const EMPTY = { picks: ['a', 'b', 'c'], done: [] }; // three empty pips until today is dealt
@@ -20,6 +23,15 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
   const [streak, setStreak] = useState(() => getStreak().count);
   const [open, setOpen] = useState(false);
   const flame = useRef(null);
+  // NAV WIPE (oct24): the CONTRACTS sheet opens/closes under the same pooled wipe as every major door — after
+  // the commit (an effect), so the sheet is already there; purely cosmetic.
+  const { sound } = useSound();
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (wasOpen.current === open) return;
+    wasOpen.current = open;
+    if (playWipe(open ? 'DAILY CONTRACTS' : '', open ? 'forward' : 'back')) sound.whoosh();
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
   const doneRef = useRef(s.done.length);
   useEffect(() => {
     const on = () => {
@@ -76,7 +88,6 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
             <span className="hp-daily-pips">
               {s.picks.map((id) => <i key={id} className={s.done.includes(id) ? 'is-done' : ''} />)}
             </span>
-            <span className="hp-daily-count">{n}/{of}</span>
           </span>
         </span>
       </button>

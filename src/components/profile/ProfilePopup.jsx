@@ -8,6 +8,9 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { heroById, readMain, writeMain, CAST, castSrc, ALL_HEROES, ownsHero } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
+import { readKit } from '../../cast/kit.js';
+import KitPicker from '../../cast/KitPicker.jsx';
+import FramedCard from '../../cast/FramedCard.jsx';
 import HeroPicker from '../../cast/HeroPicker.jsx';
 import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
@@ -54,7 +57,8 @@ function Stat({ icon, glyph, tone, value, label }) {
 /** @param onClose · @param onMainChange(id) the menu re-reads your hero */
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
-  const [view, setView] = useState('profile'); // 'profile' | 'pick'
+  const [view, setView] = useState('profile'); // 'profile' | 'pick' | 'kit' (CUSTOMIZE: sidekick + frame)
+  const [kit, setKit] = useState(readKit); // the worn components { pet, frame, fx }
   const [peekId, setPeekId] = useState(null); // the picker can open straight onto one hero's preview
   const [cheer, setCheer] = useState(0);
   const [titles, setTitles] = useState(false); // ALL TITLES open over the profile
@@ -83,7 +87,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
     const onKey = (e) => {
       if (e.key !== 'Escape' || reveal || titles) return; // the reveal / the title ladder own Escape while up
       e.stopPropagation();
-      if (view === 'pick') setView('profile'); else onClose();
+      if (view !== 'profile') setView('profile'); else onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -104,8 +108,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
       <div ref={cardRef} className={`pf is-${view}`} role="dialog" aria-modal="true" aria-label="Your profile" data-testid="profile-popup"
         style={{ '--pf-c': h.color, '--pf-d': h.dark }} onClick={(e) => e.stopPropagation()}>
         <div className="pf-head">
-          {view === 'pick' ? <button type="button" className="pf-back" onClick={() => setView('profile')}>← BACK</button> : null}
-          <span className="pf-title">{view === 'pick' ? 'CHOOSE YOUR MAIN' : 'PROFILE'}</span>
+          {view !== 'profile' ? <button type="button" className="pf-back" onClick={() => setView('profile')}>← BACK</button> : null}
+          <span className="pf-title">{view === 'pick' ? 'CHOOSE YOUR MAIN' : view === 'kit' ? 'CUSTOMIZE' : 'PROFILE'}</span>
           {/* TITLE (oct21): your worn title rides the header (no height — the card never scrolls on a laptop); tap → ALL TITLES */}
           {view === 'profile' ? (
             <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
@@ -117,13 +121,25 @@ export default function ProfilePopup({ onClose, onMainChange }) {
         </div>
         {view === 'pick' ? (
           <HeroPicker current={id} onEquip={equip} onBought={bought} peekId={peekId} />
+        ) : view === 'kit' ? (
+          <KitPicker hero={h.id} kit={kit} onKit={(slot, v) => setKit((k) => ({ ...k, [slot]: v }))} />
         ) : (
           <div className="pf-body">
             <div className="pf-left">
-              <HeroShowcase id={h.id} cheer={cheer} />
-              <FitText className="pf-hero fit-center">{h.name}</FitText>
+              {kit.frame ? (
+                // a worn FRAME (kit.js) makes your hero a CARD: the frame carries the name on its plate
+                <FramedCard frame={kit.frame} hero={h} className="pf-card"><HeroShowcase id={h.id} cheer={cheer} pet={kit.pet} /></FramedCard>
+              ) : (
+                <>
+                  <HeroShowcase id={h.id} cheer={cheer} pet={kit.pet} />
+                  <FitText className="pf-hero fit-center">{h.name}</FitText>
+                </>
+              )}
               <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
-              <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
+              <div className="pf-change-row">
+                <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
+                <button type="button" className="pf-kit" onClick={() => setView('kit')} data-testid="profile-kit">CUSTOMIZE</button>
+              </div>
             </div>
             <div className="pf-right">
               <div className="pf-id">

@@ -306,7 +306,7 @@ export const CATEGORY_EMOJI = {
   'Portal test elements': '🌀', 'Premier League clubs (all-time)': '⚽', 'Resident Evil games': '🧟', 'Roman emperors': '🏛️',
   'Rugby union positions': '🏉', 'Russian tsars': '🪆', 'Shakespeare plays': '🎭', 'Sherlock Holmes stories': '🔍',
   'Skyrim races': '🐉', 'Star Wars theatrical films': '🌌', 'Stardew Valley villagers': '🐔', 'Street Fighter fighters': '👊',
-  'Studio Ghibli Movies': '🐈', 'Summer Olympic sports': '🥇', 'Super Smash Bros. fighters': '💥', 'Tennis Slams & Masters 1000s': '🎾',
+  'Summer Olympic sports': '🥇', 'Super Smash Bros. fighters': '💥', 'Tennis Slams & Masters 1000s': '🎾',
   'Types of blood cells': '🩸', 'Types of human teeth': '🦷', 'US First Ladies': '👒', 'US National Parks': '🏞️', 'US presidents': '🇺🇸',
   'US state capitals': '🏛️', 'US states': '🗺️', 'US states bordering Canada': '🍁', 'Valorant agents': '🎯', 'WNBA teams': '🏀',
   'Wonders of the World (Ancient & New 7)': '🗿', 'Zodiac signs': '♈', 'Chinese zodiac animals': '🐉', 'Planets & dwarf planets': '🪐',

@@ -24,6 +24,7 @@ export const ICON_ART = Object.freeze({
   settings: '/icons/settings.webp',
   lock: '/icons/lock.webp',
   news: '/icons/news.webp',
+  roll: '/rolls/vessel-icon.webp', // the COG-LOCKED GEAR CANISTER (Andy oct24: no dice) — the painted epic parts, pre-composed (claude/rolls-art/compose-icon.py)
 });
 
 export function dropFor(size) {

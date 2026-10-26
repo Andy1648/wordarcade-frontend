@@ -10,6 +10,7 @@ import { loadProgress } from '../progress/xp';
 import { splashDismissed as evSplashDismissed } from '../lib/events.js';
 import { MenuXpBar, MenuXpFx } from './MenuXp';
 import { titleHeroSrc } from '../cast/mainFace.js';
+import PlayPlate from './playPlate/PlayPlate.jsx';
 
 const TAGLINES = [
   // "TYPE FAST. DIE SLOW." intentionally lives in the post-dismiss intro card,
@@ -202,26 +203,22 @@ export default function SplashScreen({ onStart, onDismiss }) {
       </div>
 
       {/* TITLE REWORK (oct22, Andy "title screen needs rework"): ONE read — your HERO (the cast PNG you play as; RIOT on
-          a fresh save) beside ONE PLAY plate. The plate is the start prompt: a tap / click anywhere still starts, and on
+          a fresh save) beside ONE PLAY plate (the painted sticker, playPlate/PlayPlate — Andy oct24 "lacks flavor"). The plate is the start prompt: a tap / click anywhere still starts, and on
           a keyboard the pips inside it fill one per key (the 5-key gate, 3 for a returning player). */}
       <div className="splash-main">
         <img className="splash-hero" src={titleHeroSrc()} width="384" height="384" alt="" aria-hidden="true" draggable="false" decoding="async" />
-        <button type="button" className="splash-play" onClick={(e) => { e.stopPropagation(); dismiss(); }}>
-          <span className="splash-play-shadow" aria-hidden="true" />
-          <span className="splash-play-face">
-            <span className="splash-play-k">PLAY</span>
-            <span className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</span>
-            {/* Keystroke-gate progress: one pip per required keystroke, filled left-to-right.
-                Fine pointer only (a coarse tap enters on one). Instant class swap, no animation. */}
-            {fine && (
-              <span className="splash-pips" aria-hidden="true">
-                {Array.from({ length: needed }, (_, i) => (
-                  <span key={i} className={`splash-pip${i < filled ? ' is-on' : ''}`} />
-                ))}
-              </span>
-            )}
-          </span>
-        </button>
+        <PlayPlate className="splash-play" onClick={(e) => { e.stopPropagation(); dismiss(); }}>
+          <span className="splash-start">{fine ? 'TYPE TO START' : 'TAP TO START'}</span>
+          {/* Keystroke-gate progress: one pip per required keystroke, filled left-to-right.
+              Fine pointer only (a coarse tap enters on one). Instant class swap, no animation. */}
+          {fine && (
+            <span className="splash-pips" aria-hidden="true">
+              {Array.from({ length: needed }, (_, i) => (
+                <span key={i} className={`splash-pip${i < filled ? ' is-on' : ''}`} />
+              ))}
+            </span>
+          )}
+        </PlayPlate>
       </div>
 
       {/* Mini XP readout under the prompt — hidden entirely for a first-time visitor

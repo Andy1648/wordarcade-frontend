@@ -4,11 +4,12 @@ import { lazyWithReload } from '../lib/chunkReload';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
+import { playWipe } from '../lib/navWipe';
 import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import { MenuIcons, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
+import { MenuIcons, MenuUtility, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
 import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
@@ -104,6 +105,8 @@ const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'C
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
+const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
+import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -166,6 +169,9 @@ const barSeen = { level: null, frac: 0 };
 
 // One cloud check per PAGE LOAD (restore + the dev's reset flag) — see the effect below.
 let cloudBootChecked = false;
+
+// the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
+const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -701,6 +707,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     document.addEventListener('visibilitychange', re);
     return () => {
       window.removeEventListener(V3.drop.DROP_CHANGE, re);
+      document.removeEventListener('visibilitychange', re);
+    };
+  }, []);
+  // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
+  const [showWheel, setShowWheel] = useState(false);
+  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
+  useEffect(() => {
+    if (!SEASON2) return undefined;
+    const re = () => setWheelDot(wheelReady());
+    window.addEventListener(WHEEL_CHANGE, re);
+    document.addEventListener('visibilitychange', re);
+    return () => {
+      window.removeEventListener(WHEEL_CHANGE, re);
       document.removeEventListener('visibilitychange', re);
     };
   }, []);
@@ -1245,7 +1264,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // v3 (SEASON2 only): the ACHIEVEMENTS trophy — installed with the v3 chunk, joins whichever nav cluster renders
   // SETTINGS (Andy oct9: "top right placement instead"): the cog is the top-right cluster's last tile, both trees
-  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} />;
   // Andy oct6 SEASON 2 #5: the four rail buttons show FROM THE START (a gated one is LOCKED with its gate) — REBIRTH
   // included: at LV1 it says how many levels to go, which is what a newcomer needs to know about it.
   const rebirthGate = useMemo(() => rebirthThreshold(rebirths), [rebirths]);
@@ -1257,7 +1275,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
-  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
+  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal || showWheel));
+
+  // NAV WIPE for the menu's own full-screen sheets (Andy oct24 "transition screens for all buttons (or at least
+  // major ones)"): GEARS / INDEX / YOUR GEAR, REWARDS and PROFILE open + close under the SAME pooled wipe as a view
+  // change. Fired from an effect, i.e. AFTER the sheet has already committed — purely cosmetic, never gating.
+  const sheetKey = showMarks || (showClaims ? 'claims' : showProfile ? 'profile' : null);
+  const lastSheetRef = useRef(sheetKey);
+  useEffect(() => {
+    const prev = lastSheetRef.current;
+    lastSheetRef.current = sheetKey;
+    if (prev === sheetKey) return;
+    const word = sheetKey ? SHEET_WIPE_WORDS[sheetKey] || '' : '';
+    if (playWipe(word, sheetKey ? 'forward' : 'back')) sound.whoosh();
+  }, [sheetKey]); // eslint-disable-line react-hooks/exhaustive-deps -- sound is a stable context value
 
   // ---- v2 MENU chrome (claude/mockups/v2/Menu.dc.html) — one set of props, both trees -------------
   // ROLL + INDEX: the REAL gate per season. Season 1: the MARKS layer reveals at LV10 (or any rebirth / an owned mark).
@@ -1290,6 +1321,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // eslint-disable-next-line react-hooks/exhaustive-deps -- wins/gems only matter as "any" (first-run grandfathering)
     [xpProgress.level, rebirths, playedGame, canRoll, ownsAnyGear, rebirthGate, wins > 0, gems > 0],
   );
+  // THE DAILY WHEEL (Andy oct24) takes the top-right slot once the core menu is revealed; NEWS + SETTINGS then move to
+  // the bottom-right cluster (MenuUtility) and CREDITS moves inside SETTINGS. Before that (the first-run title, season 1)
+  // the corners are exactly as they were.
+  const wheel = SEASON2 && reveal.core ? { dot: wheelDot, onClick: () => { sound.click(); setShowWheel(true); } } : null;
+  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? handleCredits : null} />;
   const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
@@ -1446,11 +1482,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  // NEAR MISS (Andy oct22): the keys left to the next level at THIS save's XP per key (statsMult = letterXpNow, read on
-  // render) — shown by the bar only in its last stretch. Keys, not words: a level is hundreds of keys, so "1 MORE WORD"
-  // would lie. Game words pay keys too (a 5-letter game word ≈ 1 key).
-  const keysLeft = barLive && SEASON2 && statsMult > 0 ? Math.max(1, Math.ceil((xpProgress.cost * (1 - (xpProgress.frac || 0))) / statsMult)) : 0;
-  const xpNearText = keysLeft ? { k: `${formatNum(keysLeft)} ${keysLeft === 1 ? 'KEY' : 'KEYS'}`, to: `TO LV ${formatNum(barLevel + 1)}` } : null;
+  // NO KEYS-LEFT LINE (Andy oct24 "remove how many keys to next lvl… bc there's crit and stuff"): crits, boosts and gear
+  // make a key's pay vary, so any countdown lies. The bar's fill and the next level's plate carry the pull.
   const xpBar = (
     <KitXpBar
       className="menu-xp-bar"
@@ -1460,7 +1493,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       lvInside={SEASON2}
       lead={rankPlate}
       goal={xpGoal}
-      nearText={xpNearText}
     />
   );
 
@@ -1504,6 +1536,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             news={reveal.gears ? news : null}
+            wheel={wheel}
             daily={reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null}
             dailyBlitz={reveal.core && onDailyBlitz ? <DailyBlitzTile variant="row" onPlay={openDailyBlitz} navigating={navigating} /> : null}
             railItems={railItems}
@@ -1530,14 +1563,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={reveal.gears ? news : null} daily={hasMainColumn ? null : dailyIcon} settingsSlot={settingsSlot} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={!wheel && reveal.gears ? news : null} daily={hasMainColumn ? null : dailyIcon} settingsSlot={wheel ? null : settingsSlot} wheel={wheel} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
         <div className="homepage-footer-links hp-extras">
-          <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
-            CREDITS
-          </button>
+          {wheel ? <MenuUtility news={reveal.gears ? news : null} settingsSlot={settingsSlot} navigating={navigating} /> : (
+            <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
+              CREDITS
+            </button>
+          )}
           {LEADERBOARD_ENABLED && reveal.core && <LiveTicker className="homepage-live" />}
           {/* boost timers, where the paged layout has no bottom-right cell (Homepage.css .hp-dock--extras) */}
           <div className="hp-dock hp-dock--extras"><BoostDock /></div>
@@ -1640,6 +1675,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </ScreenBoundary>
       )}
 
+      {showWheel && (
+        <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
+          <Suspense fallback={null}>
+            <DailyWheel onClose={() => setShowWheel(false)} />
+          </Suspense>
+        </ScreenBoundary>
+      )}
+
       {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
       {lockedPreview && (
         <ScreenBoundary name="locked-preview" onBack={() => setLockedPreview(null)}>
@@ -1673,7 +1716,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {patchDue && reveal.gears && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
       {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
-      {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
+      {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && !showWheel && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost
             level={xpProgress.level}

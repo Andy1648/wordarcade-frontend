@@ -1,0 +1,120 @@
+/* SealedRollReveal — the SEALED ROLL vessel opening (065). A modal moment, not persistent UI. Flat colours, the tier's
+   colour on the frame; motion = finite WAAPI one-shots in the JSX (transform / opacity only). Every node's REST style is
+   its end state, so a skipped / reduced-motion open simply shows the result. Nothing loops. */
+.srr {
+  --srr-tier: #B04BFF;
+  --srr-shade: #7A1FC4;
+  --srr-pick: var(--srr-tier);
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(22, 6, 44, .985); /* a deep tier-tinted scrim (EPIC violet) — the shop must not read through */
+  overflow: hidden;
+  font-family: var(--k-display, 'Bungee', system-ui, sans-serif);
+  color: #fff;
+  text-transform: uppercase;
+}
+.srr.is-legendary { --srr-tier: #FFC23D; --srr-shade: #B8860B; background: rgba(38, 22, 4, .985); /* gold-brown */ }
+
+.srr-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+
+.srr-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  row-gap: 14px;
+  width: min(420px, 100%);
+}
+.srr-floor {
+  position: relative;
+  z-index: 3;
+  font-size: var(--fs-k44);
+  line-height: 1;
+  color: var(--srr-tier);
+  -webkit-text-stroke: 5px #000;
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #000;
+  transform: rotate(-3deg);
+}
+.srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
+
+.srr-pod { position: relative; display: grid; grid-template-columns: 100%; place-items: center; } /* width / min-height / --srr-v / --srr-rim: the hero size, set once on mount in the JSX */
+.srr-vessel {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  align-self: end;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+.srr-vessel:disabled { cursor: default; }
+.srr-vessel:not(:disabled):hover .va { transform: translateY(-4px); transition: transform 160ms ease-out; }
+.srr-vessel:not(:disabled):active .va { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
+/* the open phase's REST = the burst's end state: the cog + lid have flown, the glow sits behind the card */
+.srr.is-open .va-cog, .srr.is-open .va-lid { opacity: 0; }
+/* the glow = a painted ray burst from its BOTTOM CENTRE, seated on the canister's open rim (~63% of the 250 vessel up) */
+/* the painted fan's rays converge at 50% / 74.4% of its 512 canvas (the art's origin) — that point sits on the rim */
+.srr-glow { position: absolute; left: 50%; bottom: calc(var(--srr-rim) - var(--srr-v) * .512); width: calc(var(--srr-v) * 2); height: calc(var(--srr-v) * 2); max-width: none; margin-left: calc(var(--srr-v) * -1); transform-origin: 50% 74.4%; opacity: 0; pointer-events: none; }
+.srr.is-sealed .srr-glow, .srr.is-opening .srr-glow { opacity: .3; }
+.srr.is-open .srr-glow { opacity: .9; }
+.srr-shards { position: absolute; left: 50%; bottom: var(--srr-rim); width: 0; height: 0; pointer-events: none; }
+.srr-shard { position: absolute; left: -28px; top: -28px; width: 56px; height: 56px; opacity: 0; }
+
+.srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; }
+.srr-stamp {
+  position: absolute;
+  right: -64px;
+  top: 22%;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 4px solid #8A1E10;
+  background: #FF6B3D;
+  color: #fff;
+  font-size: var(--fs-k20);
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+  box-shadow: 4px 4px 0 #000;
+  transform: rotate(-8deg);
+}
+
+.srr-line { min-height: 40px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; text-align: center; }
+.srr-chip {
+  padding: 3px 9px;
+  border-radius: 8px;
+  border: 3px solid #12A99A;
+  background: #2EFFE0;
+  color: #0d0618;
+  font-size: var(--fs-k16);
+  box-shadow: 3px 3px 0 #000;
+}
+.srr-chip.is-dupe { border-color: #7A6A20; background: #FFE94A; }
+.srr-later { font-size: var(--fs-k20); color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+
+.srr-btn {
+  min-width: 200px;
+  min-height: 56px;
+  padding: 8px 26px;
+  border-radius: 8px;
+  border: 5px solid var(--srr-shade);
+  background: var(--srr-tier);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-k28);
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  box-shadow: 6px 6px 0 #000;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.srr-btn:hover { transform: translate(-1px, -2px); }
+.srr-btn:active { transform: translate(4px, 4px); }
+.srr-btn:disabled { opacity: .55; cursor: default; }
+.srr-btn:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 4px; }
+
