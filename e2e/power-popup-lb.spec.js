@@ -224,3 +224,56 @@ test('your own profile card still shows your achievement badges', async ({ page 
   await expect(pc).toBeVisible();
   await expect(pc.locator('.pc-badge')).toHaveCount(8);
 });
+
+// THE LOBBY EDIT tag (Andy oct26 "the EDIT control overlaps something on laptop screens"): YOUR seat's name button —
+// name + EDIT — never crosses the hero, the YOU / HOST badges or the seat's edge, short or 16-letter name.
+for (const [w, h] of [[1536, 864], [1366, 768], [1280, 720], [1280, 600]]) {
+  for (const myName of ['ANDY', 'WWMMWWMMWWMMWWMM']) {
+    test(`@${w}x${h} LOBBY: "${myName}" — the EDIT tag crosses nothing in YOUR seat`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      const mock = await installBackendMock(page);
+      await page.addInitScript(() => {
+        if (sessionStorage.getItem('lo.seeded')) return;
+        sessionStorage.setItem('lo.seeded', '1');
+        localStorage.setItem('taw.seenMenu', '1');
+        localStorage.setItem('taw.seenMenuSpotlight', '1');
+      });
+      await page.goto('/?portal=1&season2=1');
+      await menuReady(page);
+      const players = [{ id: 'e2e-player', name: myName, isHost: true }, { id: 'p2', name: 'KEYSMASH' }, { id: 'p3', name: 'MMMMWWWWMMMMWWWW', isBot: true, botDifficulty: 'hard' }];
+      mock.pushToClient({ type: 'room_update', payload: { code: 'KZRTB', gameType: 'word-bomb', hostId: 'e2e-player', difficultyKey: 'chill', players } });
+      await page.locator('.room-wrap').waitFor({ state: 'visible' });
+      await page.waitForTimeout(900);
+      const r = await page.evaluate(() => {
+        const chip = [...document.querySelectorAll('.room-player-chip')].find((c) => c.querySelector('.room-rename-btn'));
+        const vis = (e) => { if (!e) return null; const b = e.getBoundingClientRect(); return b.width && b.height && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden' ? b : null; };
+        const edit = vis(chip.querySelector('.room-rename-hint'));
+        const range = document.createRange(); range.selectNodeContents(chip.querySelector('.room-rename-btn').firstChild);
+        const R = { edit, name: range.getBoundingClientRect(), you: vis(chip.querySelector('.room-you-badge')), host: vis(chip.querySelector('.room-host-badge')), hero: vis(chip.querySelector('[data-testid="room-hero"], .rh-btn')) };
+        const bad = [];
+        for (const k of ['name', 'you', 'host', 'hero']) {
+          const A = R.edit; const B = R[k];
+          if (!A || !B) continue;
+          const x = Math.min(A.right, B.right) - Math.max(A.left, B.left);
+          const y = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
+          if (x > 1 && y > 1) bad.push(`edit×${k} ${Math.round(x)}x${Math.round(y)}`);
+        }
+        for (const k of ['name', 'you', 'host']) {
+          const A = R.name; const B = R[k];
+          if (k === 'name' || !A || !B) continue;
+          const x = Math.min(A.right, B.right) - Math.max(A.left, B.left);
+          const y = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
+          if (x > 2 && y > 3) bad.push(`name×${k} ${Math.round(x)}x${Math.round(y)}`); // the YOU sticker is tilted: its box corner may graze the line box
+        }
+        const c = chip.getBoundingClientRect();
+        if (edit && (edit.right > c.right + 1 || edit.left < c.left - 1)) bad.push(`edit past the seat (${Math.round(edit.left)}..${Math.round(edit.right)} in ${Math.round(c.left)}..${Math.round(c.right)})`);
+        const btn = chip.querySelector('.room-rename-btn');
+        const cut = btn.scrollWidth > btn.clientWidth + 1;
+        return { bad, edit: !!edit, cut };
+      });
+      await shot(page, `lobby-${w}x${h}-${myName.length}`);
+      expect(r.edit, 'the EDIT tag shows').toBe(true);
+      expect(r.bad, 'nothing crosses in YOUR seat').toEqual([]);
+    });
+  }
+}
