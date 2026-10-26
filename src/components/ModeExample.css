@@ -157,3 +157,12 @@
 .mode-ex-gem { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 8px; }
 .mode-ex-gem .kit-icon { flex: 0 0 auto; }
 .mode-ex-gem-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-k22); line-height: 1.1; color: #2EFFE0; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+
+/* MINER: the painted ore beside each example answer (static) */
+.mode-ex-ore {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}

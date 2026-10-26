@@ -150,10 +150,29 @@ const WORD_RACE_GAME = {
   enabled: true,
 };
 
+// MINER (Andy oct26) — the endless competitive rare-answer dig that replaced DAILY BLITZ. Painted card
+// (public/cards/miner-*.webp: the mine shaft, the miner, flying ore).
+const MINER_GAME = {
+  id: 'miner',
+  artKey: 'WordRaceArt',
+  artLayers: { bg: '/cards/miner-bg.webp', hero: '/cards/miner-hero.webp', fx: '/cards/miner-fx.webp' },
+  name: 'MINER',
+  description: 'RARER ANSWERS DIG DEEPER. FIRST TO THE CORE.',
+  baseColor: '#FFD23F',
+  iconBg: '#2a1a10',
+  badgeText: 'MULTI',
+  badgeBg: '#000',
+  badgeColor: '#FFD23F',
+  textColor: '#000',
+  descColor: '#3b2410',
+  enabled: true,
+};
+
 // SAT RUSH (when enabled) keeps slot 3; CHAIN + FUSE are the new slots 4 and 5,
 // so the stagger/rotation rules keyed to those slots land on the new cards.
 export const GAMES = [
   ...BASE_GAMES,
+  MINER_GAME,
   ...(SAT_RUSH_ENABLED ? [SAT_RUSH_GAME] : []),
   CHAIN_GAME,
   FUSE_GAME,

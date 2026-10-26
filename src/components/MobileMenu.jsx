@@ -46,7 +46,8 @@ function SoloPerk({ id }) {
 // `desc` is read from gameData (passed in) so the sub-copy has ONE source of truth and cannot
 // drift from the mode dialog / card / SEO copy.
 // WORD RACE joins as a fourth row only when its (dark-launch) card is in `games` at all.
-const MODE_IDS = ['word-bomb', 'category-blitz', 'sat-rush', 'word-race'];
+// MINER (Andy oct26) takes the first row DAILY BLITZ held.
+const MODE_IDS = ['miner', 'word-bomb', 'category-blitz', 'sat-rush', 'word-race'];
 
 // Per-row palette. The band is INVERTED: the slab is the dark panel base and the NAME carries
 // the mode's neon, set in the chromatic Bungee stack (LayeredWord) — the treatment CHAIN, FUSE,
@@ -58,6 +59,7 @@ const ROW_STYLE = {
   'category-blitz': { accent: '#FF6B3D', sub: '#E0A88F' },
   'sat-rush': { accent: '#FFE94A', sub: '#D6C98A' },
   'word-race': { accent: '#FF4FA3', sub: '#E6A3C4' },
+  miner: { accent: '#FFD23F', sub: '#D9C27A' },
 };
 
 // The in-app route each row points at, so the row is a REAL link: long-press gets a URL,
@@ -69,6 +71,7 @@ const ROW_HREF = {
   'category-blitz': '/category-blitz/play',
   'sat-rush': '/sat-rush/play',
   'word-race': '/?race=1',
+  miner: '/miner/play',
 };
 
 function Chevron() {
@@ -154,7 +157,6 @@ export default function MobileMenu({
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
   wheel = null, // { onClick, dot } — THE DAILY WHEEL tile (oct24): takes the top row's NEWS + SETTINGS slot
   daily = null, // the DAILY CONTRACTS icon (contracts/DailyTile variant icon) — the icon cluster's first tile (oct21)
-  dailyBlitz = null, // the DAILY BLITZ row (dailyBlitz/DailyBlitzTile variant row) — the mode list's first row
   railItems,
   xpBar = null,
   markChip = null,
@@ -215,7 +217,6 @@ export default function MobileMenu({
       {/* 2. The three mode rows. They flex-grow to share whatever height is left, so the
              screen always fills exactly one viewport with no scroll at any phone height. */}
       <nav className="hp-m-modes" aria-label="Game modes">
-        {dailyBlitz}
         {rows.map((game) => {
           const s = ROW_STYLE[game.id];
           return (

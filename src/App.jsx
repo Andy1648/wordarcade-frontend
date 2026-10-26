@@ -18,6 +18,12 @@ import { raceReducer } from './race/raceState';
 import { WORD_RACE_ID } from './race/config';
 import { bankRaceWord } from './race/racePayout';
 import { recentPace, recordPace } from './race/racePace';
+// MINER (Andy oct26, replaced DAILY BLITZ): quick-match board + lobby, lazy like the race's.
+const MinerScreen = lazyWithReload(() => import('./miner/MinerScreen'), 'MinerScreen');
+const MinerLobby = lazyWithReload(() => import('./miner/MinerLobby'), 'MinerLobby');
+import { minerReducer } from './miner/minerState';
+import { MINER_ID } from './miner/config';
+import { bankMinerAnswer } from './miner/minerPayout';
 import WallScene from './components/WallScene';
 import TimerOver from './frenzy/TimerOver';
 import TransitionOverlay from './components/TransitionOverlay';
@@ -248,6 +254,7 @@ const LAUNCH_INTENT = (() => {
     satrush: params.get('satrush') === '1',
     play: PRESELECTABLE_GAMES.includes(play) ? play : null,
     race: play === 'race', // /race/play (challenge link) -> the EXISTING race quick match, below
+    miner: play === 'miner', // /miner/play (and the retired /daily) -> the MINER quick match, below
   };
 })();
 
@@ -264,6 +271,7 @@ const SKIP_INTRO =
   LAUNCH_INTENT.daily ||
   LAUNCH_INTENT.satrush ||
   LAUNCH_INTENT.race ||
+  LAUNCH_INTENT.miner ||
   DAILY_BLITZ_LAUNCH || // /daily (DAILY BLITZ share links)
   !!VS_BOT_LAUNCH || // /word-bomb/play, /category-blitz/play
   SOLO_LAUNCH.chain ||
@@ -1050,6 +1058,12 @@ function App() {
   const [race, dispatchRace] = useReducer(raceReducer, null);
   const [raceEarned, setRaceEarned] = useState({ wins: 0, xp: 0 });
   const raceMyWordsRef = useRef(0); // my accepted words this race (the payout gate's count)
+  // MINER: the miner_* frames reduce into ONE state object (miner/minerState.js), dispatched from the FIFO
+  // drain like the race's. minerEarned is what THIS dig banked (miner/minerPayout.js, the Blitz rails).
+  const [miner, dispatchMiner] = useReducer(minerReducer, null);
+  const [minerEarned, setMinerEarned] = useState({ wins: 0 });
+  const minerWordsRef = useRef(0); // my accepted answers this dig (the payout gate's count)
+  const minerWeightRef = useRef(0); // their summed ore weight (the banked unit)
   // H4 WINNER PAYS: the inputs winnerPayout() needs at game over, as refs so the drain reads them
   // live. Per-game wins banked (Blitz / RACE — WB reads its round ledger), WB valid words per player
   // id (the same attribution the feed uses), the RACE start time, every bot id the roster has shown,
@@ -1173,6 +1187,28 @@ function App() {
           // Shown even at 0 (a gate held it back) so the winner learns why; once per race.
           setWinnerPay((prev) => prev || wp);
         }
+      }
+    }
+
+    // MINER frames: reduce into the miner state, and bank MY accepted answers right here (each drained frame
+    // is processed exactly once, so an answer can never double-pay). miner_result only ever reaches its sender.
+    if (typeof lastMessage.type === 'string' && lastMessage.type.startsWith('miner_')) {
+      dispatchMiner({ frame: lastMessage, now: Date.now() });
+      const mp = lastMessage.payload || {};
+      if (lastMessage.type === 'miner_start') {
+        minerWordsRef.current = 0;
+        minerWeightRef.current = 0;
+        setMinerEarned({ wins: 0 });
+      } else if (lastMessage.type === 'miner_result' && mp.accepted) {
+        const paid = bankMinerAnswer({
+          answer: mp.answer,
+          ore: mp.ore,
+          prevWords: minerWordsRef.current,
+          prevWeight: minerWeightRef.current,
+        });
+        minerWordsRef.current += 1;
+        minerWeightRef.current = paid.nowWeight;
+        if (paid.wins > 0) setMinerEarned((e) => ({ wins: e.wins + paid.wins }));
       }
     }
 
@@ -1981,7 +2017,7 @@ function App() {
       return;
     }
     if (wsStatus !== 'open') return;
-    if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily && !LAUNCH_INTENT.race) return;
+    if (!LAUNCH_INTENT.join && !LAUNCH_INTENT.daily && !LAUNCH_INTENT.race && !LAUNCH_INTENT.miner) return;
     launchFiredRef.current = true;
     if (LAUNCH_INTENT.join) {
       const name = resolvePlayerName();
@@ -1990,6 +2026,8 @@ function App() {
       track('room_joined', { mode: 'invite_link' }); // enum only; no PII
     } else if (LAUNCH_INTENT.race) {
       handleRaceQuickMatch();
+    } else if (LAUNCH_INTENT.miner) {
+      handleMinerQuickMatch();
     } else {
       handleStartDaily();
     }
@@ -2284,6 +2322,24 @@ function App() {
     track('race_quick_match', {});
   }
 
+  // MINER QUICK MATCH: one frame. The server seats us in the fullest waiting mine (or opens one), answers
+  // room_created/room_joined + room_update (-> the MINER lobby) and miner_queue, and launches the dig itself
+  // when it fills or 8s pass — bots top up a mine with < 2 humans. From the results (DIG AGAIN) the server
+  // leaves the old room first; we show the lobby at once so the old board never lingers.
+  function handleMinerQuickMatch() {
+    const name = playerName || resolvePlayerName();
+    setPlayerName(name);
+    setServerError('');
+    setLobbyMode(MINER_ID);
+    dispatchMiner({ type: 'reset' });
+    send('miner_quick_match', { name });
+    track('miner_quick_match', {});
+  }
+  function handleMinerAgain() {
+    setView('room');
+    handleMinerQuickMatch();
+  }
+
   // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
   // eight steps (card, PLAY, name, CONTINUE, ADD BOT, pick bot, pick difficulty, START); it is now
   // the card and this button. NO NEW PROTOCOL: these are the /word-bomb/play deep link's frames
@@ -2339,6 +2395,11 @@ function App() {
       // same socket, so create_room (which registers the room) is handled
       // before this set_game_type lands.
       // WORD RACE private room: lock the type and report my recent pace (bots are paced to it).
+      // MINER private room: lock the type (the host starts it; bots top up a mine with < 2 humans).
+      if (mode === MINER_ID) {
+        dispatchMiner({ type: 'reset' });
+        send('set_game_type', { gameType: MINER_ID });
+      }
       if (mode === WORD_RACE_ID) {
         dispatchRace({ type: 'reset' }); // no stale quick-match queue state in a private lobby
         send('set_game_type', { gameType: WORD_RACE_ID });
@@ -2539,7 +2600,30 @@ function App() {
   // fixed control must be suppressed here — keyed on which screen actually renders, not on `view`
   // alone, so a menu shown under any non-'home' fallback value can never double up the control.
   let isHomeMenu = false;
-  if (view === 'game' && gameType === WORD_RACE_ID) {
+  if (view === 'game' && gameType === MINER_ID) {
+    screen = (
+      <MinerScreen
+        miner={miner}
+        myId={myId}
+        audioSlot={(
+          <AudioControls
+            variant="inline"
+            accent="#FFD23F"
+            musicMuted={music.isMuted}
+            onToggleMusic={music.toggleMute}
+            sfxMuted={sfxMuted}
+            onToggleSfx={() => setSfxMuted((m) => !m)}
+          />
+        )}
+        earned={minerEarned}
+        againPending={false}
+        onSubmit={(answer) => send('submit_word', { word: answer })}
+        onLocalReject={(result) => dispatchMiner({ type: 'local', result })}
+        onAgain={handleMinerAgain}
+        onLeave={handleLeaveRequest}
+      />
+    );
+  } else if (view === 'game' && gameType === WORD_RACE_ID) {
     screen = (
       <WordRaceScreen
         race={race}
@@ -2640,6 +2724,20 @@ function App() {
         payoutLedger={payoutLedger}
         winnerPay={winnerPay}
         lastLanding={lastLanding}
+      />
+    );
+  } else if (view === 'room' && room && room.gameType === MINER_ID) {
+    screen = (
+      <MinerLobby
+        room={room}
+        myId={myId}
+        miner={miner}
+        serverError={serverError}
+        startPending={startPending}
+        botPending={botPending}
+        onStart={handleStartGame}
+        onAddBot={() => fireBot(() => send('miner_add_bot', {}))}
+        onLeave={handleLeaveRoom}
       />
     );
   } else if (view === 'room' && room && room.gameType === WORD_RACE_ID) {
@@ -2778,10 +2876,10 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onPlaySolo={handlePlaySolo}
         onRaceQuickMatch={handleRaceQuickMatch}
+        onMinerQuickMatch={handleMinerQuickMatch}
         onSatRush={(m) => { satStartModeRef.current = m === 'briefing' || m === 'lineup' ? m : null; goToSatRush(); }}
         onChain={goToChain}
         onFuse={goToFuse}
-        onDailyBlitz={() => setView(DAILY_BLITZ_VIEW)}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
         onCredits={goToCredits}
