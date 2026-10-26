@@ -3601,9 +3601,12 @@ body:has(.sr-app) .wpm-hud {
     overscroll-behavior: contain;
   }
 }
-@media (min-width: 1000px) and (max-height: 700px) {
+@media (min-width: 1000px) and (max-height: 820px) {
+  /* a 1366x768 laptop: the left column used to run ~60px past the fold (oct26 teacher pass) */
   .fr-app .sr-respage { padding-block: 20px; }
   .fr-app .sr-respage .sr-dead { font-size: var(--fs-h2); }
+  .fr-app .sr-respage > * { margin-bottom: 8px; }
+  .fr-app .sr-respage > .sr-keepmissing { max-height: clamp(80px, 17vh, 170px); }
 }
 @media (min-width: 1000px) and (max-height: 620px) {
   .fr-app .sr-respage .sr-dead { font-size: var(--fs-panel); }

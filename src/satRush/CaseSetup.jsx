@@ -4,6 +4,7 @@
 // paper page as PICK YOUR BEAT. The last choices are preselected, so a returning player's setup is
 // one press. Both rows are radio groups (arrow keys move, Enter starts).
 import { useState, useRef, useEffect } from 'react';
+import PrintPicker from './PrintPicker';
 import { DIFFICULTY_ORDER, LENGTHS, normalizeSpec, difficultiesFor } from './runSpec';
 
 const isBriefPreview = (mode) => mode === 'briefing';
@@ -105,17 +106,14 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
                 onPick={setCategory}
                 render={(id) => <span className="sr-setup-opt-theme">{catLabel(id)}</span>}
               />
-              {/* phones: the same choice as one dropdown row (the 8-card grid cost ~200px) */}
-              <label className="sr-setup-select">
-                <span className="sr-setup-label">theme</span>
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {['all', ...catIds].map((id) => (
-                    <option key={id} value={id}>
-                      {catLabel(id)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* phones: the same choice as one printed picker row (the 8-card grid cost ~200px) */}
+              <PrintPicker
+                className="sr-setup-select"
+                label="theme"
+                value={category}
+                options={['all', ...catIds].map((id) => ({ value: id, label: catLabel(id) }))}
+                onChange={setCategory}
+              />
             </div>
           )}
           <div className="sr-setup-col">
@@ -155,10 +153,12 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               render={(n) => <span className="sr-setup-opt-main">{n}</span>}
               aside={
                 offerSkip ? (
-                  <label className="sr-setup-check">
-                    <input type="checkbox" checked={skipStudied} onChange={(e) => setSkipStudied(e.target.checked)} />
+                  <button type="button" role="checkbox" aria-checked={skipStudied} className="fr-tick" onClick={() => setSkipStudied((v) => !v)}>
+                    <span className="fr-tick-box" aria-hidden="true">
+                      {skipStudied ? '✓' : ''}
+                    </span>
                     <span>skip ones I&apos;ve studied</span>
-                  </label>
+                  </button>
                 ) : null
               }
             />
