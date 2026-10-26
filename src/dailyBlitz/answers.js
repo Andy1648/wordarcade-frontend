@@ -99,7 +99,7 @@ export function renderAnswersPage(model, { nowMs = Date.now(), canonicalPath } =
   const path = canonicalPath || `/daily/${n}`;
   const title = `Daily Blitz #${n} answers — ${shortDate(n)} | TYPE A WORD`;
   const first = prompts.map((p) => p.name).join(', ');
-  const desc = `Daily Blitz #${n} (${longDate(n)}) answers: the most-said and the rarest answers for ${first}. Play today's #${live} free.`;
+  const desc = `Daily Blitz #${n} (${longDate(n)}) answers: the most-said and the rarest answers for ${first}. Play MINER, the rare-answer game, free.`;
   const crowdLine = plays
     ? `${formatNum(plays)} players · % = share of players who gave that answer`
     : 'A quiet day — % are estimates (~) from how familiar each answer is';
@@ -184,10 +184,10 @@ ol,ul{margin:0;padding:0;list-style:none}
 <div class="hero"><img src="/cards/cb-hero.webp" alt="" width="96" height="144" />
 <div><h1>DAILY BLITZ #${n} ANSWERS</h1><p class="date">${esc(longDate(n))}</p></div></div>
 <p class="crowd">${esc(crowdLine)}</p>
-<a class="cta" href="/daily">PLAY TODAY'S #${live} →</a>
+<a class="cta" href="/miner/play">PLAY MINER →</a>
 ${items}
 <nav class="navs" aria-label="Other days">${prev}${next}</nav>
-<a class="cta" href="/daily">PLAY TODAY'S #${live} →</a>
-<p class="foot">Daily Blitz: 6 prompts, one answer each, 20 seconds a prompt — the rarer your answer, the more it scores. Answers go up once a day is over in every time zone. <a href="/category-blitz/">Category Blitz</a> · <a href="/">All games</a></p>
+<a class="cta" href="/miner/play">PLAY MINER →</a>
+<p class="foot">Daily Blitz has retired — the rare-answer game is now MINER: race your friends through endless prompts, rarer answers dig deeper. <a href="/category-blitz/">Category Blitz</a> · <a href="/">All games</a></p>
 </main></body></html>`;
 }
