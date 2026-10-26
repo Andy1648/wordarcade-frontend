@@ -3,7 +3,7 @@
 // separate from the JSX components means adding a 7th game later is a
 // one-entry addition here, not a structural change to GameCard.jsx.
 //
-// `artKey` must match an exported component name in GameArt.jsx -
+// `artKey` (cards without painted `artLayers`) must match an exported component name in GameArt.jsx -
 // GameCard looks it up dynamically rather than each game having its own
 // hardcoded SVG inline.
 
@@ -92,7 +92,6 @@ const SAT_RUSH_GAME = {
 // house 4px black outline.
 const CHAIN_GAME = {
   id: 'chain',
-  artKey: 'ChainArt',
   // Andy oct24 "redesign chain and fuse game cards" — the painted, COMPONENT card: the vault backdrop, the chain-link
   // brawler, hover FX, and PARTS for its act (cardLayers/cardActs.js ACTS.chain): the lasso whips, the vault flash
   // blows out where the chain snapped, two broken links fly off. Parts sit in card % (centre x / y, width).
@@ -128,7 +127,6 @@ const CHAIN_GAME = {
 };
 const FUSE_GAME = {
   id: 'fuse',
-  artKey: 'FuseArt',
   // Andy oct24: the painted, COMPONENT card — the fireworks storeroom, the sneaky firecracker (shh), hover FX, and
   // PARTS for its act (ACTS.fuse): a tiptoe two-step, the fuse FLARES (flash + spark) and coughs a smoke puff. The
   // pieces ride the hero's frame (onHero), placed on its fuse tip.
