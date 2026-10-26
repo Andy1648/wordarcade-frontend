@@ -7,7 +7,7 @@
 // loads it on the menu's first key / tap, and only while a paid look is worn, so it never weighs on the first paint.
 
 /** fill: colours cycled pop to pop · stroke: the text outline · shadow: the hard offset · shards: burst colours, n of them. */
-export const POP_LOOKS = Object.freeze({
+export const POP_LOOKS = {
   chrome: { fill: ['#E8EEF6'], stroke: '#4A5468', shadow: '#000', shards: ['#FFFFFF', '#9AA6BA'], n: 2 },
   inferno: { fill: ['#FF6B3D', '#FFB23D'], stroke: '#7A1A00', shadow: '#000', shards: ['#FF6B3D', '#FFE94A'], n: 3 },
   void: { fill: ['#B44CFF'], stroke: '#2A0656', shadow: '#000', shards: ['#9A1AFF', '#FFFFFF'], n: 3 },
@@ -20,7 +20,12 @@ export const POP_LOOKS = Object.freeze({
   nova: { fill: ['#FFFFFF'], stroke: '#000', shadow: '#FFE94A', shards: ['#FFFFFF', '#FFE94A'], n: 6 },
   eclipse: { fill: ['#0d0618'], stroke: '#FF9A1F', shadow: '#FFE94A', shards: ['#FF9A1F', '#FFE94A', '#0d0618'], n: 6 },
   legend: { fill: ['#FF4FA3', '#FFE94A', '#2EFFE0', '#B44CFF', '#FF6B3D'], stroke: '#000', shadow: '#FFD54A', shards: ['#FF4FA3', '#FFE94A', '#2EFFE0', '#B44CFF', '#FF6B3D'], n: 6 },
-});
+};
+
+// THE BURST (oct24, Andy: pop styles need "far higher-quality real art" — game-card / gear-card quality): every paid look
+// also throws its own PAINTED burst behind the +N (public/shop/pop/burst-<id>.webp, one Gemini image each), on the
+// same pooled pop node — the burst slams in under the number and fades with it.
+for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], art: `/shop/pop/burst-${id}.webp` });
 
 /** The look for a pop-style id, or null (CLASSIC / unknown → the menu's own tier colours). */
 export function popLookOf(id) {

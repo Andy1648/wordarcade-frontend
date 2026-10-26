@@ -12,7 +12,7 @@ import { loadGemState, saveGemState, tellBalance, grantGems } from '../gemsCore.
 import { statOf, mainMultOf, loadRollState, wornMarkId, markBaseXp, TIER_MAIN, TIER_PCT, ROLL_MARKS, statBaseValue, statHits } from '../markRollsCore.js';
 import { noteRebirthPerks } from '../markPerks.js'; // FIREBIRD's AFTERPARTY on the season-2 rebirth door
 import {
-  cosmeticGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
+  cosmeticGemPrice, popGemPrice, canAscend, starsForAscend, xpPerLetter as xpPerLetterV3, WINS_BASE, WORD_REF, powerXpMult,
   rebirthMult as rebirthMultV3, rebirthGate, powerCostAt, rebirthGems, LEVEL_UP, DROP_CHANCE, DROP_MIN, DROP_MAX, BOT_WIN, BOT_WIN_BY_DIFF,
   winnerPot, ROLL_PRICE, STREAK_BONUS, modeMult, MARK_MULT,
 } from './econ.js';
@@ -198,7 +198,8 @@ export function itemGemPrice(id) {
   const list = POP_STYLES.some((i) => i.id === id) ? POP_STYLES : SOUND_PACKS.some((i) => i.id === id) ? SOUND_PACKS : null;
   if (!list) return 0;
   const k = list.filter((i) => i.price > 0).findIndex((i) => i.id === id);
-  return k < 0 ? 0 : cosmeticGemPrice(k + 1);
+  if (k < 0) return 0;
+  return list === POP_STYLES ? popGemPrice(k + 1) : cosmeticGemPrice(k + 1);
 }
 export const shopSwap = {
   /** buy: a cosmetic for GEMS (equips it). Returns { ok, reason?, wins, gems }. */

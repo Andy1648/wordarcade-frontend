@@ -16,7 +16,7 @@ import {
   getRebirths,
 } from './xp';
 // SEASON 2 (PROGRESSION FINAL v2): ANY key counts at ×0.2 with no rate cap (letterXp.tryLetterCredit) — mashing is the game.
-import { markXpBoost, tryLetterCredit } from './letterXp';
+import { markXpBoost, tryLetterCredit, popXpMult } from './letterXp';
 import { boostMult } from './boost';
 import { letterPerkMult } from './markPerks';
 import { playClack } from './clack';
@@ -117,13 +117,13 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
     // and rebirth happen on another screen, which remounts this hook and re-reads them.
     // v11: one key = one LETTER at the MENU price — 2 × KEY × rebirth × the worn mark (a fifth of a game letter).
-    // Cosmetics (pop style / sound pack) are looks only — they never multiply XP (review round 2).
+    // The worn POP STYLE multiplies it again (oct24, letterXp.popXpMult — cached per equip); sound packs stay looks only.
     // × BOOST (code boost × OVERDRIVE) × the DOUBLE LETTERS perk (LEVIATHAN)
     // Andy oct9: "it says I get 18 XP/KEY but when I type the bar goes up like 4". This was read ONCE per menu session,
     // so a boost / FRENZY / OVERDRIVE that started (or POWER bought) while the menu was open never reached the keys,
     // while the rate line (live) already showed it. Now it is re-read at most once a second while typing — the same
     // number the rate line prints (letterXpNow) — never a storage read per key.
-    const readGain = () => xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() });
+    const readGain = () => xpPerInput({ mode: 'menu', markMult: markXpBoost() * letterPerkMult() * boostMult() * popXpMult() });
     let menuGain = readGain();
     let gainAt = typeof performance !== 'undefined' ? performance.now() : Date.now(); // same clock as credit()'s `now`
     // KEY TIER tier → the per-keystroke feel band the player BOUGHT (item 1). Mapped
