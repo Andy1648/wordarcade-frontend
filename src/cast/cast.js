@@ -470,10 +470,9 @@ const FRAME_SPECS = { hero: {}, win: {} };
 for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
 export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
 // a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
-const WIN_SEQ = { n: 4, seq: [[1, 480], [2, 520], [3, 900]], rest: 700 };
-registerWinFrames('riot', WIN_SEQ);
 // 6-frame WIN sheets (3x2): small steps, so the party flows
 const WIN_SEQ6 = { n: 6, seq: [[1, 260], [2, 420], [3, 420], [4, 520], [5, 900]], rest: 600 };
+registerWinFrames('riot', WIN_SEQ6); // oct26 repaint (was 4 frames, fuse unlit): crouch → fists up → the hop, a pink spray splash → shakes the can → points it at you → rock-on horns
 registerWinFrames('glitch', WIN_SEQ6);
 registerWinFrames('hype', WIN_SEQ6);
 registerWinFrames('brawl', WIN_SEQ6);
