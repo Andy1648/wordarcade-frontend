@@ -470,10 +470,9 @@ const FRAME_SPECS = { hero: {}, win: {} };
 for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
 export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
 // a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
-const WIN_SEQ = { n: 4, seq: [[1, 480], [2, 520], [3, 900]], rest: 700 };
-registerWinFrames('riot', WIN_SEQ);
 // 6-frame WIN sheets (3x2): small steps, so the party flows
 const WIN_SEQ6 = { n: 6, seq: [[1, 260], [2, 420], [3, 420], [4, 520], [5, 900]], rest: 600 };
+registerWinFrames('riot', WIN_SEQ6); // oct26 repaint (was 4 frames, fuse unlit): crouch → fists up → the hop, a pink spray splash → shakes the can → points it at you → rock-on horns
 registerWinFrames('glitch', WIN_SEQ6);
 registerWinFrames('hype', WIN_SEQ6);
 registerWinFrames('brawl', WIN_SEQ6);
@@ -487,8 +486,8 @@ registerWinFrames('shh', WIN_SEQ6);
 registerWinFrames('jinx', WIN_SEQ6);
 registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the treasure chest → over its head → hook salute
 registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
-// QUILL's sheet lost two frames to cleanup (a feather cut out, a collar pocket) — four clean beats: heart → verse → quill high → the smug nod
-registerWinFrames('quill', { n: 4, seq: [[1, 520], [2, 620], [3, 900]], rest: 700 });
+registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
+registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own

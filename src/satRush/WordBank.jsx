@@ -3,6 +3,7 @@
 // French with or without accents, and the English. It is a LIST, so it scrolls — inside its page.
 // Useful to a student before a test and to a teacher picking a set.
 import { useMemo, useState } from 'react';
+import PrintPicker from './PrintPicker';
 import { speakFr, canSpeak, withArticle } from './speak';
 
 const fold = (s) =>
@@ -14,6 +15,15 @@ const fold = (s) =>
 
 // the level a word sits in, matching CASE SETUP's bands (runSpec FR_DIFFICULTIES)
 const LEVEL = (r) => (r.ap === 1 && r.tier <= 2 ? 'basics' : r.ap <= 2 && r.tier <= 4 ? 'exam core' : 'score 5');
+const SHOW = [
+  { value: 'all', label: 'All words' },
+  { value: 'todo', label: 'Still to learn' },
+  { value: 'known', label: 'Known' },
+  { value: 'studied', label: 'Studied' },
+  { value: 'unstudied', label: 'Not studied yet' },
+  { value: 'study', label: "Can't guess from English" },
+  { value: 'false', label: 'False friends' },
+];
 const STATUS_LABEL = { known: 'known', learning: 'learning', new: 'new' };
 
 export default function WordBank({ words = [], categories = [], masteryOf, studiedOf, onBack }) {
@@ -54,29 +64,14 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
           </div>
         </div>
         <div className="sr-bank-filters">
-          <label className="sr-bank-field">
-            <span className="sr-setup-label">theme</span>
-            <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-              <option value="all">All themes</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="sr-bank-field">
-            <span className="sr-setup-label">show</span>
-            <select value={show} onChange={(e) => setShow(e.target.value)}>
-              <option value="all">All words</option>
-              <option value="todo">Still to learn</option>
-              <option value="known">Known</option>
-              <option value="studied">Studied</option>
-              <option value="unstudied">Not studied yet</option>
-              <option value="study">Can&apos;t guess from English</option>
-              <option value="false">False friends</option>
-            </select>
-          </label>
+          <PrintPicker
+            className="sr-bank-field"
+            label="theme"
+            value={theme}
+            options={[{ value: 'all', label: 'All themes' }, ...categories.map((c) => ({ value: c.id, label: c.label }))]}
+            onChange={setTheme}
+          />
+          <PrintPicker className="sr-bank-field" label="show" value={show} options={SHOW} onChange={setShow} />
           <label className="sr-bank-field grow">
             <span className="sr-setup-label">search</span>
             <input

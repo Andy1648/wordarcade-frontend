@@ -7,9 +7,9 @@
 //     buy is shop.buyKeyPower() (the v3 swap counts the POWER LEVEL achievement), on a 1 s KitHoldButton (one POWER
 //     per hold). The plate is a tilted square carrying the kit POWER key.
 //   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
-//   * STOCK (right) — six GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
-//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. The SEALED EPIC+ / LEGENDARY+ ROLLS
-//     (065) are sold by the SERVER (serverTickets.buyTicket) and open in place (SealedRollReveal).
+//   * STOCK (right) — GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
+//     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. The SEALED EPIC+ ROLL
+//     (065) are sold by the SERVER (serverTickets.buyTicket) and open in place (SealedRollReveal). 069: EPIC+ only (500).
 // Motion: kit one-shots only (pill count / deny, stamp slam, BOUGHT! float, plate bump); nothing loops at rest.
 import { Suspense, useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
@@ -51,6 +51,7 @@ const NOTE = {
   offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
   budget: 'NOT YET — PLAY A LITTLE MORE',
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
+  not_sold: 'NOT IN THE SHOP ANYMORE',
 };
 
 const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
@@ -386,7 +387,7 @@ export default function ShopV2({ onBack }) {
             ) : null}
             {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
             {SHELF_ORDER(STOCK).map((it) => (
-              <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} ref={(el) => { cards.current[it.id] = el; }}>
+              <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
               </div>
             ))}

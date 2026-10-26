@@ -13,8 +13,9 @@
 //                                                  directly, never the R3 2nd slot (that multiplied ×10 × ×10 = ×100)
 //   RARE       +5 MIN BOOSTS           150  ×2   → +5 min on the running XP / WINS / LUCK boosts ONLY — never OVERDRIVE
 //                                                  (Andy oct8)
-//   EPIC       SEALED EPIC+ ROLL       150  ×2   → a SERVER ticket (065 lb_ticket_buy) — guaranteed EPIC or better
-//   LEGENDARY  SEALED LEGENDARY+ ROLL  750  ×1   → a SERVER ticket — guaranteed LEGENDARY or better (Andy oct24)
+//   EPIC       SEALED EPIC+ ROLL       500  ×2   → a SERVER ticket (065 lb_ticket_buy) — guaranteed EPIC or better
+//              (069, Andy oct26: 150 → 500, and the LEGENDARY+ ROLL left the shop — "like 10x better than rolling";
+//              LEGENDARY+ tickets still come from the daily wheel jackpot / streak grants)
 //
 // Every write is a no-op with the SEASON2 flag OFF (store.js set()). LEAF-ish: imports store.js, boost.js and
 // gemsCore.js only (never hooks.js / unlocks.js — they import THIS).
@@ -41,12 +42,11 @@ export const STOCK = [
   // Andy oct12: EVERYTHING BOOST — was TIME BOOST (+5 MIN on a running boost, useless with none). Now it STARTS the XP,
   // WINS and LUCK boosts together for 5 min (a running one gains 5 min). Never OVERDRIVE. id kept (saves' stock counts).
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
-  // 065 SEALED ROLLS (Andy oct24): a guaranteed EPIC+ / LEGENDARY+ gear roll. NOT bought here: the SERVER sells it
+  // 065 SEALED ROLL (Andy oct24; 069 oct26: EPIC+ only, 500): a guaranteed EPIC+ gear roll. NOT bought here: the SERVER sells it
   // (lb_ticket_buy — price, hourly stock and the floor are its own; rollTickets.js TICKET_SHOP mirrors them) and the shop
   // card routes the tap there (buyStock answers 'ticket'). the card draws the vessel (VesselArt). NO tagline (Andy oct25:
   // too much writing) — the art + tier word + price carry it; new-gear-first stays a quiet server behaviour.
-  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', price: 150, max: 2 },
-  { id: 'legroll', rarity: 'legendary', ticket: 'legendary', name: 'SEALED ROLL', big: 'LEGENDARY+', price: 750, max: 1 },
+  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', price: 500, max: 2 },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },

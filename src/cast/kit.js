@@ -1,9 +1,7 @@
 // kit.js — HERO COMPONENTS (oct24, Andy: "cooler heroes, frames, and SO MUCH MORE … components? we def lacking
-// components rn"). A component is owned ONCE and worn on ANY hero, so a few painted pieces make many looks (Among Us
-// pets, Fortnite back bling, Rocket League borders + goal explosions). Three slots:
-//  · SIDEKICK — a small painted pet that stands at your hero's feet wherever your hero is drawn big (profile showcase,
-//    the WIN results card). Two painted frames each (public/cast/kit/<id>-0/1.webp — rest + action, ChatGPT, one
-//    matched 3x2 sheet per frame) that it flips between now and then.
+// components rn"). A component is owned ONCE and worn on ANY hero, so a few painted pieces make many looks (Rocket
+// League borders + goal explosions). Two slots (the SIDEKICK slot was removed oct26 by Andy; an old
+// save's `pet` key / owned sidekick ids are simply ignored on read and dropped on the next write):
 //  · FRAME — a painted card frame (public/cards/frame-<id>.webp, ChatGPT, the ELITE / LEGEND frames as the layout
 //    reference) that turns your hero in the PROFILE into a framed card. Each frame's art + name-plate windows were
 //    measured off the cut (% of the frame). The five MODE frames are the MASTERY ROAD's frame node (masteryRoad.js
@@ -16,18 +14,6 @@ import { getRebirths } from '../progress/xp.js';
 import { spendGems } from '../progress/gems.js';
 import { itemPurchased } from '../lib/events.js';
 import { totalWins } from './cast.js';
-
-export const SIDEKICKS = [
-  { id: 'pup', name: 'BOMB PUP', tag: 'GOOD BOY. HIGHLY EXPLOSIVE.', color: '#2EFFE0' },
-  { id: 'inky', name: 'INKY', tag: 'GETS EVERYWHERE', color: '#9A1AFF', wins: 15, price: 400 },
-  { id: 'ducky', name: 'DUCKY', tag: 'TOO COOL TO QUACK', color: '#FFE94A', wins: 30, price: 500 },
-  { id: 'worm', name: 'BOOKWORM', tag: 'HAS READ THE DICTIONARY. TWICE.', color: '#B8F632', wins: 50, price: 650 },
-  { id: 'pixel', name: 'PIXEL', tag: 'RUNS ON 8 BITS OF JOY', color: '#2EFFE0', wins: 80, price: 900 },
-  // the rare one: a rebirth gate, then gems (like a LEGEND hero)
-  { id: 'turbo', name: 'TURBO', tag: 'FASTEST SNAIL ALIVE', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
-  // DAILY WHEEL only (067_daily_wheel.sql picks it; never sold). Painted oct25 (both frames rest pose; the Sidekick hop is code).
-  { id: 'lucky', name: 'LUCKY', tag: 'SPINS TO WIN', color: '#FFC23D', wheel: true, rare: true },
-].map((k) => ({ ...k, slot: 'pet' }));
 
 // art / plate = the frame's two windows [x, y, w, h], % of the frame image; ar = its width / height
 const F = (id, name, tag, color, ar, art, plate, more) => ({ id, name, tag, color, ar, art, plate, slot: 'frame', ...more });
@@ -54,13 +40,13 @@ export const WIN_FX = [
   // DAILY WHEEL only — PLACEHOLDER art (a copy of FIREWORKS)
   { id: 'confetti', name: 'PRIZE SHOWER', tag: 'EVERYBODY WINS (MOSTLY YOU)', color: '#FFC23D', wheel: true, rare: true },
 ].map((k) => ({ ...k, slot: 'fx' }));
-const ALL_KIT = [...SIDEKICKS, ...FRAMES, ...WIN_FX];
+const ALL_KIT = [...FRAMES, ...WIN_FX];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
-export const kitSrc = (id, frame = 0) => {
+export const kitSrc = (id) => {
   const k = kitById(id);
   if (k && k.slot === 'frame') return `/cards/frame-${id}.webp`;
   if (k && k.slot === 'fx') return `/fx/win/${id}.webp`;
-  return `/cast/kit/${id}-${frame}.webp`;
+  return null; // an unknown / retired id has no art
 };
 
 // a season-2 key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
@@ -71,8 +57,8 @@ export function readKit() {
     const v = JSON.parse(localStorage.getItem(KIT_KEY) || '{}');
     const own = Array.isArray(v && v.own) ? v.own.filter((id) => kitById(id)) : [];
     const slot = (k) => (v && SLOT_OK(k, v[k]) ? v[k] : null);
-    return { own, pet: slot('pet'), frame: slot('frame'), fx: slot('fx') };
-  } catch { return { own: [], pet: null, frame: null, fx: null }; }
+    return { own, frame: slot('frame'), fx: slot('fx') };
+  } catch { return { own: [], frame: null, fx: null }; }
 }
 function writeKit(k) {
   try { localStorage.setItem(KIT_KEY, JSON.stringify(k)); } catch { /* blocked storage */ }
@@ -128,20 +114,17 @@ export function grantKit(id) {
   return true;
 }
 
-/** The sidekick you wear (null = none). */
-export const equippedPet = () => readKit().pet;
 /** The frame you wear (null = none). */
 export const equippedFrame = () => readKit().frame;
 /** The WIN FX you wear (null = the default burst). */
 export const equippedFx = () => readKit().fx;
-/** Wear a component you own in its slot, or clear a slot ('pet' | 'frame' | 'fx', id null). Returns false when it isn't yours. */
+/** Wear a component you own in its slot, or clear a slot ('frame' | 'fx', id null). Returns false when it isn't yours. */
 export function wearKit(slot, id) {
   if (id != null && (!SLOT_OK(slot, id) || !ownsKit(id))) return false;
   const k = readKit();
   writeKit({ ...k, [slot]: id });
   return true;
 }
-export const equipPet = (id) => wearKit('pet', id);
 /** Buy + wear a component with gems (you see exactly what you buy — never a loot box). { ok, reason? }: 'unknown' |
  *  'locked' (its rebirth gate, or a road frame — never sold) | 'unaffordable'. One you already have just goes on. */
 export function buyKit(id) {
@@ -152,7 +135,7 @@ export function buyKit(id) {
     if (!spendGems(s.price)) return { ok: false, reason: 'unaffordable' };
     const k = readKit();
     writeKit({ ...k, own: [...k.own, id] });
-    itemPurchased(id, { pet: 'sidekick', frame: 'frame', fx: 'winfx' }[s.slot]);
+    itemPurchased(id, { frame: 'frame', fx: 'winfx' }[s.slot]);
   }
   wearKit(s.slot, id);
   return { ok: true };

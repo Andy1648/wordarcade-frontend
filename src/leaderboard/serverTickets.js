@@ -5,11 +5,11 @@
 //   rollTicket(t)        lb_ticket_roll → the reserved pick (asking again returns the SAME one — no re-rolls)
 //   claimTicket(id)      lb_ticket_claim on the reveal's landing (a failure is kept and retried on the next list)
 //   streakCheckin(day)   lb_streak_checkin — the STREAK CALENDAR's server-checked step (DAY 4 / DAY 7 mint tickets)
-//   buyTicket(tier)      065 lb_ticket_buy — the SHOP's sealed EPIC+ / LEGENDARY+ ROLL (gems → a server ticket)
+//   buyTicket(tier)      065 lb_ticket_buy — the SHOP's sealed EPIC+ ROLL (gems → a server ticket; 069: EPIC+ only)
 // The floor tier is never sent: the server reads it from its own ticket row.
 import { getSecret, rpc } from './client.js';
 import { serverRollOn } from './serverRoll.js';
-import { normalizeTickets, spendPick, TICKET_SHOP, buyOutcome } from '../progress/rollTickets.js';
+import { normalizeTickets, spendPick, TICKET_SHOP, SHOP_TIERS_EVER, buyOutcome } from '../progress/rollTickets.js';
 import { loadGemState, saveGemState, tellBalance } from '../progress/gemsCore.js';
 
 const BUY_KEY = 'taw.s2.ticketbuy'; // 065: a PAID buy whose answer is not in yet — { req, tier, price } (retried, never re-charged)
@@ -97,7 +97,7 @@ export async function streakCheckin(day) {
 function readBuy() {
   try {
     const o = JSON.parse(localStorage.getItem(BUY_KEY) || 'null');
-    return o && typeof o.req === 'string' && TICKET_SHOP[o.tier] && Number.isFinite(o.price) ? o : null;
+    return o && typeof o.req === 'string' && SHOP_TIERS_EVER.includes(o.tier) && Number.isFinite(o.price) ? o : null;
   } catch { return null; }
 }
 function writeBuy(o) {
@@ -141,8 +141,9 @@ async function settleBuy() {
 export const buyPending = () => !!readBuy();
 
 /**
- * BUY a sealed `tier` ROLL ('epic' | 'legendary') for its gems. Resolves { ok: true, ticket: { id, tier }, left } or
- * { ok: false, reason: 'soon' | 'offline' | 'gems' | 'sold_out' | 'budget' | ... , short? }.
+ * BUY a sealed `tier` ROLL ('epic' — the only one sold since 069) for its gems. The wallet pays the price the card shows
+ * (TICKET_SHOP); the server books its own price against the gem budget — a pre-069 server's 150 is tolerated, never an error. Resolves { ok: true, ticket: { id, tier }, left } or
+ * { ok: false, reason: 'soon' | 'offline' | 'gems' | 'sold_out' | 'budget' | 'not_sold' | ... , short? }.
  */
 export async function buyTicket(tier) {
   const item = TICKET_SHOP[tier];

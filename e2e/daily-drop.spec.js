@@ -148,7 +148,7 @@ test('the ⓘ shows the printed odds; the DAILY CHEST is the first BOOSTS card, 
   expect(m.pageScroll).toBeLessThanOrEqual(0);
   expect(m.minGap, 'every price stays inside its card').toBeGreaterThanOrEqual(0);
   expect(m.first, 'the DAILY CHEST is the first BOOSTS card').toBe('daily-chest');
-  await expect(shop.locator('.sp2-card')).toHaveCount(8); // the chest + the 5 boosts + the 2 SEALED ROLLS (the shelf scrolls for more)
+  await expect(shop.locator('.sp2-card')).toHaveCount(7); // the chest + the 5 boosts + the SEALED EPIC+ ROLL (069: LEGENDARY+ left the shop; the shelf scrolls for more)
   await page.locator('.sp2-pop-x').click();
   await expect(page.locator('.sp2-pop')).toHaveCount(0);
 });

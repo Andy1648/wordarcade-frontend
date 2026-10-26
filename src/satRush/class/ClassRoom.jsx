@@ -14,12 +14,15 @@
 // scrolls and the actions are always on screen; the body's lists (roster, names, summary) get denser
 // as the class grows and only as a last resort scroll inside their own box.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import PrintPicker from '../PrintPicker';
+import { usePressOnChange } from '../press';
 import { useClassRoom } from './useClassRoom';
 import { qrPath } from './qr';
 import { classReport } from './classReport';
 import { bandWords, difficultiesFor, DIFFICULTY_ORDER } from '../runSpec';
 import { withArticle, speakFr, canSpeak, setAutoSpeak } from '../speak';
 import { formatNum } from '../../format';
+import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
 
 const LENGTHS = [10, 20, 30];
@@ -51,6 +54,11 @@ function shuffled(rows) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// the longest word in a line (its letters), floored so a short word never blows up past the type cap
+function longest(text) {
+  return Math.max(6, ...String(text || '').split(/\s+/).map((w) => w.length));
 }
 
 // a list gets denser as it grows (chip size / columns), so a 40-student class still fits the frame
@@ -153,16 +161,13 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
     >
       <div className="fr-class-setup">
         <div className="fr-class-setup-col">
-          <label className="fr-class-select">
-            <span className="sr-setup-label">theme</span>
-            <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-              {['all', ...categories.map((c) => c.id)].map((id) => (
-                <option key={id} value={id}>
-                  {label(id)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <PrintPicker
+            className="fr-class-select"
+            label="theme"
+            value={theme}
+            options={['all', ...categories.map((c) => c.id)].map((id) => ({ value: id, label: label(id) }))}
+            onChange={setTheme}
+          />
           <Pick
             label="level"
             cls="fr-three"
@@ -326,7 +331,11 @@ function TallyBar({ t, review }) {
       <div className="fr-class-legend">
         {parts.map(([k, v, label]) => (
           <span key={k} className={`leg ${k}`}>
-            <b>{formatNum(v)}</b> {label}
+            {/* keyed by the value: a count that moves stamps itself in again (the console feels the room) */}
+            <b key={v} className="fr-pop">
+              {formatNum(v)}
+            </b>{' '}
+            {label}
           </span>
         ))}
         {t.away > 0 && <span className="leg away">{formatNum(t.away)} away</span>}
@@ -343,7 +352,11 @@ function useConsoleKeys(primary, toggleNames) {
   useEffect(() => {
     const onKey = (e) => {
       const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || t.isContentEditable)) return;
+      if (e.defaultPrevented || e.repeat) return;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      // a focused button keeps Enter / Space (its own click); the clicker's → / PageDown and N always reach the
+      // console (oct26: after one mouse click on REVEAL, a presenter clicker did nothing for the rest of class)
+      if (t && t.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
         if (ref.current.primary) {
           e.preventDefault();
@@ -422,10 +435,14 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
           </div>
           <div className="fr-class-people">
             <div className="fr-class-joined">
-              <b>{formatNum(roster.length)}</b> joined
-              {roster.length > 0 && <NamesToggle on={showNames} set={setShowNames} />}
+              {/* keyed by the count: each new student stamps the number in again */}
+              <b key={roster.length} className="fr-class-joined-n">
+                {formatNum(roster.length)}
+              </b>
+              <span className="fr-class-joined-label">{roster.length === 1 ? 'student in' : 'students in'}</span>
             </div>
-            {roster.length === 0 && <div className="fr-class-none">no one yet — share the code</div>}
+            {roster.length === 0 && <div className="fr-class-none">waiting for the first one</div>}
+            {roster.length > 0 && <NamesToggle on={showNames} set={setShowNames} />}
             {showNames && roster.length > 0 && <Chips names={roster} onKick={host.kick} size={roster.length} />}
           </div>
         </div>
@@ -437,6 +454,14 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
     const rows = (snap.summary || []).slice().sort((a, b) => b.miss - a.miss || b.hinted - a.hinted);
     const answered = rows.reduce((n, r) => n + r.clean + r.hinted + r.miss, 0);
     const got = rows.reduce((n, r) => n + r.clean + r.hinted, 0);
+    const pct = answered ? Math.round((100 * got) / answered) : 0;
+    const totals = {
+      total: answered,
+      clean: rows.reduce((n, r) => n + r.clean, 0),
+      hinted: rows.reduce((n, r) => n + r.hinted, 0),
+      miss: rows.reduce((n, r) => n + r.miss, 0),
+      away: 0,
+    };
     // REPLAY = the words the class actually struggled with: missed by at least a quarter of the class
     // (or by anyone, in a small class), hardest first, at most 10 — not every word one student missed
     const missedRows = rows
@@ -450,7 +475,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
     return (
       <Page
         title="CLASS DONE"
-        sub={answered ? `the class got ${Math.round((100 * got) / answered)}% · hardest words first` : 'hardest words first'}
+        sub={`${formatNum(snap.total)} words · ${formatNum(roster.length)} ${roster.length === 1 ? 'student' : 'students'} · hardest first`}
         note={note}
         wide
         onBack={onLeave}
@@ -471,24 +496,37 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
           </>
         }
       >
-        <ol className={`fr-class-summary ${density(rows.length)}`}>
-          {rows.map((r) => {
-            const tot = Math.max(1, r.clean + r.hinted + r.miss);
-            return (
-              <li key={r.index}>
-                <span className="fr-class-sum-word">{r.word}</span>
-                <span className="fr-class-bar mini" aria-hidden="true">
-                  {r.clean > 0 && <span className="seg clean" style={{ width: `${(100 * r.clean) / tot}%` }} />}
-                  {r.hinted > 0 && <span className="seg hinted" style={{ width: `${(100 * r.hinted) / tot}%` }} />}
-                  {r.miss > 0 && <span className="seg miss" style={{ width: `${(100 * r.miss) / tot}%` }} />}
-                </span>
-                <span className={`fr-class-sum-miss${r.miss ? ' bad' : ''}`} aria-label={`${r.miss} missed`}>
-                  {r.miss ? `✗${formatNum(r.miss)}` : '✓'}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="fr-class-done">
+          <div className="sr-panel fr-class-score">
+            <div className="sr-panel-label">the class</div>
+            <div className="fr-class-score-n sr-print" data-v={`${pct}%`}>
+              {pct}%
+            </div>
+            <TallyBar t={totals} review />
+          </div>
+          <ol className={`fr-class-summary ${density(rows.length)}`}>
+            {rows.map((r) => {
+              const tot = Math.max(1, r.clean + r.hinted + r.miss);
+              const w = snap.rows && snap.rows[r.index];
+              return (
+                <li key={r.index} className={r.miss ? 'missed' : ''}>
+                  <span className="fr-class-sum-word">
+                    <b>{w ? withArticle(w.word, w.pos, w.gender) : r.word}</b>
+                    {w && w.gloss && <span className="fr-class-sum-gloss">{w.gloss}</span>}
+                  </span>
+                  <span className="fr-class-bar mini" aria-hidden="true">
+                    {r.clean > 0 && <span className="seg clean" style={{ width: `${(100 * r.clean) / tot}%` }} />}
+                    {r.hinted > 0 && <span className="seg hinted" style={{ width: `${(100 * r.hinted) / tot}%` }} />}
+                    {r.miss > 0 && <span className="seg miss" style={{ width: `${(100 * r.miss) / tot}%` }} />}
+                  </span>
+                  <span className={`fr-class-sum-miss${r.miss ? ' bad' : ''}`} aria-label={`${r.miss} missed`}>
+                    {r.miss ? `✗${formatNum(r.miss)}` : '✓'}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </Page>
     );
   }
@@ -518,10 +556,12 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
         {row && (
           <div className="sr-panel fr-class-clue">
             <div className="sr-panel-label">{word ? 'the clue' : 'the answer'}</div>
-            <div className="fr-class-gloss">{row.gloss}</div>
+            <div className="fr-class-gloss" style={{ '--len': longest(row.gloss) }}>
+              {row.gloss}
+            </div>
             {review && (
               <>
-                <div className="fr-class-answer">
+                <div className="fr-class-answer" key={`a-${snap.index}`} style={{ '--len': longest(withArticle(row.word, row.pos, row.gender)) + 1 }}>
                   {withArticle(row.word, row.pos, row.gender)}
                   {canSpeak() && (
                     <button type="button" className="sr-say" onClick={() => speakFr(row.word)} aria-label={`say ${row.word}`}>
@@ -530,6 +570,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
                   )}
                 </div>
                 {row.context && <p className="fr-class-context">“{row.context.replace(/_+/, row.word)}”</p>}
+                <EnglishLine text={row.contextEn} className="fr-class-context-en" />
               </>
             )}
           </div>
@@ -752,6 +793,44 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     bump((n) => n + 1);
   };
   if (standbyRef) standbyRef.current = standby;
+
+  // THE PRESS (oct26): each class screen comes off the press titled in French (English underneath); on the
+  // console every new word is a quick sheet — MOT 4 — so the room sees the page turn.
+  let screen;
+  let press = null;
+  if (cr.closed) {
+    screen = 'closed';
+    press = ['AU REVOIR', 'class over', 'back'];
+  } else if (snap && snap.role === 'host') {
+    if (newSet) {
+      screen = 'newset';
+      press = ['NOUVEAU', 'new set'];
+    } else if (snap.phase === 'lobby') {
+      screen = `lobby-${snap.round}`;
+      press = ['OUVERT !', 'the class is open'];
+    } else if (snap.phase === 'done') {
+      screen = `done-${snap.round}`;
+      press = ['BRAVO !', 'class done'];
+    } else {
+      screen = `run-${snap.round}-${snap.index}`;
+      press = snap.index === 0 ? ["C'EST PARTI !", 'here we go'] : [`MOT ${snap.index + 1}`, `word ${snap.index + 1} of ${snap.total}`, 'forward', true];
+    }
+  } else if (snap && snap.role === 'student') {
+    if (runRef.current.started) screen = 'student-run'; // the game presses its own sheet
+    else if (snap.phase === 'done') {
+      screen = 'student-done';
+      press = ['BRAVO !', 'class done'];
+    } else {
+      screen = 'student-wait';
+      press = snap.round > 1 ? ['EN ATTENTE', 'next set soon'] : ['BIENVENUE', "you're in"];
+    }
+  } else if (cr.hasSeat || offline) {
+    screen = 'connecting';
+  } else {
+    screen = stage;
+    press = stage === 'setup' ? ['LE PROF', 'teacher'] : stage === 'join' ? ['REJOINS', 'join a class'] : ['EN CLASSE', 'class room'];
+  }
+  usePressOnChange(screen, press, entry !== 'join');
 
   if (cr.closed) {
     return <Page title="CLASS ROOM" sub={CLOSED_COPY[cr.closed] || 'The class is over.'} onBack={leave} backLabel="HOME" />;
