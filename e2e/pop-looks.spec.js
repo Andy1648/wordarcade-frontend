@@ -32,19 +32,23 @@ async function popDress(page) {
       const e = els[els.length - 1];
       if (!e) return null;
       const c = getComputedStyle(e);
-      return { color: c.color, stroke: c.webkitTextStrokeColor, shadow: c.textShadow };
+      const art = e.parentElement.querySelector('.menu-xp-pop-art');
+      return { color: c.color, stroke: c.webkitTextStrokeColor, shadow: c.textShadow, art: art && art.style.display === 'block' ? art.getAttribute('src') : null };
     });
     return !!dress;
   }, { timeout: 10_000 }).toBe(true);
   return dress;
 }
 
-test('GOLD: the menu +N pops are gold with a dark-gold outline and a hard shadow', async ({ page }) => {
+// oct25: a paid look throws its painted BURST behind the pop (the look's colour lives in the art), and the number reads
+// on top of it in white with a black outline + hard shadow (a gold number vanished on the gold burst).
+test('GOLD: the menu +N pops throw the gold burst, the number white with a black outline and a hard shadow', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await menuWith(page, 'gold');
   const d = await popDress(page);
-  expect(d.color).toBe('rgb(255, 213, 74)');
-  expect(d.stroke).toBe('rgb(122, 82, 0)');
+  expect(d.art).toContain('burst-gold');
+  expect(d.color).toBe('rgb(255, 255, 255)');
+  expect(d.stroke).toBe('rgb(0, 0, 0)');
   expect(d.shadow).toContain('3px 3px 0px');
 });
 
@@ -54,6 +58,7 @@ test('CLASSIC keeps the old dress (black outline, no look shadow)', async ({ pag
   const d = await popDress(page);
   expect(d.stroke).toBe('rgb(0, 0, 0)');
   expect(d.shadow).not.toContain('3px 3px 0px');
+  expect(d.art).toBeNull();
 });
 
 test('equipping a look while the menu is open re-dresses the next pop (no reload)', async ({ page }) => {
@@ -67,8 +72,7 @@ test('equipping a look while the menu is open re-dresses the next pop (no reload
   });
   await page.waitForTimeout(1500); // let the classic pops finish
   const d = await popDress(page);
-  expect(d.color).toBe('rgb(158, 255, 46)');
-  expect(d.stroke).toBe('rgb(44, 90, 0)');
+  expect(d.art).toContain('burst-toxic');
 });
 
 if (SHOTS) {
