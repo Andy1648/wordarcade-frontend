@@ -18,7 +18,7 @@
   --mn-panel: #1a0b2e;
   position: relative;
   z-index: 40;
-  width: min(1180px, 96vw);
+  width: min(1180px, 100%);
   height: calc(100dvh - 16px);
   max-height: 900px;
   margin: auto;
@@ -163,6 +163,7 @@
   color: #000;
 }
 .mn-col-track {
+  --mn-dig-h: clamp(48px, 9vh, 92px);
   position: relative;
   width: 100%;
   max-width: 96px;
@@ -189,7 +190,8 @@
 .mn-col-slide {
   position: absolute;
   inset: 0;
-  transform: translateY(calc(var(--d, 0) * 100%));
+  /* travel = the track minus the digger, so the digger starts inside the track (never over the name) and ends on it */
+  transform: translateY(calc(var(--d, 0) * (100% - var(--mn-dig-h))));
   transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
@@ -197,10 +199,11 @@
   position: absolute;
   left: 50%;
   top: 0;
-  width: min(70px, 92%);
+  height: var(--mn-dig-h);
+  max-width: 96%;
   aspect-ratio: 2 / 3;
   object-fit: contain;
-  transform: translate(-50%, -62%);
+  transform: translateX(-50%);
 }
 .mn-col.is-out .mn-digger,
 .mn-col.is-left .mn-digger {
@@ -211,7 +214,7 @@
   left: 50%;
   top: 0;
   margin-left: -16px;
-  margin-top: 4px;
+  margin-top: calc(var(--mn-dig-h) - 30px);
 }
 .mn-col-lock {
   position: absolute;
@@ -492,10 +495,11 @@
   font-size: var(--fs-label);
 }
 .mn-pick-word {
+  min-width: 0;
   font-weight: 700;
   font-size: var(--fs-body);
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .mn-pick-gain {
   font-family: 'Bungee', sans-serif;
@@ -564,7 +568,7 @@
 }
 .mn-st {
   display: grid;
-  grid-template-columns: 3em minmax(0, 6em) minmax(0, 1fr) auto;
+  grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1.3fr) auto;
   align-items: center;
   gap: 8px;
   padding: 2px 10px;
@@ -593,7 +597,8 @@
   font-weight: 700;
   font-size: var(--fs-label);
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 .mn-st-depth {
   font-family: 'Bungee', sans-serif;
@@ -699,7 +704,7 @@
 /* ---------------------------------------------------------------- phone: shaft on top, panel under */
 @media (max-width: 760px), (max-aspect-ratio: 4/5) {
   .mn-root {
-    width: 100vw;
+    width: 100%;
     height: 100dvh;
     max-height: none;
     border-width: 0;
@@ -710,8 +715,8 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
   }
-  .mn-digger {
-    width: min(48px, 92%);
+  .mn-col-track {
+    --mn-dig-h: clamp(40px, 7vh, 64px);
   }
   .mn-col-depth {
     font-size: var(--fs-panel);
@@ -723,6 +728,22 @@
   .mn-seats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* RESULTS on a phone: the board is done — the standings get the whole screen */
+  .mn-root[data-miner-status='over'] .mn-body {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .mn-root[data-miner-status='over'] .mn-shaft {
+    display: none;
+  }
+  .mn-st {
+    grid-template-columns: 3em minmax(0, 1fr) auto;
+    grid-template-areas: 'place name depth' 'place best depth';
+    row-gap: 0;
+  }
+  .mn-st-place { grid-area: place; }
+  .mn-st-name { grid-area: name; }
+  .mn-st-best { grid-area: best; }
+  .mn-st-depth { grid-area: depth; }
 }
 
 @media (prefers-reduced-motion: reduce) {

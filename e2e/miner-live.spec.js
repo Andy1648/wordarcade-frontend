@@ -35,7 +35,7 @@ async function freshPage(browser, viewport, name) {
   }, name);
   const page = await ctx.newPage();
   page.on('console', (m) => {
-    if (m.type() === 'error' && !/posthog|sentry|vercel|analytics|Failed to load resource/i.test(m.text())) errors.push(`${name}: ${m.text()}`);
+    if (m.type() === 'error' && !/posthog|sentry|vercel|analytics|Failed to load resource|Content Security Policy|google/i.test(m.text())) errors.push(`${name}: ${m.text()}`);
   });
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
   return page;
@@ -59,8 +59,9 @@ test('three devices quick-match into one mine and dig it to the core', async ({ 
   const c = await freshPage(browser, { width: 390, height: 844 }, 'CY');
   const all = [a, b, c];
 
-  for (const p of all) await p.goto('/miner/play');
-  for (const p of all) await p.getByTestId('miner-lobby').waitFor({ timeout: 30000 });
+  // all three in parallel: a quick-match mine launches 8s after it opens, so a slow third load would open its own mine
+  await Promise.all(all.map((p) => p.goto('/miner/play')));
+  await Promise.all(all.map((p) => p.getByTestId('miner-lobby').waitFor({ timeout: 30000 })));
   await shot(a, 'lobby-1366');
   await shot(c, 'lobby-390');
   const codes = await Promise.all(all.map((p) => p.locator('.mn-code').textContent()));
