@@ -16,6 +16,7 @@ import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
+import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
@@ -1349,7 +1350,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
-    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null } : null,
+    // THE POWER FORM (Andy oct26): the tile wears the painted form your POWER has reached (powerArt.js), not a stock bolt
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden

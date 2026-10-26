@@ -1067,7 +1067,11 @@
 .lb2-row.is-me .lb2-name-line { max-width: 100%; }
 .lb2--narrow .lb2-row.is-me .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row.is-me .lb2-you { display: none; }
-@container (max-width: 320px) { .lb2-row.is-me .lb2-band-tag { display: none; } }
+/* oct26: the band tag moved OFF the name line (a FitText-shrunk name ran under it at wide stages) INTO the chase line's
+   FitText, after "PASS <rival> FOR #n" — one box that scales as a whole, so the tag can never cover a name. On a narrow
+   cell it steps aside (the rival is the nearer goal) so the rival line keeps a readable size. */
+.lb2-chase-fit .lb2-band-tag { display: inline-block; margin-left: 8px; padding: 0 5px; font-size: var(--fs-k14); line-height: 1.1; vertical-align: baseline; }
+@container (max-width: 300px) { .lb2-row.is-me .lb2-band-tag { display: none; } }
 /* the chase names the rival in FULL: a long rival scales the line down (FitText) instead of ending in "…" */
 .lb2-chase .fit-box.lb2-chase-fit { overflow: visible; }
 /* PHONE PODIUM NAMES (audit oct25): the name plate was a content-sized flex item, so FitText's own shrink (a negative
