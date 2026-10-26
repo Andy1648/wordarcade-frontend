@@ -685,3 +685,23 @@
 @media (max-width: 999px), (min-width: 1000px) and (max-height: 680px) {
   .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k20); white-space: nowrap; }
 }
+
+/* 069 (Andy oct26): the LEGENDARY+ ROLL left the shop — 7 cards, which leaves a lone card on the last row of both the
+   3-column desktop shelf and the 2-column phone shelf. Two WIDE cards rebalance it, so every row is full:
+   desktop  [chest][ EPIC+ ROLL  ] / [xp][wins][luck] / [overdrive][ EVERYTHING ]
+   phone    [EPIC+][chest] / [xp][wins] / [luck][overdrive] / [ EVERYTHING ]
+   The wide cards keep their content column at a card's width (the price bar never stretches across two cells). */
+@media (min-width: 1000px) {
+  .sp2-cell.is-ticket,
+  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
+}
+@media (max-width: 999px) {
+  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
+}
+@media (min-width: 1000px) {
+  .sp2-cell.is-ticket .sp2-price,
+  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 20px), 260px); }
+}
+@media (max-width: 999px) {
+  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 10px), 170px); }
+}
