@@ -1,0 +1,31 @@
+/* CardLayers.css — the layered card's ACT pieces (cardActs.js). The backdrop / hero / FX layers keep their rules in
+   GameCard.css (.gc-l*). Nothing here moves at rest: parts are invisible until an act plays them (WAAPI, no fill), the
+   actor wrapper sits at identity. No will-change here — cardActs sets it for the run only. */
+.gc-actor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* The hero's own frame, so a part can ride the hero (the spark on FUSE's fuse): the same pose + hover lean as
+   .gc-l-hero, without its one-shot entrance (parts are invisible then anyway). */
+.gc-heroframe {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translate(0, var(--gc-hy, -11%)) scale(var(--gc-hs, 0.76));
+  transform-origin: 50% 40%;
+  transition: rotate 1100ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+.game-card:hover .gc-heroframe { rotate: var(--gc-lean, -9deg); }
+.gc-p {
+  position: absolute;
+  height: auto;
+  aspect-ratio: 1;
+  translate: -50% -50%; /* centred on its spot; the act animates `transform`, which composes with this */
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .game-card:hover .gc-heroframe { rotate: none; }
+}
