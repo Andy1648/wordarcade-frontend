@@ -114,16 +114,16 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
     );
   } else if (ex.kind === 'ore') {
     body = (
-      <div className="mode-ex-line mode-ex-ore">
+      <div className="mode-ex-line mode-ex-orewrap">
         <span className="mode-ex-word" style={{ color: accent }}>“{ex.prompt}”</span>
-        <span className="mode-ex-arrow" aria-hidden="true">→</span>
-        {ex.picks.map(([w, ore], i) => (
-          <span key={w} className="mode-ex-tok">
-            {i > 0 && <span className="mode-ex-sep" aria-hidden="true">·</span>}
-            <img className="mode-ex-ore" src={ORES[ore].art} alt={ORES[ore].name} draggable="false" />
-            <span className="mode-ex-word">{w}</span>
-          </span>
-        ))}
+        <span className="mode-ex-ores">
+          {ex.picks.map(([w, ore]) => (
+            <span key={w} className="mode-ex-orechip">
+              <img className="mode-ex-ore" src={ORES[ore].art} alt={ORES[ore].name} draggable="false" />
+              <span className="mode-ex-ore-w">{w}</span>
+            </span>
+          ))}
+        </span>
       </div>
     );
   } else if (ex.kind === 'define') {
