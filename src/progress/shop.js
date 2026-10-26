@@ -130,8 +130,9 @@ export function getEquippedSoundPack() {
   return getEquipped().soundPack;
 }
 
-// The legacy XP multiplier carried by an item id (1.0 if unknown / has none). v11: NOT applied to any XP
-// (cosmetics are looks only). Pure lookups over the catalog above.
+// The XP multiplier carried by an item id (1.0 if unknown / has none). POP STYLES PAY AGAIN (oct24, Andy: "each gives
+// an XP MULTIPLIER (like v1)"): the equipped pop style's xpMult rides every XP-per-key read (letterXp.letterXpNow and
+// the menu's readGain), cached per equip (EQUIP_CHANGE) so no key reads storage. Sound packs stay looks only.
 export function xpMultOf(id) {
   const it = itemById(id);
   return it && Number.isFinite(it.xpMult) && it.xpMult > 0 ? it.xpMult : 1;

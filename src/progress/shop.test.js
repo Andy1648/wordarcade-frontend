@@ -197,3 +197,21 @@ test('Andy oct2: buying a cosmetic auto-equips it', () => {
     globalThis.localStorage = prev;
   }
 });
+
+test('POP STYLES pay their xpMult again (oct24): the worn pop multiplies letterXpNow; equipping re-reads it', async () => {
+  const store = new Map();
+  globalThis.localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
+  const listeners = {};
+  globalThis.window = { addEventListener: (t, f) => { (listeners[t] = listeners[t] || []).push(f); }, dispatchEvent: (e) => { (listeners[e.type] || []).forEach((f) => f(e)); return true; } };
+  try {
+    const LX = await import('./letterXp.js');
+    const S = await import('./shop.js');
+    window.dispatchEvent({ type: S.EQUIP_CHANGE }); // drop any value cached before this test's window existed
+    const base = LX.letterXpNow();
+    assert.equal(LX.popXpMult(), 1);
+    store.set(S.EQUIPPED_KEY, JSON.stringify({ popStyle: 'legend', soundPack: 'thock' }));
+    window.dispatchEvent({ type: S.EQUIP_CHANGE });
+    assert.equal(LX.popXpMult(), 3);
+    assert.ok(Math.abs(LX.letterXpNow() - base * 3) < 1e-9);
+  } finally { delete globalThis.localStorage; delete globalThis.window; }
+});

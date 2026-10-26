@@ -465,6 +465,7 @@
   box-shadow: 4px 4px 0 var(--k-ink);
 }
 .sp2-look.is-on { border-color: #12A99A; }
+.sp2-look-xp { font-family: var(--k-display); font-size: var(--fs-k16); color: var(--k-yellow); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .sp2-look-name { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k18); color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sp2-look-what { font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k14); color: var(--k-dim); }
 .sp2-look-act {
@@ -665,6 +666,12 @@
 .sp2-chest-art img { object-fit: contain; }
 @media (max-width: 999px) { .sp2-grid { grid-auto-rows: 224px; } }
 
+/* POP STYLE stage (oct24): the painted burst sits behind the letter swatch, a touch bigger and turned, so every card
+   shows what its pop does on the menu. Static (the burst's motion lives on the menu pop, MenuXp dressArt). */
+.sp2-look-stage { position: relative; display: grid; place-items: center; }
+.sp2-look-stage .sp2-look-art { position: relative; z-index: 1; }
+.sp2-look-burst { position: absolute; z-index: 0; width: 118%; height: 118%; object-fit: contain; transform: rotate(-12deg); opacity: .95; pointer-events: none; }
+.sp2-look.is-locked .sp2-look-burst { opacity: .45; }
 /* the SEALED ROLL canister fills its square down to the badge (the other icons have air under them): no negative bottom
    margin, so it never sits on the EPIC+ / LEGENDARY+ word */
 .sp2-card-in > .sp2-art.sp2-vessel { margin-bottom: 2px; width: auto; aspect-ratio: 1 / 1; } /* when the row is short and the art gives way (below), it shrinks as a SQUARE so the parts stay registered */
