@@ -57,8 +57,8 @@ function Stat({ icon, glyph, tone, value, label }) {
 /** @param onClose · @param onMainChange(id) the menu re-reads your hero */
 export default function ProfilePopup({ onClose, onMainChange }) {
   const [id, setId] = useState(readMain);
-  const [view, setView] = useState('profile'); // 'profile' | 'pick' | 'kit' (CUSTOMIZE: sidekick + frame)
-  const [kit, setKit] = useState(readKit); // the worn components { pet, frame, fx }
+  const [view, setView] = useState('profile'); // 'profile' | 'pick' | 'kit' (CUSTOMIZE: frame + WIN FX)
+  const [kit, setKit] = useState(readKit); // the worn components { frame, fx }
   const [peekId, setPeekId] = useState(null); // the picker can open straight onto one hero's preview
   const [cheer, setCheer] = useState(0);
   const [titles, setTitles] = useState(false); // ALL TITLES open over the profile
@@ -128,10 +128,10 @@ export default function ProfilePopup({ onClose, onMainChange }) {
             <div className="pf-left">
               {kit.frame ? (
                 // a worn FRAME (kit.js) makes your hero a CARD: the frame carries the name on its plate
-                <FramedCard frame={kit.frame} hero={h} className="pf-card"><HeroShowcase id={h.id} cheer={cheer} pet={kit.pet} /></FramedCard>
+                <FramedCard frame={kit.frame} hero={h} className="pf-card"><HeroShowcase id={h.id} cheer={cheer} /></FramedCard>
               ) : (
                 <>
-                  <HeroShowcase id={h.id} cheer={cheer} pet={kit.pet} />
+                  <HeroShowcase id={h.id} cheer={cheer} />
                   <FitText className="pf-hero fit-center">{h.name}</FitText>
                 </>
               )}

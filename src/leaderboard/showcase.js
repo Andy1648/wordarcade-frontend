@@ -48,14 +48,15 @@ export function myShowcase() {
     ...flex(),
     title: null, // 050's TITLE slot — titles were removed (Andy oct17); null clears any title already stored
     hero: readMain(), // 053: the equipped hero, so the board shows YOUR pick to everyone (an older DB just ignores the key)
-    ...kit(), // 064: the worn components (sidekick / frame / WIN FX); an older DB ignores the keys
+    ...kit(), // 064: the worn components (frame / WIN FX); an older DB ignores the keys
   };
 }
 
-/** 064: the worn HERO COMPONENTS (cast/kit.js), null for an empty slot. */
+/** 064: the worn HERO COMPONENTS (cast/kit.js), null for an empty slot. `pet` is always null: the SIDEKICK slot was
+ *  removed (oct26), and sending null clears any sidekick a row still stores. */
 function kit() {
   const k = readKit();
-  return { pet: k.pet, frame: k.frame, fx: k.fx };
+  return { pet: null, frame: k.frame, fx: k.fx };
 }
 
 /** 046: the badges (top claimed tier per achievement), the SIGNATURE WORD (rarest ever accepted), the best CHAIN. */
@@ -123,11 +124,10 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 053 + 064: the podium's looks in one read — { heroes: { id: hero }, pets: { id: sidekick } }. `select=*` so a DB
- *  before 064 (no pet column) still answers the heroes. */
+/** 053: the podium heroes in one read — { heroes: { id: hero } }. */
 export async function fetchPodium(ids) {
   const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 80);
-  const out = { heroes: {}, pets: {} };
+  const out = { heroes: {} };
   if (!BASE || !KEY || !list.length) return out;
   try {
     const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
@@ -136,7 +136,6 @@ export async function fetchPodium(ids) {
     for (const row of (await r.json()) || []) {
       if (!row || !row.profile_id) continue;
       if (typeof row.hero === 'string') out.heroes[row.profile_id] = row.hero;
-      if (typeof row.pet === 'string') out.pets[row.profile_id] = row.pet;
     }
     return out;
   } catch {

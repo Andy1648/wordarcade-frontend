@@ -17,7 +17,7 @@ const TICKET_ID = '99999999-8888-4777-8666-555555555555';
 const SHOTS = !!process.env.SHOTS;
 const DIR = process.env.SHOTS_DIR || 'claude/shots-wheel';
 
-async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'lucky' } = {}) {
+async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'jackpot' } = {}) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-wh', username: 'Spinner', level: 24, rebirths: 2, lifetime_words: 400, lifetime_letters: 2000, wins_per_word: 0, econ: 13 };
@@ -202,7 +202,7 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
 }
 
 // the wheel-only cosmetics: the painted piece shows on the result card, lands in the save, and wears where its slot is worn
-for (const [id, name, tab, slotKey] of [['lucky', 'LUCKY', 'SIDEKICK', 'pet'], ['jackpot', 'JACKPOT', 'FRAME', 'frame'], ['confetti', 'PRIZE SHOWER', 'WIN FX', 'fx']]) {
+for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame'], ['confetti', 'PRIZE SHOWER', 'WIN FX', 'fx']]) {
   for (const [vn, vp] of [['1366x768', { width: 1366, height: 768 }], ['390x844', { width: 390, height: 844 }]]) {
     test(`cosmetic ${id} ${vn}: the result card shows its art, it is owned, WEAR equips it`, async ({ page }) => {
       await page.setViewportSize(vp);
@@ -212,7 +212,7 @@ for (const [id, name, tab, slotKey] of [['lucky', 'LUCKY', 'SIDEKICK', 'pet'], [
       await wheel.getByTestId('wheel-spin').click();
       const res = wheel.getByTestId('wheel-result');
       await expect(res).toContainText(name, { timeout: 12000 });
-      await expect(res.locator('img')).toHaveAttribute('src', id === 'jackpot' ? '/cards/frame-jackpot.webp' : id === 'confetti' ? '/fx/win/confetti.webp' : '/cast/kit/lucky-0.webp');
+      await expect(res.locator('img')).toHaveAttribute('src', id === 'jackpot' ? '/cards/frame-jackpot.webp' : '/fx/win/confetti.webp');
       expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).own)).toContain(id);
       if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${DIR}/cosmetic-${id}-result-${vn}.png` }); }
       await wheel.getByRole('button', { name: 'Close the daily wheel' }).click();
@@ -228,6 +228,21 @@ for (const [id, name, tab, slotKey] of [['lucky', 'LUCKY', 'SIDEKICK', 'pet'], [
     });
   }
 }
+
+// LUCKY (a sidekick) left the wheel in 068 (the SIDEKICK slot is gone): a server still on 067 that names it pays the slot as
+// 120 GEMS on the gift box — never a broken image, never a piece you can't wear
+test('a retired LUCKY from an old server: +120 GEMS on the gift box, nothing owned in the kit', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await boot(page, { gems: 200, slot: 7, cosmetic: 'lucky' });
+  await page.locator('[data-nav="wheel"]').click();
+  const wheel = page.getByTestId('daily-wheel');
+  await wheel.getByTestId('wheel-spin').click();
+  const res = wheel.getByTestId('wheel-result');
+  await expect(res).toContainText('+120 GEMS', { timeout: 12000 });
+  await expect(res.locator('img')).toHaveAttribute('src', '/wheel/prize-cosmetic.webp');
+  await expect.poll(() => gemBal(page)).toBe(320);
+  expect(await page.evaluate(() => localStorage.getItem('taw.s2.kit'))).toBeNull();
+});
 
 // Andy oct25: "idk why u didnt add click outside of spin wheel to exit (that's a default)". Tap outside / Escape / ✕
 // close it — but never mid-spin: the result lands (pays + claims) before anything can close the panel.

@@ -1,6 +1,6 @@
-// e2e/hero-kit.spec.js — HERO COMPONENTS (kit.js): SIDEKICKS + FRAMES. PROFILE → CUSTOMIZE opens the picker: your hero with the
-// sidekick you're looking at beside it, six painted tiles, and how you get it. BOMB PUP is free (WEAR), an earned one
-// shows its WINS bar, HOLD TO BUY spends gems and wears it, and the profile showcase then shows it at the hero's feet.
+// e2e/hero-kit.spec.js — HERO COMPONENTS (kit.js): FRAMES + WIN FX. PROFILE → CUSTOMIZE opens the picker: your hero with the
+// piece you're looking at on it, painted tiles, and how you get it. An earned one shows its WINS bar, HOLD TO BUY spends
+// gems and wears it, and the profile showcase then shows it. (The SIDEKICK slot was removed oct26.)
 // Screenshots land in claude/shots/hero-kit when SHOTS=1.
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
@@ -26,43 +26,22 @@ async function openKit(page, vp, gems, main) {
   await expect(page.getByTestId('kit-picker')).toBeVisible();
 }
 
+// the SIDEKICK slot was removed (oct26): a save that still wears / owns one opens CUSTOMIZE on FRAME, with no ghost tab
 for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width: 390, height: 844 }]]) {
-  test(`sidekicks ${vn}: try on, wear the free pup, earned + bought ones, shown in the profile`, async ({ page }) => {
+  test(`no sidekicks ${vn}: an old save with a pet loads clean — two tabs, no sidekick anywhere`, async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    await page.addInitScript(() => { localStorage.setItem('taw.s2.kit', JSON.stringify({ own: ['pixel', 'lucky'], pet: 'pixel', frame: null, fx: null })); });
     await openKit(page, vp, 1000);
     const pk = page.getByTestId('kit-picker');
-    // the free pup: try it on, wear it
-    await expect(pk.locator('.skp-name')).toHaveText('BOMB PUP');
-    await expect(pk.locator('.hs [data-sidekick="pup"]')).toBeVisible();
-    await pk.getByRole('button', { name: 'WEAR BOMB PUP' }).click();
-    await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible();
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).pet)).toBe('pup');
-    await page.waitForTimeout(600);
-    await shot(page, `${vn}-1-pup`);
-    // INKY: earned at 15 wins (the seed has 20) → WEAR straight away
-    await pk.getByRole('radio', { name: 'INKY' }).click();
-    await expect(pk.getByRole('button', { name: 'WEAR INKY' })).toBeVisible();
-    // PIXEL: 80 wins not reached → its bar + HOLD TO BUY (1000 gems ≥ 900)
-    await pk.getByRole('radio', { name: /PIXEL/ }).click();
-    await expect(pk.locator('.skp-prog-n')).toContainText('20 / 80 WINS');
-    await page.waitForTimeout(500);
-    await shot(page, `${vn}-2-pixel-locked`);
-    const hold = pk.getByRole('button', { name: /Hold to buy PIXEL/ });
-    await hold.scrollIntoViewIfNeeded();
-    const box = await hold.boundingBox();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible({ timeout: 5000 });
-    await page.mouse.up();
-    const kit = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')));
-    expect(kit).toEqual({ own: ['pixel'], pet: 'pixel', frame: null, fx: null });
-    // TURBO is rebirth-gated: no buy button
-    await pk.getByRole('radio', { name: /TURBO/ }).click();
-    await expect(pk.locator('.skp-locked')).toContainText('REBIRTH 3');
-    // back to the profile: the worn sidekick stands at the hero's feet
+    await expect(pk.getByRole('tab')).toHaveCount(2);
+    await expect(pk.getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
+    await expect(pk.getByRole('tab', { name: /SIDEKICK/ })).toHaveCount(0);
+    await expect(page.locator('[data-sidekick], .sk')).toHaveCount(0);
     await page.locator('.pf-back').click();
-    await expect(page.locator('.pf-left [data-sidekick="pixel"]')).toBeVisible();
-    await page.waitForTimeout(600);
-    await shot(page, `${vn}-3-profile`);
+    await expect(page.locator('.pf-left .hs')).toBeVisible();
+    await expect(page.locator('[data-sidekick], .sk')).toHaveCount(0);
+    expect(errors).toEqual([]);
   });
 }
 
@@ -70,7 +49,8 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   test(`frames ${vn}: try one on, a road frame is earned, wear it, the profile hero becomes a card`, async ({ page }) => {
     await openKit(page, vp, 700);
     const pk = page.getByTestId('kit-picker');
-    await pk.getByRole('tab', { name: 'FRAME' }).click();
+    // FRAME is the first tab now (no SIDEKICK)
+    await expect(pk.getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
     // FROST: 40 wins (20 seeded) → its bar + HOLD TO BUY (700 ≥ 600); the try-on shows it
     await expect(pk.locator('.skp-name')).toHaveText('FROST');
     await expect(pk.locator('.skp-stage [data-frame="frost"]')).toBeVisible();
@@ -110,15 +90,4 @@ test('WIN FX: try one on (the burst replays behind the WIN pose), buy it, it is 
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).fx)).toBe('firework');
   await pk.getByRole('radio', { name: /INK SPLAT/ }).click();
   await expect(pk.locator('.skp-fx[data-fx="splat"]')).toBeVisible();
-});
-
-test('sidekicks: the hop is a finite one-shot (no infinite animation)', async ({ page }) => {
-  await openKit(page, { width: 1366, height: 768 }, 0);
-  await page.getByTestId('kit-picker').getByRole('button', { name: 'WEAR BOMB PUP' }).click();
-  await page.waitForTimeout(3500);
-  const inf = await page.evaluate(() => document.getAnimations().filter((a) => {
-    const t = a.effect && a.effect.getTiming && a.effect.getTiming();
-    return t && t.iterations === Infinity && a.effect.target && a.effect.target.closest && a.effect.target.closest('.sk');
-  }).length);
-  expect(inf).toBe(0);
 });

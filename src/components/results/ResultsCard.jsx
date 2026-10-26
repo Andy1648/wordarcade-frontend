@@ -29,8 +29,7 @@ import './ResultsCard.css';
 import { resolvePlayerColor } from '../../playerColors';
 import { castFor, castByColor, castSrc, hasPose, castFrames } from '../../cast/cast.js';
 import CastArt from '../../cast/CastArt.jsx';
-import Sidekick from '../../cast/Sidekick.jsx';
-import { equippedPet, equippedFx } from '../../cast/kit.js';
+import { equippedFx } from '../../cast/kit.js';
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -334,8 +333,6 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
                 // a painted victory FLIPBOOK where one exists (oct19) — the still otherwise
                 ? <CastArt className="rs2-char-img" id={myCast.id} pose={pose} />
                 : <img className={`rs2-char-img${!hasPose(myCast.id, pose) ? ` is-stand-in is-${pose}` : ''}`} src={castSrc(myCast.id, pose)} width="512" height="512" alt="" draggable="false" />}
-              {/* your SIDEKICK (kit.js) celebrates at your feet on a WIN */}
-              {pose === 'win' && equippedPet() ? <Sidekick id={equippedPet()} className="rs2-pet" /> : null}
               {pose === 'win' ? (
                 <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}

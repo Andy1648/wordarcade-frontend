@@ -1,10 +1,10 @@
-// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): three tabs, SIDEKICK, FRAME and WIN FX. Left: YOUR hero with the
-// piece you're looking at already on it (the sidekick at its feet, or your hero as a card in that frame) — you try it on
+// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): two tabs, FRAME and WIN FX. Left: YOUR hero with the
+// piece you're looking at already on it (your hero as a card in that frame, or the burst behind its WIN) — you try it on
 // before you wear it, with whatever you wear in the other slot. Right: the pieces as painted tiles (the art is the
 // button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
 // TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
 import { useEffect, useRef, useState } from 'react';
-import { SIDEKICKS, FRAMES, WIN_FX, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+import { FRAMES, WIN_FX, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
 import HeroShowcase from './HeroShowcase.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -17,7 +17,7 @@ import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './KitPicker.css';
 
-const TABS = [['pet', 'SIDEKICK', SIDEKICKS], ['frame', 'FRAME', FRAMES], ['fx', 'WIN FX', WIN_FX]];
+const TABS = [['frame', 'FRAME', FRAMES], ['fx', 'WIN FX', WIN_FX]];
 // the WIN FX try-on: the burst slams out behind your WIN pose each time you pick one (the results card's KIT_BURST)
 const FX_BURST = [{ transform: 'scale(.2) rotate(-30deg)', opacity: 1 }, { transform: 'scale(1.12) rotate(4deg)', opacity: 1, offset: 0.16 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0.26 }, { transform: 'scale(1.04) rotate(8deg)', opacity: 1, offset: 0.8 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
 function FxStage({ hero, fx }) {
@@ -31,12 +31,12 @@ function FxStage({ hero, fx }) {
   );
 }
 
-/** @param hero your MAIN's id · @param kit { pet, frame } worn · @param onKit(slot, id|null) a slot changed
+/** @param hero your MAIN's id · @param kit { frame, fx } worn · @param onKit(slot, id|null) a slot changed
  *  @param slot0 the tab to open on */
-export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
-  const [slot, setSlot] = useState(slot0);
+export default function KitPicker({ hero, kit, onKit, slot0 = 'frame' }) {
+  const [slot, setSlot] = useState(TABS.some((t) => t[0] === slot0) ? slot0 : 'frame');
   const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
-  const [look, setLook] = useState({ pet: kit.pet || SIDEKICKS[0].id, frame: kit.frame || FRAMES[0].id, fx: kit.fx || WIN_FX[0].id });
+  const [look, setLook] = useState({ frame: kit.frame || FRAMES[0].id, fx: kit.fx || WIN_FX[0].id });
   const [gems, setGems] = useState(getGems);
   const [, bump] = useState(0);
   useEffect(() => subscribeGems(setGems), []);
@@ -69,9 +69,8 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
     );
   }
   // the try-on: the piece you're looking at, plus whatever you wear in the other slot
-  const pet = slot === 'pet' ? s.id : kit.pet;
   const frame = slot === 'frame' ? s.id : kit.frame;
-  const stage = <HeroShowcase id={hero} pet={pet} />;
+  const stage = <HeroShowcase id={hero} />;
   return (
     <div className={`skp is-${slot}`} style={{ '--sk-c': s.color }} data-testid="kit-picker">
       <div className="skp-stage">
@@ -84,14 +83,14 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'pet' }) {
             <button key={k} type="button" role="tab" aria-selected={k === slot} className={`skp-tab${k === slot ? ' is-on' : ''}`} onClick={() => setSlot(k)}>{label}</button>
           ))}
         </div>
-        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={{ pet: 'Sidekicks', frame: 'Frames', fx: 'Win effects' }[slot]}>
+        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={slot === 'frame' ? 'Frames' : 'Win effects'}>
           {list.map((k) => {
             const mine = ownsKit(k.id);
             return (
               <button key={k.id} type="button" role="radio" aria-checked={k.id === s.id}
                 className={`skp-tile${k.id === s.id ? ' is-look' : ''}${k.id === worn ? ' is-worn' : ''}${mine ? '' : ' is-locked'}${k.rare ? ' is-rare' : ''}`}
                 style={{ '--t-c': k.color }} onClick={() => setLook((l) => ({ ...l, [slot]: k.id }))} aria-label={`${k.name}${k.id === worn ? ', worn' : mine ? '' : ', locked'}`}>
-                <img src={kitSrc(k.id, 0)} alt="" aria-hidden="true" draggable="false" />
+                <img src={kitSrc(k.id)} alt="" aria-hidden="true" draggable="false" />
                 {!mine ? <span className="skp-lock"><KitIcon name="lock" size={18} shadow={1} extras={false} /></span> : null}
                 {k.id === worn ? <span className="skp-worn">WORN</span> : null}
               </button>

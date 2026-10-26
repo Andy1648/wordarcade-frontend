@@ -1,4 +1,4 @@
-// kit.test.js — HERO COMPONENTS (kit.js): the free pup is yours, earned ones unlock at their WINS, a rebirth-gated
+// kit.test.js — HERO COMPONENTS (kit.js): earned ones unlock at their WINS, a rebirth-gated
 // one can't be bought early, a road frame is never sold and is earned by claiming its MASTERY ROAD node, and a slot
 // only ever holds something you own.
 import test from 'node:test';
@@ -20,13 +20,15 @@ test('ROAD_FRAME_NODE is the mastery road\'s frame node, and every road frame na
   }
 });
 
-test('the pup is free; INKY is earned at 15 wins; a slot only takes what you own', () => withStorage({ 'taw.s2.count': JSON.stringify({ bots: 10 }) }, () => {
-  assert.equal(ownsKit('pup'), true);
-  assert.equal(ownsKit('inky'), false);
-  assert.equal(wearKit('pet', 'inky'), false);
-  assert.equal(wearKit('pet', 'pup'), true);
-  assert.equal(wearKit('frame', 'pup'), false); // wrong slot
-  assert.equal(readKit().pet, 'pup');
+test('a save that still has a SIDEKICK (removed oct26) loads clean: the pet key and sidekick ids are ignored', () => withStorage({
+  [KIT_KEY]: JSON.stringify({ own: ['pixel', 'lucky', 'jackpot'], pet: 'pixel', frame: 'jackpot', fx: null }),
+}, (store) => {
+  const k = readKit();
+  assert.deepEqual(k, { own: ['jackpot'], frame: 'jackpot', fx: null });
+  assert.equal(ownsKit('pup'), false);
+  assert.equal(wearKit('pet', 'pup'), false);
+  assert.equal(wearKit('fx', null), true); // the next write drops the old keys
+  assert.deepEqual(JSON.parse(store.get(KIT_KEY)), { own: ['jackpot'], frame: 'jackpot', fx: null });
 }));
 
 test('a road frame: never for sale, earned by claiming its node', () => withStorage({ 'taw.s2.gems': JSON.stringify({ bal: 99999 }) }, (store) => {
@@ -38,19 +40,19 @@ test('a road frame: never for sale, earned by claiming its node', () => withStor
   assert.equal(JSON.parse(store.get(KIT_KEY)).frame, 'chain');
 }));
 
-test('TURBO waits for REBIRTH 3, then costs gems', () => withStorage({ 'taw.s2.gems': JSON.stringify({ bal: 5000 }) }, () => {
-  assert.equal(buyKit('turbo').reason, 'locked');
+test('ARCADE waits for REBIRTH 2, then costs gems', () => withStorage({ 'taw.s2.gems': JSON.stringify({ bal: 5000 }) }, () => {
+  assert.equal(buyKit('arcade').reason, 'locked');
 }));
 
 test('a WIN FX: earned at its wins, only fits the fx slot', () => withStorage({ 'taw.s2.count': JSON.stringify({ mp: 30 }) }, () => {
   assert.equal(ownsKit('firework'), true);
-  assert.equal(wearKit('pet', 'firework'), false);
+  assert.equal(wearKit('frame', 'firework'), false);
   assert.equal(wearKit('fx', 'firework'), true);
   assert.equal(readKit().fx, 'firework');
 }));
 
 test('every component id is unique across the slots (one id, one piece)', async () => {
-  const { SIDEKICKS, FRAMES, WIN_FX } = await import('./kit.js');
-  const ids = [...SIDEKICKS, ...FRAMES, ...WIN_FX].map((k) => k.id);
+  const { FRAMES, WIN_FX } = await import('./kit.js');
+  const ids = [...FRAMES, ...WIN_FX].map((k) => k.id);
   assert.equal(new Set(ids).size, ids.length);
 });

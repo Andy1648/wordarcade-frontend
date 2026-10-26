@@ -237,11 +237,11 @@ test('SEASON 2 (PROGRESSION FINAL v2): the chain shows REBIRTH ×3^R and no ★ 
   expect(shown.total).toBeGreaterThan(0);
 });
 
-test('WIN with a SIDEKICK worn: it celebrates at your hero\'s feet (kit.js); a loss leaves it out', async ({ page }) => {
+test('WIN with a WIN FX worn (kit.js): its burst; an old save with a SIDEKICK (removed oct26) shows nothing', async ({ page }) => {
   test.setTimeout(90_000);
   await play(page, { outcome: 'win', seed: { 'taw.main': 'hype', 'taw.s2.kit': JSON.stringify({ own: ['firework'], pet: 'pup', fx: 'firework' }) } });
-  await expect(page.locator('.rs2-char [data-sidekick="pup"]')).toBeVisible();
   await expect(page.locator('.rs2-impact-burst.is-kit')).toHaveAttribute('src', '/fx/win/firework.webp');
+  await expect(page.locator('[data-sidekick], .sk')).toHaveCount(0);
   await page.waitForTimeout(700);
   if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/hero-kit/results-win.png' });
 });
