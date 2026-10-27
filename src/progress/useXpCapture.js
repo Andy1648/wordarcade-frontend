@@ -187,7 +187,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
         } else if (res.leveledUp) { fx.celebrate(res.level); sndLevelUp(); evLevelUp(res.level); refreshSessionProps({ level: res.level }); } // Job 11: level-up chime + analytics
         if (isTap) fx.tapPop(`+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], opts.x, opts.y, look);
         else if (hit.crit && fx.critPop) {
-          fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier]);
+          fx.critPop(opts.letter, `CRIT +${formatNum(hit.gain)}`, TIER_SCALES[tier], look); // a worn look themes the crit too
         }
         else fx.letterPop(opts.letter, `+${formatNum(menuGain)}`, TIER_SCALES[tier], popColors[tier], feelTier, look);
         // Edge pulse stays on a streak-cross (the menu has no "words" to glow per —

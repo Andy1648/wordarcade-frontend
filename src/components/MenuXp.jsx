@@ -64,7 +64,20 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // ~260ms) and a bigger "CRIT +N", over a yellow ink STARBURST (the real asset public/fx/crit-burst.svg — never CSS
 // shapes). The bursts are a FIXED POOL reused round-robin: WAAPI scale / rotate / opacity, finite, will-change on for
 // the flight only. Placement reuses the pop's cached-size random position — no layout read per key.
-const CRIT_BURST_MS = 1300; // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
+// oct27 (Andy: "make the key animations last slightly longer"): every key pop lives POP_STRETCH × its tier length on a
+// fuller arc (a wind-up from small, an overshoot squash, a settle, a long readable LINGER, then the float-off); the crit
+// and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
+const POP_STRETCH = 1.3;
+const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
+const popArc = (CENTER, rot, s, peak, rise) => [
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.45}) translateY(10px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s * peak * 1.12}, ${s * peak * 0.9}) translateY(-8px)`, opacity: 1, offset: 0.13, easing: 'ease-out' },
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.96}, ${s * 1.06}) translateY(-13px)`, opacity: 1, offset: 0.22, easing: 'ease-out' },
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-15px)`, opacity: 1, offset: 0.3, easing: 'linear' },
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-24px)`, opacity: 1, offset: 0.7, easing: 'ease-in' }, // the LINGER: the +N is read
+  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.06}) translateY(-${rise}px)`, opacity: 0, offset: 1 },
+];
+const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
 const CRIT_SHAKE_PX = 7;
 const CRIT_PUNCH_MS = 140; // Andy oct9 "cleaner": ONE slam 1.5 → 1, no wobble (was 380: 1.6 → 0.88 → 1.08 → 1)
@@ -415,17 +428,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
   const lookNextRef = useRef(0);
   // the painted burst under the number: shown + slammed in for a look, hidden otherwise (a pooled child, finite WAAPI)
-  function dressArt(pop, look) {
+  function dressArt(pop, look, crit = false) {
     const img = pop.children[2];
     if (!img) return;
-    if (!look || !look.art || prefersReducedMotion()) { img.style.display = 'none'; return; }
-    if (img.getAttribute('src') !== look.art) img.setAttribute('src', look.art);
+    const src = look && (crit ? look.crit : look.art);
+    if (!src || prefersReducedMotion()) { img.style.display = 'none'; return; }
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     img.style.display = 'block'; // the CSS rests it at display:none
-    // the number must read ON the painted burst: white, a heavy black outline + hard shadow (the burst carries the look)
-    const num = pop.children[1];
-    num.style.color = '#FFFFFF';
-    num.style.webkitTextStroke = '5px #000';
-    num.style.textShadow = '3px 3px 0 #000';
+    dressNum(pop.children[1], look);
     const rot = Math.random() * 60 - 30;
     if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
     img.style.willChange = 'transform, opacity'; // only for the burst's life
@@ -437,10 +447,28 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       { transform: `translate(-50%, -50%) rotate(${rot + 12}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
       { transform: `translate(-50%, -50%) rotate(${rot + 16}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
       { transform: `translate(-50%, -50%) rotate(${rot + 22}deg) scale(1.12)`, opacity: 0 },
-    ], { duration: 420, delay: 90, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
+    ], { duration: crit ? CRIT_BURST_MS : POP_BURST_MS, delay: crit ? 0 : 90, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
+  // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
+  // outline colour — static styles on the pooled node, set per spawn (MenuXp.css .is-kit).
+  function dressNum(node, look) {
+    if (!look || !look.bar) { clearNum(node); return; }
+    node.style.backgroundImage = `url(${look.bar})`;
+    node.style.borderColor = look.stroke;
+    node.classList.add('is-kit');
+    node.style.color = '';
+    node.style.webkitTextStroke = '';
+    node.style.textShadow = '';
+  }
+  function clearNum(node) {
+    if (!node.classList.contains('is-kit')) return;
+    node.classList.remove('is-kit');
+    node.style.backgroundImage = '';
+    node.style.borderColor = '';
+  }
   function dressPop(node, look, colour, hardShadow) {
+    clearNum(node);
     if (!look) {
       node.style.color = colour;
       node.style.webkitTextStroke = '';
@@ -494,14 +522,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
       // further, and lands with a punch (overshoot) before it floats off.
       const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: tf.popMs });
-      anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 1, offset: 0.62 }, // Andy oct9: HOLD readable so the +N is seen
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
-      ]);
+      anim.effect.updateTiming({ duration: Math.round(tf.popMs * POP_STRETCH) });
+      anim.effect.setKeyframes(popArc(CENTER, rot, s, 1 + tf.tier * 0.05, tf.popRise));
       anim.cancel();
       anim.play();
     },
@@ -514,7 +536,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     critArm() {
       // nothing to download any more (the crit is type + motion only); kept so callers don't change
     },
-    critPop(letter, critText, scale = 1) {
+    critPop(letter, critText, scale = 1, look = null) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return;
@@ -546,8 +568,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = critText;
       el.children[1].style.color = '';
       el.children[1].style.textShadow = '';
-      el.children[1].style.webkitTextStroke = ''; // a LOOK's outline never rides into the crit dress
-      if (el.children[2]) el.children[2].style.display = 'none'; // nor its painted burst
+      el.children[1].style.webkitTextStroke = ''; // the crit dress (CSS) unless a LOOK dresses it below
+      clearNum(el.children[1]);
+      // THE KIT's CRIT (oct27): a worn look throws its own painted CRIT burst behind the hit, its textured number, and
+      // a full ring of its shards; without one the crit keeps its own dress and no burst
+      el.classList.toggle('is-kit-crit', !!look);
+      if (look) {
+        dressArt(el, look, true);
+        if (!prefersReducedMotion()) spawnShards(pos.x, pos.y, look.shards, 6, 1.4);
+      } else if (el.children[2]) el.children[2].style.display = 'none';
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
@@ -614,14 +643,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
       // further, and lands with a punch (overshoot) before it floats off.
       const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: tf.popMs });
-      anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 1, offset: 0.62 }, // Andy oct9: HOLD readable so the +N is seen
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
-      ]);
+      anim.effect.updateTiming({ duration: Math.round(tf.popMs * POP_STRETCH) });
+      anim.effect.setKeyframes(popArc(CENTER, rot, s, 1 + tf.tier * 0.05, tf.popRise));
       anim.cancel();
       anim.play();
     },

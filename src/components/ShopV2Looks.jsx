@@ -103,7 +103,9 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
     if (!t.id || !fx) return;
     const tier = tryStreak(t.st, performance.now());
     playClack(t.st.count - 1);
-    fx.letterPop(letter, `+${formatNum(t.gain)}`, TIER_SCALES[tier], t.colors[tier], t.feel, t.look);
+    // THE KIT (oct27): every 5th try key is a CRIT, so the try shows the look's crit too (the menu crits on gear / luck)
+    if (t.look && t.st.count % 5 === 0 && fx.critPop) fx.critPop(letter, `CRIT +${formatNum(t.gain * 2)}`, TIER_SCALES[tier], t.look);
+    else fx.letterPop(letter, `+${formatNum(t.gain)}`, TIER_SCALES[tier], t.colors[tier], t.feel, t.look);
   };
   const fireRef = useRef(fire);
   fireRef.current = fire;
@@ -171,6 +173,8 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
         // the TRYING bar sticks to the foot of the shelf's view, so the chip, the BUY and (phone) the TYPE pad stay in sight
         <div className="sp2-try" data-testid="sp2-try" data-try={tried.id} key={live.n}>
           <span className="sp2-try-chip">TRYING · {tried.name}</span>
+          {/* THE KIT's BAR (oct27): the menu XP bar's fill while this look is worn */}
+          {tried.id !== 'classic' ? <span className="sp2-try-bar" data-testid="sp2-try-bar" aria-hidden="true" style={{ backgroundImage: `url(/shop/pop/bar-${tried.id}.webp)` }} /> : null}
           <LookAct it={tried} isOn={equipped.popStyle === tried.id} isOwned={owned.has(tried.id) || triedPrice === 0} can={gems >= triedPrice} price={triedPrice}
             owner={owner} onBuy={onBuy} onEquip={onEquip} onWear={onWear} />
           <button type="button" className="sp2-try-pad" data-testid="sp2-try-pad" onPointerDown={onPad}>TYPE</button>

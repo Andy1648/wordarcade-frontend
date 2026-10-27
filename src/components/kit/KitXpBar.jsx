@@ -53,11 +53,15 @@ export const NEAR_FRAC = 0.9;
 
 // NEAR MISS (Andy oct22, the goal-gradient pull): `nearText` = { k: '38 KEYS', to: 'TO LV 8' } replaces the readout in the last NEAR_FRAC of
 // a level — an honest countdown in keys, the unit the menu actually pays in. Static swap + one finite pop-in, nothing loops.
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null }) {
+// THE KIT's BAR (oct27, Andy: "apply the color style … even the progress bar"): `skin` = a worn POP STYLE's painted fill
+// texture. It rides INSIDE the scaleX fill on a child that counter-scales by 1/f — so the art never stretches as the bar
+// grows (it is revealed, anchored left). Both writes are transforms on the one climb frame; nothing else changes.
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null, skin = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
   const fillRef = useRef(null);
+  const skinRef = useRef(null);
   const sweepRef = useRef(null);
   const curRef = useRef(null);
   const ghostRef = useRef(null);
@@ -92,6 +96,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       frac,
       onFrame: (l, f) => {
         if (fillRef.current) fillRef.current.style.transform = `scaleX(${f})`;
+        if (skinRef.current) skinRef.current.style.transform = `scaleX(${1 / Math.max(f, 0.002)})`;
         const cur = curRef.current;
         if (cur) {
           const t = formatNum(f * needRef.current);
@@ -248,7 +253,8 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div className="kx-track" aria-hidden="true">
             {lvInside && <div ref={ghostRef} className="kx-ghost" />}
-            <div ref={fillRef} className="kx-fill">
+            <div ref={fillRef} className={`kx-fill${skin ? ' is-skin' : ''}`}>
+              {skin ? <div ref={skinRef} className="kx-fill-skin" style={{ backgroundImage: `url(${skin})`, transform: `scaleX(${1 / Math.max(frac, 0.002)})` }} /> : null}
               <div className="kx-fill-hi" />
             </div>
             {/* ABOVE the fill (Andy oct18: "keep it visible inside the bar … not hidden under the yellow"), then it fades */}
