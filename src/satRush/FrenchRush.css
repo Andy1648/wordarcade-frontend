@@ -573,7 +573,8 @@
     white-space: normal;
     overflow-wrap: normal;
     line-height: 1.1;
-    font-size: clamp(14px, 3.9vw, 18px); /* PHONES / BASICS ran edge to edge in a 96px card */
+    --fs-panel: 14px; /* PHONES / BASICS ran edge to edge in a 96px card */
+    font-size: var(--fs-panel);
   }
 }
 
