@@ -336,7 +336,8 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
               {pose === 'win' ? (
                 <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
-              {pose === 'ko' ? (
+              {/* a K.O. flipbook paints its own dizzy stars — the overlay only dresses a still */}
+              {pose === 'ko' && !castFrames(myCast.id, 'ko') ? (
                 <span className="rs2-dizzy">{[0, 1, 2].map((i) => <img key={i} className={`rs2-dizzy-s is-${i}`} src={`/stage/fx/dizzy-${i}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
             </div>
