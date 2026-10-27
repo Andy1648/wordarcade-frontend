@@ -14,6 +14,7 @@
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
+import { pinDay } from './support/fixedDay.js';
 
 const ME = 'e2e-player';
 const NAMES = ['YOU', 'RIVAL', 'KIMBERLY', 'SAMWISE', 'LEXI', 'ZZZAP'];
@@ -21,6 +22,10 @@ const WORDS = ['STRAND', 'INSTRUCT', 'STRONGEST', 'ASTRAY', 'DESTROY', 'STRIPE',
 
 async function play(page, { outcome, place = 3, reduce = false, vp = { width: 1366, height: 657 }, season2 = false, seed = {} }) {
   await page.setViewportSize(vp);
+  // pin the calendar: the day's contracts are dealt from the local date, and on a day whose pick the round below finishes
+  // (2026-10-27: wb-long9 ← CONSTRUCT) the card grows a CONTRACT DONE line — CI went red at UTC midnight. Pinned to
+  // that day, every run measures the TALLER card (the worst case). PIN_DAY=<iso> tries another day.
+  await pinDay(page, process.env.PIN_DAY || '2026-10-27T12:00:00');
   await page.emulateMedia({ reducedMotion: reduce ? 'reduce' : 'no-preference' });
   const mock = await installBackendMock(page);
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
@@ -197,6 +202,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     const card = page.locator('.rs2');
     await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
     await page.evaluate(() => document.fonts.ready);
+    if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/results-fit/${vp.width}x${vp.height}.png` });
     const m = await page.evaluate(() => {
       const c = document.querySelector('.rs2');
       const b = document.querySelector('.rs2 .game-over-rematch').getBoundingClientRect();

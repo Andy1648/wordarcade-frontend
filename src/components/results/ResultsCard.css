@@ -429,3 +429,18 @@
 .rs2-char .rs2-impact-burst { position: absolute; z-index: 0; left: -22%; top: -22%; width: 144%; height: 144%; object-fit: contain; opacity: 0; filter: none; pointer-events: none; }
 .rs2-hero-in { z-index: 2; } /* the character + #N stay ON TOP of the impact flash (the classic impact frame) */
 .rs2-contract { align-self: flex-start; }
+/* A CONTRACT DONE line is one row more than the tally was fitted for (CI oct27: on days whose contract the round
+   finished, the tally ran 30–60 px into the PLAY AGAIN footer at 1280×551 / 1366×657 / 1163×450). When it shows, the
+   tally drops WORDS · LETTERS (the PLAYERS list has your words — the short-window rule below already does this). */
+.rs2-tally:has(.rs2-contract) .rs2-stats { display: none; }
+/* ≤ 520 px tall, WORDS · LETTERS is already gone, so the contract line itself yields: its gems are counted in GEMS on
+   this card and the in-round toast already said CONTRACT DONE. */
+@media (max-height: 520px) and (min-width: 701px) {
+  .rs2 .rs2-contract { display: none; }
+}
+/* PHONES: the contract line rides compact (it is a receipt, not a headline) — and when the card is still TIGHT (360×640
+   with a CONTRACT DONE line ran 19 px over, CI oct27), the learn hold keeps the WORD and drops its "A WORD CONTAINING"
+   line: the prompt was on screen all round; the word is the lesson. */
+.rs2--narrow .rs2-contract { gap: 6px; padding: 2px 8px 2px 2px; }
+.rs2--narrow .rs2-contract img { width: 24px; height: 24px; }
+.rs2--narrow[data-ko-tight] .rs2-learn .missed-hold-prompt { display: none; }
