@@ -443,7 +443,8 @@ export const CAST_FRAMES = {
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
-  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [4, 620], [10, 440], [5, 462], [11, 198]], rest: 2000 },
+  // oct26: in-between 9 repainted (the snap hand lowering as the planet forms — the old one drew a prop on the wrong hand)
+  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [9, 248], [4, 372], [10, 440], [5, 462], [11, 198]], rest: 2000 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
