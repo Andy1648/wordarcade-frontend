@@ -447,15 +447,21 @@ export const CAST_FRAMES = {
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
-  'hype-elite': { n: 4, seq: [[1, 700], [2, 1000], [3, 1100]], rest: 1800 },
+  // 6 frames (oct26, the ELITE idles were 4-frame jumps): megaphone down → swings it up → YELLS → flung high, a confetti
+  // burst → thumb at the crown, wink → lowers it, the last confetti falling
+  'hype-elite': { n: 6, seq: [[1, 220], [2, 700], [3, 1000], [4, 700], [5, 400]], rest: 1600 },
   // ROCKSTAR RIOT: horns up → strums (twice), notes fly → windmill + headbang, sparks off the guitar → rock-god pose
-  'riot-elite': { n: 4, seq: [[1, 220], [0, 120], [1, 220], [2, 900], [3, 1100]], rest: 1700 },
+  // 6 frames: horns up → strums → strums harder, notes fly (twice) → windmill headbang, sparks → guitar high, tongue out → lowers it
+  'riot-elite': { n: 6, seq: [[1, 220], [2, 220], [1, 180], [2, 220], [3, 900], [4, 1000], [5, 300]], rest: 1500 },
   // CHAMP BRAWL: guard → jab → hoists the BELT, camera flashes → kisses the glove at you
-  'brawl-elite': { n: 4, seq: [[1, 160], [0, 140], [1, 160], [2, 1100], [3, 1000]], rest: 1700 },
+  // 6 frames: guard → jab (twice) → reaches for the belt → hoists it, camera flashes → lowers it → kisses the glove, a heart
+  'brawl-elite': { n: 6, seq: [[1, 160], [0, 140], [1, 160], [2, 300], [3, 1100], [4, 300], [5, 900]], rest: 1500 },
   // GLITCH.EXE: bored hologram → types, code floats up → the whole body GLITCHES (sliced + pixels) → arms crossed, smug
-  'glitch-elite': { n: 4, seq: [[1, 700], [2, 160], [1, 120], [2, 420], [3, 1200]], rest: 2000 },
+  // 6 frames: bored, a hologram keyboard → types, code floats up → types faster → the body GLITCHES (twice) → snaps back → arms crossed
+  'glitch-elite': { n: 6, seq: [[1, 500], [2, 500], [3, 160], [4, 120], [3, 300], [4, 300], [5, 1200]], rest: 1800 },
   // ARCHMAGE HEX: leans on the staff → crystal flares → a swirl of runes + stars bursts out → calm, smug
-  'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
+  // 6 frames: leans on the staff → raises it, the crystal glows → it FLARES, eyes gold → a swirl of runes + stars → fades → smug
+  'hex-elite': { n: 6, seq: [[1, 500], [2, 700], [3, 1050], [4, 500], [5, 900]], rest: 1800 },
 };
 // GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
 // (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
