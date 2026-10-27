@@ -51,7 +51,7 @@ async function enterSat(page) {
   await page.goto('/?satRush=1&portal=1');
   await menuReady(page);
   await page.waitForTimeout(300);
-  await modeEntry(page, 'sat-rush').click({ force: true });
+  await (await revealMode(page, 'sat-rush')).click({ force: true });
   await page.getByRole('button', { name: /BRIEFING/ }).click(); await satSetupGo(page);
   await page.locator('.sr-brief-page').waitFor({ state: 'visible', timeout: 6000 });
   await page.getByRole('button', { name: 'Start the run' }).click();

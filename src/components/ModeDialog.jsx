@@ -26,6 +26,7 @@ const MODE_KEY = {
   fuse: 'fuse',
   'word-race': 'race',
   'sat-rush': 'sat',
+  miner: 'miner',
 };
 
 function prefersReduced() {

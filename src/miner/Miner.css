@@ -1,0 +1,758 @@
+/* Miner.css — MINER board + lobby. House style: flat fills, thick COLOURED outlines (a darker shade of the
+   fill), hard black offset shadows, Bungee display / Space Mono body, 8px radius.
+   ART VS MOTION: the wall, digger, ores and lamps are painted webp assets; CSS only moves them.
+   MOTION: transform/opacity only, every animation FINITE (a digger slide, an ore pop, the bell drain once
+   per round, the 3-2-1). Nothing loops at rest. will-change is never set on an idle node. */
+
+.mn-root {
+  --mn-rock: #2a1a10;
+  --mn-rock-dark: #120a05;
+  --mn-earth: #6b4423;
+  --mn-earth-dark: #3b2410;
+  --mn-gold: #ffd23f;
+  --mn-gold-dark: #9c7a00;
+  --mn-cyan: #2effe0;
+  --mn-cyan-dark: #0f8f7e;
+  --mn-pink: #ff4fa3;
+  --mn-red: #ff6b3d;
+  --mn-panel: #1a0b2e;
+  position: relative;
+  z-index: 40;
+  width: min(1180px, 100%);
+  height: calc(100dvh - 16px);
+  max-height: 900px;
+  margin: auto;
+  box-sizing: border-box;
+  border: 4px solid #000;
+  box-shadow: 7px 7px 0 #000;
+  border-radius: 8px;
+  background: var(--mn-panel);
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  padding: clamp(8px, 1.6vh, 16px) clamp(10px, 2vw, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vh, 12px);
+  overflow: hidden;
+}
+
+.mn-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.mn-chip {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  color: #000;
+  background: var(--mn-gold);
+  border: 3px solid var(--mn-gold-dark);
+  border-radius: 8px;
+  padding: 0 12px;
+  box-shadow: 3px 3px 0 #000;
+  line-height: 1.3;
+}
+.mn-round,
+.mn-code {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  color: var(--mn-cyan);
+  font-variant-numeric: tabular-nums;
+}
+.mn-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mn-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 18px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--fs-body);
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  transition: transform 120ms ease-out;
+}
+.mn-btn:active {
+  transform: translate(3px, 3px);
+}
+.mn-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.mn-btn-go {
+  background: var(--mn-gold);
+  color: #000;
+  border: 3px solid var(--mn-gold-dark);
+}
+.mn-btn-ghost {
+  background: #2c1a48;
+  color: #fff;
+  border: 3px solid #5a3a8a;
+}
+
+/* ---------------------------------------------------------------- the board */
+.mn-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(8px, 1.6vw, 18px);
+}
+
+.mn-shaft {
+  position: relative;
+  min-height: 0;
+  border: 4px solid var(--mn-earth-dark);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  background: var(--mn-rock);
+  overflow: hidden;
+}
+.mn-shaft-wall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.mn-cols {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 8px 8px 40px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.mn-col {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  justify-items: center;
+  gap: 4px;
+}
+.mn-col-name {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  color: #fff;
+  background: #000;
+  border-radius: 6px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+.mn-col.is-me .mn-col-name {
+  background: var(--mn-gold);
+  color: #000;
+}
+.mn-col-track {
+  --mn-dig-h: clamp(48px, 9vh, 92px);
+  position: relative;
+  width: 100%;
+  max-width: 96px;
+  height: 100%;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 3px solid var(--mn-earth-dark);
+  box-sizing: border-box;
+}
+/* the tunnel dug so far: a flat column scaled from the surface (transform only) */
+.mn-col-dug {
+  position: absolute;
+  inset: 0;
+  background: #0d0618;
+  transform-origin: 50% 0;
+  transform: scaleY(var(--d, 0));
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 5px;
+}
+.mn-col.is-me .mn-col-dug {
+  background: #1d0d33;
+}
+/* the slide is the track's full height; translateY(d × 100%) puts its top edge at the depth */
+.mn-col-slide {
+  position: absolute;
+  inset: 0;
+  /* travel = the track minus the digger, so the digger starts inside the track (never over the name) and ends on it */
+  transform: translateY(calc(var(--d, 0) * (100% - var(--mn-dig-h))));
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.mn-digger {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: var(--mn-dig-h);
+  max-width: 96%;
+  aspect-ratio: 2 / 3;
+  object-fit: contain;
+  transform: translateX(-50%);
+}
+.mn-col.is-out .mn-digger,
+.mn-col.is-left .mn-digger {
+  opacity: 0.35;
+}
+.mn-col-slide .mn-ore {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  margin-left: -16px;
+  margin-top: calc(var(--mn-dig-h) - 30px);
+}
+.mn-col-lock {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mn-cyan);
+  border: 2px solid var(--mn-cyan-dark);
+  color: #000;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  animation: mn-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mn-col-depth {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 1px #000;
+  font-variant-numeric: tabular-nums;
+}
+.mn-col.is-winner .mn-col-depth {
+  color: var(--mn-gold);
+}
+.mn-lamps {
+  display: flex;
+  gap: 2px;
+}
+.mn-lamp {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.mn-lamp.is-out {
+  opacity: 0.22;
+}
+.mn-core {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--mn-red);
+  border-top: 3px solid #a3361a;
+  color: #000;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+}
+
+/* ---------------------------------------------------------------- ores */
+.mn-ore {
+  display: inline-block;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+.mn-ore-sm {
+  width: 32px;
+  height: 32px;
+}
+.mn-ore-md {
+  width: 48px;
+  height: 48px;
+}
+.mn-ore-lg {
+  width: clamp(72px, 12vh, 120px);
+  height: clamp(72px, 12vh, 120px);
+}
+.mn-ore.is-pop {
+  animation: mn-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes mn-pop {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- the play panel */
+.mn-play {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(8px, 1.6vh, 16px);
+  padding: clamp(8px, 1.6vh, 16px);
+  border: 4px solid #000;
+  border-radius: 8px;
+  background: #22103d;
+  box-shadow: 5px 5px 0 #000;
+  overflow: hidden;
+}
+.mn-count-wrap {
+  display: grid;
+  place-items: center;
+  flex: 1;
+}
+.mn-count {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  color: var(--mn-gold);
+  -webkit-text-stroke: 3px #000;
+  animation: mn-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mn-prompt {
+  margin: 0;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1.02;
+  color: #fff;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.mn-prompt-sm {
+  font-size: var(--fs-panel);
+  color: var(--mn-gold);
+}
+.mn-bell {
+  position: relative;
+  height: 30px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: #0d0618;
+  overflow: hidden;
+}
+.mn-bell-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--mn-cyan);
+  transform-origin: 0 50%;
+  animation-name: mn-drain;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+@keyframes mn-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.mn-bell-num {
+  position: relative;
+  display: block;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 24px;
+  color: #000;
+  mix-blend-mode: normal;
+}
+.mn-form {
+  display: flex;
+  gap: 8px;
+}
+.mn-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: max(16px, var(--fs-body));
+  text-transform: uppercase;
+  color: #000;
+  background: #fff;
+  border: 4px solid var(--mn-gold-dark);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  outline: none;
+}
+.mn-input:focus {
+  border-color: var(--mn-gold);
+}
+.mn-shake-0 {
+  animation: mn-shake-a 260ms ease-out;
+}
+.mn-shake-1 {
+  animation: mn-shake-b 260ms ease-out;
+}
+@keyframes mn-shake-a {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+@keyframes mn-shake-b {
+  20%, 60% { transform: translateX(7px); }
+  40%, 80% { transform: translateX(-7px); }
+}
+.mn-toast {
+  margin: 0;
+  min-height: 1.4em;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  color: #fff;
+}
+.mn-toast.is-reject {
+  color: var(--mn-red);
+}
+.mn-locked {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.mn-locked-word {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.mn-locked-ore {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  -webkit-text-stroke: 1px #000;
+}
+.mn-out {
+  margin: 0;
+  text-align: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  color: var(--mn-red);
+}
+
+/* ---------------------------------------------------------------- reveal */
+.mn-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.mn-picks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+.mn-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 5.5em) 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: #2c1a48;
+  border: 3px solid #452a6e;
+  animation: mn-pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mn-pick.is-me {
+  border-color: var(--mn-gold);
+}
+.mn-pick.is-cave {
+  grid-template-columns: minmax(0, 5.5em) minmax(0, 1fr) auto;
+  opacity: 0.7;
+}
+.mn-pick-name {
+  font-weight: 700;
+  font-size: var(--fs-label);
+}
+.mn-pick-word {
+  min-width: 0;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+.mn-pick-gain {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  color: var(--mn-gold);
+  -webkit-text-stroke: 1px #000;
+}
+.mn-pick.is-cave .mn-pick-gain {
+  color: var(--mn-red);
+}
+.mn-deep {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #0d2e2a;
+  border: 3px solid var(--mn-cyan-dark);
+}
+.mn-deep-word {
+  font-weight: 700;
+  font-size: var(--fs-body);
+  text-transform: uppercase;
+  color: var(--mn-cyan);
+}
+
+/* ---------------------------------------------------------------- results */
+.mn-over {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+.mn-over-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.mn-over-digger {
+  width: clamp(56px, 10vh, 96px);
+  aspect-ratio: 2 / 3;
+  object-fit: contain;
+}
+.mn-over-digger.is-win {
+  animation: mn-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mn-over-title {
+  margin: 0;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  color: var(--mn-gold);
+  -webkit-text-stroke: 2px #000;
+}
+.mn-standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.mn-st {
+  display: grid;
+  grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1.3fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 10px;
+  border-radius: 8px;
+  background: #2c1a48;
+  border: 3px solid #452a6e;
+}
+.mn-st.is-me {
+  border-color: var(--mn-gold);
+}
+.mn-st.is-winner {
+  background: #3a2c06;
+}
+.mn-st-place,
+.mn-st-name {
+  font-weight: 700;
+  font-size: var(--fs-label);
+}
+.mn-st-best {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.mn-st-best-word {
+  font-weight: 700;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.mn-st-depth {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.1;
+}
+.mn-earn {
+  margin: 0;
+  text-align: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  color: var(--mn-gold);
+}
+.mn-over-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------- lobby */
+.mn-lobby {
+  justify-content: flex-start;
+}
+.mn-lobby-wall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+.mn-lobby > :not(.mn-lobby-wall) {
+  position: relative;
+  z-index: 1;
+}
+.mn-seats {
+  list-style: none;
+  margin: auto 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 1.6vw, 16px);
+}
+.mn-seat {
+  min-height: clamp(110px, 22vh, 190px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(13, 6, 24, 0.82);
+  border: 4px solid var(--mn-earth-dark);
+  box-shadow: 4px 4px 0 #000;
+  animation: mn-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mn-seat.is-me {
+  border-color: var(--mn-gold);
+}
+.mn-seat.is-open {
+  background: rgba(13, 6, 24, 0.45);
+  border-style: dashed;
+  box-shadow: none;
+  animation: none;
+}
+.mn-seat-digger {
+  height: 100%;
+  max-height: 150px;
+  aspect-ratio: 2 / 3;
+  object-fit: contain;
+}
+.mn-seat-name {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--fs-body);
+}
+.mn-lobby-status {
+  margin: auto 0;
+  text-align: center;
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  font-size: var(--fs-hero);
+  color: var(--mn-gold);
+  -webkit-text-stroke: 3px #000;
+  line-height: 1;
+}
+.mn-lobby-status.is-wait {
+  font-size: var(--fs-panel);
+  -webkit-text-stroke: 1px #000;
+}
+.mn-lobby-actions {
+  margin: auto 0;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---------------------------------------------------------------- phone: shaft on top, panel under */
+@media (max-width: 760px), (max-aspect-ratio: 4/5) {
+  .mn-root {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border-width: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .mn-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+  .mn-col-track {
+    --mn-dig-h: clamp(40px, 7vh, 64px);
+  }
+  .mn-col-depth {
+    font-size: var(--fs-panel);
+  }
+  .mn-lamp {
+    width: 14px;
+    height: 14px;
+  }
+  .mn-seats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* RESULTS on a phone: the board is done — the standings get the whole screen */
+  .mn-root[data-miner-status='over'] .mn-body {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .mn-root[data-miner-status='over'] .mn-shaft {
+    display: none;
+  }
+  .mn-st {
+    grid-template-columns: 3em minmax(0, 1fr) auto;
+    grid-template-areas: 'place name depth' 'place best depth';
+    row-gap: 0;
+  }
+  .mn-st-place { grid-area: place; }
+  .mn-st-name { grid-area: name; }
+  .mn-st-best { grid-area: best; }
+  .mn-st-depth { grid-area: depth; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mn-root *,
+  .mn-root *::before {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+  .mn-bell-fill {
+    animation: none !important;
+  }
+}
