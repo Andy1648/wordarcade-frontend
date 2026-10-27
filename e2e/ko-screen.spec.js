@@ -15,6 +15,7 @@
 //       real >= 44px control inside the card
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { pinDay } from './support/fixedDay.js';
 
 const ME = 'e2e-player';
 const NAMES = ['YOU', 'RIVAL', 'KIMBERLY', 'SAMWISE'];
@@ -31,6 +32,10 @@ const VIEWPORTS = [
 test.use({ reducedMotion: 'no-preference' });
 
 async function playToGameOver(page, n, outcome) {
+  // pin the calendar: the day's contracts are dealt from the local date, and on a day whose pick this round finishes
+  // (2026-10-27: wb-long9 ← STRONGEST) the card grows a CONTRACT DONE line — 360×640 went red at UTC midnight. Pinned
+  // to that day, every run measures the TALLER card (the worst case). PIN_DAY=<iso> tries another day.
+  await pinDay(page, process.env.PIN_DAY || '2026-10-27T12:00:00');
   const mock = await installBackendMock(page);
   // The real faces: Bungee is wider than the fallback, and a fit measured without it proves nothing.
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
@@ -89,6 +94,7 @@ for (const n of [2, 3, 4]) {
       await page.evaluate(() => document.fonts.ready);
       // Let every finite entrance (slam, pulses, hop, count-ups) run out before judging "at rest".
       await page.waitForTimeout(3200);
+      if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/results-fit/ko-${outcome}-${n}-${vp.width}x${vp.height}.png` });
       await page.mouse.move(vp.width / 2, vp.height / 2);
       await page.mouse.move(vp.width / 2 + 30, vp.height / 2 + 20);
 
