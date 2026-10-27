@@ -502,6 +502,16 @@ registerKoFrames('brawl', KO_SEQ6); // a boot twitches → sits up, stars → up
 registerKoFrames('hex', KO_SEQ6); // an eye opens, hat askew → lifts its head, stars → reaches for the spellbook → a sad fizzle in its face, flops
 registerKoFrames('dud', KO_SEQ6); // standing, KO'd by sleep: nods off → a snot bubble swells → POP, jolts awake, nightcap flies → a giant teary yawn
 registerKoFrames('lexi', KO_SEQ6); // staggering: glasses slide down → bends for the book → reads it upside down → it SNAPS shut on its nose
+registerKoFrames('boo', KO_SEQ6); // floating, X eyes: the tail droops → deflates like a sad balloon → flat on the floor, one eye peeks → puffs back up, woozy
+registerKoFrames('shh', KO_SEQ6); // trapped in the invisible box: palms on the glass → it shrinks → squeezed tiny, beret pops off → slides down the wall
+registerKoFrames('sizzle', KO_SEQ6); // tongue on fire: fans its mouth → grabs the hot sauce → a panicked swig → breathes a puff of fire, crying
+registerKoFrames('mecha', KO_SEQ6); // sparks → powers down, slumped → dark visor, smoke → REBOOT, loading bars → X eyes again
+// QUILL's sheet opened on a happy reading pose, so its last (K.O.) frame is frame 0 and the loop runs five
+registerKoFrames('quill', { n: 5, seq: [[1, 300], [2, 450], [3, 600], [4, 700]], rest: 900 }); // an eye opens → stars → reads a verse aloud → the scroll smacks its face
+registerKoFrames('jinx', KO_SEQ6); // the tail twitches → stars + halo → admires itself in a mirror shard → it CRACKS, fur puffs up
+registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a candy corn → to its mouth → it slips and bonks its head
+registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
+registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
