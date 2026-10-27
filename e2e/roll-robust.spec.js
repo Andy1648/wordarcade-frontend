@@ -279,12 +279,23 @@ test('7. the in-game REDUCE MOTION toggle (taw.reduceMotion) is respected: strai
   await expect(page.getByTestId('roll-cutscene')).not.toHaveClass(/is-on/);
 });
 
+// wait for the finite one-shot entrances (slap / pop scale) on this element and its ancestors to land before measuring —
+// a box read mid-overshoot is wider than the resting layout and reads as a clip on a slow CI runner
+const settled = (loc) => loc.evaluate((el) => {
+  const anims = [];
+  for (let n = el; n; n = n.parentElement) {
+    for (const a of n.getAnimations()) if (a.effect?.getTiming().iterations !== Infinity) anims.push(a.finished.catch(() => {}));
+  }
+  return Promise.all(anims);
+});
+
 for (const [w, h] of [[1280, 551], [1366, 657], [1920, 1080], [390, 844], [360, 640]]) {
   test(`8. ${w}x${h}: nothing clipped, ROLL visible, no horizontal scroll`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await seed(page, { 'taw.markRolls': STARTED() });
     await openRoll(page);
     const inView = async (sel) => {
+      await settled(page.locator(sel).first());
       const b = await page.locator(sel).first().boundingBox();
       expect(b, sel).not.toBeNull();
       expect(b.x, `${sel} left`).toBeGreaterThanOrEqual(-1);

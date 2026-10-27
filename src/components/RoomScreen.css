@@ -132,7 +132,11 @@
   gap: 8px;
 }
 .room-rename-btn:hover { text-decoration: underline dashed 2px; text-underline-offset: 4px; }
+/* YOUR seat's tag row (oct26): HOST + EDIT side by side under the name, so EDIT never shares the name's line */
+.room-seat-tags { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.room-seat-tags .room-host-badge { margin-left: 0; }
 .room-rename-hint {
+  cursor: pointer;
   font-size: var(--fs-k14);
   letter-spacing: 1px;
   color: #fff;

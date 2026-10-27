@@ -177,6 +177,12 @@
   100% { opacity: 1; transform: none; }
 }
 .room-wrap[data-skin="v2"] .room-host-badge { align-self: flex-start; }
+/* YOUR name is a button: a block that ends where the seat's text column ends (beside the hero), never past it */
+.room-wrap[data-skin="v2"] .room-rename-btn { display: block; max-width: 100%; min-height: 44px; box-sizing: border-box; padding-block: 10px; margin-block: -10px; line-height: 24px; }
+.room-wrap[data-skin="v2"] .room-seat-tags { align-self: flex-start; max-width: 100%; }
+/* the lobby says YOU ARE HOST over the seats, so YOUR seat drops its HOST badge: the tag row (beside the hero, ~90px
+   on a laptop) holds EDIT alone and never runs under the hero */
+.room-wrap[data-skin="v2"] .room-seat-tags .room-host-badge { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .room-wrap[data-skin="v2"] .room-player-chip { animation: none; }
 }

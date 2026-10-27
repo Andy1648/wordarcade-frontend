@@ -28,6 +28,7 @@ import '../kit/tokens.css';
 import './ResultsCard.css';
 import { resolvePlayerColor } from '../../playerColors';
 import { castFor, castByColor, castSrc, hasPose, castFrames } from '../../cast/cast.js';
+import AvatarFrame from '../../cast/AvatarFrame.jsx';
 import CastArt from '../../cast/CastArt.jsx';
 import { equippedFx } from '../../cast/kit.js';
 
@@ -336,7 +337,8 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
               {pose === 'win' ? (
                 <span className="rs2-char-fx">{CHAR_CONFETTI.map((c, i) => <img key={i} className="rs2-char-cf" src={`/stage/fx/confetti-${c.art}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
-              {pose === 'ko' ? (
+              {/* a K.O. flipbook paints its own dizzy stars — the overlay only dresses a still */}
+              {pose === 'ko' && !castFrames(myCast.id, 'ko') ? (
                 <span className="rs2-dizzy">{[0, 1, 2].map((i) => <img key={i} className={`rs2-dizzy-s is-${i}`} src={`/stage/fx/dizzy-${i}.webp`} width="96" height="96" alt="" draggable="false" />)}</span>
               ) : null}
             </div>
@@ -430,7 +432,9 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
           {rows.map((p, i) => (
             <li key={p.id} className={`rs2-prow${p.me ? ' is-me' : ''}`} data-place={p.place} data-rv="slide" data-at={300 + i * 70}>
               <span className={`rs2-prk rs2-prk--${p.place <= 3 ? p.place : 'n'}`}>{formatNum(p.place)}</span>
-              <img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" />
+              {p.me
+                ? <AvatarFrame src={castSrc(rowCast(p).id, 'hero')} className="rs2-pav"><img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" /></AvatarFrame>
+                : <img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" />}
               <span className="rs2-pname" translate="no">{p.name}</span>
               {p.me ? <span className="rs2-you">YOU</span> : null}
               <span className="rs2-pw">{formatNum(p.words)}</span>

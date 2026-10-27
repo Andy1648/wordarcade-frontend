@@ -383,7 +383,7 @@ test('tap a name: the profile card shows their gear, BASE, POWER and gears found
 // 046 PROFILE FLEX (Andy oct14 "ways profiles can be shown off (not avatars)"): the best CHAIN and a BADGE ROW (top claimed
 // achievement tiers); 051 (oct15): the player's DESCRIPTION where the signature word was. A pre-046 row has none → absent.
 for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, { width: 360, height: 640 }]) {
-  test(`@${vp.width}x${vp.height}: the profile card shows the description and badges (no best chain) — nothing clips, the card fits`, async ({ page }) => {
+  test(`@${vp.width}x${vp.height}: the profile card shows the description, no badges (no best chain) — nothing clips, the card fits`, async ({ page }) => {
     const SHOW = {
       b: {
         gear1: 'mk-kraken', gear2: 'mk-hydra', base_wins: 190, wins_per_word: 5130, gears_found: 9, gears_total: 27, power: 6,
@@ -403,16 +403,14 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 1920, height: 1080 }, {
     await expect(pc.locator('.pc-sig')).toHaveCount(0); // the signature word is gone (Andy oct15)
     await expect(pc.getByTestId('profile-bio-edit')).toHaveCount(0); // someone else's card: read only
     await expect(pc.getByTestId('profile-chain')).toHaveCount(0); // best CHAIN removed (Andy oct17 "why that specific game mode?")
-    await expect(pc.locator('.pc-badge')).toHaveCount(8);
-    await expect(pc.locator('.pc-badge-roman')).toHaveText(['MAX', 'III', 'II', 'IV', 'I', 'II', 'MAX', 'MAX']);
+    await expect(pc.locator('.pc-badge')).toHaveCount(0); // Andy oct26: no achievement badges on SOMEONE ELSE's card
     await page.waitForTimeout(400); // the card's pop
     const m = await pc.evaluate((el) => {
       const sig = el.querySelector('.pc-bio').getBoundingClientRect();
       const w = el.querySelector('.pc-bio-t').getBoundingClientRect();
       const r = el.getBoundingClientRect();
       const clippedEls = [...el.querySelectorAll('.pc-tile-v, .pc-tile-k, .pc-gear-name, .pc-name, .pc-bio-t')].filter((n) => n.scrollWidth > n.clientWidth + 1); const clipped = clippedEls.length;
-      const lastB = el.querySelector('.pc-badges').getBoundingClientRect();
-      return { clipped, wordInside: w.left >= sig.left - 1 && w.right <= sig.right + 1, cardBottom: r.bottom, badgesBottom: lastB.bottom, vh: innerHeight, overflow: el.scrollHeight - el.clientHeight };
+      return { clipped, wordInside: w.left >= sig.left - 1 && w.right <= sig.right + 1, cardBottom: r.bottom, vh: innerHeight, overflow: el.scrollHeight - el.clientHeight };
     });
     expect(m.clipped).toBe(0);
     expect(m.wordInside).toBe(true);

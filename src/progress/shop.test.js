@@ -215,3 +215,32 @@ test('POP STYLES pay their xpMult again (oct24): the worn pop multiplies letterX
     assert.ok(Math.abs(LX.letterXpNow() - base * 3) < 1e-9);
   } finally { delete globalThis.localStorage; delete globalThis.window; }
 });
+
+// OWNER TRY-LOOKS (oct26): ?trylooks=1 (or taw.flag.trylooks) wears any pop style for the page load — memory only.
+test('wearForSession: off without the owner flag — nothing worn, nothing written', async () => {
+  const { wearForSession, wornPopStyle } = await import('./shop.js');
+  withStorage({}, (map) => {
+    assert.equal(wearForSession('legend'), false);
+    assert.equal(wornPopStyle(), 'classic');
+    assert.equal(map.has('taw.equipped'), false);
+  });
+});
+
+test('wearForSession: with the flag the menu wears it, the save never sees it, a real equip ends it', async () => {
+  const { wearForSession, wornPopStyle, equippedPopMult } = await import('./shop.js');
+  withStorage({ 'taw.flag.trylooks': '1' }, (map) => {
+    assert.equal(wearForSession('legend'), true);
+    assert.equal(wornPopStyle(), 'legend');
+    assert.equal(getEquipped().popStyle, 'classic'); // the saved loadout is untouched
+    assert.equal(map.has('taw.equipped'), false); // never persisted → never backed up or synced
+    assert.equal(equippedPopMult(), 1); // the XP multiplier still reads the REAL equip
+    assert.equal(isOwned('legend'), false);
+    equip('clack'); // any real equip (here a sound pack) drops the session wear
+    assert.equal(wornPopStyle(), 'classic');
+    wearForSession('gold');
+    wearForSession(null);
+    assert.equal(wornPopStyle(), 'classic');
+    wearForSession('not-a-style');
+    assert.equal(wornPopStyle(), 'classic');
+  });
+});

@@ -16,6 +16,7 @@ import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
 import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
+import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
@@ -70,6 +71,8 @@ import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { patchSeen } from './patchNotes/patchSeen.js';
 import { mainFaceSrc, titleHeroSrc } from '../cast/mainFace.js';
+import { wornAvatarFrame, KIT_CHANGE } from '../cast/avatarFrame.js';
+const AvatarFrame = lazyWithReload(() => import('../cast/AvatarFrame.jsx'), 'AvatarFrame'); // only when a frame is worn (payload ratchet)
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -1357,7 +1360,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // GEARS are icon + label only; the DOT is the whole signal — on while something is actionable (an upgrade or a roll
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
-    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null } : null,
+    // THE POWER FORM (Andy oct26): the tile wears the painted form your POWER has reached (powerArt.js), not a stock bolt
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden
@@ -1459,9 +1463,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     import('../cast/heroSeen.js').then((m) => { if (live) setHeroNews(m.peekUnseen().length > 0); }, () => {});
     return () => { live = false; };
   }, [showProfile]);
+  // oct26 AVATAR FRAMES: the worn round frame (storage read, no kit data); equipping fires KIT_CHANGE
+  const [avFrame, setAvFrame] = useState(wornAvatarFrame);
+  useEffect(() => {
+    const on = () => setAvFrame(wornAvatarFrame());
+    window.addEventListener(KIT_CHANGE, on);
+    return () => window.removeEventListener(KIT_CHANGE, on);
+  }, []);
+  const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
     <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
-      <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />
+      {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
+      {avFrame
+        ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
+        : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
         <span className="hp-rankplate-n">{titleName}</span>

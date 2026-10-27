@@ -936,9 +936,12 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   }
   /* the four icons fit the right column (they overflowed it by ~38px and the column's contents never shared an edge —
      the "off center" Andy saw): icons, the chip / slab and the column now share both edges */
+  /* Andy oct26 "dont space top right icons": the cluster sits TIGHT against the column's right edge (the chip / slab
+     below shares that edge) with one small gap — never spread across the column */
   .homepage-stage[data-paged] .hp-icons {
     justify-self: stretch;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: max(6px, calc(8 * var(--u)));
     --hp-tr: min(max(46px, calc(58 * var(--u))), calc((var(--hp-nav-w) - 42 * var(--u)) / 4));
   }
   /* SLAB (?menu=slab): the left rail's twin — framed from the panel's top line to its bottom; the boost timers move
@@ -1021,3 +1024,11 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
    Same three faces, same fill; only bigger. ---- */
 .homepage-stage[data-first] .homepage-logo-wrap { height: max(84px, 17vh); }
 .homepage-stage[data-first] .homepage-logo { font-size: calc(var(--fs-hpword) * 1.5); }
+
+/* THE POWER FORM on the UPGRADES tile (Andy oct26 "include their current stage icon too bc it looks hella cool"): the
+   painted form is a busier picture than a kit glyph, so it sits a size up — big enough to read the art */
+.hp-rail .kb-rface .kit-icon.kb-rart { width: calc(var(--hp-nav-ico) * 1.35); height: calc(var(--hp-nav-ico) * 1.35); }
+.homepage-stage[data-paged] .hp-rail .kb--rail:not(.has-value) .kb-rface .kit-icon.kb-rart {
+  width: calc(var(--hp-tile-ico) * 2.1);
+  height: calc(var(--hp-tile-ico) * 2.1);
+}

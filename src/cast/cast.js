@@ -466,7 +466,7 @@ for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-go
  *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
 export const CAST_WIN_FRAMES = {};
 // each spec carries its file prefix; built ONCE here so a component's effect deps stay stable across re-renders
-const FRAME_SPECS = { hero: {}, win: {} };
+const FRAME_SPECS = { hero: {}, win: {}, ko: {} };
 for (const [id, F] of Object.entries(CAST_FRAMES)) FRAME_SPECS.hero[id] = { ...F, file: id };
 export function registerWinFrames(id, F) { CAST_WIN_FRAMES[id] = F; FRAME_SPECS.win[id] = { ...F, file: `${id}-win` }; }
 // a WIN celebration runs tighter than an idle: short holds, a short rest — it's a party
@@ -488,6 +488,30 @@ registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the 
 registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
 registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
 registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
+/** K.O. flipbooks (oct26, Andy: "use [ChatGPT] on HEROES first … KO flipbooks"): the knocked-out hero on the results
+ *  screen acts out a short loop of trying to get back up and failing (frame 0 = the painted K.O. pose, the last frame
+ *  lands back on it). Frames are public/cast/anim/<id>-ko-<n>.webp, registered on the lowest point like the WIN frames. */
+export const CAST_KO_FRAMES = {};
+export function registerKoFrames(id, F) { CAST_KO_FRAMES[id] = F; FRAME_SPECS.ko[id] = { ...F, file: `${id}-ko` }; }
+// a K.O. loop lies still a beat, stirs, tries, fails — slower than a WIN, and it rests long on the floor
+const KO_SEQ6 = { n: 6, seq: [[1, 300], [2, 450], [3, 600], [4, 260], [5, 700]], rest: 900 };
+registerKoFrames('riot', KO_SEQ6); // an eye blinks open → sits up, dizzy stars → props on a glove, fist up → the arm gives out → flat again
+registerKoFrames('glitch', KO_SEQ6); // a bored eye opens → lifts its head, stars → props up, blows a HUGE gum bubble → POP, gum on its face, flops
+registerKoFrames('hype', KO_SEQ6); // an eye opens → the foam finger up, weak → a hoarse little cheer → the finger droops and bonks it, flops
+registerKoFrames('brawl', KO_SEQ6); // a boot twitches → sits up, stars → up on one knee, a weak jab → the jab spins it, topples
+registerKoFrames('hex', KO_SEQ6); // an eye opens, hat askew → lifts its head, stars → reaches for the spellbook → a sad fizzle in its face, flops
+registerKoFrames('dud', KO_SEQ6); // standing, KO'd by sleep: nods off → a snot bubble swells → POP, jolts awake, nightcap flies → a giant teary yawn
+registerKoFrames('lexi', KO_SEQ6); // staggering: glasses slide down → bends for the book → reads it upside down → it SNAPS shut on its nose
+registerKoFrames('boo', KO_SEQ6); // floating, X eyes: the tail droops → deflates like a sad balloon → flat on the floor, one eye peeks → puffs back up, woozy
+registerKoFrames('shh', KO_SEQ6); // trapped in the invisible box: palms on the glass → it shrinks → squeezed tiny, beret pops off → slides down the wall
+registerKoFrames('sizzle', KO_SEQ6); // tongue on fire: fans its mouth → grabs the hot sauce → a panicked swig → breathes a puff of fire, crying
+registerKoFrames('mecha', KO_SEQ6); // sparks → powers down, slumped → dark visor, smoke → REBOOT, loading bars → X eyes again
+// QUILL's sheet opened on a happy reading pose, so its last (K.O.) frame is frame 0 and the loop runs five
+registerKoFrames('quill', { n: 5, seq: [[1, 300], [2, 450], [3, 600], [4, 700]], rest: 900 }); // an eye opens → stars → reads a verse aloud → the scroll smacks its face
+registerKoFrames('jinx', KO_SEQ6); // the tail twitches → stars + halo → admires itself in a mirror shard → it CRACKS, fur puffs up
+registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a candy corn → to its mouth → it slips and bonks its head
+registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
+registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own

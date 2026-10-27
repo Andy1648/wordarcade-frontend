@@ -747,7 +747,7 @@ html[data-beat='true'] .game-card.featured {
 }
 /* FUSE is a fire card — a warm hue turns muddy under CHAIN's cool dim, so gate it
    WARMER & LIGHTER (still locked + plaqued) so it reads HOT, not brown. FUSE only;
-   do NOT "correct" this to match CHAIN's dim (see GameArt.jsx FuseArt note). */
+   do NOT "correct" this to match CHAIN's dim. */
 .game-card-magnet[data-game='fuse'] .game-card.locked .game-card-art {
   filter: saturate(1) brightness(0.82);
 }
