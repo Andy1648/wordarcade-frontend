@@ -9,7 +9,8 @@ import HeroShowcase from './HeroShowcase.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
 import FramedCard from './FramedCard.jsx';
-import { heroById, CAST } from './cast.js';
+import AvatarFrame from './AvatarFrame.jsx';
+import { heroById, CAST, castSrc } from './cast.js';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
 import FitText from '../components/kit/FitText.jsx';
 import { getGems, subscribeGems } from '../progress/gemsCore';
@@ -76,6 +77,8 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame' }) {
       <div className="skp-stage">
         {slot === 'fx' ? <FxStage hero={hero} fx={s.id} />
           : frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
+        {/* oct26: the same frame as your round PORTRAIT (menu profile plate, your results row) */}
+        {slot === 'frame' ? <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-avatar" /> : null}
       </div>
       <div className="skp-side">
         <div className="skp-tabs" role="tablist" aria-label="Customize">
