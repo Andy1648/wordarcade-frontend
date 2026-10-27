@@ -18,7 +18,7 @@ import PowerLadder from './PowerLadder.jsx';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { getKeyTier, keyTierCost, keyXpMult } from '../progress/xp';
+import { getKeyTier, keyTierCost, keyXpMult, loadProgress, getRebirths } from '../progress/xp';
 import { letterXpNow } from '../progress/letterXp';
 import { buyKeyPower } from '../progress/shop';
 // v3/stock.js rides in the v3 chunk (installed before the first render in season 2) — read through the V3 holder, so
@@ -29,6 +29,8 @@ import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
+import { MenuXpFx } from './MenuXp';
+import { menuTier } from '../progress/menuTier';
 import DailyDrop from './DailyDrop';
 import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -156,6 +158,8 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
+  const tryFxRef = useRef(null); // the LOOKS try-on's pop layer (MenuXpFx)
+  const [tryTier] = useState(() => menuTier(loadProgress().level, getRebirths())); // the menu tier its pops are sized at
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
   const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
   const buying = useRef(false);
@@ -385,7 +389,10 @@ export default function ShopV2({ onBack }) {
           <div className="sp2-stock-sub sp2-shelf-sub">
             {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'BOUGHT ONCE, KEPT FOREVER · POP STYLES MULTIPLY YOUR XP' : 'REDEEM A CODE'}
           </div>
-          {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} /></div> : null}
+          {/* LOOKS TRY-ON (oct26): the menu's own pop layer (MenuXpFx — the pooled pops, shards and painted bursts) over the
+              shelf, so a tried pop style throws exactly what it throws on the menu, at the player's menu tier */}
+          {shelf === 'looks' ? <div className="sp2-tryfx" aria-hidden="true"><MenuXpFx ref={tryFxRef} menuTier={tryTier} /></div> : null}
+          {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} tryFxRef={tryFxRef} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (
               <div className="sp2-cell is-chest">

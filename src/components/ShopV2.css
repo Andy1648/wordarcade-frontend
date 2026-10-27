@@ -762,3 +762,80 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   .pl-art { left: 10px; top: 10px; width: 72px; height: 72px; }
 }
 @media (prefers-reduced-motion: reduce) { .pl-form { animation: none; } button.sp2-plate { transition: none; } }
+
+/* ===== LOOKS TRY-ON (Andy oct26 "i want to playtest all the key looks"): tap a pop-style card → keys (or the phone's TYPE
+   pad) throw that style's real menu pop for 10 s. The art stage is the card's TRY button; the TRYING bar sticks to the
+   foot of the shelf's view; the pops fly on the menu's own layer (MenuXpFx) laid over the shelf. One-shots only. ===== */
+.sp2-look-stage { padding: 0; margin: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; min-width: 44px; min-height: 44px; }
+.sp2-look-stage:focus-visible { outline: 3px solid var(--k-cyan); outline-offset: 2px; border-radius: 8px; }
+.sp2-look.has-art { cursor: pointer; }
+.sp2-look.is-trying { border-color: #FF4FA3; }
+.sp2-look.is-trying .sp2-look-stage { animation: sp2-try-slam 260ms cubic-bezier(.2, 1.5, .4, 1) 1; }
+@keyframes sp2-try-slam { 0% { transform: scale(.82) rotate(-6deg); } 100% { transform: none; } }
+.sp2-look-wear { background: #FF4FA3; }
+.sp2-look-act + .sp2-look-act { margin-top: 6px; }
+.sp2-try {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #1a0b2e;
+  border: 4px solid #6a1ab8;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--k-ink);
+  animation: sp2-try-in 220ms cubic-bezier(.2, 1.3, .4, 1) 1;
+}
+@keyframes sp2-try-in { 0% { transform: translateY(14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.sp2-try-chip {
+  flex: 1 1 auto;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-size: var(--fs-k18);
+  color: var(--k-cyan);
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+.sp2-try .sp2-look-act { flex: 0 0 auto; margin-top: 0; padding: 0 14px; }
+.sp2-try .sp2-look-act + .sp2-look-act { margin-top: 0; }
+.sp2-try-pad { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .sp2-try { flex-wrap: wrap; }
+  .sp2-try-chip { flex-basis: 100%; }
+  .sp2-try-pad {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 56px;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--k-display);
+    font-size: var(--fs-k24);
+    color: #fff;
+    -webkit-text-stroke: 3px #000;
+    paint-order: stroke fill;
+    background: #FF4FA3;
+    border: 3px solid #A8226A;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0 var(--k-ink);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 90ms ease-out;
+  }
+  .sp2-try-pad:active { transform: translate(3px, 3px); }
+}
+/* the pops' layer: the stock panel on a desktop (the shelf scrolls inside it); on a phone the PAGE scrolls, so the layer
+   rides a 0-tall sticky host and spans the screen while the shelf is in view */
+.sp2-tryfx { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+@media (max-width: 999px) {
+  .sp2-tryfx { position: sticky; inset: auto; top: 0; height: 0; margin-bottom: -8px; }
+  .sp2-tryfx .menu-xp-fx { bottom: auto; height: 100vh; height: 100dvh; }
+  .sp2-shelf { overflow: visible; } /* the page is the scroller here, so the TRYING bar sticks to the screen's foot */
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp2-look.is-trying .sp2-look-stage, .sp2-try { animation: none; }
+}
