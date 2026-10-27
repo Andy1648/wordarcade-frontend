@@ -423,11 +423,19 @@ html[data-beat='true'] .homepage-logo {
 .homepage-cards-grid[data-cols='3'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .homepage-cards-grid[data-cols='3'] .game-card-magnet { grid-column: span 2; }
 .homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
+.homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(7):last-child { grid-column: 3 / span 2; }
+/* A 4-column grid of seven (MINER oct26) ends 4+3 — eight half-tracks, card 5 starts on the second. */
+.homepage-cards-grid[data-cols='4'] { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.homepage-cards-grid[data-cols='4'] .game-card-magnet { grid-column: span 2; }
+.homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(5):nth-last-child(3) { grid-column: 2 / span 2; }
 .homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) { grid-column: 1 / -1; }
-/* CARD PAGES (feat/chromebook-card-pages): the paged row's layout ships with the lazy CardPager.css. */
+/* CARD PAGES (feat/chromebook-card-pages): the paged row's layout ships with the lazy CardPager.css.
+   Three a page; seven cards (MINER oct26) are three pages, 3 + 3 + 1. */
 .homepage-cards-pagerow { display: contents; }
 .homepage-stage[data-paged] .homepage-cards-grid[data-page='0']:not([data-measuring]) > .game-card-magnet:nth-child(n+4),
-.homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3) {
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(-n+3),
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='1']:not([data-measuring]) > .game-card-magnet:nth-child(n+7),
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='2']:not([data-measuring]) > .game-card-magnet:nth-child(-n+6) {
   display: none;
 }
 

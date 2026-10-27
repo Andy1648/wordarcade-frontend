@@ -16,7 +16,7 @@
 // mode dialog), and markup explicitly tagged data-decor (PlayerDot's tier numeral, a superscript). The last test proves the detector bites.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, navControl, satSetupGo } from './support/menu.js';
+import { menuReady, navControl, revealMode, satSetupGo } from './support/menu.js';
 import { SCREENS, bootMenu, bootRoom, screenProfile, card } from './support/screens.js';
 
 const VIEWPORTS = [
@@ -66,7 +66,7 @@ const EXTRA = [
       await installBackendMock(page);
       await page.goto('/?satRush=1&portal=1');
       await menuReady(page);
-      await card(page, 'sat-rush').click();
+      await (await revealMode(page, 'sat-rush')).click();
       await page.getByRole('button', { name: /LINEUP/ }).click(); await satSetupGo(page);
       await page.locator('.sr-lineup').waitFor({ state: 'visible', timeout: 20000 });
       await page.waitForTimeout(400);
@@ -78,7 +78,7 @@ const EXTRA = [
       await installBackendMock(page);
       await page.goto('/?satRush=1&portal=1');
       await menuReady(page);
-      await card(page, 'sat-rush').click();
+      await (await revealMode(page, 'sat-rush')).click();
       await page.getByRole('button', { name: /LINEUP/ }).click(); await satSetupGo(page);
       await page.locator('.sr-lineup').waitFor({ state: 'visible', timeout: 20000 });
       await expect

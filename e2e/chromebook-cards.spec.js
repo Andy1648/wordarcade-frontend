@@ -70,7 +70,7 @@ for (const { w, h } of SIZES) {
     // (feat/menu-centre: every landscape desktop pages now).
     await boot(page, 900, 1180);
     const tall = await readCards(page);
-    expect(tall.length, 'a portrait tablet shows all six cards').toBe(6);
+    expect(tall.length, 'a portrait tablet shows all seven cards').toBe(7);
     await expect(page.locator('.homepage-cards-arrow'), 'no pager on a portrait tablet').toHaveCount(0);
     const ref = tall.map((c) => c.ratio).sort((a, b) => a - b)[3];
 
@@ -94,11 +94,11 @@ for (const { w, h } of SIZES) {
       });
       expect(onTop, `${sel} is not covered`).toBe(true);
     }
-    await expect(page.locator('.homepage-cards-dot')).toHaveCount(2);
+    await expect(page.locator('.homepage-cards-dot')).toHaveCount(3); // seven cards (MINER oct26): 3 + 3 + 1
 
-    const check = async (label) => {
+    const check = async (label, n = 3) => {
       const cards = await readCards(page);
-      expect(cards.length, `${label}: three cards on the page`).toBe(3);
+      expect(cards.length, `${label}: ${n} cards on the page`).toBe(n);
       for (const c of cards) {
         // eslint-disable-next-line no-console
         console.log(`[chromebook ${w}x${h} ${label}] ${c.game} ${c.w}x${c.h} ratio=${c.ratio.toFixed(3)} (ref ${ref.toFixed(3)}) clip=${c.clip.toFixed(1)}${c.by ? `@${c.by}` : ''}`);
@@ -120,9 +120,19 @@ for (const { w, h } of SIZES) {
     await page.waitForTimeout(350);
     expect(await pageOf(page)).toBe('1');
     expect(await dotOn(page)).toBe('1');
-    await expect(page.locator('.homepage-cards-arrow.is-next')).toHaveAttribute('aria-disabled', 'true');
     const p2 = await check('page 2');
-    expect(new Set([...p1, ...p2]).size, 'the two pages hold six different modes').toBe(6);
+
+    // → page 3: the last card alone, and the next arrow is spent
+    await page.locator('.homepage-cards-arrow.is-next').click();
+    await page.waitForTimeout(350);
+    expect(await pageOf(page)).toBe('2');
+    expect(await dotOn(page)).toBe('2');
+    await expect(page.locator('.homepage-cards-arrow.is-next')).toHaveAttribute('aria-disabled', 'true');
+    const p3 = await check('page 3', 1);
+    expect(new Set([...p1, ...p2, ...p3]).size, 'the three pages hold seven different modes').toBe(7);
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForTimeout(350);
+    expect(await pageOf(page)).toBe('1');
 
     // (d) ← back to page 1, → to page 2 again (keys work from anywhere on the menu)
     await page.evaluate(() => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); });
@@ -163,7 +173,7 @@ for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 5
   test(`${w}x${h}: the cards are centred — left gap = right gap (±1px)`, async ({ page }) => {
     await installBackendMock(page);
     await boot(page, w, h);
-    const pages = paged ? 2 : 1;
+    const pages = paged ? 3 : 1; // seven cards (MINER oct26): 3 + 3 + 1, the lone last card centred too
     for (let p = 0; p < pages; p += 1) {
       if (p > 0) {
         // by KEY, not a click: the pointer near a card swings its cursor-magnetic lean and skews the rects
@@ -173,7 +183,7 @@ for (const { w, h, paged } of [{ w: 1366, h: 657, paged: true }, { w: 1280, h: 5
         await page.waitForTimeout(450); // the finite flip slide
       }
       const g = await cardGaps(page);
-      expect(g.n, `cards on page ${p}`).toBe(paged ? 3 : 6);
+      expect(g.n, `cards on page ${p}`).toBe(paged ? (p === 2 ? 1 : 3) : 7);
       expect(g.left, `page ${p}: a card is outside the console`).toBeGreaterThanOrEqual(0);
       expect(Math.abs(g.left - g.right), `page ${p}: left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1.5); // 1.5: the flipped page lands on a sub-pixel
     }

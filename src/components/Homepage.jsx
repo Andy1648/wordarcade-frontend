@@ -548,9 +548,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const count = grid.querySelectorAll('.game-card-magnet').length || 5;
         // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
         // PAGED: one row of CARDS_PER_PAGE, the other cards are a flip away.
+        // rows = ceil(count / cols): seven cards (MINER oct26) are 4+3 / 3+3+1 / 2+2+2+1.
         const LAYOUTS = isPagedMenu
           ? [[Math.min(CARDS_PER_PAGE, count), 1]]
-          : narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
+          : (narrow ? [2] : [count, 4, 3, 2, 1]).map((c) => [c, Math.ceil(count / c)]);
         let best = null;
         let owed = 0;
         for (const [cols, rows] of LAYOUTS) {

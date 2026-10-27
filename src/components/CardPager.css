@@ -23,6 +23,8 @@
   grid-template-columns: repeat(var(--cards-cols, 3), var(--card-w, 200px));
 }
 .homepage-stage[data-paged] .homepage-cards-grid .game-card-magnet { grid-column: auto; }
+/* the last page of seven holds one card: it takes the middle track (the row keeps its width, so the arrows stay put) */
+.homepage-stage[data-paged] .homepage-cards-grid[data-page='2'] .game-card-magnet:nth-child(7) { grid-column: 2; }
 .homepage-cards-arrow {
   flex: 0 0 auto;
   width: 48px;

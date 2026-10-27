@@ -9,7 +9,7 @@
 // claude/batch-a/latency.md. SAT RUSH re-renders its whole poster per key (p95 ~56 ms): open item.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, satSetupGo } from './support/menu.js';
+import { menuReady, revealMode, satSetupGo } from './support/menu.js';
 
 const SEED = () => {
   if (sessionStorage.getItem('lat.seeded')) return;
@@ -77,7 +77,7 @@ test('SAT RUSH: keystroke → paint p95 < 50 ms at 4x CPU (typing the real word)
   await installBackendMock(page);
   await page.addInitScript(SEED);
   await page.goto('/?satRush=1&portal=1');
-  await page.locator('[data-game="sat-rush"] .game-card').click();
+  await (await revealMode(page, 'sat-rush')).click();
   await page.getByRole('button', { name: /BRIEFING/ }).click(); await satSetupGo(page);
   await page.locator('.sr-brief-card').first().waitFor();
   const briefed = [];

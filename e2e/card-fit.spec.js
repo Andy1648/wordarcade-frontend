@@ -197,12 +197,15 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
         // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
         // skews every rect this measures (a 3D lean read as "text clipped by its card").
         await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
-        await page.keyboard.press('ArrowRight');
-        await page.waitForTimeout(400);
-        const m2 = await measure(page);
-        expect(m2.cards.length, 'page 2 shows the other three').toBe(3);
-        m.cards = [...m.cards, ...m2.cards];
-        if (m2.smallest.px < m.smallest.px) m.smallest = m2.smallest;
+        // seven cards (MINER oct26): pages 2 and 3 hold three and one
+        for (const [pg, n] of [[2, 3], [3, 1]]) {
+          await page.keyboard.press('ArrowRight');
+          await page.waitForTimeout(400);
+          const m2 = await measure(page);
+          expect(m2.cards.length, `page ${pg} shows ${n}`).toBe(n);
+          m.cards = [...m.cards, ...m2.cards];
+          if (m2.smallest.px < m.smallest.px) m.smallest = m2.smallest;
+        }
       }
       const row = {
         profile, vp: `${w}x${h}`,
