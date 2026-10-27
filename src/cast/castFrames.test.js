@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { CAST_FRAMES, CAST_WIN_FRAMES, castFrames } from './cast.js';
+import { CAST_FRAMES, CAST_WIN_FRAMES, CAST_KO_FRAMES, castFrames } from './cast.js';
 
 const has = (f) => fs.existsSync(new URL(`../../public/cast/anim/${f}.webp`, import.meta.url));
 
@@ -19,8 +19,13 @@ test('every WIN flipbook frame exists', () => {
   for (const [id, F] of Object.entries(CAST_WIN_FRAMES)) for (let k = 0; k < F.n; k++) assert.ok(has(`${id}-win-${k}`), `${id}-win-${k}.webp missing`);
 });
 
+test('every K.O. flipbook frame exists', () => {
+  for (const [id, F] of Object.entries(CAST_KO_FRAMES)) for (let k = 0; k < F.n; k++) assert.ok(has(`${id}-ko-${k}`), `${id}-ko-${k}.webp missing`);
+});
+
 test('castFrames returns the SAME object every call (stable effect deps under App re-render churn)', () => {
   assert.equal(castFrames('riot'), castFrames('riot'));
   assert.equal(castFrames('riot', 'win'), castFrames('riot', 'win'));
-  assert.equal(castFrames('riot', 'ko'), null);
+  assert.equal(castFrames('riot', 'ko'), castFrames('riot', 'ko'));
+  assert.equal(castFrames('nobody', 'ko'), null);
 });

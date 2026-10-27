@@ -251,3 +251,13 @@ test('WIN with a WIN FX worn (kit.js): its burst; an old save with a SIDEKICK (r
   await page.waitForTimeout(700);
   if (process.env.SHOTS) await page.screenshot({ path: 'claude/shots/hero-kit/results-win.png' });
 });
+
+test('K.O. with a painted K.O. flipbook (oct26): your hero acts out trying to get back up, frame 0 = the K.O. pose', async ({ page }) => {
+  await play(page, { outcome: 'loss', place: 4, seed: { 'taw.main': 'brawl' } });
+  const flip = page.locator('.rs2-char--ko .cast-flip');
+  await expect(flip).toBeVisible();
+  await expect(flip.locator('img.cast-frame.is-rest')).toHaveAttribute('src', '/cast/anim/brawl-ko-0.webp');
+  await expect(flip.locator('img.cast-frame')).toHaveCount(6);
+  await expect(page.locator('.rs2-dizzy'), 'the flipbook paints its own stars').toHaveCount(0);
+  if (process.env.SHOTS) { await page.waitForTimeout(2500); await page.screenshot({ path: 'claude/shots/ko-results.png' }); }
+});
