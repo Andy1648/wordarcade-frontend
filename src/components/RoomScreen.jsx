@@ -80,7 +80,7 @@ function botDifficultyLabel(key) {
  * YOUR name in the roster is editable (Andy oct15 "change your name even after you join a multiplayer lobby"): tap it,
  * type, Enter / tap away saves (set_name — the server only takes it between games), Escape cancels.
  */
-function RenameName({ name, onRename }) {
+function RenameName({ name, onRename, host = false }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
   const inputRef = useRef(null);
@@ -92,38 +92,52 @@ function RenameName({ name, onRename }) {
     setEditing(false);
     if (next && next !== name) onRename(next);
   };
+  const start = () => { setDraft(name); setEditing(true); };
+  // the EDIT tag rides the TAG row with HOST, under the name — never beside it (Andy oct26: on a laptop the seat's
+  // name line is ~100px beside the hero, and "NAME EDIT" ran under the hero / past the seat). A tap on it renames too.
+  const tags = (
+    <span className="room-seat-tags">
+      {host ? <span className="room-host-badge">HOST</span> : null}
+      {editing ? null : <span className="room-rename-hint" aria-hidden="true" onClick={start}>EDIT</span>}
+    </span>
+  );
   if (!editing) {
     return (
-      <button
-        type="button"
-        className="room-player-name room-rename-btn"
-        translate="no"
-        onClick={() => { setDraft(name); setEditing(true); }}
-        aria-label="Change your name"
-        title="Change your name"
-      >
-        {name}
-        <span className="room-rename-hint" aria-hidden="true">EDIT</span>
-      </button>
+      <>
+        <button
+          type="button"
+          className="room-player-name room-rename-btn"
+          translate="no"
+          onClick={start}
+          aria-label="Change your name"
+          title="Change your name"
+        >
+          {name}
+        </button>
+        {tags}
+      </>
     );
   }
   return (
-    <input
-      ref={inputRef}
-      className="room-player-name room-rename-input"
-      value={draft}
-      maxLength={MAX_NAME_LENGTH}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={save}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') save();
-        if (e.key === 'Escape') { setDraft(name); setEditing(false); }
-      }}
-      aria-label="Your name"
-      autoComplete="off"
-      spellCheck={false}
-    />
+    <>
+      <input
+        ref={inputRef}
+        className="room-player-name room-rename-input"
+        value={draft}
+        maxLength={MAX_NAME_LENGTH}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === 'Enter') save();
+          if (e.key === 'Escape') { setDraft(name); setEditing(false); }
+        }}
+        aria-label="Your name"
+        autoComplete="off"
+        spellCheck={false}
+      />
+      {tags}
+    </>
   );
 }
 
@@ -317,11 +331,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                     : SEASON2 ? <SeatHero id={player.hero || castByColor(pc.color).id} />
                     : <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />}
                   {player.id === myId && onRename ? (
-                    <RenameName name={player.name} onRename={onRename} />
+                    <RenameName name={player.name} onRename={onRename} host={player.id === room.hostId} />
                   ) : (
                     <span className="room-player-name" translate="no">{player.name}</span>
                   )}
-                  {player.id === room.hostId && <span className="room-host-badge">HOST</span>}
+                  {player.id === room.hostId && !(player.id === myId && onRename) && <span className="room-host-badge">HOST</span>}
                   {SEASON2 && player.id === myId ? <span className="room-you-badge">YOU</span> : null}
                   {player.isBot && (
                     <span className="room-bot-badge">

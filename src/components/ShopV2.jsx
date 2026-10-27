@@ -14,6 +14,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
 import { powerForm, nextPowerForm } from '../progress/powerArt.js';
+import PowerLadder from './PowerLadder.jsx';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
@@ -164,6 +165,9 @@ export default function ShopV2({ onBack }) {
   const buying = useRef(false);
   const chestRef = useRef(chest);
   chestRef.current = chest;
+  const [ladder, setLadder] = useState(false); // THE POWER LADDER popup (a tap on the plate)
+  const ladderRef = useRef(ladder);
+  ladderRef.current = ladder;
   const sealedRef = useRef(sealed);
   sealedRef.current = sealed;
   const rootRef = useRef(null);
@@ -194,7 +198,8 @@ export default function ShopV2({ onBack }) {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
       if (sealedRef.current) return; // the SEALED ROLL opening owns the screen until NICE
-      if (chestRef.current) setChest(false); // Esc closes the chest popup first
+      if (ladderRef.current) { setLadder(false); plateRef.current?.focus(); } // Esc closes the power forms first
+      else if (chestRef.current) setChest(false); // Esc closes the chest popup first
       else onBackRef.current();
     };
     window.addEventListener('keydown', onKey);
@@ -303,6 +308,7 @@ export default function ShopV2({ onBack }) {
           </div>
         </div>
       ) : null}
+      {ladder ? <PowerLadder current={form.n} onClose={() => { setLadder(false); plateRef.current?.focus(); }} /> : null}
       <div className="sp2-scale">
       <div className="sp2-stage">
         <header className="sp2-head">
@@ -318,7 +324,8 @@ export default function ShopV2({ onBack }) {
           {/* THE POWER LADDER (oct24, powerArt.js): the plate shows the FORM this level has reached — a new painted icon
               every two levels, each with its own plate colour — and the next form waits, blacked out, in the corner */}
           <div className="sp2-forever" data-testid="sp2-form">FORM {form.n} · {form.name}</div>
-          <div className="sp2-plate" ref={plateRef} aria-hidden="true" style={{ '--pf-plate': form.plate, '--pf-inner': form.inner }} data-form={form.n}>
+          {/* a tap opens THE POWER LADDER: every form, the ones ahead hidden (Andy oct26) */}
+          <button type="button" className="sp2-plate" ref={plateRef} aria-label={`Power form ${form.n}, ${form.name} — see every form`} aria-haspopup="dialog" onClick={() => setLadder(true)} style={{ '--pf-plate': form.plate, '--pf-inner': form.inner }} data-form={form.n}>
             <span className="sp2-plate-a" />
             <span className="sp2-plate-b" />
             <span className="sp2-evolve" ref={evolveRef} />
@@ -329,7 +336,7 @@ export default function ShopV2({ onBack }) {
                 <span className="sp2-next-at">P{next.at}</span>
               </span>
             ) : null}
-          </div>
+          </button>
           <div className="sp2-pw">
             <span className="sp2-pw-lab">POWER</span>
             <span className="sp2-pw-now" data-testid="sp2-power" ref={nowRef}>{formatNum(tier)}</span>
