@@ -26,6 +26,8 @@ export const NEW_CREW = [
   { id: 'salty', name: 'SALTY', tag: 'SEVEN SEAS. ZERO MANNERS.', color: '#2D6CDF', dark: '#122E66' },
   // oct26 (Andy: heroes first, new heroes next): BUZZ, the spelling-bee champion — a bumblebee bomb, a giant pencil for a sword
   { id: 'buzz', name: 'BUZZ', tag: 'SPELLING BEE CHAMPION', color: '#FFC21A', dark: '#8A5A00' },
+  // oct26: ZIP, the ninja bomb — the fastest fingers in the room (a speed hero for a typing game)
+  { id: 'zip', name: 'ZIP', tag: 'FASTEST FINGERS ALIVE', color: '#E0283C', dark: '#6E0A16' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
 // of a bomb that already went off) needs REBIRTH 5 and then gems (oct19, HERO_PRICE / HERO_UNLOCK below).
@@ -82,13 +84,14 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, buzz: 1800, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, buzz: 1800, zip: 2000, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
   quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
   salty: { wins: 160, label: '160 WINS', icon: 'wins' },
   buzz: { wins: 200, label: '200 WINS', icon: 'wins' },
+  zip: { wins: 250, label: '250 WINS', icon: 'wins' },
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
   nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
@@ -176,7 +179,8 @@ const PAINTED = new Set([
   'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
   'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
   'salty-hero', 'salty-win', 'salty-ko',
-  'buzz-hero', 'buzz-win', 'buzz-ko', // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
+  'buzz-hero', 'buzz-win', 'buzz-ko',
+  'zip-hero', 'zip-win', 'zip-ko', // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
   'nova-hero', 'nova-win', 'nova-ko', // oct24 LEGEND (ChatGPT, RIOT / JINX / DUD as the style refs)
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
@@ -245,6 +249,7 @@ export const CAST_BEATS = {
   jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
   salty: { ms: 1100, k: [[0, 1, 1], [0.35, 1.04, 0.95], [0.7, 0.98, 1.03], [1, 1, 1]] }, // a sea-legs sway, heavy iron
   buzz: { ms: 520, k: [[0, 1, 1], [0.5, 1.03, 0.97], [1, 1, 1]] }, // a quick wing-beat hum
+  zip: { ms: 700, k: [[0, 1, 1], [0.3, 1.05, 0.95], [0.6, 0.97, 1.03], [1, 1, 1]] }, // light on its toes, coiled
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
   nova: { ms: 2400, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // a slow orbit's breath (it floats; nothing to bounce on)
 };
@@ -446,6 +451,8 @@ export const CAST_FRAMES = {
   // SALTY: spyglass up → spots something → lowers it, gold tooth glint → whips out the cutlass → points it at you → rests it
   // on the shoulder, wink
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
+  // ZIP (oct26): spins a throwing star on a fingertip → tosses it up → a quick crouch → catches it without looking → 'shh'
+  zip: { n: 6, seq: [[1, 380], [2, 300], [3, 420], [4, 600], [5, 800]], rest: 1500 },
   // BUZZ (oct26): the spelling-bee champion — licks the pencil tip → scribbles in the air, sparkles → a big scribble loop
   // overhead → polishes its gold medal → pencil over the shoulder, wink
   buzz: { n: 6, seq: [[1, 420], [2, 360], [3, 700], [4, 650], [5, 900]], rest: 1700 },
@@ -497,6 +504,7 @@ registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round →
 registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
 registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
 registerWinFrames('buzz', WIN_SEQ6); // lands → pencil high like a trophy → buzzing mid-air, sparkles + honey drops → bites its gold medal → points the pencil at you → pencil on the shoulder
+registerWinFrames('zip', WIN_SEQ6); // ninja landing → flying jump kick → a fan of throwing stars mid-air → they thunk into the floor in a row → a quick bow → arms crossed
 /** K.O. flipbooks (oct26, Andy: "use [ChatGPT] on HEROES first … KO flipbooks"): the knocked-out hero on the results
  *  screen acts out a short loop of trying to get back up and failing (frame 0 = the painted K.O. pose, the last frame
  *  lands back on it). Frames are public/cast/anim/<id>-ko-<n>.webp, registered on the lowest point like the WIN frames. */
@@ -522,6 +530,7 @@ registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a c
 registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
 registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
 registerKoFrames('buzz', KO_SEQ6); // a wing twitches → buzzes weakly off the floor → hovers, reaching for its snapped pencil → the wings sputter, it drops
+registerKoFrames('zip', KO_SEQ6); // an eye opens → a ninja kip-up, legs up → springs up halfway, wobbling → steps on its own throwing star, topples
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
@@ -551,6 +560,8 @@ export const CAST_IDLE = {
   quill: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.3, 0.97, 1.04, 0, -3], [0.6, 1, 1, 0, -3], [0.8, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
   salty: { ms: 2200, rest: 0, k: [[0, 1, 1, 0, 0], [0.25, 1.03, 0.97, -2, 0], [0.5, 1, 1, 0, 0], [0.75, 1.03, 0.97, 2, 0], [1, 1, 1, 0, 0]] },
   // BUZZ hovers on its buzzing wings: a quick bob up off the floor and back, twice
+  // ZIP shifts its stance: a quick sidestep one way, freeze, a sidestep back — never still, never loud
+  zip: { ms: 1800, rest: 0, k: [[0, 1, 1, 0, 0], [0.12, 1.04, 0.96, -4, 0], [0.4, 1.04, 0.96, -4, 0], [0.52, 1.04, 0.96, 4, 0], [0.8, 1.04, 0.96, 4, 0], [1, 1, 1, 0, 0]] },
   buzz: { ms: 1400, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 0.97, 1.04, 0, -5], [0.4, 1, 1, 0, -2], [0.6, 0.97, 1.04, 0, -5], [0.85, 1.03, 0.97, 0, 0], [1, 1, 1, 0, 0]] },
   jinx: { ms: 2000, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 1.04, 0.95, 0, 1], [0.35, 0.96, 1.05, 0, -4], [0.5, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },

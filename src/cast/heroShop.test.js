@@ -79,12 +79,12 @@ test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () =
 }));
 
 test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s seat member', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
-  for (const id of ['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'salty', 'buzz', 'nova']) {
+  for (const id of ['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'salty', 'buzz', 'zip', 'nova']) {
     for (const pose of ['hero', 'win', 'ko']) assert.equal(castSrc(id, pose), `/cast/${id}-${pose}.webp`);
     assert.equal(ownsHero(id), false);
     assert.ok(CAST_BEATS[id]);
   }
-  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'salty', 'buzz', 'nova'].includes(castFor(`p${i}`).id));
+  for (let i = 0; i < 200; i++) assert.ok(!['dud', 'lexi', 'boo', 'shh', 'sizzle', 'mecha', 'quill', 'jinx', 'salty', 'buzz', 'zip', 'nova'].includes(castFor(`p${i}`).id));
   map.set(REBIRTH_KEY_FOR_TEST, '5');
   assert.equal(ownsHero('boo'), false, 'oct19: REBIRTH 5 only unlocks the BUY — a LEGEND is never free');
   assert.equal(ownsHero('lexi'), false);
@@ -121,7 +121,7 @@ test('GOLD: earned with 100 wins on its member (bots + online), never sold; a wi
 test('oct19: DUD / LEXI / SHH / SIZZLE are earned at a WINS count (bots + online) or bought; DUD costs the most', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
   const { HERO_PRICE, HERO_UNLOCK } = CASTMOD;
   assert.ok(HERO_PRICE.dud > HERO_PRICE.lexi && HERO_PRICE.dud > HERO_PRICE.sizzle);
-  for (const id of ['dud', 'lexi', 'shh', 'sizzle', 'quill', 'jinx', 'salty', 'buzz']) assert.ok(HERO_UNLOCK[id].wins > 0 && HERO_PRICE[id] > 0 && !HERO_UNLOCK[id].gate);
+  for (const id of ['dud', 'lexi', 'shh', 'sizzle', 'quill', 'jinx', 'salty', 'buzz', 'zip']) assert.ok(HERO_UNLOCK[id].wins > 0 && HERO_PRICE[id] > 0 && !HERO_UNLOCK[id].gate);
   map.set('taw.s2.count', JSON.stringify({ mp: 20, bots: 19 }));
   assert.equal(ownsHero('shh'), false);
   map.set('taw.s2.count', JSON.stringify({ mp: 20, bots: 20 }));
