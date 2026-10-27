@@ -447,15 +447,21 @@ export const CAST_FRAMES = {
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
-  'hype-elite': { n: 4, seq: [[1, 700], [2, 1000], [3, 1100]], rest: 1800 },
+  // 6 frames (oct26, the ELITE idles were 4-frame jumps): megaphone down → swings it up → YELLS → flung high, a confetti
+  // burst → thumb at the crown, wink → lowers it, the last confetti falling
+  'hype-elite': { n: 6, seq: [[1, 220], [2, 700], [3, 1000], [4, 700], [5, 400]], rest: 1600 },
   // ROCKSTAR RIOT: horns up → strums (twice), notes fly → windmill + headbang, sparks off the guitar → rock-god pose
-  'riot-elite': { n: 4, seq: [[1, 220], [0, 120], [1, 220], [2, 900], [3, 1100]], rest: 1700 },
+  // 6 frames: horns up → strums → strums harder, notes fly (twice) → windmill headbang, sparks → guitar high, tongue out → lowers it
+  'riot-elite': { n: 6, seq: [[1, 220], [2, 220], [1, 180], [2, 220], [3, 900], [4, 1000], [5, 300]], rest: 1500 },
   // CHAMP BRAWL: guard → jab → hoists the BELT, camera flashes → kisses the glove at you
-  'brawl-elite': { n: 4, seq: [[1, 160], [0, 140], [1, 160], [2, 1100], [3, 1000]], rest: 1700 },
+  // 6 frames: guard → jab (twice) → reaches for the belt → hoists it, camera flashes → lowers it → kisses the glove, a heart
+  'brawl-elite': { n: 6, seq: [[1, 160], [0, 140], [1, 160], [2, 300], [3, 1100], [4, 300], [5, 900]], rest: 1500 },
   // GLITCH.EXE: bored hologram → types, code floats up → the whole body GLITCHES (sliced + pixels) → arms crossed, smug
-  'glitch-elite': { n: 4, seq: [[1, 700], [2, 160], [1, 120], [2, 420], [3, 1200]], rest: 2000 },
+  // 6 frames: bored, a hologram keyboard → types, code floats up → types faster → the body GLITCHES (twice) → snaps back → arms crossed
+  'glitch-elite': { n: 6, seq: [[1, 500], [2, 500], [3, 160], [4, 120], [3, 300], [4, 300], [5, 1200]], rest: 1800 },
   // ARCHMAGE HEX: leans on the staff → crystal flares → a swirl of runes + stars bursts out → calm, smug
-  'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
+  // 6 frames: leans on the staff → raises it, the crystal glows → it FLARES, eyes gold → a swirl of runes + stars → fades → smug
+  'hex-elite': { n: 6, seq: [[1, 500], [2, 700], [3, 1050], [4, 500], [5, 900]], rest: 1800 },
 };
 // GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
 // (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
@@ -488,6 +494,12 @@ registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the 
 registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
 registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
 registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
+// ELITE WIN flipbooks (oct26 — they showed a still): ChatGPT, each ELITE's WIN + standing pose attached
+registerWinFrames('riot-elite', WIN_SEQ6); // lands, guitar low → guitar high, horns → a power chord mid-air, sparks + confetti → a wild strum → knee-slide, points it at you → guitar on the shoulder
+registerWinFrames('glitch-elite', WIN_SEQ6); // crouched → fist up under a hologram grid → glitches into slices mid-air → snaps back, a download bar fills → finger-guns → arms crossed
+registerWinFrames('hype-elite', WIN_SEQ6); // lands → megaphone high → the wings flap, a confetti burst → YELLS into it → points it at you, wink → thumb at the crown
+registerWinFrames('brawl-elite', WIN_SEQ6); // boxing crouch → hoists the belt → camera flashes mid-air → a roaring double fist pump → points at you, belt on the shoulder → gloves crossed
+registerWinFrames('hex-elite', WIN_SEQ6); // lands → staff high, the crystal glows → floats in a swirl of runes → the book flips itself → a star at you, wink → leans on the staff
 /** K.O. flipbooks (oct26, Andy: "use [ChatGPT] on HEROES first … KO flipbooks"): the knocked-out hero on the results
  *  screen acts out a short loop of trying to get back up and failing (frame 0 = the painted K.O. pose, the last frame
  *  lands back on it). Frames are public/cast/anim/<id>-ko-<n>.webp, registered on the lowest point like the WIN frames. */
@@ -512,6 +524,12 @@ registerKoFrames('jinx', KO_SEQ6); // the tail twitches → stars + halo → adm
 registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a candy corn → to its mouth → it slips and bonks its head
 registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
 registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
+// ELITE K.O. flipbooks (oct26): each ELITE's K.O. + standing pose attached
+registerKoFrames('riot-elite', KO_SEQ6); // an eye opens → grabs the guitar → one sad strum → a string snaps in its face, flops
+registerKoFrames('glitch-elite', KO_SEQ6); // crashed → a loading spinner → the visor flickers on, a loading bar → nearly loaded → the bar goes red and shatters, glitches out
+registerKoFrames('hype-elite', KO_SEQ6); // an eye opens → grabs the megaphone → a big breath → only a tiny squeak, flops
+registerKoFrames('brawl-elite', KO_SEQ6); // a glove twitches → onto one knee → staggers up, a wobbly guard → the belt slips to its ankles and trips it
+registerKoFrames('hex-elite', KO_SEQ6); // under its hat: peeks out → grabs the staff → a few weak sparkles → the spell backfires in its face
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
