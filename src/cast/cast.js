@@ -455,7 +455,7 @@ export const CAST_FRAMES = {
   zip: { n: 6, seq: [[1, 380], [2, 300], [3, 420], [4, 600], [5, 800]], rest: 1500 },
   // BUZZ (oct26): the spelling-bee champion — licks the pencil tip → scribbles in the air, sparkles → a big scribble loop
   // overhead → polishes its gold medal → pencil over the shoulder, wink
-  buzz: { n: 6, seq: [[1, 420], [2, 360], [3, 700], [4, 650], [5, 900]], rest: 1700 },
+  buzz: { n: 12, seq: [[6, 168], [1, 252], [7, 144], [2, 216], [8, 280], [3, 420], [9, 260], [4, 390], [10, 360], [5, 540], [11, 180]], rest: 1700 }, // 12 frames: 6-11 are painted in-betweens
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
   nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [4, 620], [10, 440], [5, 462], [11, 198]], rest: 2000 },
