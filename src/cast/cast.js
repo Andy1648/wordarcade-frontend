@@ -452,7 +452,7 @@ export const CAST_FRAMES = {
   // on the shoulder, wink
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // ZIP (oct26): spins a throwing star on a fingertip → tosses it up → a quick crouch → catches it without looking → 'shh'
-  zip: { n: 6, seq: [[1, 380], [2, 300], [3, 420], [4, 600], [5, 800]], rest: 1500 },
+  zip: { n: 12, seq: [[6, 152], [1, 228], [7, 120], [2, 180], [8, 168], [3, 252], [9, 240], [4, 360], [10, 320], [5, 480], [11, 160]], rest: 1500 }, // 12 frames: 6-11 are painted in-betweens
   // BUZZ (oct26): the spelling-bee champion — licks the pencil tip → scribbles in the air, sparkles → a big scribble loop
   // overhead → polishes its gold medal → pencil over the shoulder, wink
   buzz: { n: 12, seq: [[6, 168], [1, 252], [7, 144], [2, 216], [8, 280], [3, 420], [9, 260], [4, 390], [10, 360], [5, 540], [11, 180]], rest: 1700 }, // 12 frames: 6-11 are painted in-betweens
