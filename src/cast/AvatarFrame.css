@@ -1,0 +1,19 @@
+/* AvatarFrame — the worn round frame round a portrait. `.avf` takes the portrait's slot (its own class sizes it) and
+   drops the slot's tile look; the face is a circle under the painted ring. Selectors are tripled so a host rule like
+   `.pchip-face img` can't reach in. */
+:where(.avf) { position: relative; } /* zero specificity: a host may place the frame (absolute) itself */
+.avf.avf.avf {
+  display: inline-block; flex: none; padding: 0; overflow: visible; isolation: isolate;
+  background: none; border: 0; border-radius: 0; box-shadow: none; filter: none; object-fit: initial;
+}
+.avf.avf .avf-face {
+  position: absolute; display: block; overflow: hidden; border-radius: 50%; margin: 0; padding: 0; border: 0;
+}
+.avf.avf .avf-face img {
+  position: absolute; left: 50%; top: -2%; width: 118%; height: auto; max-width: none; margin: 0; padding: 0; border: 0;
+  translate: -50% 0; transform: none; object-fit: initial; filter: none; pointer-events: none;
+}
+.avf.avf .avf-ring {
+  position: absolute; z-index: 1; display: block; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0;
+  translate: none; transform: none; object-fit: contain; filter: none; pointer-events: none;
+}

@@ -1,7 +1,9 @@
 /* KitPicker (CUSTOMIZE) — your hero wearing the piece you're trying on (left), SIDEKICK | FRAME tabs, the painted tiles + how you get it (right).
    House look: flat fills, coloured outlines, hard black shadows. Nothing scrolls on a laptop. */
 .skp { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: center; }
-.skp-stage { display: flex; justify-content: center; min-width: 0; }
+.skp-stage { position: relative; display: flex; justify-content: center; min-width: 0; }
+/* the round PORTRAIT try-on (AvatarFrame), tucked in the card's lower-left corner */
+.skp-stage .skp-avatar { position: absolute; left: 6px; bottom: 10px; width: 84px; height: 84px; z-index: 2; }
 .skp-stage .hs { max-width: min(400px, calc(100dvh - 230px)); }
 .skp-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .skp-stage .fc { width: min(300px, calc((100dvh - 250px) * .6)); }
@@ -53,6 +55,7 @@
 .skp-locked { display: inline-flex; align-items: center; gap: 8px; font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #fff; }
 .skp-gems { display: inline-flex; align-items: center; gap: 6px; font: 400 var(--fs-k22) 'Bungee', sans-serif; color: #fff; }
 @media (max-width: 760px) {
+  .skp-stage .skp-avatar { width: 56px; height: 56px; left: 2px; bottom: 4px; }
   .skp { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .skp-stage .hs { max-width: 210px; }
   .skp-stage .fc { width: 150px; }

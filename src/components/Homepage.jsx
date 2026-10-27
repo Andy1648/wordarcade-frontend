@@ -70,6 +70,8 @@ import MobileMenu from './MobileMenu';
 import ClaimPopup from '../claims/ClaimPopup.jsx';
 import { patchSeen } from './patchNotes/patchSeen.js';
 import { mainFaceSrc, titleHeroSrc } from '../cast/mainFace.js';
+import { wornAvatarFrame, KIT_CHANGE } from '../cast/avatarFrame.js';
+const AvatarFrame = lazyWithReload(() => import('../cast/AvatarFrame.jsx'), 'AvatarFrame'); // only when a frame is worn (payload ratchet)
 import { useClaims } from '../claims/useClaims.js';
 import { queueClaim, trimClaimInbox } from '../progress/claims.js';
 import { moments } from '../lib/moments';
@@ -1468,9 +1470,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     import('../cast/heroSeen.js').then((m) => { if (live) setHeroNews(m.peekUnseen().length > 0); }, () => {});
     return () => { live = false; };
   }, [showProfile]);
+  // oct26 AVATAR FRAMES: the worn round frame (storage read, no kit data); equipping fires KIT_CHANGE
+  const [avFrame, setAvFrame] = useState(wornAvatarFrame);
+  useEffect(() => {
+    const on = () => setAvFrame(wornAvatarFrame());
+    window.addEventListener(KIT_CHANGE, on);
+    return () => window.removeEventListener(KIT_CHANGE, on);
+  }, []);
+  const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
     <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
-      <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />
+      {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
+      {avFrame
+        ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
+        : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
         <span className="hp-rankplate-n">{titleName}</span>

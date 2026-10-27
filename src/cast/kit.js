@@ -10,6 +10,7 @@
 //    card's impact burst) — Rocket League's goal explosion.
 // Earned with WINS like the crew (gems skip the wait); the rare ones sit behind a rebirth, then gems. Looks only:
 // nothing here changes how a game plays or pays.
+import { KIT_CHANGE } from './avatarFrame.js';
 import { getRebirths } from '../progress/xp.js';
 import { spendGems } from '../progress/gems.js';
 import { itemPurchased } from '../lib/events.js';
@@ -50,7 +51,7 @@ export const kitSrc = (id) => {
 };
 
 // a season-2 key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
-export const KIT_KEY = 'taw.s2.kit';
+export const KIT_KEY = 'taw.s2.kit'; // = avatarFrame.js KIT_KEY
 const SLOT_OK = (slot, id) => { const k = kitById(id); return !!k && k.slot === slot; };
 export function readKit() {
   try {
@@ -62,6 +63,7 @@ export function readKit() {
 }
 function writeKit(k) {
   try { localStorage.setItem(KIT_KEY, JSON.stringify(k)); } catch { /* blocked storage */ }
+  try { window.dispatchEvent(new Event(KIT_CHANGE)); } catch { /* no window (tests) */ } // the worn-frame portraits (AvatarFrame)
 }
 
 // the MASTERY ROAD's claims (masteryRoad.js ROAD_KEY = { mode: [node index …] }) read straight from storage so this file
