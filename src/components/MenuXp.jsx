@@ -453,7 +453,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
   // outline colour — static styles on the pooled node, set per spawn (MenuXp.css .is-kit).
   function dressNum(node, look) {
-    if (!look || !look.bar) { clearNum(node); return; }
+    if (!look || !look.bar) {
+      clearNum(node);
+      // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
+      if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
+      return;
+    }
     node.style.backgroundImage = `url(${look.bar})`;
     node.style.borderColor = look.stroke;
     node.classList.add('is-kit');

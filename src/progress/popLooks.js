@@ -3,6 +3,7 @@
 // (MenuXp letterPop / tapPop, the pooled nodes) — fill, a coloured outline (a darker shade of the fill, the house rule),
 // a hard offset shadow and the burst shards. A pricier look throws more shards; PRISM / PLASMA / LEGEND cycle their
 // fill pop to pop. LOOKS ONLY: nothing here touches XP, wins or gems. CLASSIC = the old dress, untouched (null).
+import { KIT_PAINTED } from './kitArt.js';
 // Colours follow each look's shop swatch (public/shop/pop/<id>.webp). Leaf module: no imports. LAZY — useXpCapture
 // loads it on the menu's first key / tap, and only while a paid look is worn, so it never weighs on the first paint.
 
@@ -29,7 +30,7 @@ export const POP_LOOKS = {
 // progress bar"): each look is a whole themed set — `bar` is its painted fill texture (the menu XP bar's fill while worn,
 // and the texture INSIDE the +N number), `crit` its bigger painted CRIT burst. One ChatGPT image each, the look's icon +
 // burst attached as the reference.
-for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], art: `/shop/pop/burst-${id}.webp`, bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp` });
+for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], art: `/shop/pop/burst-${id}.webp`, ...(KIT_PAINTED.has(id) ? { bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp` } : {}) });
 
 /** The look for a pop-style id, or null (CLASSIC / unknown → the menu's own tier colours). */
 export function popLookOf(id) {

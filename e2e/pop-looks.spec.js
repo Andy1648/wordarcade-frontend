@@ -42,14 +42,14 @@ async function popDress(page) {
 
 // oct25: a paid look throws its painted BURST behind the pop (the look's colour lives in the art). oct27 (THE KIT): the
 // number sits on a chip of the look's own painted texture, in white with a black outline (it reads on any burst).
-test('GOLD: the menu +N pops throw the gold burst, the number white on a gold-texture chip', async ({ page }) => {
+test('INFERNO: the menu +N pops throw the inferno burst, the number white on an inferno-texture chip', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await menuWith(page, 'gold');
+  await menuWith(page, 'inferno');
   const d = await popDress(page);
-  expect(d.art).toContain('burst-gold');
+  expect(d.art).toContain('burst-inferno');
   expect(d.color).toBe('rgb(255, 255, 255)');
   expect(d.stroke).toBe('rgb(0, 0, 0)');
-  expect(d.chip).toContain('bar-gold');
+  expect(d.chip).toContain('bar-inferno');
 });
 
 test('CLASSIC keeps the old dress (black outline, no look shadow)', async ({ page }) => {

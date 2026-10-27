@@ -23,10 +23,10 @@ import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny, buyKeyPower, wornPopStyle, EQUIP_CHANGE } from '../progress/shop';
+import { kitBarOf } from '../progress/kitArt.js';
 // THE KIT's BAR (oct27): a worn POP STYLE paints the XP bar's fill (public/shop/pop/bar-<id>.webp — media, fetched only
-// while one is worn; the ids are listed here so the menu never loads popLooks.js for its first paint)
-const KIT_BAR_IDS = new Set(['chrome', 'inferno', 'void', 'prism', 'toxic', 'ember', 'frost', 'gold', 'plasma', 'nova', 'eclipse', 'legend']);
-const kitBarSkin = () => { const id = wornPopStyle(); return KIT_BAR_IDS.has(id) ? `/shop/pop/bar-${id}.webp` : null; };
+// while one is worn; kitArt.js lists the painted ids so the menu never loads popLooks.js for its first paint)
+const kitBarSkin = () => kitBarOf(wornPopStyle());
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { peakLevel } from '../progress/peakLevel';

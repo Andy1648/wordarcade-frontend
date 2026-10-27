@@ -3,6 +3,7 @@
 // the v3 shop.buy swap charges gems and equips), and CODES (the redeem box). Same logic as the live shop — shop.js
 // buy / equip / getOwned / getEquipped, RedeemCodes — re-laid on the v2 kit so they sit on the UPGRADES screen.
 import { useEffect, useRef, useState } from 'react';
+import { kitBarOf } from '../progress/kitArt.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, tryLooksOn, wearForSession, wornPopStyle } from '../progress/shop';
 import { TRY_MS, tryStreak, tryGain, padLetter } from '../progress/tryOn';
 import { TIER_SCALES, TIER_COLORS } from '../progress/useXpCapture';
@@ -174,7 +175,7 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
         <div className="sp2-try" data-testid="sp2-try" data-try={tried.id} key={live.n}>
           <span className="sp2-try-chip">TRYING · {tried.name}</span>
           {/* THE KIT's BAR (oct27): the menu XP bar's fill while this look is worn */}
-          {tried.id !== 'classic' ? <span className="sp2-try-bar" data-testid="sp2-try-bar" aria-hidden="true" style={{ backgroundImage: `url(/shop/pop/bar-${tried.id}.webp)` }} /> : null}
+          {kitBarOf(tried.id) ? <span className="sp2-try-bar" data-testid="sp2-try-bar" aria-hidden="true" style={{ backgroundImage: `url(${kitBarOf(tried.id)})` }} /> : null}
           <LookAct it={tried} isOn={equipped.popStyle === tried.id} isOwned={owned.has(tried.id) || triedPrice === 0} can={gems >= triedPrice} price={triedPrice}
             owner={owner} onBuy={onBuy} onEquip={onEquip} onWear={onWear} />
           <button type="button" className="sp2-try-pad" data-testid="sp2-try-pad" onPointerDown={onPad}>TYPE</button>
