@@ -524,6 +524,12 @@ registerKoFrames('jinx', KO_SEQ6); // the tail twitches → stars + halo → adm
 registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a candy corn → to its mouth → it slips and bonks its head
 registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
 registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
+// ELITE K.O. flipbooks (oct26): each ELITE's K.O. + standing pose attached
+registerKoFrames('riot-elite', KO_SEQ6); // an eye opens → grabs the guitar → one sad strum → a string snaps in its face, flops
+registerKoFrames('glitch-elite', KO_SEQ6); // crashed → a loading spinner → the visor flickers on, a loading bar → nearly loaded → the bar goes red and shatters, glitches out
+registerKoFrames('hype-elite', KO_SEQ6); // an eye opens → grabs the megaphone → a big breath → only a tiny squeak, flops
+registerKoFrames('brawl-elite', KO_SEQ6); // a glove twitches → onto one knee → staggers up, a wobbly guard → the belt slips to its ankles and trips it
+registerKoFrames('hex-elite', KO_SEQ6); // under its hat: peeks out → grabs the staff → a few weak sparkles → the spell backfires in its face
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
