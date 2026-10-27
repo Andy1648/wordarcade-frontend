@@ -76,6 +76,9 @@
 .pf-crew-face:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 @media (hover: hover) { .pf-crew-face:not(.is-on):hover { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .pf-crew-face { transition: none; } }
+/* a big roster (oct26, BUZZ made a full account wrap a third row at 1280x600): a step smaller so it still fits without scrolling */
+.pf-crew-row.is-many { gap: 6px; }
+.pf-crew-row.is-many .pf-crew-face { width: 40px; height: 40px; border-width: 2px; box-shadow: 2px 2px 0 #000; }
 /* TITLE (oct21 — the menu's title plate became the PROFILE plate): your worn title in the header, tap → ALL TITLES */
 .pf-titlerow {
   display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 6px; box-sizing: border-box; margin-left: 6px; overflow: hidden;
