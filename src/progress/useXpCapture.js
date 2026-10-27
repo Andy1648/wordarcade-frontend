@@ -23,7 +23,7 @@ import { playClack } from './clack';
 import { loadRarityIndex, rarityOf } from './rarityIndex';
 import { wpmStart, wpmAddWord, wpmEnd, wpmKeyStroke } from './wpmLive';
 import { equippedPopColors } from '../theme/themes';
-import { getEquipped, EQUIP_CHANGE } from './shop';
+import { wornPopStyle, EQUIP_CHANGE } from './shop';
 import { sndLevelUp } from '../audio/gameSounds';
 import { formatNum } from '../format.js';
 import { flagOn } from '../lib/featureFlags.js';
@@ -99,15 +99,15 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     let look = null;
     let lookMod = null;
     let lookLoading = false;
-    let styled = getEquipped().popStyle !== 'classic';
-    const readLook = () => { look = lookMod && styled ? lookMod.popLookOf(getEquipped().popStyle) : null; };
+    let styled = wornPopStyle() !== 'classic';
+    const readLook = () => { look = lookMod && styled ? lookMod.popLookOf(wornPopStyle()) : null; };
     const wantLook = () => {
       if (!styled || lookMod || lookLoading) return;
       lookLoading = true;
       import('./popLooks.js').then((m) => { lookMod = m; readLook(); }, () => { lookLoading = false; });
     };
     const onEquip = () => {
-      styled = getEquipped().popStyle !== 'classic';
+      styled = wornPopStyle() !== 'classic';
       readLook();
       wantLook();
     };

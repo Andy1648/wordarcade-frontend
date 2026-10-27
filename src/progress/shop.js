@@ -6,6 +6,7 @@
 import { getWins, saveWins } from './wins.js';
 import { getKeyTier, saveKeyTier, keyTierCost } from './xp.js';
 import { forgeBuys, forgeCost, forgeOne, markForgePop } from './forge.js';
+import { flagOn } from '../lib/featureFlags.js';
 // PROGRESSION v3 (SEASON2, default OFF): WINS BUY ONLY POWER — cosmetics cost GEMS (v3/econ cosmeticGemPrice), and
 // the best POWER feeds the ACHIEVEMENTS counter. OFF = every price and balance exactly as before.
 
@@ -113,6 +114,7 @@ export function getEquipped() {
 /** Fired on window when the equipped look / sound changes — the menu re-reads its LOOK (popLooks.js). */
 export const EQUIP_CHANGE = 'taw:equip-change';
 export function saveEquipped(eq) {
+  sessionPop = null; // a real equip ends the owner's session-only wear (below)
   try {
     localStorage.setItem(EQUIPPED_KEY, JSON.stringify(eq));
   } catch {
@@ -124,6 +126,30 @@ export function saveEquipped(eq) {
   } catch {
     /* no window (node) */
   }
+}
+
+// OWNER TRY-LOOKS (Andy oct26 "i want to playtest all the key looks"): with `?trylooks=1` any pop style can be worn for
+// THIS PAGE LOAD — module memory only: never written to taw.equipped, so never saved, backed up or synced to the cloud,
+// and the XP multiplier still reads the REAL equip (equippedPopMult). Without the flag it is a no-op.
+export const TRY_LOOKS_FLAG = 'trylooks';
+let sessionPop = null;
+export function tryLooksOn() {
+  return flagOn(TRY_LOOKS_FLAG);
+}
+/** Wear a pop style for the session (owner flag only); null takes it off. Returns whether it applied. */
+export function wearForSession(id) {
+  if (!tryLooksOn()) return false;
+  sessionPop = id && POP_IDS.has(id) ? id : null;
+  try {
+    window.dispatchEvent(new Event(EQUIP_CHANGE));
+  } catch {
+    /* no window (node) */
+  }
+  return true;
+}
+/** The pop style the menu's pops wear: the owner's session pick, else the saved equip. */
+export function wornPopStyle() {
+  return sessionPop || getEquipped().popStyle;
 }
 
 export function getEquippedSoundPack() {
