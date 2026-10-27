@@ -494,6 +494,12 @@ registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the 
 registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
 registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
 registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
+// ELITE WIN flipbooks (oct26 — they showed a still): ChatGPT, each ELITE's WIN + standing pose attached
+registerWinFrames('riot-elite', WIN_SEQ6); // lands, guitar low → guitar high, horns → a power chord mid-air, sparks + confetti → a wild strum → knee-slide, points it at you → guitar on the shoulder
+registerWinFrames('glitch-elite', WIN_SEQ6); // crouched → fist up under a hologram grid → glitches into slices mid-air → snaps back, a download bar fills → finger-guns → arms crossed
+registerWinFrames('hype-elite', WIN_SEQ6); // lands → megaphone high → the wings flap, a confetti burst → YELLS into it → points it at you, wink → thumb at the crown
+registerWinFrames('brawl-elite', WIN_SEQ6); // boxing crouch → hoists the belt → camera flashes mid-air → a roaring double fist pump → points at you, belt on the shoulder → gloves crossed
+registerWinFrames('hex-elite', WIN_SEQ6); // lands → staff high, the crystal glows → floats in a swirl of runes → the book flips itself → a star at you, wink → leans on the staff
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
