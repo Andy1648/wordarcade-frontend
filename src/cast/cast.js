@@ -443,7 +443,8 @@ export const CAST_FRAMES = {
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
-  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [4, 620], [10, 440], [5, 462], [11, 198]], rest: 2000 },
+  // oct26: in-between 9 repainted (the snap hand lowering as the planet forms — the old one drew a prop on the wrong hand)
+  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [9, 248], [4, 372], [10, 440], [5, 462], [11, 198]], rest: 2000 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
@@ -463,10 +464,16 @@ export const CAST_FRAMES = {
   // 6 frames: leans on the staff → raises it, the crystal glows → it FLARES, eyes gold → a swirl of runes + stars → fades → smug
   'hex-elite': { n: 6, seq: [[1, 500], [2, 700], [3, 1050], [4, 500], [5, 900]], rest: 1800 },
 };
-// GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
-// (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
-const GOLD_SEQ4 = { hex: { n: 4, seq: [[1, 650], [2, 900], [3, 1150]], rest: 2000 }, brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 }, glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 }, hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 }, riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 } };
-for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ4[b] || CAST_FRAMES[b];
+// GOLD versions act out their member's routine in solid gold — 6 painted frames each (oct26 repaint: the 4-frame
+// GOLD sheets jumped between poses), small steps so the beats flow
+const GOLD_SEQ6 = {
+  riot: { n: 6, seq: [[1, 170], [2, 170], [1, 170], [2, 170], [3, 250], [4, 950], [5, 800]], rest: 1600 }, // shakes the can (twice) → a first puff → full spray → blows the nozzle
+  glitch: { n: 6, seq: [[1, 380], [2, 420], [3, 700], [4, 260], [5, 900]], rest: 2000 }, // the gum bubble grows, grows, HUGE → POP on its face → peels it off
+  hype: { n: 6, seq: [[1, 220], [2, 420], [3, 300], [4, 300], [5, 900]], rest: 1700 }, // the foam finger up → YELLS → swings it across and back → points at you, wink
+  brawl: { n: 6, seq: [[1, 90], [2, 160], [1, 90], [2, 160], [3, 250], [4, 650], [5, 800]], rest: 1600 }, // jab (twice) → winds low → UPPERCUT → gloves bumped, wink
+  hex: { n: 6, seq: [[1, 450], [2, 500], [3, 950], [4, 300], [5, 900]], rest: 1900 }, // looks up, a star → fingers wiggle stars → the book FLARES → snaps it shut → 'shh'
+};
+for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ6[b];
 /** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
  *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
  *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
