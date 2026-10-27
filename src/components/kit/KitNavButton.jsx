@@ -66,7 +66,7 @@ export function KitIconButton({ icon, art, tone = 'yellow', rot = 0, tag, tagTon
  * `locked` = the gate it opens at ("R2", "LV10"): the face goes dark, the icon becomes the padlock, the value line
  * says the gate, and a tap SHAKES the face instead of opening (the button stays focusable — aria-disabled).
  */
-export function KitRailButton({ icon, label, tone = 'yellow', active = false, dot = false, value, locked, onClick, className, ...rest }) {
+export function KitRailButton({ icon, art, label, tone = 'yellow', active = false, dot = false, value, locked, onClick, className, ...rest }) {
   const ptrRef = useRef(null);
   const dotRef = useRef(null);
   const faceRef = useRef(null);
@@ -100,7 +100,15 @@ export function KitRailButton({ icon, label, tone = 'yellow', active = false, do
           {/* .kb-rico: the icon's MOTION host (the menu's beat bounce + dot nudge animate it; hover/press animate the
               svg inside), so the three never fight over one transform */}
           <span className="kb-rico" aria-hidden="true">
-            <KitIcon name={icon} size={28} shadow={2} extras={false} />
+            {/* `art`: a painted image in the icon's place (the UPGRADES tile wears your POWER form) — the same .kit-icon box,
+                so every rail size / hover / beat rule sizes it like the icon it replaces */}
+            {art && !locked ? (
+              <svg className="kit-icon kit-icon--bare kb-rart" viewBox="0 0 100 100" width={28} height={28} aria-hidden="true" focusable="false" data-icon="art" style={{ '--ki-drop': '2px' }}>
+                <image href={art} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet" />
+              </svg>
+            ) : (
+              <KitIcon name={icon} size={28} shadow={2} extras={false} />
+            )}
           </span>
           <span className="kb-rtext">
             <span className="kb-rlabel">{label}</span>

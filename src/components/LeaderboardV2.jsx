@@ -618,15 +618,16 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     <FitText className="lb2-name" min={0.5} style={{ '--nl': nameEms(r.username) }}>{r.username}</FitText>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
-                    {/* YOUR distance to the NEAREST band rides beside your name when a rival owns the line below */}
-                    {mine && rival && r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {/* the visit you climbed INTO a tier, that news owns the second line (the chase is back next look) */}
                   {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
                   {mine && !newTier && (rival || r.rank > 10) ? (
                     <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>
-                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b> FOR #{fmt(rival.rank)}</FitText> : null}
+                      {/* YOUR distance to the NEAREST band rides INSIDE this line's FitText, after the rival — never beside your
+                          name, where a long or shrunk name ran under it (Andy oct26 "overlap with my username and '15 TO TOP
+                          10'"): the two scale as one, so they can never cross */}
+                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b><span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}</FitText> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
                           small stage with a rival it steps aside so neither is cut */}
                       {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}

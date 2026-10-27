@@ -49,6 +49,7 @@
 .pc-rank { flex: none; font-size: var(--fs-k24); color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pc-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k28); -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pc-plate { flex: none; height: 34px; }
+.pc-name.fit-box { overflow: visible; text-overflow: clip; } /* FitText scales the name to its box — no ellipsis */
 .pc-sub { display: flex; gap: 10px; }
 .pc-sub-c {
   display: inline-flex;

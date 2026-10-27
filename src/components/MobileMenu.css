@@ -531,3 +531,8 @@
   .hp-m.is-first .hp-m-per:empty { display: none; }
   .hp-m-foot { flex: 0 0 auto; display: flex; justify-content: center; }
 }
+
+/* the UPGRADES slab's painted POWER form: a size up from the 26px glyphs, still inside the slab under its label strip */
+@media (max-width: 480px) {
+  .hp-m-rail .kb-rface .kit-icon.kb-rart { width: 34px; height: 34px; margin: -4px 0; }
+}

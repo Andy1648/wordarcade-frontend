@@ -206,6 +206,7 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           <KitRailButton
             key={id}
             icon={id}
+            art={it.art}
             label={label}
             tone={tone}
             dot={!!it.dot}

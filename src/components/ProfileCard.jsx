@@ -10,6 +10,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import './kit/tokens.css';
 import './ProfileCard.css';
 import KitIcon from './kit/KitIcon.jsx';
+import FitText from './kit/FitText.jsx';
 import './kit/kitIconData.js'; // registers power / boost / index / levels / rebirth (the menu core set has only a few)
 import MarkBadge from './MarkBadge.jsx';
 import { KitRankPlate } from './kit/KitRankPlate.jsx';
@@ -238,7 +239,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
         <div className="pc-head">
           {/* a top-50 player's card wears the same painted numbered seal as their board row (nameTier.js) */}
           {nameTier(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
-          <span className="pc-name">{row.username}</span>
+          {/* names are never cut (FitText shrinks a long one beside the rank plate instead of an ellipsis) */}
+          <FitText className="pc-name" min={0.5}>{row.username}</FitText>
           <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
         </div>
         <div className="pc-sub">
@@ -257,7 +259,8 @@ export default function ProfileCard({ row, mine = false, onClose }) {
           <Tile icon="index" tone="#FF4FA3" value={found != null ? `${formatNum(Number(s.gears_found))}/${formatNum(Number(s.gears_total))}` : UNKNOWN} label="GEARS FOUND" />
           {/* Andy oct22: one read-out a stat — the count, no bar beside it */}
         </div>
-        {s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
+        {/* achievement badges: YOUR card only (Andy oct26 "remove achievements shown … on other profiles — no one cares") */}
+        {mine && s.badges && typeof s.badges === 'object' ? <BadgeRow badges={s.badges} /> : null}
         {/* no UNLISTED shelf / found-count here (Andy oct19 "no need to show how many unlisted you've found") */}
       </div>
       {gear ? (
