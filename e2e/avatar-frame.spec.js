@@ -25,7 +25,7 @@ async function menuWith(page, frame, main = 'riot') {
 test('a worn frame goes round the menu profile face; the ring art loads', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await menuWith(page, 'frost');
-  const avf = page.locator('[data-testid="profile-plate"] .avf[data-frame="frost"]');
+  const avf = page.locator('[data-testid="profile-plate"] .avf[data-avf="frost"]');
   await expect(avf).toBeVisible();
   const ok = await avf.locator('.avf-ring').evaluate((img) => img.complete && img.naturalWidth > 0);
   expect(ok).toBe(true);
@@ -47,7 +47,7 @@ test('equipping a frame swaps the face without a reload', async ({ page }) => {
     localStorage.setItem('taw.s2.kit', JSON.stringify({ own: ['flame'], frame: 'flame', fx: null }));
     window.dispatchEvent(new Event('taw:kit-change'));
   });
-  await expect(page.locator('[data-testid="profile-plate"] .avf[data-frame="flame"]')).toBeVisible();
+  await expect(page.locator('[data-testid="profile-plate"] .avf[data-avf="flame"]')).toBeVisible();
 });
 
 if (SHOTS) {

@@ -24,7 +24,7 @@ export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow 
   const face = { left: pct(off + (cx - r) * grow), top: pct(off + (cy - r) * grow), width: pct(2 * r * grow), height: pct(2 * r * grow), background: bg };
   const ring = { left: pct(off), top: pct(off), width: pct(grow * 100), height: pct(grow * 100) };
   return (
-    <span className={`avf ${className}`} data-frame={frame} aria-hidden="true">
+    <span className={`avf ${className}`} data-avf={frame} aria-hidden="true">
       <span className="avf-face" style={face}><img src={src} alt="" draggable="false" /></span>
       <img className="avf-ring" src={`/cast/avatar/${frame}.webp`} style={ring} width="256" height="256" alt="" draggable="false" />
     </span>
