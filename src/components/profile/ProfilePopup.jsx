@@ -156,7 +156,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
               </div>
               <section className="pf-crew" aria-label="Your heroes">
                 <header className="pf-crew-head"><span className="pf-crew-k">YOUR HEROES</span><span className="pf-crew-n">{mine.length}/{ALL_HEROES.length}</span></header>
-                <div className="pf-crew-row">
+                <div className={`pf-crew-row${mine.length > 20 ? ' is-many' : ''}`}>
                   {mine.map((x) => (
                     <button key={x.id} type="button" className={`pf-crew-face${x.id === h.id ? ' is-on' : ''}${x.gold ? ' is-gold' : x.elite ? ' is-elite' : x.legend ? ' is-legend' : ''}`}
                       style={{ '--cf-d': x.dark || h.dark }} onClick={() => { if (x.id !== h.id) equip(x.id); }}
