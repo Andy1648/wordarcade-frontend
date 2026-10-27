@@ -305,7 +305,7 @@ function Chips({ names, onKick, tone = '', empty = '—', size = 0 }) {
 function NamesToggle({ on, set }) {
   return (
     <button type="button" className="sr-linkbtn fr-class-names" onClick={() => set(!on)} aria-pressed={on}>
-      {on ? 'Hide names' : 'Show names'} <span className="fr-class-key">N</span>
+      <span className="fr-class-names-label">{on ? 'Hide names' : 'Show names'}</span> <span className="fr-class-key">N</span>
     </button>
   );
 }

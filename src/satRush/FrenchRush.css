@@ -283,3 +283,447 @@
     animation: none;
   }
 }
+
+/* =====================================================================================================
+   POLISH 2 (oct27, Andy on #531: "continue doing that on ur own (proportions, overlaps (border))").
+   Measured in Playwright at 1920x1080 / 1536x864 / 1366x768 / 1280x600 / 390x844 / 360x640: rect
+   intersections incl. borders + hard shadows, clipped borders, text overflow, edge-hugging, scroll.
+   - ONE gutter: every page keeps --fr-gut from the screen edge PLUS room for its 6px hard shadow (pages
+     ran to 96vw, so shadows touched or were cut by the viewport on phones and 1280-1536 laptops).
+   - PLAY fills the screen: the poster was a 460px strip in the middle of a 1080p wall with the meaning at
+     body size; now the meaning is the biggest thing on it and the slots scale with it. The review card
+     gets the room it needs (its tag and CONTINUE were cut off on every laptop).
+   - A projector tier for the type (the arcade's 1080p tier), one page shadow (6px), 3px control borders.
+   ===================================================================================================== */
+.fr-app {
+  --fr-gut: clamp(16px, 2.2vw, 40px);
+  /* the widest a page may be: one gutter each side (the 6px hard shadow lands inside the right one) */
+  --fr-page-w: calc(100vw - 2 * var(--fr-gut));
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .fr-app {
+    --fs-h2: 50px;
+    --fs-panel: 34px;
+    --fs-body: 21px;
+    --fs-label: 16px;
+  }
+}
+.fr-app .sr-screen {
+  padding: clamp(14px, 3vh, 40px) var(--fr-gut);
+}
+.fr-app .sr-cover {
+  width: min(560px, var(--fr-page-w));
+}
+.fr-app .sr-modeselect {
+  width: min(520px, var(--fr-page-w));
+}
+.fr-app .sr-modeselect.sr-setup {
+  width: min(860px, var(--fr-page-w));
+}
+.fr-app .sr-respage {
+  width: min(560px, var(--fr-page-w));
+}
+.fr-app .sr-brief-page {
+  width: min(620px, var(--fr-page-w));
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink), 6px 6px 0 var(--ink);
+}
+.fr-app .sr-bank {
+  width: min(760px, var(--fr-page-w));
+  max-height: calc(100dvh - 2 * clamp(14px, 3vh, 40px));
+}
+@media (min-width: 1000px) {
+  .fr-app .sr-brief-page,
+  .fr-app .sr-respage {
+    width: min(1120px, var(--fr-page-w));
+  }
+}
+/* the cover title measured 4-13px wider than its page at every desktop size: size it off the
+   page's CONTENT box and keep the off-register plate inside it */
+.fr-app .fr-cover .sr-title {
+  font-size: min(var(--fs-h1), 10cqw);
+}
+
+/* tertiary exits (BACK / END CLASS / MENU) draw with the same 3px ink as every control beside them */
+.fr-app .sr-exit-chip {
+  border-width: 3px;
+}
+
+/* ---------------- PLAY: the page fills the screen, the meaning leads ---------------- */
+.fr-app .sr-stage:has(> .sr-body) {
+  width: min(1080px, var(--fr-page-w));
+  height: min(100%, 820px);
+}
+.fr-app .sr-stage:has(> .sr-body) .sr-fields {
+  justify-content: safe center;
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .fr-app .sr-gloss {
+    font-size: var(--fs-h2);
+    line-height: 1.15;
+  }
+  .fr-app .sr-sentence {
+    font-size: var(--fs-panel);
+    line-height: 1.4;
+  }
+  .fr-app .sr-slots {
+    --slot-max: 64px;
+    --gap: 10px;
+  }
+  .fr-app .sr-act {
+    min-height: 52px;
+    padding: 8px 22px;
+  }
+  /* the clue block sits in the middle of the poster, over the centred slots (it hugged the left edge
+     with 60% of the poster empty beside it) */
+  .fr-app .sr-stage .sr-fields .sr-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .fr-app .sr-stage .sr-fields .sr-fieldlabel {
+    float: none;
+    margin: 0;
+  }
+}
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-app .sr-stage:has(> .sr-body) {
+    width: min(1320px, var(--fr-page-w));
+    height: min(100%, 940px);
+  }
+  .fr-app .sr-gloss {
+    font-size: var(--fs-h1);
+  }
+  .fr-app .sr-slots {
+    --slot-max: 80px;
+    --gap: 12px;
+  }
+  .fr-app .sr-act {
+    min-height: 60px;
+    font-size: var(--fs-panel);
+  }
+}
+/* the review card: centred when it fits, top-aligned (never cut) when it doesn't; its focus ring is
+   the mode's red ink and sits INSIDE the card, so nothing is drawn past the panel edge */
+.fr-app .sr-reencode {
+  justify-content: safe center;
+}
+.fr-app .sr-reencode .sr-continue:focus-visible {
+  outline: 3px solid var(--redink, #c8321e);
+  outline-offset: 7px; /* clears the button's 4px hard shadow instead of drawing over it */
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .fr-app .sr-reencode {
+    gap: 10px;
+    padding: 24px;
+  }
+  .fr-app .sr-reencode-word {
+    font-size: var(--fs-h1);
+  }
+  .fr-app .sr-reencode-def,
+  .fr-app .sr-reencode-sentence {
+    font-size: var(--fs-panel);
+  }
+  .fr-app .sr-reencode .sr-continue {
+    margin-top: 10px;
+    min-height: 56px;
+    padding-inline: 48px;
+  }
+}
+/* the controls under the review card are covered by it: keep them out of the hit-test and the
+   tab order instead of peeking past CONTINUE */
+.fr-app .sr-card:has(.sr-reencode) .sr-actions {
+  visibility: hidden;
+}
+
+/* ---------------- CLASS ROOM ---------------- */
+.fr-app .fr-class-screen {
+  padding: clamp(14px, 3vh, 40px) var(--fr-gut);
+}
+.fr-app .fr-class-page {
+  width: min(620px, var(--fr-page-w));
+}
+.fr-app .fr-class-page.wide {
+  width: min(1180px, var(--fr-page-w));
+}
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-app .fr-class-page.wide {
+    width: min(1640px, var(--fr-page-w));
+  }
+}
+/* the body clips sideways (it scrolls only as a last resort), which cut the 3px shadow off every
+   option card and input in its right column: give the shadows a lane inside the clip */
+.fr-app .fr-class-body {
+  padding: 6px 10px 8px 6px;
+  margin: -6px -10px 0 -6px;
+  width: calc(100% + 16px);
+}
+.fr-app .fr-class-form input {
+  box-sizing: border-box;
+}
+.fr-app .fr-class-form input:focus-visible {
+  outline: 3px solid var(--redink, #c8321e);
+  outline-offset: 2px;
+}
+/* the title's off-register plate rides 5px above its type: the page's top padding clears it, so the
+   heading never sits on the inset double rule */
+.fr-app .fr-class-page {
+  padding-top: clamp(28px, 4.2vh, 44px);
+}
+/* the footer: the main action and the exit chip share one height */
+.fr-app .fr-class-foot {
+  align-items: stretch;
+}
+.fr-app .fr-class-foot .sr-exit-chip {
+  min-height: 44px;
+}
+
+/* lobby: the QR is sized so the code, the QR and the copy link fit without the body scrolling on a
+   laptop (1536x864 scrolled 23px and hid COPY THE JOIN LINK under the footer) */
+.fr-app .fr-class-qr svg {
+  width: clamp(104px, 22vh, 300px);
+}
+@media (min-width: 820px) {
+  .fr-app .fr-class-lobby:not(.names) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1400px) and (min-height: 820px) {
+  /* the code and the QR sit side by side in the join column (stacked, they pushed the body into a
+     scroll at 1536x864) */
+  .fr-app .fr-class-lobby:not(.names) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+  .fr-app .fr-class-lobby .fr-class-qr svg {
+    width: clamp(150px, 20vh, 300px);
+  }
+  .fr-app .fr-class-lobby:not(.names) .fr-class-code {
+    font-size: var(--fs-hero);
+  }
+}
+
+/* console: the clue panel fills the body's height (it floated in a band of dead paper), the page
+   title steps down so the CLUE is the loudest thing on the board */
+@media (min-width: 900px) and (min-height: 600px) {
+  .fr-app .fr-class-page.wide .fr-class-body:has(> .fr-class-console) {
+    justify-content: stretch;
+  }
+  .fr-app .fr-class-console {
+    flex: 1 1 auto;
+    align-items: stretch;
+  }
+  .fr-app .fr-class-console .fr-class-clue {
+    justify-content: center;
+  }
+  .fr-app .fr-class-side {
+    justify-content: center;
+  }
+  .fr-app .fr-class-page.wide:has(.fr-class-console) .sr-modeselect-head {
+    font-size: var(--fs-h2);
+  }
+}
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-app .fr-class-page.wide:has(.fr-class-console) .sr-modeselect-head {
+    font-size: var(--fs-h1);
+  }
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .fr-app .fr-class-console .fr-class-gloss {
+    font-size: min(calc(var(--fs-hero) * 1.4), calc(125cqw / var(--len, 8)));
+  }
+  .fr-app .fr-class-console .fr-class-answer {
+    font-size: min(calc(var(--fs-hero) * 1.5), calc(125cqw / var(--len, 8)));
+  }
+}
+
+/* names are never ellipsized: a long name wraps inside its chip instead */
+.fr-app .fr-class-chip-name {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.fr-app .fr-class-names {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none; /* the underline sits under the words only, never through the N key */
+}
+.fr-app .fr-class-names-label {
+  text-decoration: underline;
+}
+.fr-app .fr-class-key {
+  margin-left: 0;
+  line-height: 1.3;
+}
+
+/* a phone: the class setup's option subtitles go (the labels say enough) and a long label may wrap,
+   so the five pickers + OPEN THE CLASS fit without scrolling or cutting "EXAM CORE" off its card */
+@media (max-width: 520px) {
+  .fr-app .fr-class-setup .sr-setup-opt-sub {
+    display: none;
+  }
+  .fr-app .fr-class-setup .sr-setup-opt {
+    min-height: 48px;
+    padding: 4px 4px;
+  }
+  .fr-app .fr-class-setup .sr-setup-opt-main {
+    white-space: normal;
+    overflow-wrap: normal;
+    line-height: 1.1;
+    font-size: clamp(14px, 3.9vw, 18px); /* PHONES / BASICS ran edge to edge in a 96px card */
+  }
+}
+
+/* the word's theme wraps instead of being cut ("FAMILIES & COMMUNI…") */
+.fr-app .sr-case-theme {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* word bank on a phone: the tags wrap under the word instead of running off the page */
+.fr-app .sr-bank-meta {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+/* STUDY on a projector: three columns, so a 5-word set reads without scrolling */
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-app .sr-brief-page {
+    width: min(1500px, var(--fr-page-w));
+  }
+  .fr-app .sr-brief-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* RESULTS on a phone: the page fits the screen — the word list is the part that scrolls (it was the
+   whole page: 1279px tall on a 844px phone, and 9px too wide) */
+@media (max-width: 999px) {
+  .fr-app .sr-results {
+    overflow: hidden;
+  }
+  .fr-app .sr-respage {
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    gap: 10px;
+  }
+  .fr-app .sr-respage > * {
+    flex: none;
+  }
+  .fr-app .sr-respage > .sr-casefile {
+    flex: 1 1 auto;
+    min-height: 96px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .fr-app .sr-respage .sr-results-actions {
+    gap: 8px;
+    margin-top: 0;
+  }
+  .fr-app .sr-respage .sr-results-actions > .sr-btn {
+    width: 100%;
+    min-height: 46px;
+    padding: 8px 12px;
+  }
+}
+
+/* page shadows: ONE hard 6px offset on every French Rush page (cover / modes / setup / study / results
+   were 10px — the house override — beside 6px class pages, stage and bank) */
+.fr-app .sr-cover,
+.fr-app .sr-modeselect,
+.fr-app .sr-respage,
+.fr-app .sr-brief-page {
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 8px var(--ink), 6px 6px 0 var(--ink);
+}
+
+/* setup: START and the exits row never touch (START's shadow sat on BACK's border on a phone) */
+.fr-app .sr-setup-exits {
+  margin-top: 6px;
+}
+
+/* a laptop at 600-700px tall: the console's clue/answer step down a size so the panel never runs
+   into the footer */
+@media (min-width: 900px) and (max-height: 700px) {
+  .fr-app .fr-class-console .fr-class-gloss {
+    font-size: min(var(--fs-h2), calc(125cqw / var(--len, 8)));
+  }
+  .fr-app .fr-class-console .fr-class-answer {
+    font-size: min(var(--fs-h1), calc(125cqw / var(--len, 8)));
+  }
+  .fr-app .fr-class-console .fr-class-clue {
+    gap: 4px;
+    padding: 10px 14px;
+  }
+}
+
+/* a phone running the class: the head tightens, the count reads as one line, the QR shrinks */
+@media (max-width: 520px) {
+  .fr-app .fr-class-page {
+    padding: 26px 16px 16px;
+    gap: 10px;
+  }
+  .fr-app .fr-class-joined {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .fr-app .fr-class-joined .fr-class-joined-n {
+    font-size: var(--fs-h1);
+  }
+  .fr-app .fr-class-joined-label {
+    font-size: var(--fs-body);
+  }
+  .fr-app .fr-class-qr svg {
+    width: clamp(96px, 18vh, 170px);
+  }
+  .fr-app .fr-class-foot .sr-btn {
+    flex-basis: 100%;
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 520px) and (max-height: 700px) {
+  .fr-app .fr-class-page:has(.fr-class-setup) .fr-class-sub,
+  .fr-app .fr-class-setup .fr-class-hint {
+    display: none;
+  }
+  .fr-app .fr-class-page .sr-modeselect-head {
+    font-size: var(--fs-panel);
+  }
+  .fr-app .fr-class-qr figcaption {
+    display: none;
+  }
+}
+
+/* a phone running the console: the answer steps down so the clue panel + tally + NEXT fit */
+@media (max-width: 520px) and (max-height: 700px) {
+  .fr-app .fr-class-console .fr-class-answer {
+    font-size: min(var(--fs-panel), calc(125cqw / var(--len, 8)));
+  }
+  .fr-app .fr-class-console .fr-class-gloss {
+    font-size: min(var(--fs-panel), calc(125cqw / var(--len, 8)));
+  }
+  .fr-app .fr-class-console .fr-class-clue {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+  .fr-app .fr-class-context,
+  .fr-app .fr-class-context-en {
+    font-size: var(--fs-label);
+  }
+}
+
+/* the reveal: the FRENCH answer leads — the English clue above it steps down to a heading (at 1536x864 a
+   two-line clue at display size pushed the answer panel into the footer) */
+.fr-app .fr-class-console .fr-class-clue:has(.fr-class-answer) .fr-class-gloss {
+  font-size: min(var(--fs-h2), calc(125cqw / var(--len, 8)));
+}
+@media (max-width: 520px) and (max-height: 700px) {
+  .fr-app .fr-class-console .fr-class-clue:has(.fr-class-answer) .fr-class-gloss {
+    font-size: min(var(--fs-body), calc(125cqw / var(--len, 8)));
+  }
+}
