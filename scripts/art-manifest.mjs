@@ -22,7 +22,12 @@ export function cachedFiles(dir = PUBLIC) {
   return out;
 }
 
-export const hashOf = (p) => createHash('sha1').update(readFileSync(p)).digest('hex').slice(0, 16);
+// SVG is text: strip CR so a Windows (autocrlf) checkout hashes the same as CI's Linux one.
+export const hashOf = (p) => {
+  let buf = readFileSync(p);
+  if (p.endsWith('.svg')) buf = Buffer.from(buf.toString('utf8').replace(/\r/g, ''));
+  return createHash('sha1').update(buf).digest('hex').slice(0, 16);
+};
 export const keyOf = (p) => relative(PUBLIC, p).split(sep).join('/');
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
