@@ -89,10 +89,11 @@
   height: var(--wd);
   container-type: size;
 }
-/* the THIN painted RIM is the whole wheel box; its open centre is 0.797 of its half-width, so the code-exact FACE
-   (face.svg: disc = 0.918 of its box) sits in a rotor box of 0.805 / 0.918 = 87.6% of the wheel (a hair under the rim) */
+/* the THIN painted RIM (ChatGPT, oct27) is the whole wheel box; its hand-drawn opening runs 0.779–0.818 of its
+   half-width, so the code-exact FACE (face.svg: disc = 0.918 of its box) reaches 0.825 — a rotor box of 0.825 / 0.918 =
+   89.9% of the wheel — and tucks under the rim all the way round */
 .dw-face, .dw-rim, .dw-lit { position: absolute; inset: 0; width: 100%; height: 100%; }
-.dw-rotor { position: absolute; inset: 6.2%; transform: rotate(0deg); container-type: size; }
+.dw-rotor { position: absolute; inset: 5.05%; transform: rotate(0deg); container-type: size; }
 .dw-face, .dw-rim, .dw-lit { pointer-events: none; user-select: none; }
 /* the chase lights: two lit-bulb sets over the rim, dark at rest (the spin + the landing blink them, WAAPI opacity) */
 .dw-lit { opacity: 0; }

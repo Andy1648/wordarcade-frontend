@@ -13,7 +13,7 @@
 //   ODDS — the published table, one tap away (the server's own weights).
 //   AD SPIN — behind WHEEL_AD_ON (client) AND the server's ad_on; OFF until rewarded ads are approved.
 // THE JACKPOT PASS (oct27, Andy: "the wheel is so fat and the content is so small … nothing special with animations"):
-//   a THIN rim (public/wheel/rim.webp, rebuilt from the painted rim's own ring + bulbs) so the face is ~88% of the wheel,
+//   a THIN painted rim (public/wheel/rim.webp; its lit bulbs cut from the same painting) so the face is ~90% of the wheel,
 //   the prize art twice the size and every wedge NAMED round its outer band; the spin runs the CHASE LIGHTS (two
 //   lit-bulb overlays flipping on every peg — baked off the same plan as the flapper, so they slow down with the
 //   wheel) and the landing is a jackpot: the winning wedge flashes, every bulb blinks, the wheel shakes, the prize
