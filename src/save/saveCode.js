@@ -16,6 +16,7 @@
 // ratchet), so the paste cleaning and the plain-English messages live here.
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate';
 import { exportSave, parseSaveObject, writeSaveKeys, PRE_RESTORE_KEY } from './saveBackup.js';
+import { isMissingRpc } from './cloudSave.js';
 
 export const CODE_PREFIX = 'TAW2.';
 const CLOUD_PREFIX = 'tawz1:'; // the gzip-packed cloud copy (cloudCodec.js)
@@ -116,9 +117,10 @@ const fromUrl = (u) => {
   return b + '='.repeat((4 - (b.length % 4)) % 4);
 };
 
-/** This browser's save as the compact code (TAW2). `storage` as saveBackup.exportSave (tests inject a stub). */
+/** This browser's save as the compact code (TAW2) — WITH the board account (daan oct27), so loading the code brings the
+ *  account back too. `storage` as saveBackup.exportSave (tests inject a stub). */
 export function exportSaveCode(storage) {
-  const json = atobUtf8(exportSave(storage));
+  const json = atobUtf8(exportSave(storage, { account: true }));
   const mid = toUrl(bytesToB64(gzipSync(strToU8(json), { level: 9, mtime: 0 })));
   return `${CODE_PREFIX}${mid}.${crc32(mid)}`;
 }
@@ -173,12 +175,125 @@ export function parseAnySave(text, opts) {
   } catch {
     return { ok: false, error: SAVE_ERRORS.damaged };
   }
-  return said(parseSaveObject(obj, opts));
+  return withAccount(obj, said(parseSaveObject(obj, opts)));
+}
+
+// ---- THE ACCOUNT a code carries (daan oct27) ----------------------------------------------------------------------------
+// A board account is only the device secret + the claimed profile. daan's browser lost them; his progress came back under
+// a NEW name whose row could never catch up, and his old row was orphaned. A code now carries them (`acct`) and loading it
+// adopts them. A code with a MANGLED account is refused whole (it was changed) — never half-applied.
+const SECRET_RE = /^[0-9a-f]{32,64}$/;
+/** A valid { secret, profile: { id, username } } or null. */
+export function cleanAccount(a) {
+  if (!a || typeof a !== 'object') return null;
+  const secret = typeof a.secret === 'string' ? a.secret.toLowerCase() : '';
+  const p = a.profile;
+  if (!SECRET_RE.test(secret) || !p || typeof p !== 'object') return null;
+  if (typeof p.id !== 'string' || !p.id || p.id.length > 64 || typeof p.username !== 'string' || !p.username || p.username.length > 40) return null;
+  return { secret, profile: { id: p.id, username: p.username } };
+}
+function withAccount(obj, r) {
+  if (!r.ok || obj.acct == null) return r;
+  const acct = cleanAccount(obj.acct);
+  return acct ? { ...r, acct } : { ok: false, reason: 'damaged', error: SAVE_ERRORS.damaged };
+}
+// per-account board state that must not follow the save onto another account (rank caches, the rival, pending ids)
+const ACCOUNT_STATE_KEYS = ['taw.lb.rbreq', 'taw.lb.ascreq', 'taw.lb.lastRank', 'taw.lb.rankFrom', 'taw.lb.rankNews', 'taw.lb.rival', 'taw.lb.lastLv', 'taw.lb.lastRb'];
+/** Make `acct` this browser's board account (secret, profile, the secret's cookie mirror). Returns true when it changed. */
+export function adoptAccount(acct, storage = globalThis.localStorage) {
+  const a = cleanAccount(acct);
+  if (!a || !storage) return false;
+  let same = false;
+  try {
+    const p = JSON.parse(storage.getItem('taw.lb.profile') || 'null');
+    same = storage.getItem('taw.lb.secret') === a.secret && !!p && p.id === a.profile.id;
+  } catch {
+    same = false;
+  }
+  if (same) return false;
+  for (const k of ACCOUNT_STATE_KEYS) {
+    try { storage.removeItem(k); } catch { /* never throw */ }
+  }
+  try {
+    storage.setItem('taw.lb.secret', a.secret);
+    storage.setItem('taw.lb.profile', JSON.stringify(a.profile));
+  } catch {
+    return false;
+  }
+  try {
+    if (typeof document !== 'undefined') document.cookie = `taw_lb=${a.secret}; max-age=${400 * 24 * 3600}; path=/; samesite=lax; secure`; // client.js SECRET_COOKIE
+  } catch {
+    /* no cookies: localStorage holds it */
+  }
+  return true;
+}
+/** Write a parsed code (keys, then its account) — the ONE door every code restore goes through. */
+export function applySave(parsed, storage, opts) {
+  const res = writeSaveKeys(parsed.keys, storage, opts);
+  if (parsed.acct) adoptAccount(parsed.acct, storage || globalThis.localStorage);
+  return res;
 }
 
 /** Restore from ANY save code: validates fully first, snapshots the replaced save (taw.preRestore), then writes. */
 export function importAnySave(text, storage, opts) {
   const parsed = parseAnySave(text, opts);
   if (!parsed.ok) return parsed;
-  return writeSaveKeys(parsed.keys, storage, opts);
+  return applySave(parsed, storage, opts);
+}
+
+// ---- SHORT CODES (071_short_save_codes.sql; Andy oct27 "much shorter") ----------------------------------------------------
+// The long TAW2 code lives on the server under 10 characters from an alphabet with nothing to misread (no 0 O 1 I L),
+// shown K7M2Q-X9PAH. One code per account, kept for good; COPY again refreshes what it holds. The stored value IS the
+// TAW2 code, so a loaded short code goes through exactly the checks a pasted long one does (CRC, whole-save validation,
+// season) before a single key is written. Without 071 (or offline) COPY hands out the long code instead.
+export const SHORT_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const SHORT_RE = new RegExp(`^[${SHORT_ALPHABET}]{10}$`);
+/** The 10-character code in what was typed / pasted (any case, spaces, dashes, quotes), or null. */
+export function normalizeShort(text) {
+  const s = String(text == null ? '' : text).replace(INVISIBLE, '').replace(WRAPPERS, '').replace(/[-_.]/g, '').toUpperCase();
+  return SHORT_RE.test(s) ? s : null;
+}
+/** K7M2QX9PAH → K7M2Q-X9PAH */
+export const formatShort = (code) => (code && code.length === 10 ? `${code.slice(0, 5)}-${code.slice(5)}` : String(code || ''));
+
+export const SHORT_ERRORS = {
+  not_found: 'NO SAVE WITH THAT CODE',
+  bad_code: 'CHECK THE CODE — 10 LETTERS AND NUMBERS',
+  busy: 'TOO MANY TRIES — WAIT A MINUTE',
+  offline: 'NO CONNECTION — TRY AGAIN',
+  unavailable: 'SHORT CODES ARE OFF — USE THE LONG CODE',
+};
+const shortFail = (reason) => ({ ok: false, reason, error: SHORT_ERRORS[reason] || SHORT_ERRORS.offline });
+
+/** Upload this browser's save (the TAW2 code, with the account) → { ok, code } | { ok:false, reason }. Never throws. */
+export async function issueShortCode({ rpc, secret, storage } = {}) {
+  if (!rpc || !secret) return shortFail('unavailable');
+  let blob;
+  try {
+    blob = exportSaveCode(storage);
+  } catch {
+    return shortFail('unavailable');
+  }
+  try {
+    const r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
+    const code = r && r.ok ? normalizeShort(r.code) : null;
+    return code ? { ok: true, code } : shortFail(r && r.reason === 'busy' ? 'busy' : 'unavailable');
+  } catch (e) {
+    return shortFail(isMissingRpc(e) || (e && e.status >= 400 && e.status < 500) ? 'unavailable' : 'offline');
+  }
+}
+
+/** A short code → the save it holds, PARSED and VALIDATED (nothing written) → parseAnySave's shape. Never throws. */
+export async function fetchShortSave(text, { rpc, ...opts } = {}) {
+  const code = normalizeShort(text);
+  if (!code) return shortFail('bad_code');
+  if (!rpc) return shortFail('unavailable');
+  let r;
+  try {
+    r = await rpc('lb_save_code_get', { p_code: code });
+  } catch (e) {
+    return shortFail(isMissingRpc(e) ? 'unavailable' : 'offline');
+  }
+  if (!r || !r.ok || typeof r.blob !== 'string') return shortFail((r && r.reason) || 'not_found');
+  return parseAnySave(r.blob, opts);
 }

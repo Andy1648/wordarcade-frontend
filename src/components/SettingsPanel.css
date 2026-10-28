@@ -252,4 +252,26 @@
   .sp-sheet .sp-top { display: contents; }
   .sp-sheet .sp-credits--top { display: none; }
   .sp-sheet .sp-credits--phone { display: block; position: absolute; top: 0; right: 6px; padding: 0 10px; }
+  /* the header clears CREDITS, so the load confirm's compare line never runs under it (daan oct27) */
+  .sp-sheet .sp-save:not(.sp-reset) > .sp-text { min-height: 36px; }
+}
+/* SHORT SAVE CODE (daan oct27): the 10-character code, big enough to read off one screen and type on another */
+.sp-short {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  background: #0d0618;
+  color: #2EFFE0;
+  border: 3px solid #17a593;
+  border-radius: 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-k20);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  user-select: all;
 }

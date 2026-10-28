@@ -41,6 +41,26 @@ export function needsSeason2Wipe(rawEcon) {
 }
 
 /**
+ * daan (oct27): a save that holds SEASON-2 progress (taw.s2.xp / taw.s2.rebirths — the season-2 game's own keys) and NO
+ * season-1 progress (raw taw.xp / taw.rebirths — the reset removed those, and season 2 never writes them) is a LIVE
+ * season-2 save whose stamp went missing or low (econMigrate stamps a MISSING taw.econ as 12) — never a season-1 save.
+ * The boot re-stamps it 13 instead of wiping it whole. (A season-1 save with pre-launch taw.s2.* testing still has its raw
+ * season-1 keys, so it is still wiped.) `raw` = rawStorage (unmapped).
+ */
+export const SEASON2_PROGRESS_KEYS = ['taw.s2.xp', 'taw.s2.rebirths', 'taw.s2.xpv10'];
+const SEASON1_PROGRESS_KEYS = ['taw.xp', 'taw.rebirths', 'taw.xpv10'];
+const anyKey = (raw, keys) => keys.some((k) => {
+  try {
+    return raw.getItem(k) != null;
+  } catch {
+    return false;
+  }
+});
+export function isUnstampedSeason2Save(raw) {
+  return anyKey(raw, SEASON2_PROGRESS_KEYS) && !anyKey(raw, SEASON1_PROGRESS_KEYS);
+}
+
+/**
  * Wipe a pre-season-2 save. `raw` = rawStorage(localStorage) (unmapped methods). Returns
  * { removed, oldRebirths, hadSave } — hadSave = it held real progress (a reload is needed so modules re-read zeros).
  */
@@ -182,7 +202,9 @@ export async function bootSeason2({
     const c = await caps();
     if (!c || !c.season2Reset) return true; // the server reset has not run: phase-3 behaviour, nothing to do
     const r = raw || rawStorage(storage);
-    if (needsSeason2Wipe(r.getItem(ECON_KEY))) {
+    if (needsSeason2Wipe(r.getItem(ECON_KEY)) && isUnstampedSeason2Save(r)) {
+      r.setItem(ECON_KEY, String(SEASON2_ECON)); // a season-2 save that lost its stamp: keep it (daan oct27)
+    } else if (needsSeason2Wipe(r.getItem(ECON_KEY))) {
       const out = wipeForSeason2(r);
       // blocked storage can't keep the stamp → never reload (that would loop)
       if (out.hadSave && r.getItem(ECON_KEY) === String(SEASON2_ECON)) {

@@ -472,7 +472,7 @@ function StatsScreenLive({ onBack, initialTab }) {
                   {getMyProfile() && <> YOUR BOARD ROW GOES BACK TO LV 1 TOO — YOUR NAME STAYS.</>}
                 </p>
                 <div className="stats-danger-actions">
-                  <button type="button" className="stats-reset-confirm" onClick={resetAllProgress}>
+                  <button type="button" className="stats-reset-confirm" onClick={() => resetAllProgress().then((r) => { if (r && r.aborted) setConfirmingReset(false); })}>
                     YES, WIPE EVERYTHING
                   </button>
                   <button type="button" className="stats-reset-cancel" onClick={() => setConfirmingReset(false)}>

@@ -212,3 +212,24 @@ test('a fresh browser (no save at all) is stamped without a reload and gets the 
   assert.equal(shown.length, 1);
   assert.equal(shown[0].gems, 300);
 });
+
+// daan (oct27): a LIVE season-2 save whose econ stamp went missing (econMigrate stamps a missing one as 12) was wiped
+// WHOLE by this boot. A save with season-2 progress and no raw season-1 progress is re-stamped 13 and kept.
+test('a season-2 save that lost its stamp is KEPT and re-stamped 13 — never wiped', async () => {
+  for (const stamp of [null, '12']) {
+    mem.clear();
+    for (const [k, v] of Object.entries({
+      'taw.s2.xp': '{"lv":514,"f":0.2,"rc":27,"v":10}', 'taw.s2.rebirths': '27', 'taw.s2.gems': '{"bal":900}',
+      'taw.lb.secret': 'a'.repeat(48), 'taw.lb.profile': '{"id":"p1","username":"Daan"}',
+    })) mem.set(k, v);
+    if (stamp) mem.set('taw.econ', stamp);
+    assert.equal(B.isUnstampedSeason2Save(rawFor()), true);
+    const ok = await B.bootSeason2({ season2: true, enabled: true, caps: async () => ({ season2Reset: true }), show: () => {}, reload: () => assert.fail('no wipe reload'), rpc: async () => ({ found: false }) });
+    assert.equal(ok, true);
+    assert.equal(mem.get('taw.econ'), '13');
+    assert.equal(mem.get('taw.s2.rebirths'), '27', 'progress kept');
+  }
+  // a season-1 save with pre-launch taw.s2.* testing still has raw season-1 keys → still wiped (the e2e's case)
+  seasonOneSave();
+  assert.equal(B.isUnstampedSeason2Save(rawFor()), false);
+});

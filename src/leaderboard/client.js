@@ -19,7 +19,7 @@ import { SEASON2, V3 } from '../progress/season.js';
 import { GAME_WORD_MODES, masteryWords } from '../progress/mastery.js';
 import { perWordRateNow } from '../progress/wins.js';
 import { getLetters } from '../progress/letters.js';
-import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg } from '../save/cloudSave.js';
+import { backupNow, restoreIfAhead, parseRecoveryCode, wipeProgressKeys, localScore, DEV_RESET_NOTICE_KEY, ECON_RPC_VERSION_V10, econRpcArg, resetOutcome } from '../save/cloudSave.js';
 import { exportSave } from '../save/saveBackup.js';
 // lazy: keeps the gzip codec out of the initial bundle (payload ratchet)
 const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlob(code);
@@ -62,6 +62,7 @@ export async function rpc(fn, body) {
     if (data && (data.code === '23505' || /duplicate key/i.test(code))) code = 'username_taken';
     const err = new Error(code);
     err.code = code;
+    err.status = r.status; // daan oct27: a 4xx is the server's ANSWER (no_profile …), only a 5xx / no response is "offline"
     throw err;
   }
   return data;
@@ -333,37 +334,44 @@ export async function obeyDevReset(secret = peekSecret()) {
   return { restored: false, reset: true, acked };
 }
 /**
- * N2 (Andy oct2): Stats → RESET ALL PROGRESS. Wipes every taw.* progress key but KEEPS the claimed
- * name + device secret, then asks the server (014 lb_self_reset — the admin reset path from 012) to
- * overwrite the cloud save with the fresh one and zero the board row. If the server half can't happen
- * (no name, offline, 014 not run yet) it falls back to the old local reset and drops the name + secret
- * too — keeping them without a server reset would let the next boot RESTORE the old cloud save (it is
- * strictly ahead) and silently undo the reset. Returns { server }.
+ * N2 (Andy oct2): Stats → RESET ALL PROGRESS. With a claimed name the SERVER resets first (014 lb_self_reset — the
+ * admin reset path from 012: the cloud save becomes the fresh one, the board row goes to zero) and only THEN is this
+ * browser wiped, keeping the name + device secret.
+ * daan (oct27): it used to wipe first and, when the server could not be reached, ALSO drop the name, the secret and its
+ * cookie — the player lost the account for good (the row was orphaned; the next device had to claim a new name). Now a
+ * server that can't be reached ABORTS the reset (nothing is wiped, { aborted: true }); only a server without 014 (the
+ * RPC is missing) or a browser with no name falls back to the old local-only reset. Returns { server, aborted? }.
  */
 export async function selfReset() {
   const secret = peekSecret();
-  wipeProgressKeys(localStorage, [SECRET_KEY, PROFILE_KEY]);
-  let server = false;
-  if (secret && LEADERBOARD_ENABLED && getMyProfile()) {
+  const named = !!(secret && LEADERBOARD_ENABLED && getMyProfile());
+  let answer = null;
+  let error = null;
+  if (named) {
     try {
-      const r = await rpc('lb_self_reset', { p_secret: secret, p_blob: await packBlob(exportSave()), p_score: localScore().toString() });
-      server = !!(r && r.reset);
-    } catch {
-      server = false;
+      answer = await rpc('lb_self_reset', { p_secret: secret, p_blob: await packBlob(exportSave(EMPTY_STORAGE)), p_score: '0' });
+    } catch (e) {
+      error = e;
     }
   }
-  if (!server) {
-    // the old local-only reset — and the secret's cookie mirror too, or the next boot re-adopts the
-    // secret from it and restores the old cloud save (the same undo, one layer down)
-    wipeProgressKeys(localStorage, []);
-    try {
-      document.cookie = `${SECRET_COOKIE}=; max-age=0; path=/; samesite=lax; secure`;
-    } catch {
-      /* no cookies */
-    }
+  const plan = resetOutcome({ named, answer, error });
+  if (plan === 'abort') return { server: false, aborted: true };
+  if (plan === 'server') {
+    wipeProgressKeys(localStorage, [SECRET_KEY, PROFILE_KEY]);
+    return { server: true };
   }
-  return { server };
+  // 'local': the old local-only reset — and the secret's cookie mirror too, or the next boot re-adopts the secret
+  // from it and restores the old cloud save (the server never reset it)
+  wipeProgressKeys(localStorage, []);
+  try {
+    document.cookie = `${SECRET_COOKIE}=; max-age=0; path=/; samesite=lax; secure`;
+  } catch {
+    /* no cookies */
+  }
+  return { server: false };
 }
+// a fresh save (what a reset leaves): no keys at all
+const EMPTY_STORAGE = { length: 0, key: () => null, getItem: () => null };
 /** The one-shot "reset by the dev" notice (set by obeyDevReset before the reload): peek, then clear. */
 export function hasDevResetNotice() {
   try {
