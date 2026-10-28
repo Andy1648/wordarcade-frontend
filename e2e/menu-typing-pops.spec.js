@@ -84,3 +84,25 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     expect(xpAfter).not.toBe(xpBefore);
   });
 }
+
+// oct28 (Andy: "smoother" = slower + more of an ENTRANCE): a key pop GROWS IN from a speck (×0.1, was ×0.45) on a long
+// ease-out — its grow-in peaks a quarter of the way in, never in the first eighth.
+test('a key pop grows in from a speck on a long ease-out', async ({ page }) => {
+  await installBackendMock(page);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.menu-xp-fx').waitFor({ state: 'attached' });
+  await page.keyboard.press('w');
+  await page.waitForTimeout(60);
+  const arc = await page.evaluate(() => {
+    const a = [...document.querySelectorAll('.menu-xp-pop')].flatMap((e) => e.getAnimations()).find((x) => x.playState === 'running');
+    if (!a) return null;
+    const kf = a.effect.getKeyframes();
+    const sc = (t) => +/scale\(([\d.]+)/.exec(t)[1];
+    return { from: sc(kf[0].transform), peak: sc(kf[1].transform), hit: kf[1].computedOffset, ms: a.effect.getTiming().duration };
+  });
+  expect(arc).not.toBeNull();
+  expect(arc.from / arc.peak).toBeLessThan(0.12);
+  expect(arc.hit).toBeGreaterThanOrEqual(0.2);
+  expect(arc.ms).toBeGreaterThanOrEqual(1200);
+});

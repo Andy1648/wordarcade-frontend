@@ -8,6 +8,8 @@
 //     ms     — × the pop's tier length (on top of POP_STRETCH)
 //     hit    — the fraction of the pop where it LANDS (the painted burst slams in then)
 //     spin   — degrees the painted burst turns over its life
+// oct28 (Andy: "start from small"): every motion that GROWS IN starts from a speck (×0.1); the slams (CHROME, TOXIC,
+// FROST, PLASMA, LEGEND) keep their themed entrances. MenuXp's kitArc gives every entrance ~twice its share of the pop.
 // Every frame of a motion keeps the same transform function list, so rotations past 180° interpolate as written.
 
 const k = (C, x, y, r, sx, sy, o, offset, easing) => {
@@ -30,7 +32,7 @@ const MOTIONS = {
   ] }),
   // a FLARE: shoots up stretched, flickers while it is read, then burns out rising
   inferno: (C, r, s, p, rise) => ({ ms: 1, hit: 0.12, spin: 14, frames: [
-    k(C, 0, 26, r, s * 0.4, s * 0.6, 0, 0, POP_IN),
+    k(C, 0, 26, r, s * 0.1, s * 0.15, 0, 0, POP_IN),
     k(C, 0, -16, r, s * 0.84, s * 1.3 * p, 1, 0.12, 'ease-out'),
     k(C, 0, -20, r, s * 1.08, s * 0.94, 1, 0.22, 'ease-in-out'),
     k(C, 0, -23, r, s * 0.97, s * 1.06, 1, 0.33, 'ease-in-out'),
@@ -48,7 +50,7 @@ const MOTIONS = {
   ] }),
   // SHARDS: snaps in jittering between facets, settles, then SHATTERS flat
   prism: (C, r, s, p) => ({ ms: 1, hit: 0.06, spin: 30, frames: [
-    k(C, -30, 0, r - 8, s * 0.6, s * 0.6, 0, 0, 'ease-out'),
+    k(C, -30, 0, r - 8, s * 0.1, s * 0.1, 0, 0, 'ease-out'),
     k(C, 16, -6, r + 6, s * 1.12 * p, s * 0.9, 1, 0.06, 'ease-out'),
     k(C, -9, -10, r - 4, s * 0.94, s * 1.06, 1, 0.12, 'ease-out'),
     k(C, 5, -12, r + 2, s * 1.03, s * 1.03, 1, 0.18, 'ease-out'),
@@ -71,7 +73,7 @@ const MOTIONS = {
   ember: (C, r, s, p, rise) => {
     const d = r >= 0 ? 1 : -1;
     return { ms: 1, hit: 0.14, spin: 40 * d, frames: [
-      k(C, -36 * d, 24, r - 24 * d, s * 0.5, s * 0.5, 0, 0, 'ease-out'),
+      k(C, -36 * d, 24, r - 24 * d, s * 0.1, s * 0.1, 0, 0, 'ease-out'),
       k(C, -12 * d, -26, r - 6 * d, s * 1.12 * p, s * 1.12 * p, 1, 0.14, 'ease-out'),
       k(C, 0, -32, r, s, s, 1, 0.26, 'linear'),
       k(C, 8 * d, -36, r + 5 * d, s, s, 1, 0.7, 'cubic-bezier(.4,0,1,.7)'),
@@ -98,7 +100,7 @@ const MOTIONS = {
       return f;
     };
     return { ms: 1.1, hit: 0.34, spin: 0, frames: [
-      g(20, -720, s * 0.5, s * 0.5, 0, 0, 'cubic-bezier(.2,.8,.4,1)'),
+      g(20, -720, s * 0.1, s * 0.1, 0, 0, 'cubic-bezier(.2,.8,.4,1)'),
       g(-36, -60, s * p, s * p, 1, 0.24, 'cubic-bezier(.6,0,1,.6)'),
       g(-6, 0, s * 1.12, s * 0.86, 1, 0.34, 'ease-out'),
       g(-16, 0, s * 0.97, s * 1.04, 1, 0.42, 'ease-in-out'),
@@ -131,7 +133,7 @@ const MOTIONS = {
   ] }),
   // a SLOW RISE AND SET: climbs up on a tilt like a moon, hangs, sets back down the other side
   eclipse: (C, r, s, p) => ({ ms: 1.18, hit: 0.3, spin: -40, frames: [
-    k(C, -18, 44, r - 30, s * 0.7, s * 0.7, 0, 0, 'ease-out'),
+    k(C, -18, 44, r - 30, s * 0.1, s * 0.1, 0, 0, 'ease-out'),
     k(C, -4, -10, r - 4, s * 1.08 * p, s * 1.08 * p, 1, 0.3, 'ease-in-out'),
     k(C, 0, -14, r, s, s, 1, 0.4, 'linear'),
     k(C, 4, -20, r + 4, s, s, 1, 0.74, 'ease-in'),
