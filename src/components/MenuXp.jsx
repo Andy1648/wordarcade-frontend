@@ -67,25 +67,33 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // oct27 (Andy: "make the key animations last slightly longer"): every key pop lives POP_STRETCH × its tier length on a
 // fuller arc (a wind-up from small, an overshoot squash, a settle, a long readable LINGER, then the float-off); the crit
 // and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
-const POP_STRETCH = 1.3;
+const POP_STRETCH = 1.5; // oct28 ×1.5 (was 1.3): the longer entrance needs the room
+const POP_FROM = 0.1; // the entrance starts from a speck
+const POP_HIT = 0.26; // where the grow-in peaks (was 0.13)
+const POP_GROW = 'cubic-bezier(.16,1,.3,1)'; // a long ease-out: fast start, slow arrival
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
 // (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
 const KIT_POP_SCALE = 1.35;
 function kitArc(look, rot, s, peak, rise, baseMs) {
   const m = look && look.motion;
-  if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: 90 / baseMs, spin: 22 };
+  if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: POP_HIT, spin: 22 };
   const o = m(CENTER, rot, s * KIT_POP_SCALE, peak, rise); // a paid look's pop is the bigger one
-  return { frames: o.frames, ms: Math.round(baseMs * o.ms), hit: o.hit, spin: o.spin };
+  const hit = stretchHit(o.hit);
+  return { frames: stretchEntrance(o.frames, o.hit, hit), ms: Math.round(baseMs * o.ms), hit, spin: o.spin };
 }
+// oct28: every kit's ENTRANCE (frame 0 → its landing at `hit`) takes ~twice the share of the pop, the rest is squeezed to fit.
+const stretchHit = (h) => Math.min(0.34, h * 2);
+const stretchEntrance = (frames, h, h2) => frames.map((f) => ({ ...f, offset: f.offset <= h ? (f.offset * h2) / h : h2 + ((f.offset - h) * (1 - h2)) / (1 - h) }));
 const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
+// oct28 (Andy: "smoother" = slower + more of an ENTRANCE): the +N GROWS IN from a speck (×0.1, was ×0.45) on a long
+// ease-out to a small overshoot, settles, lingers, then floats off.
 const popArc = (CENTER, rot, s, peak, rise) => {
   const k = (sx, sy, y, opacity, offset, easing) => ({ transform: `${CENTER}rotate(${rot}deg) scale(${sx}, ${sy}) translateY(${y}px)`, opacity, offset, easing });
   return [
-    k(s * 0.45, s * 0.45, 10, 0, 0, 'cubic-bezier(.2,1.4,.4,1)'),
-    k(s * peak * 1.12, s * peak * 0.9, -8, 1, 0.13, 'ease-out'),
-    k(s * 0.96, s * 1.06, -13, 1, 0.22, 'ease-out'),
-    k(s, s, -15, 1, 0.3, 'linear'),
-    k(s, s, -24, 1, 0.7, 'ease-in'), // the LINGER: the +N is read
+    k(s * POP_FROM, s * POP_FROM, 10, 0, 0, POP_GROW),
+    k(s * peak * 1.08, s * peak * 1.08, -10, 1, POP_HIT, 'ease-in-out'),
+    k(s, s, -15, 1, POP_HIT + 0.12, 'linear'),
+    k(s, s, -24, 1, 0.74, 'ease-in'), // the LINGER: the +N is read
     k(s * 1.06, s * 1.06, -rise, 0, 1, 'linear'),
   ];
 };
