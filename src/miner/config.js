@@ -19,6 +19,7 @@ export const ORE_ORDER = ['dirt', 'coal', 'gold', 'diamond'];
 
 export const MINER_REASON_COPY = {
   not_on_list: 'NOT ON THE LIST',
+  safe_item: 'THAT ONE IS FINE',
   too_short: 'TYPE AN ANSWER',
   already_locked: 'ALREADY LOCKED IN',
   round_over: 'TOO LATE',

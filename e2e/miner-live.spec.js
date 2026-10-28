@@ -10,16 +10,20 @@
 //   LIVE_BASE=http://localhost:4394 BACKEND_DIR=../crb-miner npx playwright test e2e/miner-live.spec.js
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 
 const BASE = process.env.LIVE_BASE || '';
 const SHOTS = process.env.MINER_SHOTS || '';
 test.skip(!BASE, 'live check: set LIVE_BASE to a build pointed at a running backend (see header)');
 
-const CANON = BASE ? JSON.parse(readFileSync(join(process.env.BACKEND_DIR || '../crb-miner', 'blitzCanon.json'), 'utf8')) : {};
-const head = (prompt) => CANON[prompt][0].canon;
-const deep = (prompt) => {
-  const list = CANON[prompt];
+const BACKEND = resolve(process.env.BACKEND_DIR || '../crb-miner');
+const CANON = BASE ? JSON.parse(readFileSync(join(BACKEND, 'blitzCanon.json'), 'utf8')) : {};
+// the screen shows the singular ASK ("PIZZA TOPPING"); the canon is keyed by the list name behind it
+const LIST_OF = BASE ? Object.fromEntries(Object.entries(createRequire(import.meta.url)(join(BACKEND, 'minerPrompts.js')).ASK).map(([n, a]) => [a, n])) : {};
+const head = (ask) => CANON[LIST_OF[ask]][0].canon;
+const deep = (ask) => {
+  const list = CANON[LIST_OF[ask]];
   return list[Math.floor(list.length * 0.8)].canon; // DIAMOND band
 };
 
@@ -49,7 +53,9 @@ async function noScroll(page) {
 }
 
 async function shot(page, name) {
-  if (SHOTS) await page.screenshot({ path: join(SHOTS, `${name}.png`) });
+  if (!SHOTS) return;
+  await page.waitForTimeout(450); // let the finite pops settle: a mid-pop row reads as overflow
+  await page.screenshot({ path: join(SHOTS, `${name}.png`) });
 }
 
 test('three devices quick-match into one mine and dig it to the core', async ({ browser }) => {
@@ -99,6 +105,8 @@ test('three devices quick-match into one mine and dig it to the core', async ({ 
       await shot(a, 'reveal-1366');
       await shot(c, 'reveal-390');
       await expect(c.locator('.mn-pick.is-cave')).toHaveCount(1);
+      // the rare find is the hero moment: A's unshared deep cut is crowned on every screen
+      for (const p of all) await expect(p.locator('.mn-crown:not(.is-none) .mn-crown-word')).toHaveText(deep(prompt));
     }
     if (await a.getByTestId('miner-over').isVisible().catch(() => false)) break;
     const overSoon = await a.getByTestId('miner-over').waitFor({ timeout: 6000 }).then(() => true).catch(() => false);
