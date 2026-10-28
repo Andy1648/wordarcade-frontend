@@ -1,11 +1,12 @@
 // e2e/miner-live.spec.js — MINER against a REAL backend (no mock): three browser contexts (desktop, Chromebook,
-// phone) quick-match into ONE mine and play it to the core. Andy does not run 2-device play-tests (oct21), so this
+// phone) play ONE mine to the core: the desktop CREATES the room (/miner/play -> CREATE ROOM; Andy oct28: no quick
+// match), the other two JOIN by its code, the host STARTS. Andy does not run 2-device play-tests (oct21), so this
 // IS the multi-device check for the Tier-1 MINER wire: every client sees the same prompt, a locked answer is private
 // until the reveal, a blank caves in, depth lands on every client, the first to 500m wins on every client — and no
 // screen scrolls, no console error.
 //
 // OPT-IN (it needs a running backend and a build pointed at it, so the normal suite skips it):
-//   MINER_FILL_WAIT_MS=6000 PORT=3911 node server.js            (chain-reaction-backend)
+//   PORT=3911 node server.js                                     (chain-reaction-backend)
 //   VITE_BACKEND_WS_URL=ws://localhost:3911 npx vite build && npx vite preview --port 4394
 //   LIVE_BASE=http://localhost:4394 BACKEND_DIR=../crb-miner npx playwright test e2e/miner-live.spec.js
 import { test, expect } from '@playwright/test';
@@ -58,20 +59,27 @@ async function shot(page, name) {
   await page.screenshot({ path: join(SHOTS, `${name}.png`) });
 }
 
-test('three devices quick-match into one mine and dig it to the core', async ({ browser }) => {
+test('three devices share one mine (create + join by code), dig it to the core, then DIG AGAIN in the same room', async ({ browser }) => {
   test.setTimeout(240000);
   const a = await freshPage(browser, { width: 1366, height: 768 }, 'ANNA');
   const b = await freshPage(browser, { width: 1280, height: 600 }, 'BO');
   const c = await freshPage(browser, { width: 390, height: 844 }, 'CY');
   const all = [a, b, c];
 
-  // all three in parallel: a quick-match mine launches 8s after it opens, so a slow third load would open its own mine
-  await Promise.all(all.map((p) => p.goto('/miner/play')));
-  await Promise.all(all.map((p) => p.getByTestId('miner-lobby').waitFor({ timeout: 30000 })));
+  // the host creates the room: /miner/play opens CREATE ROOM (the name screen), CONTINUE makes a MINER room
+  await a.goto('/miner/play');
+  await a.locator('.lobby-continue-btn').click({ timeout: 30000 });
+  await a.getByTestId('miner-lobby').waitFor({ timeout: 30000 });
+  const code = (await a.locator('.mn-code').textContent()).trim();
+  // the others join by the code (the share link)
+  await Promise.all([b, c].map((p) => p.goto(`/?join=${code}`)));
+  await Promise.all([b, c].map((p) => p.getByTestId('miner-lobby').waitFor({ timeout: 30000 })));
+  const codes = await Promise.all(all.map((p) => p.locator('.mn-code').textContent()));
+  expect(new Set(codes.map((x) => x.trim())).size, 'everyone landed in the same mine').toBe(1);
+  await expect(b.getByText('WAITING FOR HOST')).toBeVisible();
   await shot(a, 'lobby-1366');
   await shot(c, 'lobby-390');
-  const codes = await Promise.all(all.map((p) => p.locator('.mn-code').textContent()));
-  expect(new Set(codes).size, 'everyone landed in the same mine').toBe(1);
+  await a.getByRole('button', { name: 'START' }).click();
 
   let round = 0;
   while (round < 12) {
@@ -121,5 +129,14 @@ test('three devices quick-match into one mine and dig it to the core', async ({ 
   await shot(b, 'over-1280x600');
   await shot(c, 'over-390');
   expect(round, 'a deep digger reaches 500m in 5 rounds').toBe(5);
+
+  // DIG AGAIN (no quick match): back to the SAME room; the host starts the next dig and everyone is in it
+  await a.getByRole('button', { name: 'DIG AGAIN' }).click();
+  await a.getByTestId('miner-lobby').waitFor();
+  expect((await a.locator('.mn-code').textContent()).trim(), 'the rematch is the same room').toBe(code);
+  await b.getByRole('button', { name: 'DIG AGAIN' }).click();
+  await expect(b.getByText('WAITING FOR HOST')).toBeVisible();
+  await a.getByRole('button', { name: 'START' }).click();
+  await Promise.all(all.map((p) => p.getByTestId('miner-prompt').waitFor({ timeout: 30000 })));
   expect(errors, errors.join('\n')).toEqual([]);
 });

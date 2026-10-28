@@ -177,7 +177,7 @@ let cloudBootChecked = false;
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onMinerQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -1069,14 +1069,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     runWhenConnected('solo', () => onPlaySolo && onPlaySolo());
   }
 
-  // Dialog QUICK MATCH (MINER): straight into the fullest waiting mine (App's handleMinerQuickMatch).
-  function handleDialogMiner() {
-    if (navigating) return;
-    sound.click();
-    setNavigating(true);
-    runWhenConnected('solo', () => onMinerQuickMatch && onMinerQuickMatch());
-  }
-
   // Dialog JOIN ROOM: the existing unified join-by-code / public-rooms screen
   // (App's onJoinRoom => handleOpenBrowser). Same flow as the bottom-bar JOIN.
   function handleDialogJoin() {
@@ -1678,8 +1670,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' || dialog.game.id === 'sat-rush' ? handleDialogPlay : undefined}
             // Andy oct10: "for all game modes besides sat rush, just 2 buttons - create room and join" — no SOLO /
             // QUICK MATCH lead (a room adds bots on the room screen).
-            // MINER leads with QUICK MATCH (straight into a mine, bots fill it); CREATE/JOIN are the friends' path.
-            onPlaySolo={dialog.game.id === 'miner' ? handleDialogMiner : undefined}
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}
