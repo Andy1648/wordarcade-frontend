@@ -25,7 +25,6 @@ import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, f
 import { canAffordAny, buyKeyPower, wornPopStyle, EQUIP_CHANGE } from '../progress/shop';
 // THE KIT's BAR (oct27): a worn POP STYLE dresses the whole XP bar. kitArt.js (+ its kitBar.css) is a LAZY chunk,
 // imported only while a paid look is worn — CLASSIC never fetches it, so it never weighs on the first paint.
-const paidLookWorn = () => { const id = wornPopStyle(); return !!id && id !== 'classic'; };
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { peakLevel } from '../progress/peakLevel';
@@ -1494,10 +1493,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const [barSkin, setBarSkin] = useState(null);
   useEffect(() => {
     let live = true;
-    const on = () => {
-      if (!paidLookWorn()) { setBarSkin(null); return; }
-      import('../progress/kitArt.js').then((m) => { if (live) setBarSkin(m.kitOf(wornPopStyle())); }).catch(() => {});
-    };
+    const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
     on();
     window.addEventListener(EQUIP_CHANGE, on);
     return () => { live = false; window.removeEventListener(EQUIP_CHANGE, on); };

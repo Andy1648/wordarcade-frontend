@@ -3,7 +3,7 @@
 // (MenuXp letterPop / tapPop, the pooled nodes) — fill, a coloured outline (a darker shade of the fill, the house rule),
 // a hard offset shadow and the burst shards. A pricier look throws more shards; PRISM / PLASMA / LEGEND cycle their
 // fill pop to pop. LOOKS ONLY: nothing here touches XP, wins or gems. CLASSIC = the old dress, untouched (null).
-import { KIT_PAINTED } from './kitArt.js';
+import { KIT_PAINTED } from './kitIds.js';
 import { popMotionOf } from './popMotion.js'; // the kit's own +N motion rides this lazy chunk, never the first paint
 // Colours follow each look's shop swatch (public/shop/pop/<id>.webp). Leaf module: no imports. LAZY — useXpCapture
 // loads it on the menu's first key / tap, and only while a paid look is worn, so it never weighs on the first paint.
@@ -31,7 +31,16 @@ export const POP_LOOKS = {
 // progress bar"): each look is a whole themed set — `bar` is its painted fill texture (the menu XP bar's fill while worn,
 // and the texture INSIDE the +N number), `crit` its bigger painted CRIT burst. One ChatGPT image each, the look's icon +
 // burst attached as the reference.
-for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], id, motion: popMotionOf(id), art: `/shop/pop/burst-${id}.webp`, ...(KIT_PAINTED.has(id) ? { bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp` } : {}) });
+// THE KIT's NUMBER (MenuXp dressNum): the +N on a chip of the look's own painted bar texture, edged in its outline colour
+// (kitBar.css .is-kit carries the rest); MenuXp's clearNum takes it off again
+const kitChip = (bar, stroke) => (node) => {
+  const st = node.style;
+  st.backgroundImage = `url(${bar})`;
+  st.borderColor = stroke;
+  node.classList.add('is-kit');
+  st.color = st.webkitTextStroke = st.textShadow = '';
+};
+for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], id, motion: popMotionOf(id), art: `/shop/pop/burst-${id}.webp`, ...(KIT_PAINTED.has(id) ? { bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp`, chip: kitChip(`/shop/pop/bar-${id}.webp`, POP_LOOKS[id].stroke) } : {}) });
 
 /** The look for a pop-style id, or null (CLASSIC / unknown → the menu's own tier colours). */
 export function popLookOf(id) {

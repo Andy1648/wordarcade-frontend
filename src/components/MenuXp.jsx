@@ -78,14 +78,17 @@ function kitArc(look, rot, s, peak, rise, baseMs) {
   return { frames: o.frames, ms: Math.round(baseMs * o.ms), hit: o.hit, spin: o.spin };
 }
 const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
-const popArc = (CENTER, rot, s, peak, rise) => [
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.45}) translateY(10px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * peak * 1.12}, ${s * peak * 0.9}) translateY(-8px)`, opacity: 1, offset: 0.13, easing: 'ease-out' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.96}, ${s * 1.06}) translateY(-13px)`, opacity: 1, offset: 0.22, easing: 'ease-out' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-15px)`, opacity: 1, offset: 0.3, easing: 'linear' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-24px)`, opacity: 1, offset: 0.7, easing: 'ease-in' }, // the LINGER: the +N is read
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.06}) translateY(-${rise}px)`, opacity: 0, offset: 1 },
-];
+const popArc = (CENTER, rot, s, peak, rise) => {
+  const k = (sx, sy, y, opacity, offset, easing) => ({ transform: `${CENTER}rotate(${rot}deg) scale(${sx}, ${sy}) translateY(${y}px)`, opacity, offset, easing });
+  return [
+    k(s * 0.45, s * 0.45, 10, 0, 0, 'cubic-bezier(.2,1.4,.4,1)'),
+    k(s * peak * 1.12, s * peak * 0.9, -8, 1, 0.13, 'ease-out'),
+    k(s * 0.96, s * 1.06, -13, 1, 0.22, 'ease-out'),
+    k(s, s, -15, 1, 0.3, 'linear'),
+    k(s, s, -24, 1, 0.7, 'ease-in'), // the LINGER: the +N is read
+    k(s * 1.06, s * 1.06, -rise, 0, 1, 'linear'),
+  ];
+};
 const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
 const CRIT_SHAKE_PX = 7;
@@ -462,18 +465,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
   // outline colour — static styles on the pooled node, set per spawn (MenuXp.css .is-kit).
   function dressNum(node, look) {
-    if (!look || !look.bar) {
-      clearNum(node);
-      // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
-      if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
-      return;
-    }
-    node.style.backgroundImage = `url(${look.bar})`;
-    node.style.borderColor = look.stroke;
-    node.classList.add('is-kit');
-    node.style.color = '';
-    node.style.webkitTextStroke = '';
-    node.style.textShadow = '';
+    if (look && look.chip) return look.chip(node); // a painted kit: its textured chip (popLooks.js, lazy)
+    clearNum(node);
+    // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
+    if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
   }
   function clearNum(node) {
     if (!node.classList.contains('is-kit')) return;

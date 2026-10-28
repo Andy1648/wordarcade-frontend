@@ -61,26 +61,16 @@ export const NEAR_FRAC = 0.9;
 //    offset + width are measured on mount / resize only) and bumps once per gain;
 //  · THE MOMENT IT FILLS — a level wrap slams the look's crit art on the goal plate and flares the cap.
 // Every motion is a finite WAAPI transform / opacity one-shot; nothing moves at rest.
-const CAP_BUMP = [{ transform: 'scale(1) rotate(0deg)' }, { transform: 'scale(1.32) rotate(-14deg)', offset: 0.3 }, { transform: 'scale(1) rotate(0deg)' }];
-const CAP_FLARE = [{ transform: 'scale(1) rotate(0deg)' }, { transform: 'scale(2.1) rotate(40deg)', offset: 0.25 }, { transform: 'scale(1) rotate(90deg)' }];
-const KIT_SLAM = [
-  { transform: 'translate(-50%,-50%) scale(.3) rotate(-30deg)', opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
-  { transform: 'translate(-50%,-50%) scale(1.25) rotate(4deg)', opacity: 1, offset: 0.22, easing: 'ease-out' },
-  { transform: 'translate(-50%,-50%) scale(1) rotate(10deg)', opacity: 1, offset: 0.5, easing: 'ease-in' },
-  { transform: 'translate(-50%,-50%) scale(1.15) rotate(18deg)', opacity: 0 },
-];
+// (the cap / slam keyframes + the cap's track measure ride the lazy kit as kit.fx — progress/kitArt.js)
 export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null, kit = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
   const fillRef = useRef(null);
-  const skinRef = useRef(null);
+  const wrapRef = useRef(null);
   const barRef = useRef(null);
   const trackRef = useRef(null);
-  const capRef = useRef(null);
-  const capArtRef = useRef(null);
-  const slamRef = useRef(null);
-  const capBox = useRef({ x: 0, w: 0, f: 0 });
+  const kitFx = useRef(null); // the worn kit's live layer (kit.fx.mount): cap, slam, painted fill
   const sweepRef = useRef(null);
   const curRef = useRef(null);
   const ghostRef = useRef(null);
@@ -99,7 +89,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   // the fill is promoted for the life of a glide only (never at rest); the sweep promotes itself per play
   const promote = (on) => {
     if (fillRef.current) fillRef.current.style.willChange = on ? 'transform' : '';
-    if (capRef.current) capRef.current.style.willChange = on ? 'transform' : '';
+    if (kitFx.current) kitFx.current.hold(on);
     kitHold([lvRef.current, gainRef.current], on);
   };
   // one pooled sweep: a wrap that lands while the last sweep is still crossing rides on it (a 30-level
@@ -116,12 +106,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       frac,
       onFrame: (l, f) => {
         if (fillRef.current) fillRef.current.style.transform = `scaleX(${f})`;
-        if (skinRef.current) skinRef.current.style.transform = `scaleX(${1 / Math.max(f, 0.002)})`;
-        if (capRef.current) {
-          const b = capBox.current;
-          b.f = f;
-          capRef.current.style.transform = `translate(${b.x + f * b.w}px,-50%)`;
-        }
+        if (kitFx.current) kitFx.current.frame(f);
         const cur = curRef.current;
         if (cur) {
           const t = formatNum(f * needRef.current);
@@ -137,8 +122,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         }
         if (l > prev) {
           sweep();
-          if (slamRef.current) kitPlay(slamRef.current, KIT_SLAM, { duration: 760 });
-          if (capArtRef.current) kitPlay(capArtRef.current, CAP_FLARE, { duration: 420, easing: 'cubic-bezier(.2,1.3,.4,1)' });
+          if (kitFx.current) kitFx.current.wrap();
           if (goalRef.current) fx(goalRef.current, FX.slamSmall);
           const g = gain.current;
           clearTimeout(g.t);
@@ -218,7 +202,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       return;
     }
     const climbing = tl > p.level || (tl === p.level && tf > p.frac);
-    if (climbing && capArtRef.current && !reduceMotion()) kitPlay(capArtRef.current, CAP_BUMP, { duration: 300, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+    if (climbing && kitFx.current) kitFx.current.bump();
     climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
@@ -227,24 +211,12 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     p.to(level, frac);
   }, [level, frac, lvInside]);
 
-  // the cap rides the track: its offset + width, measured on mount and on resize only (offset* ignore the bar's skew)
+  // the worn kit's layer (lazy, progress/kitArt.js): mounted while a kit is worn, gone with it
   useEffect(() => {
     if (!kit) return undefined;
-    const measure = () => {
-      const bar = barRef.current;
-      const tr = trackRef.current;
-      if (!bar || !tr) return;
-      const b = capBox.current;
-      b.x = bar.offsetLeft + bar.clientLeft + tr.offsetLeft;
-      b.w = tr.offsetWidth;
-      if (capRef.current) capRef.current.style.transform = `translate(${b.x + b.f * b.w}px,-50%)`;
-    };
-    capBox.current.f = player.current.frac;
-    measure();
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const ro = new ResizeObserver(measure);
-    ro.observe(barRef.current);
-    return () => ro.disconnect();
+    const k = kit.fx.mount(kit, rootRef.current, wrapRef.current, barRef.current, trackRef.current, fillRef.current, player.current.frac);
+    kitFx.current = k;
+    return () => { k.destroy(); kitFx.current = null; };
   }, [kit]);
 
   useEffect(() => {
@@ -289,26 +261,19 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     </div>
   ) : null;
   return (
-    <div ref={rootRef} style={kit ? { '--kit-edge': kit.edge, '--kit-well': kit.well, '--kit-hi': kit.hi } : undefined} data-kit={kit ? kit.id : undefined} className={`kx${kit ? ' is-kit' : ''}${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
+    <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
       {lvInside ? lead : <>{lead}{lvNode}</>}
-      <div className="kx-barwrap">
+      <div ref={wrapRef} className="kx-barwrap">
         {/* LEVEL CHEST (oct22): the painted gem + what the next level pays, pinned over the goal plate's corner (outside the
             bar, which clips) — the LV number stays centred */}
         {goal && goal.chest > 0 ? (<span className="kx-goal-chest" data-testid="xp-goal-chest"><img src="/icons/gems.webp" width="64" height="64" alt="" draggable="false" />+{formatNum(goal.chest)}</span>) : null}
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />
         </span>
-        {kit ? (
-          <>
-            <span ref={capRef} className="kx-cap" aria-hidden="true"><img ref={capArtRef} src={kit.cap} alt="" draggable="false" /></span>
-            <img ref={slamRef} className="kx-slam" src={kit.crit} alt="" aria-hidden="true" draggable="false" />
-          </>
-        ) : null}
         <div ref={barRef} className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
           <div ref={trackRef} className="kx-track" aria-hidden="true">
             {lvInside && <div ref={ghostRef} className="kx-ghost" />}
-            <div ref={fillRef} className={`kx-fill${kit ? ' is-skin' : ''}`}>
-              {kit ? <div ref={skinRef} className="kx-fill-skin" style={{ backgroundImage: `url(${kit.fill})`, transform: `scaleX(${1 / Math.max(frac, 0.002)})` }} /> : null}
+            <div ref={fillRef} className="kx-fill">
               <div className="kx-fill-hi" />
             </div>
             {/* ABOVE the fill (Andy oct18: "keep it visible inside the bar … not hidden under the yellow"), then it fades */}
