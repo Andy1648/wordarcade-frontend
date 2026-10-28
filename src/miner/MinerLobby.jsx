@@ -1,6 +1,6 @@
-// MinerLobby.jsx — the waiting room for a MINER room. Two shapes of the same screen:
-//   QUICK MATCH  the server launches it (6 miners, or 8 s after it opened); bots fill a mine with < 2 humans.
-//   PRIVATE      share the code; the host adds bots and starts.
+// MinerLobby.jsx — the waiting room for a MINER room: share the code (or a public room others browse to), the host
+// adds bots and starts; a mine with < 2 humans is topped up with bots at START, shown as BOT seats until then.
+// (The QUICK MATCH queue shape below stays for an older tab's miner_queue; Andy oct28 removed quick match.)
 // Art + names + one number. No rules paragraph: the first prompt teaches the game.
 import { useEffect, useState } from 'react';
 import { MINER_MAX } from './config';
@@ -8,6 +8,7 @@ import FitText from '../components/kit/FitText.jsx';
 import './Miner.css';
 
 const HERO = '/cards/miner-hero.webp';
+const BOT_FILL_TO = 3; // mirrors the backend minerMode.js BOT_FILL_TO
 
 export default function MinerLobby({ room, myId, miner, audioSlot, serverError, startPending, botPending, onStart, onAddBot, onLeave }) {
   const isHost = room.hostId === myId;
@@ -21,6 +22,11 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
   const fillIn = queue ? Math.max(0, Math.ceil((queue.fillAt - now) / 1000)) : null;
   const players = room.players || [];
   const full = players.length >= MINER_MAX;
+  // THE BOTS THE SERVER WILL SEAT (minerMode.js start: a mine with < 2 humans is topped up to 3 miners). Shown as
+  // BOT seats before START so a solo host sees who they'll dig against (Andy oct28: "where are the bots").
+  const humans = players.filter((p) => !p.isBot).length;
+  const bots = players.length - humans;
+  const botFill = humans < 2 ? Math.max(0, BOT_FILL_TO - humans - bots) : 0;
 
   return (
     <div className="mn-root mn-lobby" data-testid="miner-lobby">
@@ -44,6 +50,11 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
             <li key={p.id} className={`mn-seat${p.id === myId ? ' is-me' : ''}`}>
               <img className="mn-seat-digger" src={HERO} alt="" draggable="false" />
               <FitText className="mn-seat-name">{p.id === myId ? 'YOU' : p.name}</FitText>
+            </li>
+          ) : i < players.length + botFill ? (
+            <li key={`bot-${i}`} className="mn-seat is-bot-fill" aria-label="A bot joins at start">
+              <img className="mn-seat-digger" src={HERO} alt="" draggable="false" />
+              <span className="mn-seat-name">BOT</span>
             </li>
           ) : (
             <li key={`open-${i}`} className="mn-seat is-open" aria-label="Open seat" />
