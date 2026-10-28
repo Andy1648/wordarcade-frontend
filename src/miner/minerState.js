@@ -73,6 +73,8 @@ export function minerReducer(state, action) {
         offset,
         round: p.round,
         prompt: p.prompt,
+        // the singular line the miner hunts (Andy oct27: "pizza topping", not "pizza toppings")
+        ask: p.ask || String(p.prompt || '').toUpperCase(),
         pack: p.pack || null,
         endsAt: toLocal(p.endsAt, offset),
         roundMs: p.roundMs || state.roundMs,
@@ -84,7 +86,7 @@ export function minerReducer(state, action) {
     }
     case 'miner_result': {
       if (!state) return state;
-      const myPick = p.accepted ? { answer: p.answer, ore: p.ore, depth: p.depth } : state.myPick;
+      const myPick = p.accepted ? { answer: p.answer, ore: p.ore, depth: p.depth, top: p.top ?? null } : state.myPick;
       return { ...state, myPick, lastResult: { ...p }, resultSeq: (state.resultSeq || 0) + 1 };
     }
     case 'miner_locked': {
@@ -102,6 +104,7 @@ export function minerReducer(state, action) {
         reveal: {
           round: p.round,
           prompt: p.prompt,
+          ask: p.ask || state.ask || String(p.prompt || '').toUpperCase(),
           picks: p.picks || [],
           diamond: p.diamond || null,
           nextAt: now + (Number(p.nextInMs) || 0),
