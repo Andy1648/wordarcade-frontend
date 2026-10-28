@@ -13,7 +13,6 @@ import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult } from '../progress/xp';
 import { reduceMotion } from '../lib/reduceMotion';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
-import { popMotionOf } from '../progress/popMotion.js';
 
 // MenuXpBar — the SPLASH's mini level bar ("LV n" + a bare track). The menu's bar is the v2 kit's
 // KitXpBar now (Homepage); this is all that is left of the old dense bar. lib/barPlan via useLevelBar:
@@ -70,10 +69,10 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
 const POP_STRETCH = 1.3;
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
-// (progress/popMotion.js) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
+// (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
 const KIT_POP_SCALE = 1.35;
 function kitArc(look, rot, s, peak, rise, baseMs) {
-  const m = look && popMotionOf(look.id);
+  const m = look && look.motion;
   if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: 90 / baseMs, spin: 22 };
   const o = m(CENTER, rot, s * KIT_POP_SCALE, peak, rise); // a paid look's pop is the bigger one
   return { frames: o.frames, ms: Math.round(baseMs * o.ms), hit: o.hit, spin: o.spin };
