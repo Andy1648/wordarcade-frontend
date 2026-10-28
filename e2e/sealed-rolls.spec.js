@@ -3,6 +3,7 @@
 // the secret, the tier and a request id (never a price, a floor or luck), and opens the bought ticket in place — the
 // cog-locked vessel rattles, unlocks, blasts open, and the server's pick lands (060 lb_ticket_roll / lb_ticket_claim). A definite no from the
 // server (over the gem budget) gives the gems back. SHOTS=1 saves the seeded screenshots to claude/shots-shop-epic/.
+import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -226,3 +227,87 @@ test('069: the server says not_sold → the gems come back', async ({ page }) =>
   expect(calls.buy).toHaveLength(1);
   expect(await gemsOf(page)).toBe(2000);
 });
+
+// THE PACK OPENING (Andy oct27 "rare addicting feeling"): YOU open it — each tap ratchets the cog a notch (a slow
+// tapper is carried by the auto-notch, a fast one is never held back); an UPGRADE tells itself first (the light + the
+// scrim turn the pick's colour before any card shows); the card rises FACE-DOWN and waits for your tap to flip.
+test('PACK OPENING: taps work the lock, the TELL shows the pick colour first, the card waits face-down for a flip', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { shop, calls } = await boot(page, { pick: { mark: 'mk-kraken', tier: 'mythic', shiny: false } });
+  await card(shop, 'epicroll').click();
+  const sealed = page.getByTestId('sealed-roll');
+  await expect(page.getByTestId('sealed-roll-open')).toBeEnabled();
+  await expect(sealed).toHaveClass(/is-epic/); // the vessel's own violet light
+  const t0 = Date.now();
+  await page.getByTestId('sealed-roll-open').click();
+  await expect(sealed).toHaveAttribute('data-phase', 'opening');
+  for (let i = 0; i < 2; i += 1) { await page.waitForTimeout(120); await sealed.locator('.srr-vessel').click(); }
+  await expect(sealed).toHaveAttribute('data-phase', 'reveal', { timeout: 6000 });
+  const tapped = Date.now() - t0;
+  expect(tapped, 'tapping opens it faster than waiting (auto ≈ 3.4 s)').toBeLessThan(2900);
+  await expect(sealed).toHaveClass(/is-mythic/); // THE TELL: pink light before the card
+  expect(calls.claim.length + calls.roll.length).toBeGreaterThan(0);
+  // face-down: the back shows, the face hides, and it WAITS (no flip on its own inside a second)
+  const back = sealed.locator('.srr-back');
+  await expect(back).toHaveCSS('opacity', '1');
+  await page.waitForTimeout(900);
+  await expect(sealed).toHaveAttribute('data-phase', 'reveal');
+  await page.mouse.click(40, 380); // a tap anywhere flips it
+  await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 600 });
+  await expect(sealed.locator('.srr-stamp')).toHaveText('UPGRADE!');
+  await expect(sealed.getByTestId('sealed-roll-close')).toBeVisible({ timeout: 3000 }); // landed
+  await expect(back).toHaveCSS('opacity', '0');
+});
+
+test('PACK OPENING: nobody is stuck — with no taps the lock winds and the card flips by itself', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const { shop } = await boot(page, { pick: { mark: 'mk-flashpoint', tier: 'epic', shiny: false } });
+  await card(shop, 'epicroll').click();
+  const sealed = page.getByTestId('sealed-roll');
+  await page.getByTestId('sealed-roll-open').click();
+  await expect(sealed).toHaveAttribute('data-phase', 'reveal', { timeout: 6000 });
+  await expect(sealed).toHaveClass(/is-epic/); // no upgrade: no tell
+  await expect(sealed).toHaveAttribute('data-phase', 'open', { timeout: 4000 });
+  await expect(sealed.getByTestId('sealed-roll-close')).toBeVisible({ timeout: 3000 });
+});
+
+// GIF=1 only: films the pack opening for Andy (CDP screencast frames + timestamps → claude/shots/canister/gif/<id>/;
+// claude/canister/gif.py stitches them).
+for (const [id, mark, tier] of [['epic', 'mk-flashpoint', 'epic'], ['legendary', 'mk-eclipse', 'legendary'], ['mythic', 'mk-kraken', 'mythic']]) {
+  test(`GIF: the pack opening, ${id} pull`, async ({ page, context }) => {
+    test.skip(!process.env.GIF, 'films only');
+    test.setTimeout(120000);
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const { shop } = await boot(page, { pick: { mark, tier, shiny: false } });
+    await card(shop, 'epicroll').click();
+    await expect(page.getByTestId('sealed-roll-open')).toBeEnabled();
+    await page.waitForTimeout(500);
+    const dir = `claude/shots/canister/gif/${id}`;
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    const cdp = await context.newCDPSession(page);
+    const stamps = [];
+    let n = 0;
+    cdp.on('Page.screencastFrame', async (f) => {
+      const name = String(n++).padStart(4, '0');
+      fs.writeFileSync(`${dir}/${name}.jpg`, Buffer.from(f.data, 'base64'));
+      stamps.push([name, f.metadata.timestamp]);
+      try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch { /* closed */ }
+    });
+    await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 82, everyNthFrame: 1 });
+    await page.waitForTimeout(500);
+    const sealed = page.getByTestId('sealed-roll');
+    await page.getByTestId('sealed-roll-open').click();
+    for (let i = 0; i < 2; i += 1) { await page.waitForTimeout(520); await sealed.locator('.srr-vessel').click(); }
+    await expect(sealed).toHaveAttribute('data-phase', 'reveal', { timeout: 6000 });
+    await page.waitForTimeout(1300);
+    await page.mouse.click(683, 600);
+    await page.waitForTimeout(2200);
+    await cdp.send('Page.stopScreencast');
+    await page.waitForTimeout(200);
+    fs.writeFileSync(`${dir}/stamps.json`, JSON.stringify(stamps));
+  });
+}
