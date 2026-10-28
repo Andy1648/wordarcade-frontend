@@ -803,6 +803,8 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-try .sp2-look-act { flex: 0 0 auto; margin-top: 0; padding: 0 14px; }
 .sp2-try .sp2-look-act + .sp2-look-act { margin-top: 0; }
 .sp2-try-pad { display: none; }
+/* the tried look's painted XP-bar fill, as a strip in the TRYING bar (skewed like the menu's bar) */
+.sp2-try-bar { flex: 1 1 120px; min-width: 90px; max-width: 260px; height: 26px; border: 3px solid #000; border-radius: 6px; box-shadow: 3px 3px 0 #000; background-size: cover; background-position: center; transform: skewX(-12deg); }
 @media (hover: none) and (pointer: coarse) {
   .sp2-try { flex-wrap: wrap; }
   .sp2-try-chip { flex-basis: 100%; }

@@ -20,9 +20,8 @@ async function boot(page, pop) {
 
 test('INFERNO worn: the +N pops carry the painted inferno burst', async ({ page }) => {
   await boot(page, 'inferno');
-  for (let i = 0; i < 5; i++) { await page.keyboard.press('KeyQ'); await page.waitForTimeout(120); }
-  // shown AND laid out (a 0-size box = still display:none from the CSS)
-  await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('.menu-xp-pop-art')].filter((i) => /burst-inferno/.test(i.getAttribute('src') || '') && i.getBoundingClientRect().width > 20).length)).toBeGreaterThan(0);
+  // shown AND laid out (a 0-size box = still display:none from the CSS); the look's data loads at idle, so keep typing
+  await expect.poll(async () => { await page.keyboard.press('KeyQ'); await page.waitForTimeout(120); return page.evaluate(() => [...document.querySelectorAll('.menu-xp-pop-art')].filter((i) => /burst-inferno/.test(i.getAttribute('src') || '') && i.getBoundingClientRect().width > 20).length); }, { timeout: 10_000 }).toBeGreaterThan(0);
   if (process.env.SHOTS) {
     // freeze a fresh pop at its peak so the screenshot shows the burst under the number
     await page.waitForTimeout(900);
