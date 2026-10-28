@@ -30,7 +30,7 @@ export const POP_LOOKS = {
 // progress bar"): each look is a whole themed set — `bar` is its painted fill texture (the menu XP bar's fill while worn,
 // and the texture INSIDE the +N number), `crit` its bigger painted CRIT burst. One ChatGPT image each, the look's icon +
 // burst attached as the reference.
-for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], art: `/shop/pop/burst-${id}.webp`, ...(KIT_PAINTED.has(id) ? { bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp` } : {}) });
+for (const id of Object.keys(POP_LOOKS)) POP_LOOKS[id] = Object.freeze({ ...POP_LOOKS[id], id, art: `/shop/pop/burst-${id}.webp`, ...(KIT_PAINTED.has(id) ? { bar: `/shop/pop/bar-${id}.webp`, crit: `/shop/pop/crit-${id}.webp` } : {}) });
 
 /** The look for a pop-style id, or null (CLASSIC / unknown → the menu's own tier colours). */
 export function popLookOf(id) {

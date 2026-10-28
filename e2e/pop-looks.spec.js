@@ -23,18 +23,19 @@ async function menuWith(page, popStyle) {
 }
 
 /** Type until a +N pop is up; return the computed dress of the newest visible one. */
-async function popDress(page) {
+async function popDress(page, kit = false) {
   let dress = null;
   await expect.poll(async () => {
     await page.keyboard.type('qwer', { delay: 90 });
-    dress = await page.evaluate(() => {
-      const els = [...document.querySelectorAll('.menu-xp-pop.is-tap .menu-xp-pop-plus')].filter((e) => /XP/.test(e.textContent) && (e.style.color || e.classList.contains('is-kit')));
+    dress = await page.evaluate((kit) => {
+      // kit: only a pop dressed by the worn look (the look's data loads at idle — a pop typed before it is plain)
+      const els = [...document.querySelectorAll('.menu-xp-pop.is-tap .menu-xp-pop-plus')].filter((e) => /XP/.test(e.textContent) && (kit ? e.classList.contains('is-kit') : (e.style.color || e.classList.contains('is-kit'))));
       const e = els[els.length - 1];
       if (!e) return null;
       const c = getComputedStyle(e);
       const art = e.parentElement.querySelector('.menu-xp-pop-art');
       return { color: c.color, stroke: c.webkitTextStrokeColor, shadow: c.textShadow, chip: e.classList.contains('is-kit') ? e.style.backgroundImage : null, art: art && art.style.display === 'block' ? art.getAttribute('src') : null };
-    });
+    }, kit);
     return !!dress;
   }, { timeout: 10_000 }).toBe(true);
   return dress;
@@ -45,7 +46,7 @@ async function popDress(page) {
 test('INFERNO: the menu +N pops throw the inferno burst, the number white on an inferno-texture chip', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await menuWith(page, 'inferno');
-  const d = await popDress(page);
+  const d = await popDress(page, true);
   expect(d.art).toContain('burst-inferno');
   expect(d.color).toBe('rgb(255, 255, 255)');
   expect(d.stroke).toBe('rgb(0, 0, 0)');
@@ -71,7 +72,7 @@ test('equipping a look while the menu is open re-dresses the next pop (no reload
     window.dispatchEvent(new Event('taw:equip-change'));
   });
   await page.waitForTimeout(1500); // let the classic pops finish
-  const d = await popDress(page);
+  const d = await popDress(page, true);
   expect(d.art).toContain('burst-toxic');
 });
 

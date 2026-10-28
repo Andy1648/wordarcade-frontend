@@ -13,6 +13,7 @@ import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult } from '../progress/xp';
 import { reduceMotion } from '../lib/reduceMotion';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
+import { popMotionOf } from '../progress/popMotion.js';
 
 // MenuXpBar — the SPLASH's mini level bar ("LV n" + a bare track). The menu's bar is the v2 kit's
 // KitXpBar now (Homepage); this is all that is left of the old dense bar. lib/barPlan via useLevelBar:
@@ -68,6 +69,15 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // fuller arc (a wind-up from small, an overshoot squash, a settle, a long readable LINGER, then the float-off); the crit
 // and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
 const POP_STRETCH = 1.3;
+// THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
+// (progress/popMotion.js) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
+const KIT_POP_SCALE = 1.35;
+function kitArc(look, rot, s, peak, rise, baseMs) {
+  const m = look && popMotionOf(look.id);
+  if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: 90 / baseMs, spin: 22 };
+  const o = m(CENTER, rot, s * KIT_POP_SCALE, peak, rise); // a paid look's pop is the bigger one
+  return { frames: o.frames, ms: Math.round(baseMs * o.ms), hit: o.hit, spin: o.spin };
+}
 const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
 const popArc = (CENTER, rot, s, peak, rise) => [
   { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.45}) translateY(10px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
@@ -428,7 +438,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
   const lookNextRef = useRef(0);
   // the painted burst under the number: shown + slammed in for a look, hidden otherwise (a pooled child, finite WAAPI)
-  function dressArt(pop, look, crit = false) {
+  function dressArt(pop, look, crit = false, delay = 90, spin = 22) {
     const img = pop.children[2];
     if (!img) return;
     const src = look && (crit ? look.crit : look.art);
@@ -443,11 +453,11 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // a crisp slam (easing per step — a whole-run ease-out raced it through its hold): pops to 1.18 at full opacity,
       // settles, HOLDS, then a quick fade — 420 ms, finite
       { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.35)`, opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 8}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 12}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 16}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 22}deg) scale(1.12)`, opacity: 0 },
-    ], { duration: crit ? CRIT_BURST_MS : POP_BURST_MS, delay: crit ? 0 : 90, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.36}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.55}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.73}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin}deg) scale(1.12)`, opacity: 0 },
+    ], { duration: crit ? CRIT_BURST_MS : POP_BURST_MS, delay: crit ? 0 : delay, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
   // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
@@ -512,7 +522,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
       const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
       dressPop(el.children[1], lk, tierColour, feelTier >= 3);
-      dressArt(el, lk);
+      const tf0 = tierRef.current;
+      const mo = kitArc(lk, Math.random() * 20 - 10, scale * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      dressArt(el, lk, false, Math.round(mo.hit * mo.ms), mo.spin);
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
@@ -522,13 +534,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, lk ? lk.shards : tierColour, shardN, 1 + tfx.tier * 0.12);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
-      const rot = Math.random() * 20 - 10; // [-10°, +10°]
-      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
-      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
-      // further, and lands with a punch (overshoot) before it floats off.
-      const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: Math.round(tf.popMs * POP_STRETCH) });
-      anim.effect.setKeyframes(popArc(CENTER, rot, s, 1 + tf.tier * 0.05, tf.popRise));
+      // per-pop variance (a small rotation + scale, picked in kitArc's call above) so no two pops read identical;
+      // LONGER at higher menu tiers (Andy A1), ×POP_STRETCH (oct27), and a worn look's own motion (kitArc)
+      anim.effect.updateTiming({ duration: mo.ms });
+      anim.effect.setKeyframes(mo.frames);
       anim.cancel();
       anim.play();
     },
@@ -639,17 +648,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
       el.children[1].textContent = plusText;
       dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
-      dressArt(el, look);
+      const tf0 = tierRef.current;
+      const mo = kitArc(look, Math.random() * 20 - 10, scale * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      dressArt(el, look, false, Math.round(mo.hit * mo.ms), mo.spin);
       if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
-      const rot = Math.random() * 20 - 10; // [-10°, +10°]
-      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
-      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
-      // further, and lands with a punch (overshoot) before it floats off.
-      const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: Math.round(tf.popMs * POP_STRETCH) });
-      anim.effect.setKeyframes(popArc(CENTER, rot, s, 1 + tf.tier * 0.05, tf.popRise));
+      anim.effect.updateTiming({ duration: mo.ms });
+      anim.effect.setKeyframes(mo.frames);
       anim.cancel();
       anim.play();
     },
