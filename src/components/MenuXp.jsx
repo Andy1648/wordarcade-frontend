@@ -34,13 +34,17 @@ export function MenuXpBar({ level, frac }) {
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 20, cap 18 running.
-// At 30 keys/sec × 0.6s = 18 concurrent, so the cap sits exactly there (Economy v3 slows
-// pops to 600ms for a longer, floatier read).
+// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 28, cap 18 live.
+// oct28 (Andy: "at a certain point i think all animations just get cleared … looks buggy"): over the cap the OLDEST
+// live pop is RETIRED — fast-forwarded into its own fade tail, so it fades out in ~150ms — and the new pop takes a FREE
+// node. One retire per keystroke, never a hard cut, never a mass clear (a level-up no longer cancels every pop either).
+// The 10 spare nodes cover the retirees still fading at a 30 keys/sec mash.
 const POP_MS = 600;
-const POP_POOL = 20;
+const POP_POOL = 28;
 const POP_CAP = 18; // pool sizing (NOT the retired concurrent-count budget — see CLAUDE.md
 // ANIMATION BUDGET): caps live pops so a mash REUSES pooled nodes instead of growing the pool.
+const POP_CAP_LEVELUP = 2; // while a LEVEL-UP / REBIRTH card plays, keys keep popping but stay sparse
+const POP_RETIRE_AT = 0.9; // a retired pop jumps here: past its hold, into its fade-out
 const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
 const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
 const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions
@@ -205,19 +209,30 @@ function pickPosition(w, h, box, recent, half = POP_HALF, halfX = half) {
   return cand;
 }
 
+// Pick the node for the next pop. Over `cap` live pops, the oldest live one is RETIRED (into its fade tail — it fades,
+// it is never cut), one per call. The new pop takes a free node; only with the whole pool busy does it reuse a node,
+// and then the oldest one already fading out.
+const startOf = (a) => a.startTime ?? 0;
 function pickIndex(anims, poolSize, cap, nextRef) {
-  const running = [];
+  const live = [];
   let free = -1;
+  let fading = -1;
   for (let n = 0; n < anims.length; n++) {
-    if (anims[n].playState === 'running') running.push(n);
-    else if (free === -1) free = n;
+    const a = anims[n];
+    if (a.playState !== 'running') { if (free === -1) free = n; }
+    else if (a.__retiring) { if (fading === -1 || startOf(a) < startOf(anims[fading])) fading = n; }
+    else live.push(n);
   }
-  let i;
-  if (running.length >= cap) {
-    i = running.reduce((oldest, n) => ((anims[n].startTime ?? 0) < (anims[oldest].startTime ?? 0) ? n : oldest), running[0]);
-  } else {
-    i = free !== -1 ? free : nextRef.current % poolSize;
+  if (live.length >= cap) {
+    const o = live.reduce((oldest, n) => (startOf(anims[n]) < startOf(anims[oldest]) ? n : oldest), live[0]);
+    const a = anims[o];
+    const dur = Number(a.effect && a.effect.getTiming().duration) || POP_MS;
+    if ((a.currentTime ?? 0) < dur * POP_RETIRE_AT) a.currentTime = dur * POP_RETIRE_AT;
+    a.__retiring = true;
+    if (fading === -1) fading = o;
   }
+  const i = free !== -1 ? free : fading !== -1 ? fading : nextRef.current % poolSize;
+  anims[i].__retiring = false;
   nextRef.current = (i + 1) % poolSize;
   return i;
 }
@@ -588,7 +603,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return; // not measured yet, or no pool
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
@@ -644,7 +659,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return;
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
@@ -729,7 +744,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
         y = box.t - POP_HALF > 0 ? box.t - POP_HALF : box.bt + POP_HALF;
       }
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
@@ -765,8 +780,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
     celebrate(level, size) {
       const a = levelupAnimRef.current;
       if (!a) return;
-      for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
-      popCapRef.current = true;
+      popCapRef.current = true; // the card owns the budget: live pops finish their own fade, new keys stay sparse
       const m = size ? MILESTONE_FX[size] : null;
       if (m) {
         // Same card, same copy (the title and LV line stay); the kicker reads MILESTONE. Reduced
@@ -850,8 +864,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
-      for (const p of popAnimsRef.current) p.cancel();
-      popCapRef.current = true;
+      popCapRef.current = true; // never a mass clear — live pops finish their own fade
       resetMilestoneCard();
       const total = rebirthMult(n);
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(n)}`;
