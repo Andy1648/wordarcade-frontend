@@ -7,14 +7,14 @@
 // goes up, it climbs every level-up inside a run, and a rebirth carries all of it forward (a fresh R1 player's keys
 // are exactly as big as their LV25 keys were).
 //
-// THE CURVE: log-shaped and capped. Early levels move the size the most (L1 → L10 is already +20%), later the climb
+// THE CURVE: log-shaped and capped. Early levels move the size the most (L1 → L10 is already ~+7%), later the climb
 // keeps paying in smaller steps, and it stops at GROWTH_CAP_CAREER (≈ R15) — never a runaway. Phones get a smaller
 // ceiling so a big +N never runs off a 360px screen. STAGES add painted dressing behind the number on top of the size.
 // PURE — no storage, no DOM (menu reads it once per mount; unit-tested in popGrowth.test.js).
 
 export const GROWTH_CAP_CAREER = 3000;
-export const GROWTH_MAX = 0.75; // +75% at the cap (desktop)
-export const GROWTH_MAX_NARROW = 0.3; // +30% at the cap on a phone-width layer
+export const GROWTH_MAX = 0.25; // +25% at the cap (desktop) — Andy oct28 "getting a bit too big, tone it down a lot" (was +75%)
+export const GROWTH_MAX_NARROW = 0.1; // +10% at the cap on a phone-width layer (was +30%)
 // Career levels where the pop gains dressing: 1 the painted burst RING behind the +N, 2 + a SPARKLE, 3 the ring in GOLD.
 export const STAGE_STARTS = [10, 100, 1000];
 

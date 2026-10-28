@@ -41,8 +41,9 @@ test('a rebirth never shrinks the pop', () => {
   assert.ok(popGrowth(careerLevel(1, 1, gate)).scale > popGrowth(careerLevel(25, 0, gate)).scale);
 });
 
-test('the early levels are felt (L10 is already ~+20%)', () => {
-  assert.ok(popGrowth(10).scale > 1.18);
+test('the early levels are felt but modest (L10 ~+7%)', () => {
+  assert.ok(popGrowth(10).scale > 1.05);
+  assert.ok(popGrowth(10).scale < 1.1);
 });
 
 test('pop dressing comes in stages', () => {

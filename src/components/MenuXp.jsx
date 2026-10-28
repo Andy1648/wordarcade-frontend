@@ -104,8 +104,8 @@ const popArc = (CENTER, rot, s, peak, rise) => {
 // pop throws the painted burst RING (public/fx/burst-ring.svg as a mask, tinted the pop's flat colour) behind its +N,
 // from LV100 a SPARKLE (public/fx/sparkle.svg), from LV1000 the ring goes gold. Both are pooled children of the pooled
 // pop node with ONE WAAPI each, created on mount and replayed — transform / opacity only, will-change only in flight.
-const POP_SCALE_MAX = 2.6;
-const POP_SCALE_MAX_NARROW = 1.6;
+const POP_SCALE_MAX = 1.6; // Andy oct28 "tone it down a lot" (was 2.6 / 1.6)
+const POP_SCALE_MAX_NARROW = 1.3;
 const CHAR_HALF_PX = 7.5; // ≈ half a Bungee glyph at the pop's size: a +N's half-width is estimated from its text, never measured
 const NARROW_W = 560; // fx-layer px below which the phone ceiling applies
 const RING_MS = 440;
