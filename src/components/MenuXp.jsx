@@ -69,33 +69,32 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // fuller arc (a wind-up from small, an overshoot squash, a settle, a long readable LINGER, then the float-off); the crit
 // and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
 const POP_STRETCH = 1.5; // oct28 ×1.5 (was 1.3): the longer entrance needs the room
-const POP_FROM = 0.1; // the entrance starts from a speck
-const POP_HIT = 0.26; // where the grow-in peaks (was 0.13)
-const POP_GROW = 'cubic-bezier(.16,1,.3,1)'; // a long ease-out: fast start, slow arrival
+// oct28 (Andy: "dont do anything with the number boxes bc when they disappear (like stretch or smthn) it looks goofy"):
+// the +N box NEVER scales or stretches — one size for its whole life, it fades in, holds, and fades out on a small
+// STRAIGHT upward drift (translateY sits before the tilt, so the drift is screen-up whatever the tilt). Every pop takes
+// this one arc — CLASSIC, every worn look, the crit. The ring, sparkle and painted burst keep their own motion.
+const POP_HIT = 0.12; // where the fade-in lands (the ring / painted burst slam in then)
+const POP_DRIFT = 18; // px the +N rises over its whole life
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
 // (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
 const KIT_POP_SCALE = 1.35;
+// A worn look keeps its pop LENGTH and its burst's spin (popMotion.js) — but its +N moves on the same flat arc as CLASSIC.
 function kitArc(look, rot, s, peak, rise, baseMs) {
   const m = look && look.motion;
-  if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: POP_HIT, spin: 22 };
-  const o = m(CENTER, rot, s * KIT_POP_SCALE, peak, rise); // a paid look's pop is the bigger one
-  const hit = stretchHit(o.hit);
-  return { frames: stretchEntrance(o.frames, o.hit, hit), ms: Math.round(baseMs * o.ms), hit, spin: o.spin };
+  if (!m) return { frames: popArc(CENTER, rot, s), ms: baseMs, hit: POP_HIT, spin: 22 };
+  const o = m(CENTER, rot, s, peak, rise);
+  return { frames: popArc(CENTER, rot, s * KIT_POP_SCALE), ms: Math.round(baseMs * o.ms), hit: POP_HIT, spin: o.spin }; // a paid look's pop is the bigger one
 }
-// oct28: every kit's ENTRANCE (frame 0 → its landing at `hit`) takes ~twice the share of the pop, the rest is squeezed to fit.
-const stretchHit = (h) => Math.min(0.34, h * 2);
-const stretchEntrance = (frames, h, h2) => frames.map((f) => ({ ...f, offset: f.offset <= h ? (f.offset * h2) / h : h2 + ((f.offset - h) * (1 - h2)) / (1 - h) }));
 const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
-// oct28 (Andy: "smoother" = slower + more of an ENTRANCE): the +N GROWS IN from a speck (×0.1, was ×0.45) on a long
-// ease-out to a small overshoot, settles, lingers, then floats off.
-const popArc = (CENTER, rot, s, peak, rise) => {
-  const k = (sx, sy, y, opacity, offset, easing) => ({ transform: `${CENTER}rotate(${rot}deg) scale(${sx}, ${sy}) translateY(${y}px)`, opacity, offset, easing });
+// The +N's one arc: constant scale `s` (its size — streak × career growth — never animates), opacity in → hold → out,
+// and a small straight rise.
+const popArc = (CENTER, rot, s) => {
+  const k = (y, opacity, offset, easing) => ({ transform: `${CENTER}translateY(${y}px) rotate(${rot}deg) scale(${s})`, opacity, offset, easing });
   return [
-    k(s * POP_FROM, s * POP_FROM, 10, 0, 0, POP_GROW),
-    k(s * peak * 1.08, s * peak * 1.08, -10, 1, POP_HIT, 'ease-in-out'),
-    k(s, s, -15, 1, POP_HIT + 0.12, 'linear'),
-    k(s, s, -24, 1, 0.74, 'ease-in'), // the LINGER: the +N is read
-    k(s * 1.06, s * 1.06, -rise, 0, 1, 'linear'),
+    k(0, 0, 0, 'ease-out'),
+    k(-POP_DRIFT * 0.2, 1, POP_HIT, 'linear'),
+    k(-POP_DRIFT * 0.6, 1, 0.74, 'ease-in'), // the LINGER: the +N is read
+    k(-POP_DRIFT, 0, 1, 'linear'),
   ];
 };
 // KEY GROWTH (Andy oct28: "larger scaling up with level"): every pop is sized x popGrowth(career level) — the levels
@@ -701,17 +700,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
           sh.play();
         }
       }
-      // the key: a hard slam (1.9 → 1), a long readable HOLD (so the +N is seen), then it lifts off
+      // the key: no slam or squash (Andy oct28 — the number box never stretches): a quick fade in at its size, a long
+      // readable HOLD (so the +N is seen), then it fades off on the same small straight rise. The hit is the shake + burst.
       const dur = CRIT_BURST_MS;
-      const at = (ms) => Math.min(0.9, ms / dur);
       const s = grownScale(scale, 0.5); // a crit is already the big one — it takes half the career growth
       anim.effect.updateTiming({ duration: dur });
       anim.effect.setKeyframes([
-        { transform: `${CENTER}scale(${s * 1.9})`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-        { transform: `${CENTER}scale(${s})`, opacity: 1, offset: at(CRIT_PUNCH_MS) },
-        { transform: `${CENTER}scale(${s * 1.04})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 2) },
-        { transform: `${CENTER}scale(${s})`, opacity: 1, offset: 0.8, easing: 'ease-in' },
-        { transform: `${CENTER}scale(${s * 0.92}) translateY(-12px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}translateY(0px) scale(${s})`, opacity: 0, offset: 0, easing: 'ease-out' },
+        { transform: `${CENTER}translateY(${-POP_DRIFT * 0.1}px) scale(${s})`, opacity: 1, offset: Math.min(0.2, CRIT_PUNCH_MS / dur) },
+        { transform: `${CENTER}translateY(${-POP_DRIFT * 0.5}px) scale(${s})`, opacity: 1, offset: 0.8, easing: 'ease-in' },
+        { transform: `${CENTER}translateY(${-POP_DRIFT}px) scale(${s})`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
