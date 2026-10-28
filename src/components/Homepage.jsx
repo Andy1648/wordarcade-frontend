@@ -15,7 +15,8 @@ import { letterXpNow } from '../progress/letterXp';
 import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, tableRebirthThreshold } from '../progress/xp';
+import { careerLevel } from '../progress/popGrowth';
 import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
@@ -1652,7 +1653,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
           the "+N" popups spawn outside the panel border and never overlap its content. */}
-      <MenuXpFx ref={xpFxRef} menuTier={tier} />
+      <MenuXpFx ref={xpFxRef} menuTier={tier} career={careerLevel(xpProgress.level, rebirths, tableRebirthThreshold)} />
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}
