@@ -4,13 +4,14 @@
 // parked on the idle pool). The fx-layer size + XP bar box are measured on
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import './MenuXp.css';
 import { formatNum } from '../format';
 import { useLevelBar } from '../hooks/useLevelBar';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
-import { rebirthMult } from '../progress/xp';
+import { rebirthMult, loadProgress, getRebirths, tableRebirthThreshold } from '../progress/xp';
+import { careerLevel, popGrowth } from '../progress/popGrowth';
 import { reduceMotion } from '../lib/reduceMotion';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
 
@@ -89,6 +90,22 @@ const popArc = (CENTER, rot, s, peak, rise) => {
     k(s * 1.06, s * 1.06, -rise, 0, 1, 'linear'),
   ];
 };
+// KEY GROWTH (Andy oct28: "larger scaling up with level"): every pop is sized x popGrowth(career level) — the levels
+// this player has ever climbed (a rebirth banks them, so the keys never shrink). Capped (progress/popGrowth.js), and the
+// whole pop (streak x growth) is clamped so a phone never gets a +N wider than its screen. From career LV10 a CLASSIC
+// pop throws the painted burst RING (public/fx/burst-ring.svg as a mask, tinted the pop's flat colour) behind its +N,
+// from LV100 a SPARKLE (public/fx/sparkle.svg), from LV1000 the ring goes gold. Both are pooled children of the pooled
+// pop node with ONE WAAPI each, created on mount and replayed — transform / opacity only, will-change only in flight.
+const POP_SCALE_MAX = 2.6;
+const POP_SCALE_MAX_NARROW = 1.6;
+const CHAR_HALF_PX = 7.5; // ≈ half a Bungee glyph at the pop's size: a +N's half-width is estimated from its text, never measured
+const NARROW_W = 560; // fx-layer px below which the phone ceiling applies
+const RING_MS = 440;
+const SPARK_MS = 420;
+const SPARK_SRC = '/fx/sparkle.svg';
+export function currentCareer() {
+  return careerLevel(loadProgress().level, getRebirths(), tableRebirthThreshold);
+}
 const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
 const CRIT_SHAKE_PX = 7;
@@ -149,18 +166,19 @@ const MILESTONE_CARD = Object.fromEntries(
 // within POP_MIN_GAP of any of the last RECENT_POS accepted positions — so pops read as
 // scattered, never as marching rows. Up to POP_TRIES attempts; if all fail the last
 // candidate is accepted. Records the accepted position in the `recent` ring buffer.
-function pickPosition(w, h, box, recent) {
-  const minX = POP_HALF;
-  const minY = POP_HALF;
-  const spanX = Math.max(0, w - POP_HALF * 2);
-  const spanY = Math.max(0, h - POP_HALF * 2);
+function pickPosition(w, h, box, recent, half = POP_HALF, halfX = half) {
+  const hx = Math.min(halfX, w / 2);
+  const minX = hx;
+  const minY = half;
+  const spanX = Math.max(0, w - hx * 2);
+  const spanY = Math.max(0, h - half * 2);
   const gap2 = POP_MIN_GAP * POP_MIN_GAP;
   let cand = { x: minX + spanX / 2, y: minY + spanY / 2 };
   for (let tries = 0; tries < POP_TRIES; tries++) {
     const x = minX + Math.random() * spanX;
     const y = minY + Math.random() * spanY;
     cand = { x, y };
-    if (box && x > box.l - POP_HALF && x < box.r + POP_HALF && y > box.t - POP_HALF && y < box.bt + POP_HALF) {
+    if (box && x > box.l - half && x < box.r + half && y > box.t - half && y < box.bt + half) {
       continue; // over the bar box
     }
     let tooClose = false;
@@ -199,12 +217,24 @@ function pickIndex(anims, poolSize, cap, nextRef) {
 
 // MenuXpFx — imperative: letterPop(char, "+N", scale, colour), edgePulse(colour) per
 // keystroke, celebrate(level) on a level-up.
-export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
+export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, ref) {
   const layerRef = useRef(null);
   // STEP 22 / A1: the MENU TIER (level + rebirth) lengthens and enriches every pop. Read through
   // a ref so a level-up mid-typing re-tiers the very next keystroke without re-creating the pool.
   const tierRef = useRef(tierFx(menuTier));
   tierRef.current = tierFx(menuTier);
+  // KEY GROWTH: the career level (Homepage passes it live; the splash / shop try-on read the save once) -> the size +
+  // dressing stage. Through refs, like the tier, so a level-up re-sizes the next key without touching the pool.
+  const [savedCareer] = useState(() => (career == null ? currentCareer() : 0));
+  const narrowRef = useRef(false);
+  const careerRef = useRef(1);
+  careerRef.current = career == null ? savedCareer : career;
+  const growthRef = useRef(null);
+  growthRef.current = popGrowth(careerRef.current, narrowRef.current);
+  const ringElsRef = useRef([]);
+  const ringAnimsRef = useRef([]);
+  const sparkElsRef = useRef([]);
+  const sparkAnimsRef = useRef([]);
   const burstRef = useRef(null);
   // Only a LEVEL-UP / REBIRTH owns the pop budget while it plays; the tier-up name card (which
   // can fire on menu open) must never mute the player's first keystrokes.
@@ -250,6 +280,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const wrap = layer.getBoundingClientRect();
       layerRectRef.current = { left: wrap.left, top: wrap.top };
       layerSizeRef.current = { w: wrap.width, h: wrap.height };
+      narrowRef.current = wrap.width > 0 && wrap.width < NARROW_W;
+      growthRef.current = popGrowth(careerRef.current, narrowRef.current);
       const bar = document.querySelector('.menu-xp-bar');
       let box = null;
       if (bar) {
@@ -282,6 +314,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       a.cancel();
       return a;
     });
+
+    // KEY GROWTH dressing: one idle WAAPI per pooled ring / sparkle (keyframes re-set per spawn for a fresh angle).
+    const idle = (el, ms) => {
+      const a = el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: ms, easing: 'linear', fill: 'both' });
+      a.cancel();
+      a.onfinish = () => { el.style.willChange = ''; };
+      return a;
+    };
+    ringAnimsRef.current = ringElsRef.current.map((el) => idle(el, RING_MS));
+    sparkAnimsRef.current = sparkElsRef.current.map((el) => idle(el, SPARK_MS));
 
     const edgeOpts = { duration: EDGE_MS, easing: 'ease-out', fill: 'both' };
     edgeAnimsRef.current = edgeElsRef.current.map((el) => {
@@ -491,6 +533,48 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     return fill;
   }
 
+  // KEY GROWTH dressing on pop node i: the burst ring (stage 1+) and sparkle (stage 2+) land as the +N hits. `colour`
+  // null = stand down (a worn look paints its own burst; a crit has its own dress) — cancels whatever ran on this node.
+  function dressGrowth(i, colour, hitMs = 90) {
+    const ra = ringAnimsRef.current[i];
+    const sa = sparkAnimsRef.current[i];
+    const ring = ringElsRef.current[i];
+    const spark = sparkElsRef.current[i];
+    if (ra) ra.cancel();
+    if (sa) sa.cancel();
+    if (ring) ring.style.willChange = ''; // a cancel never fires onfinish — drop the hint here
+    if (spark) spark.style.willChange = '';
+    const g = growthRef.current;
+    if (!colour || g.stage < 1 || prefersReducedMotion() || !ring || !ra) return;
+    if (layerRef.current && !layerRef.current.classList.contains('is-grown')) layerRef.current.classList.add('is-grown');
+    const rot = Math.random() * 40 - 20;
+    ring.style.backgroundColor = g.stage >= 3 ? TIER_GOLD : colour;
+    ring.style.willChange = 'transform, opacity';
+    ra.effect.setKeyframes([
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 8}deg) scale(1.08)`, opacity: 0.9, offset: 0.3, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 14}deg) scale(1.3)`, opacity: 0 },
+    ]);
+    ra.effect.updateTiming({ delay: hitMs });
+    ra.play();
+    if (g.stage < 2 || !spark || !sa) return;
+    if (!spark.getAttribute('src')) spark.setAttribute('src', SPARK_SRC); // fetched on the first stage-2 pop, never at paint
+    const flip = Math.random() < 0.5 ? -1 : 1;
+    spark.style.willChange = 'transform, opacity';
+    sa.effect.setKeyframes([
+      { transform: 'translate(-50%, -50%) rotate(0deg) scale(0)', opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${flip * 35}deg) scale(1.15)`, opacity: 1, offset: 0.4, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${flip * 90}deg) scale(0)`, opacity: 0 },
+    ]);
+    sa.effect.updateTiming({ delay: hitMs + 60 });
+    sa.play();
+  }
+  // streak scale x the career growth (`share` of it), clamped (the phone ceiling is lower)
+  const grownScale = (scale, share = 1) => {
+    const g = growthRef.current;
+    return Math.min(narrowRef.current ? POP_SCALE_MAX_NARROW : POP_SCALE_MAX, scale * (1 + (g.scale - 1) * share));
+  };
+
   useImperativeHandle(ref, () => (V3.fx || Object)({
     letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0, look = null) {
       const { w, h } = layerSizeRef.current;
@@ -501,7 +585,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
+      const sz = grownScale(scale);
+      // a grown pop keeps its whole (estimated) width on screen — text length x glyph half-width x size, no layout read
+      const label = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
+      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current, POP_HALF * Math.max(1, sz), Math.max(POP_HALF, label.length * CHAR_HALF_PX * sz));
       el.classList.remove('is-crit'); // reset if this node was last used for a crit
       // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", in the
       // tap pop's dress (no typed letter). The CRIT keeps its key: CRIT +N says what happened.
@@ -513,12 +600,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // children: [0] = (empty — the typed letter is not shown), [1] = "+N XP" in the tier colour
       el.children[0].textContent = '';
       // a band-only pop (useXpCapture: a menu WORD's rarity band, no +N) still shows its band word
-      el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
+      el.children[1].textContent = label;
       const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
       dressPop(el.children[1], lk, tierColour, feelTier >= 3);
       const tf0 = tierRef.current;
-      const mo = kitArc(lk, Math.random() * 20 - 10, scale * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      const mo = kitArc(lk, Math.random() * 20 - 10, sz * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
       dressArt(el, lk, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressGrowth(i, plusText && !lk ? tierColour : null, Math.round(mo.hit * mo.ms));
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
@@ -568,6 +656,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           y: Math.min(Math.max(raw.y, CRIT_TOP), Math.max(CRIT_TOP, h - CRIT_SAFE)),
         };
       }
+      dressGrowth(i, null);
       el.classList.remove('is-tap');
       el.classList.add('is-crit');
       el.children[0].textContent = letter;
@@ -607,7 +696,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // the key: a hard slam (1.9 → 1), a long readable HOLD (so the +N is seen), then it lifts off
       const dur = CRIT_BURST_MS;
       const at = (ms) => Math.min(0.9, ms / dur);
-      const s = scale;
+      const s = grownScale(scale, 0.5); // a crit is already the big one — it takes half the career growth
       anim.effect.updateTiming({ duration: dur });
       anim.effect.setKeyframes([
         { transform: `${CENTER}scale(${s * 1.9})`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
@@ -643,8 +732,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = plusText;
       dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
       const tf0 = tierRef.current;
-      const mo = kitArc(look, Math.random() * 20 - 10, scale * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      const mo = kitArc(look, Math.random() * 20 - 10, grownScale(scale) * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
       dressArt(el, look, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressGrowth(i, look ? null : colour, Math.round(mo.hit * mo.ms));
       if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
@@ -798,6 +888,21 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           <span className="menu-xp-pop-plus" />
           {/* [2] the worn POP STYLE's painted burst (popLooks art) — src set per spawn, hidden without a look */}
           <img className="menu-xp-pop-art" alt="" draggable="false" />
+          {/* [3] / [4] KEY GROWTH dressing: the burst ring (a mask, tinted per spawn) and the sparkle — idle at rest */}
+          <span
+            className="menu-xp-pop-ring"
+            ref={(n) => {
+              ringElsRef.current[i] = n;
+            }}
+          />
+          <img
+            className="menu-xp-pop-spark"
+            alt=""
+            draggable="false"
+            ref={(n) => {
+              sparkElsRef.current[i] = n;
+            }}
+          />
         </span>
       ))}
       {Array.from({ length: EDGE_POOL }, (_, i) => (

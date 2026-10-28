@@ -79,6 +79,15 @@
 /* the worn POP STYLE's painted burst (popLooks art): centred behind the number, under the text, hidden by default */
 .menu-xp-pop-art { position: absolute; left: 50%; top: 50%; z-index: -1; width: 170px; height: 170px; object-fit: contain; display: none; opacity: 0; pointer-events: none; transform: translate(-50%, -50%); }
 .menu-xp-pop { isolation: isolate; }
+/* KEY GROWTH (MenuXp dressGrowth): the burst RING behind a CLASSIC +N — the painted ring asset as a MASK, tinted the
+   pop's flat colour per spawn — and a SPARKLE on its corner. Both sit under the text, invisible at rest (opacity 0, no
+   will-change); one pooled WAAPI each plays transform / opacity only. */
+.menu-xp-pop-ring { position: absolute; left: 50%; top: 50%; z-index: -1; width: 96px; height: 96px; opacity: 0; pointer-events: none; transform: translate(-50%, -50%); }
+/* the mask is only attached once a grown pop has played (MenuXp adds .is-grown) — never fetched on the first paint */
+.menu-xp-fx.is-grown .menu-xp-pop-ring { -webkit-mask: url('/fx/burst-ring.svg') center / contain no-repeat; mask: url('/fx/burst-ring.svg') center / contain no-repeat; }
+.menu-xp-pop-spark { position: absolute; left: 100%; top: 0; width: 30px; height: 30px; opacity: 0; pointer-events: none; transform: translate(-50%, -50%); }
+.menu-xp-fx .menu-xp-pop-ring { width: min(96px, 22vw); height: min(96px, 22vw); }
+.menu-xp-pop.is-crit .menu-xp-pop-ring, .menu-xp-pop.is-crit .menu-xp-pop-spark { display: none; }
 .menu-xp-pop.is-crit .menu-xp-pop-art { width: 260px; height: 260px; top: 32%; }
 .menu-xp-pop-letter {
   font-family: 'Bungee', cursive;
