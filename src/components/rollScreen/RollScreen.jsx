@@ -48,6 +48,8 @@ import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
 import { sndRollRelease, sndRollReady } from '../../audio/rollSounds';
 import { announceRolls } from '../../leaderboard/live';
+import { pushShowcaseNow } from '../../leaderboard/client.js';
+import { rollChaseDrop, writeMain } from '../../cast/cast.js';
 import { formatNum } from '../../format';
 import { lazyWithReload } from '../../lib/chunkReload';
 import { holdBeats } from '../../hooks/useBeatSync';
@@ -71,6 +73,8 @@ export const stopMenuPointer = (e) => e.stopPropagation();
 const MarksIndex = lazyWithReload(() => import('../MarksIndex'), 'MarksIndex');
 // 065: an EPIC+ / LEGENDARY+ ticket opens as a SEALED CAPSULE (its own big reveal), not the reel
 const SealedRollReveal = lazyWithReload(() => import('./SealedRollReveal'), 'SealedRollReveal');
+// THE CHASE DROP's reveal (oct28): the NEW HERO moment, only fetched when a roll actually drops a CHASE hero
+const HeroUnlock = lazyWithReload(() => import('../../cast/HeroUnlock.jsx'), 'HeroUnlock');
 const SEALED_TIERS = ['epic', 'legendary'];
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
 
@@ -166,6 +170,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const queue = useRef([]);
   const partProbs = useRef(null);
   const auto = useRef({ on: false, until: null, timer: null });
+  // a CHASE hero this roll dropped: held until the gear's reveal closes, then its own NEW HERO reveal plays
+  const dropRef = useRef(null);
+  const [heroDrop, setHeroDrop] = useState(null);
   const live = useRef({});
 
   useEffect(() => subscribeGems(setGems), []);
@@ -234,6 +241,10 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (auto.current.on && autoShouldStop(res, auto.current.until)) stopAuto();
     askServer(); // the next roll's pick: asked while this reveal plays (AUTO or a tap)
     announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each
+    // THE CHASE DROP (oct28): every gear roll can also drop a CHASE hero (cast.js CHASE_ODDS) — kept at once, shown
+    // after this reveal; AUTO stops so it is never rolled past
+    const drop = rollChaseDrop();
+    if (drop) { dropRef.current = drop; stopAuto(); }
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     if (wornNow && onEquip) onEquip(wornNow);
   };
@@ -351,6 +362,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   const onDone = () => {
     if (pending.current && queue.current.length) { spinNextPart(); return; } // the DOUBLE ROLL's next spin
+    if (dropRef.current) { setHeroDrop(dropRef.current); dropRef.current = null; return; } // the CHASE DROP's turn
     if (!auto.current.on) { rearm(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;
@@ -599,6 +611,11 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             ticket={sealed}
             onDone={() => { setSealed(null); setTickets((l) => l.filter((x) => x.id !== sealed.id)); refreshTickets(); setLanded((n) => n + 1); }}
           />
+        </Suspense>
+      ) : null}
+      {heroDrop ? (
+        <Suspense fallback={null}>
+          <HeroUnlock ids={[heroDrop]} onEquip={(id) => { writeMain(id); pushShowcaseNow(); }} onClose={() => { setHeroDrop(null); rearm(); }} />
         </Suspense>
       ) : null}
       {tut && tutDef && (

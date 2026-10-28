@@ -38,6 +38,16 @@ export const LEGEND = [
   // The top of the LEGEND ladder: REBIRTH 15 (the third jackpot rebirth), then gems
   { id: 'nova', name: 'NOVA', tag: 'BIGGER THAN THE SKY', color: '#2EFFE0', dark: '#1A1060', legend: true },
 ];
+// CHASE (oct28, Andy: "a few SUPER-RARE chase heroes with that rare addicting feeling"): heroes you can NEVER buy or earn
+// on a counter — each GEAR ROLL has a tiny chance to DROP one (CHASE_ODDS: "1 IN N" printed on its locked card, so you
+// always know what you're chasing). Two MYTHIC, one SECRET. A drop is kept forever (HEROES_KEY, like a bought hero).
+export const CHASE = [
+  { id: 'drake', name: 'DRAKE', tag: 'HATCHED ANGRY', color: '#FF4FA3', dark: '#8E0F2A', legend: true, chase: 'mythic' },
+  { id: 'magma', name: 'MAGMA', tag: 'NEVER COOLS DOWN', color: '#FF6B3D', dark: '#2A1E26', legend: true, chase: 'mythic' },
+  { id: 'facet', name: 'FACET', tag: 'FLAWLESS', color: '#2EFFE0', dark: '#4A2A8A', legend: true, chase: 'secret' },
+];
+/** One gear roll's chance of each CHASE hero (1 IN N). */
+export const CHASE_ODDS = { drake: 500, magma: 500, facet: 2500 };
 /** HOLLOW's sale ends at the start of Nov 1 2026, US Pacific (07:00 UTC). */
 export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
@@ -89,7 +99,9 @@ export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirt
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
   nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
-  hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true } };
+  hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true },
+  // a CHASE hero's gate never opens: it only DROPS (rollChaseDrop) — the card prints its odds
+  ...Object.fromEntries(Object.entries(CHASE_ODDS).map(([id, n]) => [id, { drop: n, label: `1 IN ${n}`, gate: true }])) };
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
 // free of the progress store import (`mp` = online wins, `bots` = wins against bots)
 const counts = () => {
@@ -121,6 +133,7 @@ export function heroGateMet(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
   if (!u || !u.gate) return true;
   if (u.until != null) return now < u.until; // LIMITED: on sale until the date, never after
+  if (u.drop != null) return false; // CHASE: never sold — it only drops
   try { return (getRebirths() || 0) >= u.reb; } catch { return false; }
 }
 // GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
@@ -141,7 +154,7 @@ function grandfatherOct19() {
   } catch { /* blocked storage */ }
 }
 for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
-export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE, ...GOLD];
+export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...CHASE, ...ELITE, ...GOLD];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
@@ -150,14 +163,27 @@ export function ownedHeroes() {
   grandfatherOct19();
   try {
     const v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]');
-    return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && h.price)) : [];
+    return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && (h.price || h.chase))) : [];
   } catch { return []; }
 }
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
   if (h && h.gold) return goldProgress(id).done; // GOLD is earned with wins only, never bought
+  if (h && h.chase) return ownedHeroes().includes(id); // CHASE: only a drop makes it yours
   return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
 };
+/** THE CHASE DROP: one gear roll's chance at each CHASE hero you don't have yet (CHASE_ODDS). A hit is kept at once
+ *  (HEROES_KEY) and its id returned (the roll screen plays the NEW HERO reveal); a miss returns null. */
+export function rollChaseDrop(rand = Math.random) {
+  for (const h of CHASE) {
+    if (ownsHero(h.id)) continue;
+    if (rand() < 1 / CHASE_ODDS[h.id]) {
+      try { localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...ownedHeroes(), h.id])])); } catch { return null; }
+      return h.id;
+    }
+  }
+  return null;
+}
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([
   'riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero',
@@ -174,6 +200,8 @@ const PAINTED = new Set([
   'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
   'salty-hero', 'salty-win', 'salty-ko', // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
   'nova-hero', 'nova-win', 'nova-ko', // oct24 LEGEND (ChatGPT, RIOT / JINX / DUD as the style refs)
+  // oct28 CHASE (ChatGPT, NOVA / MECHA / JINX as the style refs — one 3-pose sheet each)
+  'drake-hero', 'drake-win', 'drake-ko', 'magma-hero', 'magma-win', 'magma-ko', 'facet-hero', 'facet-win', 'facet-ko',
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -240,6 +268,9 @@ export const CAST_BEATS = {
   quill: { ms: 1300, k: [[0, 1, 1], [0.4, 0.97, 1.04], [0.75, 1.02, 0.98], [1, 1, 1]] }, // a theatrical inhale
   jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
   salty: { ms: 1100, k: [[0, 1, 1], [0.35, 1.04, 0.95], [0.7, 0.98, 1.03], [1, 1, 1]] }, // a sea-legs sway, heavy iron
+  drake: { ms: 1000, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.65, 0.97, 1.04], [1, 1, 1]] }, // a predator's coiled breath
+  magma: { ms: 1500, k: [[0, 1, 1], [0.25, 1.06, 0.93], [0.5, 1.06, 0.93], [0.8, 0.99, 1.01], [1, 1, 1]] }, // a heavy rock settle
+  facet: { ms: 1800, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // poised, barely moves (it knows)
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
   nova: { ms: 2400, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // a slow orbit's breath (it floats; nothing to bounce on)
 };
@@ -441,6 +472,12 @@ export const CAST_FRAMES = {
   // SALTY: spyglass up → spots something → lowers it, gold tooth glint → whips out the cutlass → points it at you → rests it
   // on the shoulder, wink
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
+  // CHASE (oct28): DRAKE rolls a flame across its claws → tosses it → catches it in a fist, sparks → opens the glove, grin
+  drake: { n: 6, seq: [[1, 260], [2, 340], [3, 420], [4, 380], [5, 300]], rest: 1700 },
+  // MAGMA pulls the fist back → SLAMS it into its palm, sparks + lava → rolls its shoulders, cracks blazing → steams, settles
+  magma: { n: 6, seq: [[1, 320], [2, 300], [3, 520], [4, 480], [5, 360]], rest: 1900 },
+  // FACET turns the floating shard → flicks it spinning up → it hangs at the top → drops back into its hand
+  facet: { n: 6, seq: [[1, 380], [2, 340], [3, 520], [4, 380], [5, 340]], rest: 2000 },
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
   // oct26: in-between 9 repainted (the snap hand lowering as the planet forms — the old one drew a prop on the wrong hand)
