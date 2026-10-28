@@ -254,7 +254,7 @@ const LAUNCH_INTENT = (() => {
     satrush: params.get('satrush') === '1',
     play: PRESELECTABLE_GAMES.includes(play) ? play : null,
     race: play === 'race', // /race/play (challenge link) -> the EXISTING race quick match, below
-    miner: play === 'miner', // /miner/play (and the retired /daily) -> the MINER quick match, below
+    miner: play === 'miner', // /miner/play (and the retired /daily) -> CREATE a MINER room, below
   };
 })();
 
@@ -2027,7 +2027,8 @@ function App() {
     } else if (LAUNCH_INTENT.race) {
       handleRaceQuickMatch();
     } else if (LAUNCH_INTENT.miner) {
-      handleMinerQuickMatch();
+      goToLobby(MINER_ID); // Andy oct28: no MINER quick match - the deep link opens CREATE ROOM like the dialog
+
     } else {
       handleStartDaily();
     }
@@ -2322,22 +2323,11 @@ function App() {
     track('race_quick_match', {});
   }
 
-  // MINER QUICK MATCH: one frame. The server seats us in the fullest waiting mine (or opens one), answers
-  // room_created/room_joined + room_update (-> the MINER lobby) and miner_queue, and launches the dig itself
-  // when it fills or 8s pass — bots top up a mine with < 2 humans. From the results (DIG AGAIN) the server
-  // leaves the old room first; we show the lobby at once so the old board never lingers.
-  function handleMinerQuickMatch() {
-    const name = playerName || resolvePlayerName();
-    setPlayerName(name);
-    setServerError('');
-    setLobbyMode(MINER_ID);
-    dispatchMiner({ type: 'reset' });
-    send('miner_quick_match', { name });
-    track('miner_quick_match', {});
-  }
+  // DIG AGAIN (Andy oct28: no MINER quick match): back to the SAME room's lobby - the host starts the next dig
+  // (the server restarts a finished room; bots top up a mine with < 2 humans), everyone else waits for them.
   function handleMinerAgain() {
+    setServerError('');
     setView('room');
-    handleMinerQuickMatch();
   }
 
   // PLAY SOLO (feat/wb-solo): the mode dialog's straight-to-a-round entry for Word Bomb. It was
@@ -2876,7 +2866,6 @@ function App() {
         onSelectGame={(gameId) => goToLobby(gameId)}
         onPlaySolo={handlePlaySolo}
         onRaceQuickMatch={handleRaceQuickMatch}
-        onMinerQuickMatch={handleMinerQuickMatch}
         onSatRush={(m) => { satStartModeRef.current = m === 'briefing' || m === 'lineup' ? m : null; goToSatRush(); }}
         onChain={goToChain}
         onFuse={goToFuse}

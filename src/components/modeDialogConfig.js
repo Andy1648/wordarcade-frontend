@@ -40,13 +40,13 @@ export const MODES = {
     create: 'CREATE ROOM',
     lead: 'QUICK MATCH',
   },
-  // MINER (Andy oct26, replaced DAILY BLITZ): QUICK MATCH leads (the solo slot), then a room to share + JOIN.
+  // MINER (Andy oct26, replaced DAILY BLITZ): CREATE ROOM + JOIN like every room mode (Andy oct28: no QUICK MATCH;
+  // a room with < 2 humans gets bots when the host starts).
   miner: {
     accent: '#FFD23F', bg: ['#3a2406', '#140c02'], anim: 'streaks',
     chip: 'MULTI', t1: '', t2: 'MINER',
     liner: 'RARER ANSWERS DIG DEEPER.',
     create: 'CREATE ROOM',
-    lead: 'QUICK MATCH',
   },
   // SAT RUSH (Andy oct8: "should be a popup as well"): the same dialog as CHAIN / FUSE, but its PLAY is the
   // mode pick — BRIEFING or LINEUP — so the old cover + PICK YOUR BEAT pages are skipped from the menu.

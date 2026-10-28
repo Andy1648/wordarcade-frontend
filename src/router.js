@@ -58,7 +58,7 @@ const PATH_TO_QUERY = {
   // quick match once the socket opens. No landing page: /race/play falls through to the SPA.
   '/race/play': 'race=1&play=race',
   // MINER (miner/, Andy oct26): no landing page yet, so the SPA receives both; `play=miner` is the launch intent
-  // App reads to send the quick match once the socket opens.
+  // App reads to open CREATE ROOM for a MINER room (Andy oct28: no quick match).
   '/miner': 'play=miner',
   '/miner/play': 'play=miner',
   // DAILY BLITZ was RETIRED for MINER (oct26): its old share links (/daily?s=share) open a mine instead. The
