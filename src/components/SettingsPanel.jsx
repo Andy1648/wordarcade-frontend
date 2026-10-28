@@ -13,7 +13,7 @@
 // It lives where the app's settings already live — the ONE sound/settings control (AudioControls), which renders this
 // panel in its popover under SEASON2 (CLAUDE.md NO ORPHAN FIXED UI: no new fixed element). Every control is a real
 // ≥ 44 px button; nothing animates but the press.
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
 import { enableEventSounds, disableEventSounds, isEventSoundsEnabled } from '../audio/gameSounds';
@@ -21,8 +21,9 @@ import { disableClack } from '../progress/clack';
 import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
-import { exportSave, writeSaveKeys } from '../save/saveBackup';
-import { exportSaveCode, parseAnySave, readPreRestore } from '../save/saveCode';
+import { exportSave } from '../save/saveBackup';
+import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort } from '../save/saveCode';
+import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, rpc } from '../leaderboard/client';
 import { progressScoreFromKeys, localScore } from '../save/cloudSave';
 import { resolveXpState } from '../progress/xp';
 import './kit/tokens.css';
@@ -52,6 +53,9 @@ function OnOff({ on, onClick, label }) {
   );
 }
 
+// SHORT CODES + THE ACCOUNT (daan oct27): COPY gives a 10-character code (save/saveCode issueShortCode — the save lives on
+// the server, 071) and every code carries the board account, so loading it on a wiped / new device brings the NAME back
+// with the progress. Offline / 071 not run → the long code, exactly as before. The one-line tagline is gone (Andy).
 // SAVE PROGRESS (Andy oct8: "you need a button for people to save their progress — remember the restore code"): the
 // save CODE (save/saveCode — every progress key incl. season 2's taw.s2.*) to COPY, and a box to paste one back.
 // SAVE CODE FIX (Andy oct22 "fix save code - its buggy (people complaining)"):
@@ -77,11 +81,14 @@ function headline(get) {
   const st = Math.max(0, Math.floor(Number(keys['taw.s2.stars']) || 0));
   return { text: `${st > 0 ? `★${formatNum(st)} · ` : ''}R${formatNum(rb)} · LV ${formatNum(Math.floor(lv))}`, keys };
 }
-function codeHeadline(keys) {
+function codeHeadline(keys, acct = null) {
   // a season-2 code carries the mapped keys twice (taw.xp AND taw.s2.xp); fall back to the s2 copy if one is missing
   const get = (k) => (keys[k] != null ? keys[k] : S2_DUP.includes(k) ? keys[`taw.s2.${k.slice(4)}`] ?? null : null);
   const h = headline(get);
-  return { ...h, score: progressScoreFromKeys(h.keys, { asConverted: true }) };
+  // a code from ANOTHER board account names it (loading it switches this device to that name — daan oct27)
+  const me = getMyProfile();
+  const other = acct && acct.profile && (!me || me.id !== acct.profile.id) ? `${String(acct.profile.username).toUpperCase()} · ` : '';
+  return { ...h, text: `${other}${h.text}`, score: progressScoreFromKeys(h.keys, { asConverted: true }) };
 }
 function deviceHeadline() {
   const h = headline((k) => { try { return localStorage.getItem(k); } catch { return null; } });
@@ -128,38 +135,71 @@ const selectAll = (e) => {
 const loud = (s) => String(s || 'THAT CODE DID NOT WORK').toUpperCase();
 
 function SaveRow({ onCredits = null }) {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(''); // the LONG code on screen (the fallback)
+  const [short, setShort] = useState(null); // { code } once the server holds this save (071) — the code COPY gives
   const [draft, setDraft] = useState('');
   const [msg, setMsg] = useState('');
-  const [ask, setAsk] = useState(null); // { keys, mine, here, lower, undo } while the player confirms a load
+  const [busy, setBusy] = useState(false);
+  const [ask, setAsk] = useState(null); // { parsed, mine, here, lower, undo } while the player confirms a load
   const [undo] = useState(recentUndo);
+  // SHORT CODE (daan oct27): the save goes up the moment SETTINGS opens, so COPY can put the 10-character code on the
+  // clipboard inside the tap (Safari drops the permission after an await). Offline / no name / 071 not run → the long code.
+  const refresh = useCallback(() => {
+    const secret = LEADERBOARD_ENABLED && getMyProfile() ? peekSecret() : null;
+    if (!secret) return Promise.resolve(null);
+    return issueShortCode({ rpc, secret }).then((r) => {
+      if (r.ok) setShort({ code: r.code });
+      return r;
+    });
+  }, []);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
   const copy = () => {
+    if (short) {
+      const shown = formatShort(short.code);
+      setCode('');
+      copyText(shown).then((ok) => setMsg(ok ? 'COPIED' : 'COPY THE CODE ABOVE'), () => setMsg('COPY THE CODE ABOVE'));
+      refresh(); // the code stays the same; what it holds becomes this exact moment's save
+      return;
+    }
     let c = '';
-    try { c = exportSaveCode(); } catch { c = exportSave(); }
+    try { c = exportSaveCode(); } catch { c = exportSave(undefined, { account: true }); }
     setCode(c);
     copyText(c).then(
       (ok) => setMsg(ok ? 'COPIED — PASTE THE WHOLE CODE ON YOUR OTHER DEVICE' : 'TAP THE CODE BELOW TO SELECT IT ALL, THEN COPY'),
       () => setMsg('TAP THE CODE BELOW TO SELECT IT ALL, THEN COPY'),
     );
   };
-  const offer = (text, isUndo) => {
-    const r = parseAnySave(text);
+  const confirmParsed = (r, isUndo) => {
     if (!r.ok) {
       setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : r.error));
       return;
     }
-    const mine = codeHeadline(r.keys);
+    const mine = codeHeadline(r.keys, r.acct);
     const here = deviceHeadline();
-    setAsk({ keys: r.keys, mine, here, lower: mine.score < here.score, undo: !!isUndo });
+    setAsk({ parsed: r, mine, here, lower: mine.score < here.score, undo: !!isUndo });
     setMsg('');
+  };
+  const offer = (text, isUndo) => {
+    if (!isUndo && normalizeShort(text)) {
+      setBusy(true);
+      setMsg('LOADING…');
+      fetchShortSave(text, { rpc }).then((r) => {
+        setBusy(false);
+        confirmParsed(r, false);
+      });
+      return;
+    }
+    confirmParsed(parseAnySave(text), isUndo);
   };
   const check = (e) => {
     e.preventDefault();
-    offer(draft, false);
+    if (!busy) offer(draft, false);
   };
   const load = () => {
     if (!ask) return;
-    writeSaveKeys(ask.keys, undefined, { source: 'code' });
+    applySave(ask.parsed, undefined, { source: 'code' });
     setAsk(null);
     setMsg(ask.undo ? 'PUT BACK — RELOADING…' : 'RESTORED — RELOADING…');
     setTimeout(() => {
@@ -172,7 +212,6 @@ function SaveRow({ onCredits = null }) {
         <span className="sp-label">SAVE PROGRESS</span>
         {/* phones: CREDITS sits in this header's empty right end (the top bar is CLOSE's corner of the SOUND row there) */}
         {onCredits ? <button type="button" className="sp-credits sp-credits--phone" onClick={onCredits}>CREDITS</button> : null}
-        <span className="sp-sub">COPY YOUR SAVE CODE · PASTE IT ON ANY DEVICE TO GET EVERYTHING BACK</span>
       </div>
       {ask ? (
         <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
@@ -185,11 +224,14 @@ function SaveRow({ onCredits = null }) {
         </div>
       ) : (
         <>
-          <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">COPY SAVE CODE</button>
+          <div className="sp-restore">
+            {short ? <span className="sp-short" data-testid="sp-save-short">{formatShort(short.code)}</span> : null}
+            <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">{short ? 'COPY' : 'COPY SAVE CODE'}</button>
+          </div>
           {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" data-testid="sp-save-code" onFocus={selectAll} onClick={selectAll} /> : null}
           <form className="sp-restore" onSubmit={check}>
-            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE A SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
-            <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim()}>RESTORE</button>
+            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
+            <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim() || busy}>RESTORE</button>
           </form>
           {undo && !code ? (
             <button type="button" className="sp-btn sp-btn--ghost" onClick={() => offer(undo.code, true)} data-testid="sp-undo">UNDO LAST RESTORE</button>
@@ -207,10 +249,13 @@ function SaveRow({ onCredits = null }) {
 function ResetRow() {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
   const go = () => {
     if (busy) return;
     setBusy(true);
-    import('../progress/resetAll').then((m) => m.resetAllProgress(), () => setBusy(false));
+    setMsg('');
+    const fail = () => { setBusy(false); setMsg('NO CONNECTION — NOTHING WAS RESET'); };
+    import('../progress/resetAll').then((m) => m.resetAllProgress()).then((r) => { if (r && r.aborted) fail(); }, fail);
   };
   return (
     <div className="sp-save sp-reset" style={{ '--sp-c': '#FF5C5C' }} data-testid="sp-reset">
@@ -229,6 +274,7 @@ function ResetRow() {
       ) : (
         <button type="button" className="sp-btn sp-btn--danger" onClick={() => setConfirming(true)} data-testid="sp-reset-open">RESET ACCOUNT</button>
       )}
+      {msg ? <p className="sp-msg" role="status" aria-live="polite">{msg}</p> : null}
     </div>
   );
 }

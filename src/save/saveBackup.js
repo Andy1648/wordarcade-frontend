@@ -169,14 +169,26 @@ function defaultStorage() {
   };
 }
 
-// Snapshot the present progress keys into one base64 code the player can copy.
-export function exportSave(storage = defaultStorage()) {
+// Snapshot the present progress keys into one base64 code the player can copy. `account` (daan oct27): also carry the
+// board account — the device secret + claimed profile — as `acct`, so a save CODE brings the account back with the
+// progress (saveCode.js validates + adopts it). The cloud copy never carries it.
+export function exportSave(storage = defaultStorage(), { account = false } = {}) {
   const keys = {};
   for (const k of [...PROGRESS_KEYS, ...s2KeysOf(storage)]) {
     const v = storage.getItem(k);
     if (v != null) keys[k] = v; // omit absent keys; a "new player" simply exports fewer
   }
-  return utf8ToB64(JSON.stringify({ format: FORMAT, v: 1, keys }));
+  const out = { format: FORMAT, v: 1, keys };
+  if (account) {
+    try {
+      const secret = storage.getItem('taw.lb.secret');
+      const profile = JSON.parse(storage.getItem('taw.lb.profile') || 'null');
+      if (secret && profile) out.acct = { secret, profile };
+    } catch {
+      /* no account to carry */
+    }
+  }
+  return utf8ToB64(JSON.stringify(out));
 }
 
 const SEASON2_ECON = 13; // leaderboard/season2Rules.js (not imported: this file is on the first-load path)
@@ -229,19 +241,28 @@ export function parseSave(text, opts) {
 // exported (not a progress key).
 export const PRE_RESTORE_KEY = 'taw.preRestore';
 
-/** Write already-validated keys (parseSave / parseSaveObject) — after snapshotting the save they replace.
+/** Write already-validated keys (parseSave / parseSaveObject) — after snapshotting the save they replace (with its
+ *  board account, so UNDO brings the account back too — saveCode.js adoptAccount).
  *  `source`: 'code' (a pasted save code — SETTINGS offers UNDO for it) or 'restore' (the cloud; no UNDO: the cloud
  *  would only bring the higher save back on the next load). */
 export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore' } = {}) {
   if (snapshot) {
     try {
-      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage) }));
+      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage, { account: true }) }));
     } catch {
       /* quota: the restore still goes ahead */
     }
   }
   for (const [k, v] of Object.entries(keys)) {
     storage.setItem(k, v);
+  }
+  // an unanswered rebirth / ascension id belongs to the save being replaced (daan oct27)
+  for (const k of ['taw.lb.rbreq', 'taw.lb.ascreq']) {
+    try {
+      if (typeof storage.removeItem === 'function') storage.removeItem(k);
+    } catch {
+      /* never throw */
+    }
   }
   // PV10: the blob's econ stamp is written above when it has one; when it has none (a pre-STEP-52 or
   // pre-v10 blob) the LOCAL stamp, shadow and gate are removed so the migration re-runs on reload.

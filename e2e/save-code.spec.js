@@ -26,9 +26,10 @@ function heavySave() {
 }
 const small = (rb, lv) => ({ 'taw.s2.xp': JSON.stringify({ lv, f: 0, rc: rb, v: 10 }), 'taw.s2.rebirths': String(rb), 'taw.s2.wins': '55' });
 
-async function boot(page, seed, vp) {
+async function boot(page, seed, vp, routes = null) {
   await page.setViewportSize(vp);
   await installBackendMock(page);
+  if (routes) await routes(page); // registered AFTER the mock's catch-all, so these win
   await page.addInitScript((seed) => {
     if (sessionStorage.getItem('sc.seeded')) return;
     sessionStorage.setItem('sc.seeded', '1');
@@ -184,3 +185,59 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 360, height: 640 }]) {
     expect(b).toBeLessThanOrEqual(vp.height);
   });
 }
+
+// daan (oct27): SHORT CODES + THE ACCOUNT. A named device's COPY gives a 10-character code (071, mocked here); a wiped
+// phone that typed it gets the progress AND the board name back (before: progress only, under a new name whose row was
+// stuck at R2).
+test('SHORT CODE: COPY gives XXXXX-XXXXX; a wiped phone types it and gets the save AND the account back', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const SECRET = 'd4'.repeat(24);
+  const held = new Map();
+  const mockCodes = async (pg) => {
+    await pg.route('**/rpc/lb_save_code_put', async (route) => {
+      const b = route.request().postDataJSON();
+      if (b.p_secret !== SECRET) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'no_profile' }) });
+      held.set('K7M2QX9PAH', b.p_blob);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, code: 'K7M2QX9PAH' }) });
+    });
+    await pg.route('**/rpc/lb_save_code_get', async (route) => {
+      const b = route.request().postDataJSON();
+      const blob = held.get(String(b.p_code));
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(blob ? { ok: true, blob } : { ok: false, reason: 'not_found' }) });
+    });
+  };
+  const named = { ...small(7, 44), 'taw.lb.secret': SECRET, 'taw.lb.profile': JSON.stringify({ id: 'row-daan', username: 'Daan' }) };
+  const actx = await browser.newContext({ viewport: DESK, permissions: ['clipboard-read', 'clipboard-write'] });
+  const a = await actx.newPage();
+  await boot(a, named, DESK, mockCodes);
+  await openSettings(a);
+  await expect(a.getByTestId('sp-save-short')).toHaveText('K7M2Q-X9PAH', { timeout: 10_000 });
+  await a.getByTestId('sp-save-copy').click();
+  await expect(a.locator('.sp-msg')).toHaveText('COPIED');
+  expect(await a.evaluate(() => navigator.clipboard.readText())).toBe('K7M2Q-X9PAH');
+  await shot(a, 'desktop-short-code');
+
+  const bctx = await browser.newContext({ viewport: PHONE, isMobile: true, hasTouch: true });
+  const b = await bctx.newPage();
+  await boot(b, { ...small(0, 2), 'taw.lb.secret': 'e5'.repeat(24), 'taw.lb.profile': JSON.stringify({ id: 'row-auto', username: 'NEONGOBLIN42' }) }, PHONE, mockCodes);
+  await openSettings(b);
+  const box = b.getByLabel('Paste a save code');
+  await box.fill('k7m2q x9pah');
+  await b.getByRole('button', { name: 'RESTORE' }).click();
+  await expect(b.getByTestId('sp-load-compare')).toHaveText('THIS CODE: DAAN · R7 · LV 44 · THIS DEVICE: R0 · LV 2');
+  await noScroll(b, PHONE);
+  await shot(b, 'phone-short-confirm');
+  await b.getByTestId('sp-load-yes').click();
+  await expect.poll(() => rebirths(b), { timeout: 10_000 }).toBe('7');
+  expect(await b.evaluate(() => localStorage.getItem('taw.lb.secret'))).toBe(SECRET);
+  expect(JSON.parse(await b.evaluate(() => localStorage.getItem('taw.lb.profile'))).username).toBe('Daan');
+  // a wrong code: a few plain words, nothing changed
+  await menuReady(b);
+  await openSettings(b);
+  await b.getByLabel('Paste a save code').fill('ZZZZZ-ZZZZZ');
+  await b.getByRole('button', { name: 'RESTORE', exact: true }).click();
+  await expect(b.locator('.sp-msg')).toHaveText('NO SAVE WITH THAT CODE');
+  expect(await rebirths(b)).toBe('7');
+  await actx.close();
+  await bctx.close();
+});

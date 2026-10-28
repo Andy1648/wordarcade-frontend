@@ -47,7 +47,7 @@ async function serverRebirthEnabled() {
     capsYes = SEASON2 ? !!(c && c.rebirth_rpc && c.season2) : !!(c && c.rebirth_rpc);
     return capsYes;
   } catch {
-    return false;
+    return 'offline'; // daan oct27: a named player never rebirths locally because one probe failed (rebirthFlow)
   }
 }
 /** Local half of a rebirth: `target` = the server's new count (local lands exactly on it), null = local +1. */
