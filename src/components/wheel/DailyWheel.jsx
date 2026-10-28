@@ -12,6 +12,12 @@
 //   Every wheel image is decoded before SPIN is offered, and the prize art is decoded while the wheel turns.
 //   ODDS — the published table, one tap away (the server's own weights).
 //   AD SPIN — behind WHEEL_AD_ON (client) AND the server's ad_on; OFF until rewarded ads are approved.
+// THE JACKPOT PASS (oct27, Andy: "the wheel is so fat and the content is so small … nothing special with animations"):
+//   a THIN rim (public/wheel/rim.webp, rebuilt from the painted rim's own ring + bulbs) so the face is ~88% of the wheel,
+//   the prize art twice the size and every wedge NAMED round its outer band; the spin runs the CHASE LIGHTS (two
+//   lit-bulb overlays flipping on every peg — baked off the same plan as the flapper, so they slow down with the
+//   wheel) and the landing is a jackpot: the winning wedge flashes, every bulb blinks, the wheel shakes, the prize
+//   bursts out of the centre and drops into the result card. All finite WAAPI transform / opacity one-shots.
 // Nothing loops: at rest the wheel is still. REDUCE MOTION parks the wheel on the result with no spin.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -37,6 +43,9 @@ import { holdBeats } from '../../hooks/useBeatSync';
 const stopMenuPointer = (e) => e.stopPropagation();
 
 const PAY = { grantGems, grantFx: grantStockFx, grantKit };
+const WIND_DEG = 24; // the pull-back before the launch
+const POP_MS = 1150; // the prize's burst-out + drop
+const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
 
 // one peg click, scheduled on the audio clock at `when` (s)
 function sndTickAt(when, i) {
@@ -51,7 +60,7 @@ function sndLand(big) {
 }
 
 // each prize icon's upright pose for a rotor angle: undo its slice's turn AND the rotor's (pure writes, no reads)
-const icoPose = (slot, rotor) => `rotate(${-(slot * SLICE_DEG + rotor)}deg)`;
+const icoPose = (slot, rotor) => `translate(-50%, -50%) rotate(${-(slot * SLICE_DEG + rotor)}deg)`; // centred on its spot (CSS left/top)
 function poseAll(els, rotor) { els.forEach((el, i) => { if (el) el.style.transform = icoPose(i, rotor); }); }
 // one finite WAAPI counter-turn per icon riding the rotor's own curve (transform only; will-change only while it runs)
 function turnIcons(els, from, to, opts) {
@@ -89,7 +98,40 @@ const decodeSrc = (src) => {
   im.src = src;
   return im.decode ? im.decode().catch(() => {}) : Promise.resolve();
 };
-const WHEEL_ART = ['face', 'rim', 'hub', 'pointer', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc);
+const BURST_SRC = '/fx/burst-win.webp';
+const WHEEL_ART = [...['face', 'rim', 'rim-lit-a', 'rim-lit-b', 'wedge-hi', 'hub', 'pointer', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
+
+// THE CHASE LIGHTS: one lit set's opacity, flipped at every peg tick of the spin (held between — steps), so the bulbs
+// race at launch and crawl into the landing with the wheel
+function chaseFrames(ticks, ms, phase) {
+  const kf = [{ opacity: phase, offset: 0, easing: 'steps(1, end)' }];
+  let on = phase;
+  for (const t of ticks) {
+    if (t <= 0 || t >= ms) continue;
+    on = 1 - on;
+    kf.push({ opacity: on, offset: t / ms, easing: 'steps(1, end)' });
+  }
+  kf.push({ opacity: 0, offset: 1 });
+  return kf;
+}
+// a run of n held blinks over the duration
+const blinkFrames = (n, peak = 1) => {
+  const kf = [];
+  for (let i = 0; i < n; i += 1) {
+    kf.push({ opacity: peak, offset: i / n, easing: 'steps(1, end)' });
+    kf.push({ opacity: 0, offset: (i + 0.5) / n, easing: 'steps(1, end)' });
+  }
+  kf.push({ opacity: 0, offset: 1 });
+  return kf;
+};
+// one finite WAAPI play; will-change only for its life
+function playOnce(el, frames, opts) {
+  if (!el) return null;
+  el.style.willChange = frames.some((f) => 'transform' in f) ? 'transform, opacity' : 'opacity';
+  const a = el.animate(frames, opts);
+  a.onfinish = () => { el.style.willChange = ''; };
+  return a;
+}
 
 export default function DailyWheel({ onClose }) {
   const [st, setSt] = useState({ phase: 'load' }); // load | off | ready | spinning | landed | done
@@ -97,6 +139,12 @@ export default function DailyWheel({ onClose }) {
   const rotorRef = useRef(null);
   const icoRefs = useRef([]); // the 8 prize icons: counter-rotated so each one always stands upright to the viewer
   const pointerRef = useRef(null);
+  const wheelRef = useRef(null);
+  const litRefs = useRef([]);
+  const wedgeRef = useRef(null);
+  const popRef = useRef(null);
+  const popArtRef = useRef(null);
+  const popBurstRef = useRef(null);
   const resultRef = useRef(null);
   const restRef = useRef(0); // the wheel's current angle (deg)
   const timers = useRef([]);
@@ -178,9 +226,45 @@ export default function DailyWheel({ onClose }) {
       { transform: 'scale(0.4) rotate(-6deg)', opacity: 0 },
       { transform: 'scale(1.12) rotate(2deg)', opacity: 1, offset: 0.6 },
       { transform: 'scale(1) rotate(0deg)', opacity: 1 },
-    ], { duration: 360, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1.2)' });
+    ], { duration: 360, delay: RESULT_DELAY_MS, fill: 'backwards', easing: 'cubic-bezier(0.2, 0.9, 0.3, 1.2)' });
     a.onfinish = () => { el.style.willChange = ''; };
   }, [st.phase]);
+
+  // THE JACKPOT LANDING: wedge flash + every bulb blinking + a shake + the prize bursting out of the hub and dropping
+  // into the result card (a ticket / cosmetic plays it bigger and longer)
+  const jackpot = useCallback((s) => {
+    const big = s.prize === 'ticket' || s.prize === 'cosmetic';
+    const w = wedgeRef.current;
+    if (w) {
+      w.style.transform = `rotate(${s.slot * SLICE_DEG}deg)`;
+      playOnce(w, blinkFrames(big ? 5 : 3, 0.85), { duration: big ? 1300 : 800 });
+    }
+    litRefs.current.forEach((el, i) => playOnce(el, blinkFrames(big ? 7 : 4), { duration: big ? 1400 : 900, delay: i * (big ? 100 : 112) }));
+    const j = big ? 10 : 6;
+    playOnce(wheelRef.current, [
+      { transform: 'translate(0px,0px) rotate(0deg)' },
+      { transform: `translate(${-j}px,${j * 0.4}px) rotate(-1deg)`, offset: 0.15 },
+      { transform: `translate(${j * 0.8}px,${-j * 0.3}px) rotate(0.8deg)`, offset: 0.35 },
+      { transform: `translate(${-j * 0.5}px,0px) rotate(-0.4deg)`, offset: 0.6 },
+      { transform: 'translate(0px,0px) rotate(0deg)' },
+    ], { duration: big ? 520 : 340, easing: 'ease-out' });
+    const art = popArtRef.current;
+    if (art) art.setAttribute('src', prizeArt(s));
+    const drop = 'calc(var(--wd) * 0.62)';
+    playOnce(popRef.current, [
+      { transform: 'translate(-50%,-50%) scale(0.2) rotate(-20deg)', opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+      { transform: `translate(-50%,-50%) scale(${big ? 1.5 : 1.25}) rotate(6deg)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
+      { transform: 'translate(-50%,-50%) scale(1.1) rotate(0deg)', opacity: 1, offset: 0.34, easing: 'linear' },
+      { transform: 'translate(-50%,-50%) scale(1.12) rotate(0deg)', opacity: 1, offset: 0.62, easing: 'cubic-bezier(.6,0,1,.6)' },
+      { transform: `translate(-50%, calc(-50% + ${drop})) scale(0.4) rotate(0deg)`, opacity: 0.2, offset: 0.96 },
+      { transform: `translate(-50%, calc(-50% + ${drop})) scale(0.4) rotate(0deg)`, opacity: 0 },
+    ], { duration: POP_MS });
+    playOnce(popBurstRef.current, [
+      { transform: 'translate(-50%,-50%) scale(0.3) rotate(0deg)', opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+      { transform: 'translate(-50%,-50%) scale(1.15) rotate(25deg)', opacity: 1, offset: 0.25 },
+      { transform: 'translate(-50%,-50%) scale(1.3) rotate(60deg)', opacity: 0 },
+    ], { duration: big ? 900 : 640 });
+  }, []);
 
   const spin = useCallback(async (kind = 'free') => {
     if (st.phase === 'spinning') return;
@@ -192,9 +276,9 @@ export default function DailyWheel({ onClose }) {
     let windIcons = [];
     if (rotor && !reduceMotion()) {
       rotor.style.willChange = 'transform';
-      const wo = { duration: 260, easing: 'ease-out', fill: 'forwards' };
-      wind = rotor.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${from - 14}deg)` }], wo);
-      windIcons = turnIcons(icoRefs.current, from, from - 14, wo);
+      const wo = { duration: 340, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' };
+      wind = rotor.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${from - WIND_DEG}deg)` }], wo);
+      windIcons = turnIcons(icoRefs.current, from, from - WIND_DEG, wo);
     }
     const r = await spinWheel(kind);
     if (!live.current) return;
@@ -213,7 +297,7 @@ export default function DailyWheel({ onClose }) {
       land(s, to % 360);
       return;
     }
-    const start = from - 14;
+    const start = from - WIND_DEG;
     decodeSrc(prizeArt(s)); // the result chip's art: decoded while the wheel turns
     const plan = spinPlan(start, to);
     const so = { duration: plan.ms, fill: 'forwards' };
@@ -227,9 +311,11 @@ export default function DailyWheel({ onClose }) {
     const track = flapperTrack(plan);
     const flap = ptr ? ptr.animate(track.frames, { duration: plan.ms, easing: 'linear' }) : null;
     if (ptr) ptr.style.willChange = 'transform';
+    // the chase lights ride the same peg ticks (two sets, out of phase)
+    const chase = litRefs.current.map((el, i) => playOnce(el, chaseFrames(track.ticks, plan.ms, i), { duration: plan.ms }));
     a.ready.then(() => {
       if (!live.current) return;
-      if (flap && a.startTime != null) flap.startTime = a.startTime; // one clock for both
+      if (a.startTime != null) [flap, ...chase].forEach((x) => { if (x) x.startTime = a.startTime; }); // one clock for all
       const ctx = sfxReady();
       if (!ctx) return;
       const t0 = ctx.currentTime - (Number(a.currentTime) || 0) / 1000;
@@ -242,9 +328,10 @@ export default function DailyWheel({ onClose }) {
       settleIcons(icoRefs.current, spinIcons, to % 360);
       rotor.style.willChange = '';
       if (ptr) ptr.style.willChange = ''; // the track ends at rest (rotate 0)
+      jackpot(s);
       land(s, to % 360);
     };
-  }, [st.phase, land]);
+  }, [st.phase, land, jackpot]);
 
   const watchAd = useCallback(async () => {
     const r = await showRewarded('wheel_spin');
@@ -271,12 +358,15 @@ export default function DailyWheel({ onClose }) {
         </div>
 
         <div className="dw-stage">
-          <div className="dw-wheel">
+          <div ref={wheelRef} className="dw-wheel">
             <div ref={rotorRef} className="dw-rotor">
               <img className="dw-face" src={artSrc('face')} alt="" aria-hidden="true" draggable="false" />
+              <img ref={wedgeRef} className="dw-wedge" src={artSrc('wedge-hi')} alt="" aria-hidden="true" draggable="false" />
               {WHEEL_SLOTS.map((p) => (
                 <div key={p.slot} className={`dw-slice${p.jackpot ? ' is-jackpot' : ''}`} style={{ transform: `rotate(${p.slot * SLICE_DEG}deg)` }} aria-hidden="true">
-                  {/* the painted prize carries the slice (no text: it can't reach 16px on a phone wedge — the ODDS sheet names it) */}
+                  {/* the wedge's NAME rides round the outer band (it turns with the wheel, so it reads upright under the pointer) */}
+                  <span className={`dw-slice-lab${p.label.length > 5 ? ' is-long' : ''}`}>{p.label}</span>
+                  {/* the painted prize, big, always upright to the viewer */}
                   <img
                     ref={(el) => { icoRefs.current[p.slot] = el; }}
                     className="dw-slice-ico"
@@ -289,6 +379,9 @@ export default function DailyWheel({ onClose }) {
               ))}
             </div>
             <img className="dw-rim" src={artSrc('rim')} alt="" aria-hidden="true" draggable="false" />
+            {['rim-lit-a', 'rim-lit-b'].map((n, i) => (
+              <img key={n} ref={(el) => { litRefs.current[i] = el; }} className="dw-lit" src={artSrc(n)} alt="" aria-hidden="true" draggable="false" />
+            ))}
             <button
               type="button"
               className="dw-hub"
@@ -299,6 +392,10 @@ export default function DailyWheel({ onClose }) {
               <img src={artSrc('hub')} alt="" aria-hidden="true" draggable="false" />
             </button>
             <img ref={pointerRef} className="dw-pointer" src={artSrc('pointer')} alt="" aria-hidden="true" draggable="false" />
+            <div ref={popRef} className="dw-pop" aria-hidden="true">
+              <img ref={popBurstRef} className="dw-pop-burst" src={BURST_SRC} alt="" draggable="false" />
+              <img ref={popArtRef} className="dw-pop-art" src={artSrc('prize-gems-s')} alt="" draggable="false" />
+            </div>
           </div>
         </div>
 

@@ -274,3 +274,42 @@ test('CLOSE: tap outside + Escape + ✕ close the wheel; mid-spin all three are 
   await page.mouse.click(12, 12);
   await expect(wheel).toHaveCount(0);
 });
+
+// GIF=1: films a spin → landing (CDP screencast frames + timestamps → claude/shots-wheel/gif/<name>/) for Andy
+test.describe('films', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  for (const [name, slot] of [['gems', 2], ['legend', 5]]) {
+    test(`GIF: spin and land on ${name}`, async ({ page }) => {
+      test.skip(!process.env.GIF, 'films only');
+      test.setTimeout(90000);
+      const fs = await import('node:fs');
+      await page.setViewportSize({ width: 1366, height: 768 });
+      await page.addInitScript(() => localStorage.setItem('taw.reduceMotion', '0'));
+      await boot(page, { gems: 200, slot });
+      await page.locator('[data-nav="wheel"]').click();
+      const wheel = page.getByTestId('daily-wheel');
+      await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
+      await artLoaded(page);
+      await page.waitForTimeout(500);
+      const dir = `claude/shots-wheel/gif/${name}`;
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.mkdirSync(dir, { recursive: true });
+      const cdp = await page.context().newCDPSession(page);
+      const stamps = [];
+      let n = 0;
+      cdp.on('Page.screencastFrame', async (f) => {
+        const id = String(n++).padStart(4, '0');
+        fs.writeFileSync(`${dir}/${id}.jpg`, Buffer.from(f.data, 'base64'));
+        stamps.push([id, f.metadata.timestamp]);
+        try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch { /* closed */ }
+      });
+      await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 85 });
+      await page.waitForTimeout(400);
+      await wheel.getByTestId('wheel-spin').click();
+      await expect(wheel.getByTestId('wheel-result')).toBeVisible({ timeout: 12000 });
+      await page.waitForTimeout(2200);
+      await cdp.send('Page.stopScreencast');
+      fs.writeFileSync(`${dir}/stamps.json`, JSON.stringify(stamps));
+    });
+  }
+});
