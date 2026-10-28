@@ -31,7 +31,7 @@
 export const PHONE_MENU_MAX = 480; // Homepage.jsx PHONE_MENU_QUERY = '(max-width: 480px)'
 
 /** The three modes the phone menu gives a full row to (MobileMenu.jsx MODE_IDS). */
-export const PHONE_MODE_IDS = ['miner', 'word-bomb', 'category-blitz', 'sat-rush', 'word-race'];
+export const PHONE_MODE_IDS = ['sat-rush', 'word-bomb', 'category-blitz', 'miner', 'word-race'];
 
 /** The two modes that share the phone menu's split solo band (MobileMenu.jsx SOLO_IDS). */
 export const PHONE_SOLO_IDS = ['chain', 'fuse'];

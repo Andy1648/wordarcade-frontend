@@ -40,6 +40,9 @@ test('LOOKS: each paid pop says what it pays (+5% XP … ×3 XP)', async ({ page
 test('a worn LEGEND pop pays ×3 the CLASSIC key (same save, same keys)', async ({ browser }) => {
   const gain = async (pop) => {
     const ctx = await browser.newContext(); const page = await ctx.newPage();
+    // no CRIT dice: the 1% base crit (markRollsCore CRIT_BASE_RATE, ×2) landing on one of 8 keys made this ratio 24/9 =
+    // 2.67 in CI (oct28) — the ratio must measure the POP multiplier alone, so every roll misses (rng 0.99 > any rate)
+    await page.addInitScript(() => { Math.random = () => 0.99; });
     await boot(page, pop);
     const { a, b } = await xpFor(page, 8);
     await ctx.close();

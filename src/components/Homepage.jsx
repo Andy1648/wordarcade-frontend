@@ -23,10 +23,8 @@ import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
 import { canAffordAny, buyKeyPower, wornPopStyle, EQUIP_CHANGE } from '../progress/shop';
-import { kitOf } from '../progress/kitArt.js';
-// THE KIT's BAR (oct27): a worn POP STYLE paints the XP bar's fill (public/shop/pop/bar-<id>.webp — media, fetched only
-// while one is worn; kitArt.js lists the painted ids so the menu never loads popLooks.js for its first paint)
-const kitBarSkin = () => kitOf(wornPopStyle());
+// THE KIT's BAR (oct27): a worn POP STYLE dresses the whole XP bar. kitArt.js (+ its kitBar.css) is a LAZY chunk,
+// imported only while a paid look is worn — CLASSIC never fetches it, so it never weighs on the first paint.
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { peakLevel } from '../progress/peakLevel';
@@ -1492,11 +1490,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  const [barSkin, setBarSkin] = useState(kitBarSkin);
+  const [barSkin, setBarSkin] = useState(null);
   useEffect(() => {
-    const on = () => setBarSkin(kitBarSkin());
+    let live = true;
+    const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
+    on();
     window.addEventListener(EQUIP_CHANGE, on);
-    return () => window.removeEventListener(EQUIP_CHANGE, on);
+    return () => { live = false; window.removeEventListener(EQUIP_CHANGE, on); };
   }, []);
   // NO KEYS-LEFT LINE (Andy oct24 "remove how many keys to next lvl… bc there's crit and stuff"): crits, boosts and gear
   // make a key's pay vary, so any countdown lies. The bar's fill and the next level's plate carry the pull.

@@ -1,0 +1,54 @@
+/* kitBar.css — THE KIT's styles (oct27): the worn POP STYLE's bar (KitXpBar is-kit / cap / slam / painted fill) and its
+   +N chip (MenuXp is-kit). LAZY: imported by kitArt.js, which the menu loads only while a paid look is worn — so none of
+   this weighs on the first paint (e2e/payload-budget). */
+/* a worn POP STYLE's painted fill (KitXpBar `skin`): the texture rides a child that counter-scales against the fill */
+.kx-fill-skin { position: absolute; inset: 0; transform-origin: 0 50%; background-size: cover; background-position: center; }
+.kx-fill.is-skin { overflow: hidden; }
+.kx-fill.is-skin .kx-fill-hi { display: none; }
+
+/* THE KIT's BAR (oct27, Andy: "the progress bar still doesnt fit with the theme"): the worn look owns the whole bar — its
+   coloured frame (a darker shade of its fill, the house rule; the hard shadow stays black), its dark channel, its plates,
+   its ghost + sweep light, a painted cap on the leading edge and its crit art slammed on the goal plate at a level. All
+   static colours (vars from KitXpBar); the cap + slam move by finite WAAPI transform / opacity only. */
+.kx[data-kit] .kx-bar { border-color: var(--kit-edge); border-width: 5px; background-color: var(--kit-well); }
+.kx[data-kit] .kx-lvplate,
+.kx[data-kit] .kx-goal { background: var(--kit-well); border-color: var(--kit-edge); }
+.kx[data-kit] .kx-lvplate .kx-lv-k,
+.kx[data-kit] .kx-goal .kx-lv-k { color: var(--kit-hi); opacity: 0.7; }
+.kx[data-kit] .kx-lvplate .kx-lv-n,
+.kx[data-kit] .kx-goal-n { color: var(--kit-hi); -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.kx[data-kit].is-near .kx-goal { background: var(--kit-hi); }
+.kx[data-kit].is-near .kx-goal .kx-lv-k,
+.kx[data-kit].is-near .kx-goal-n { color: #000; -webkit-text-stroke: 0; opacity: 1; }
+.kx[data-kit] .kx-ghost { background: var(--kit-hi); opacity: 0.32; }
+.kx[data-kit] .kx-sweep { background: var(--kit-hi); }
+.kx[data-kit] .kx-near { color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
+/* the painted cap: rides the fill's leading edge (KitXpBar writes translate(x, -50%)), over the bar's frame */
+.kx-cap { position: absolute; left: 0; top: 50%; z-index: 2; width: 0; height: 0; transform: translate(0, -50%); pointer-events: none; }
+.kx-cap img { position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; object-fit: contain; display: block; }
+/* the moment it fills: the crit art slams on the goal plate (rests invisible) */
+.kx-slam { position: absolute; right: -40px; top: 50%; z-index: 3; width: 150px; height: 150px; object-fit: contain; opacity: 0; transform: translate(-50%, -50%); pointer-events: none; }
+.kx[data-kit]:not(.is-goal) .kx-slam { right: -75px; }
+@media (max-width: 600px) {
+  .kx-cap img { left: -26px; top: -26px; width: 52px; height: 52px; }
+  .kx-slam { width: 110px; height: 110px; }
+}
+@media (prefers-reduced-motion: reduce) { .kx-slam { display: none; } }
+
+/* THE KIT's NUMBER (oct27): a worn look sets the +N on a CHIP of its own painted texture (its bar art) — edged in the
+   look's outline colour (set inline), the house hard shadow — with the number in white over a heavy black outline, so it
+   reads on any burst. Static styles only (the pop's own WAAPI moves it). */
+.menu-xp-pop-plus.is-kit {
+  background-size: cover;
+  background-position: center;
+  padding: 3px 12px 4px;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  color: #fff;
+  -webkit-text-stroke: 6px #000;
+  paint-order: stroke fill;
+}
+.menu-xp-pop.is-crit .menu-xp-pop-plus.is-kit { font-size: var(--fs-h2); padding: 4px 16px 6px; border-width: 5px; box-shadow: 5px 5px 0 #000; -webkit-text-stroke-width: 7px; }
+/* the look's crit: the KEY reads white on its burst; the textured CRIT +N sits under the burst, on the menu */
+.menu-xp-pop.is-crit.is-kit-crit .menu-xp-pop-letter { color: #fff; -webkit-text-stroke: 6px #000; text-shadow: 5px 5px 0 #000; }

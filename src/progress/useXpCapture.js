@@ -114,7 +114,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
     window.addEventListener(EQUIP_CHANGE, onEquip);
     // oct27: a paid look is fetched at IDLE after the menu paints (was: on the first key — so a session's first pops
     // came out in the plain dress); still never on the first paint, still only while a paid look is worn
-    const idleLook = typeof requestIdleCallback === 'function' ? requestIdleCallback(wantLook, { timeout: 2500 }) : setTimeout(wantLook, 1200);
+    const idleLook = setTimeout(wantLook, 1200);
     // ONE letter limiter for the menu AND every game input (letterXp.js — 12 letters a second, shared).
     // The per-input XP from the single multiplier stack (menu mode), INCLUDING the equipped
     // cosmetic multipliers (pop style + sound pack). Stable for this menu session — equipping
@@ -280,7 +280,7 @@ export function useXpCapture({ fxRef, active = true, isBlocked, onCredit } = {})
       window.removeEventListener('pointerup', onUp, true);
       window.removeEventListener('pointercancel', onCancel, true);
       window.removeEventListener(EQUIP_CHANGE, onEquip);
-      if (typeof cancelIdleCallback === 'function' && typeof requestIdleCallback === 'function') cancelIdleCallback(idleLook); else clearTimeout(idleLook);
+      clearTimeout(idleLook);
     };
   }, [active, fxRef]);
 

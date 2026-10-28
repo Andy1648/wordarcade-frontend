@@ -47,7 +47,7 @@ function SoloPerk({ id }) {
 // drift from the mode dialog / card / SEO copy.
 // WORD RACE joins as a fourth row only when its (dark-launch) card is in `games` at all.
 // MINER (Andy oct26) takes the first row DAILY BLITZ held.
-const MODE_IDS = ['miner', 'word-bomb', 'category-blitz', 'sat-rush', 'word-race'];
+const MODE_IDS = ['sat-rush', 'word-bomb', 'category-blitz', 'miner', 'word-race'];
 
 // Per-row palette. The band is INVERTED: the slab is the dark panel base and the NAME carries
 // the mode's neon, set in the chromatic Bungee stack (LayeredWord) — the treatment CHAIN, FUSE,

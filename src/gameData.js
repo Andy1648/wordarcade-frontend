@@ -194,8 +194,8 @@ const MINER_GAME = {
 // so the stagger/rotation rules keyed to those slots land on the new cards.
 export const GAMES = [
   ...BASE_GAMES,
-  MINER_GAME,
   ...(SAT_RUSH_ENABLED ? [SAT_RUSH_GAME] : []),
+  MINER_GAME, // Andy oct27: MINER and SAT RUSH swapped - SAT RUSH back in slot 3
   CHAIN_GAME,
   FUSE_GAME,
   ...(WORD_RACE_ENABLED ? [WORD_RACE_GAME] : []),

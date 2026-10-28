@@ -74,39 +74,6 @@
 }
 /* the GHOST (NIGHT oct8 #3): a pale flat layer under the fill — it jumps to the target, the fill follows */
 .kx-ghost { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); background: #FFF6B8; opacity: 0.55; }
-/* a worn POP STYLE's painted fill (KitXpBar `skin`): the texture rides a child that counter-scales against the fill */
-.kx-fill-skin { position: absolute; inset: 0; transform-origin: 0 50%; background-size: cover; background-position: center; }
-.kx-fill.is-skin { overflow: hidden; }
-.kx-fill.is-skin .kx-fill-hi { display: none; }
-
-/* THE KIT's BAR (oct27, Andy: "the progress bar still doesnt fit with the theme"): the worn look owns the whole bar — its
-   coloured frame (a darker shade of its fill, the house rule; the hard shadow stays black), its dark channel, its plates,
-   its ghost + sweep light, a painted cap on the leading edge and its crit art slammed on the goal plate at a level. All
-   static colours (vars from KitXpBar); the cap + slam move by finite WAAPI transform / opacity only. */
-.kx.is-kit .kx-bar { border-color: var(--kit-edge); border-width: 5px; background-color: var(--kit-well); }
-.kx.is-kit .kx-lvplate,
-.kx.is-kit .kx-goal { background: var(--kit-well); border-color: var(--kit-edge); }
-.kx.is-kit .kx-lvplate .kx-lv-k,
-.kx.is-kit .kx-goal .kx-lv-k { color: var(--kit-hi); opacity: 0.7; }
-.kx.is-kit .kx-lvplate .kx-lv-n,
-.kx.is-kit .kx-goal-n { color: var(--kit-hi); -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
-.kx.is-kit.is-near .kx-goal { background: var(--kit-hi); }
-.kx.is-kit.is-near .kx-goal .kx-lv-k,
-.kx.is-kit.is-near .kx-goal-n { color: #000; -webkit-text-stroke: 0; opacity: 1; }
-.kx.is-kit .kx-ghost { background: var(--kit-hi); opacity: 0.32; }
-.kx.is-kit .kx-sweep { background: var(--kit-hi); }
-.kx.is-kit .kx-near { color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; }
-/* the painted cap: rides the fill's leading edge (KitXpBar writes translate(x, -50%)), over the bar's frame */
-.kx-cap { position: absolute; left: 0; top: 50%; z-index: 2; width: 0; height: 0; transform: translate(0, -50%); pointer-events: none; }
-.kx-cap img { position: absolute; left: -34px; top: -34px; width: 68px; height: 68px; object-fit: contain; display: block; }
-/* the moment it fills: the crit art slams on the goal plate (rests invisible) */
-.kx-slam { position: absolute; right: -40px; top: 50%; z-index: 3; width: 150px; height: 150px; object-fit: contain; opacity: 0; transform: translate(-50%, -50%); pointer-events: none; }
-.kx.is-kit:not(.is-goal) .kx-slam { right: -75px; }
-@media (max-width: 600px) {
-  .kx-cap img { left: -26px; top: -26px; width: 52px; height: 52px; }
-  .kx-slam { width: 110px; height: 110px; }
-}
-@media (prefers-reduced-motion: reduce) { .kx-slam { display: none; } }
 .kx-fill-hi { position: absolute; left: 0; right: 0; top: 3px; height: 3px; background: var(--k-yellow-hi); }
 /* the level-wrap sweep: one band that rests offscreen left; FX.barSweep carries it across */
 .kx-sweep { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; background: var(--k-white); transform: translateX(-100%); opacity: 0; pointer-events: none; }

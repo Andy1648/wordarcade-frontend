@@ -30,7 +30,7 @@ test('INFERNO worn: textured +N, the painted crit burst, the painted bar fill, l
   await expect(page.locator('.kx-fill.is-skin .kx-fill-skin')).toHaveCount(1);
   expect(await page.locator('.kx-fill-skin').getAttribute('style')).toContain('bar-inferno');
   // the whole bar is the kit: its frame colour, the painted cap on the edge, the crit art waiting on the goal plate
-  await expect(page.locator('.kx.is-kit[data-kit=inferno] .kx-cap img')).toHaveCount(1);
+  await expect(page.locator('.kx[data-kit=inferno] .kx-cap img')).toHaveCount(1);
   await expect(page.locator('.kx-slam')).toHaveAttribute('src', /crit-inferno/);
   // the look's data loads at idle after the menu paints: keep typing until a pop wears it
   await expect.poll(async () => { await page.keyboard.press('KeyQ'); await page.waitForTimeout(120); return kitNums(page, 'inferno'); }, { timeout: 10_000 }).toBeGreaterThan(0);

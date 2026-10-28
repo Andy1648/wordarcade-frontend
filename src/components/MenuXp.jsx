@@ -13,7 +13,6 @@ import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult } from '../progress/xp';
 import { reduceMotion } from '../lib/reduceMotion';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
-import { popMotionOf } from '../progress/popMotion.js';
 
 // MenuXpBar — the SPLASH's mini level bar ("LV n" + a bare track). The menu's bar is the v2 kit's
 // KitXpBar now (Homepage); this is all that is left of the old dense bar. lib/barPlan via useLevelBar:
@@ -70,23 +69,26 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
 const POP_STRETCH = 1.3;
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
-// (progress/popMotion.js) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
+// (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
 const KIT_POP_SCALE = 1.35;
 function kitArc(look, rot, s, peak, rise, baseMs) {
-  const m = look && popMotionOf(look.id);
+  const m = look && look.motion;
   if (!m) return { frames: popArc(CENTER, rot, s, peak, rise), ms: baseMs, hit: 90 / baseMs, spin: 22 };
   const o = m(CENTER, rot, s * KIT_POP_SCALE, peak, rise); // a paid look's pop is the bigger one
   return { frames: o.frames, ms: Math.round(baseMs * o.ms), hit: o.hit, spin: o.spin };
 }
 const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
-const popArc = (CENTER, rot, s, peak, rise) => [
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.45}) translateY(10px)`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * peak * 1.12}, ${s * peak * 0.9}) translateY(-8px)`, opacity: 1, offset: 0.13, easing: 'ease-out' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 0.96}, ${s * 1.06}) translateY(-13px)`, opacity: 1, offset: 0.22, easing: 'ease-out' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-15px)`, opacity: 1, offset: 0.3, easing: 'linear' },
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-24px)`, opacity: 1, offset: 0.7, easing: 'ease-in' }, // the LINGER: the +N is read
-  { transform: `${CENTER}rotate(${rot}deg) scale(${s * 1.06}) translateY(-${rise}px)`, opacity: 0, offset: 1 },
-];
+const popArc = (CENTER, rot, s, peak, rise) => {
+  const k = (sx, sy, y, opacity, offset, easing) => ({ transform: `${CENTER}rotate(${rot}deg) scale(${sx}, ${sy}) translateY(${y}px)`, opacity, offset, easing });
+  return [
+    k(s * 0.45, s * 0.45, 10, 0, 0, 'cubic-bezier(.2,1.4,.4,1)'),
+    k(s * peak * 1.12, s * peak * 0.9, -8, 1, 0.13, 'ease-out'),
+    k(s * 0.96, s * 1.06, -13, 1, 0.22, 'ease-out'),
+    k(s, s, -15, 1, 0.3, 'linear'),
+    k(s, s, -24, 1, 0.7, 'ease-in'), // the LINGER: the +N is read
+    k(s * 1.06, s * 1.06, -rise, 0, 1, 'linear'),
+  ];
+};
 const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
 const CRIT_SHAKE_PX = 7;
@@ -463,18 +465,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
   // outline colour — static styles on the pooled node, set per spawn (MenuXp.css .is-kit).
   function dressNum(node, look) {
-    if (!look || !look.bar) {
-      clearNum(node);
-      // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
-      if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
-      return;
-    }
-    node.style.backgroundImage = `url(${look.bar})`;
-    node.style.borderColor = look.stroke;
-    node.classList.add('is-kit');
-    node.style.color = '';
-    node.style.webkitTextStroke = '';
-    node.style.textShadow = '';
+    if (look && look.chip) return look.chip(node); // a painted kit: its textured chip (popLooks.js, lazy)
+    clearNum(node);
+    // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
+    if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
   }
   function clearNum(node) {
     if (!node.classList.contains('is-kit')) return;
