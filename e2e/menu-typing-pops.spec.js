@@ -85,9 +85,9 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
   });
 }
 
-// oct28 (Andy: "smoother" = slower + more of an ENTRANCE): a key pop GROWS IN from a speck (×0.1, was ×0.45) on a long
-// ease-out — its grow-in peaks a quarter of the way in, never in the first eighth.
-test('a key pop grows in from a speck on a long ease-out', async ({ page }) => {
+// oct28 (Andy: "dont do anything with the number boxes bc when they disappear (like stretch or smthn) it looks goofy"):
+// the +N box keeps ONE size its whole life — every keyframe has the same scale — and only fades + rises a little.
+test('a key pop never scales or stretches its number box', async ({ page }) => {
   await installBackendMock(page);
   await page.goto('/?portal=1');
   await menuReady(page);
@@ -98,11 +98,18 @@ test('a key pop grows in from a speck on a long ease-out', async ({ page }) => {
     const a = [...document.querySelectorAll('.menu-xp-pop')].flatMap((e) => e.getAnimations()).find((x) => x.playState === 'running');
     if (!a) return null;
     const kf = a.effect.getKeyframes();
-    const sc = (t) => +/scale\(([\d.]+)/.exec(t)[1];
-    return { from: sc(kf[0].transform), peak: sc(kf[1].transform), hit: kf[1].computedOffset, ms: a.effect.getTiming().duration };
+    return {
+      scales: kf.map((f) => /scale\(([^)]*)\)/.exec(f.transform)[1]),
+      ys: kf.map((f) => +/translateY\((-?[\d.]+)px/.exec(f.transform)[1]),
+      opacity: kf.map((f) => +f.opacity),
+      ms: a.effect.getTiming().duration,
+    };
   });
   expect(arc).not.toBeNull();
-  expect(arc.from / arc.peak).toBeLessThan(0.12);
-  expect(arc.hit).toBeGreaterThanOrEqual(0.2);
+  expect(new Set(arc.scales).size, `one size: ${arc.scales}`).toBe(1);
+  expect(arc.scales[0]).not.toContain(','); // never a non-uniform (stretch) scale
+  expect(arc.opacity[0]).toBe(0);
+  expect(arc.opacity[arc.opacity.length - 1]).toBe(0);
+  expect(Math.min(...arc.ys)).toBeGreaterThanOrEqual(-24); // a small drift, not a launch
   expect(arc.ms).toBeGreaterThanOrEqual(1200);
 });
