@@ -841,3 +841,61 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 @media (prefers-reduced-motion: reduce) {
   .sp2-look.is-trying .sp2-look-stage, .sp2-try { animation: none; }
 }
+
+/* ===== WIDE CARDS, LAID OUT WIDE (Andy oct28 "dont make anything stretched on the shop screen (the sealed gear already
+   looks horrendous)"): a card spanning two cells kept a one-cell column of content floating in a stretched empty field —
+   the canister a speck in the middle of a purple slab. Now the art stands big on the left, at its own ratio, and the word
+   + price sit on the right. The vessel's 512 canvas holds transparent air round the canister (it sits low, ~64% wide), so
+   its square box is sized past the slot and the air trimmed off with negative margins (--vs = the square's side): the
+   painted canister itself fills the card's height. The card is a size container so the art sizes to the card it's in.
+   e2e/shop-aspect.spec.js holds every shop image at its native ratio and the vessel square. ===== */
+@media (min-width: 1000px) {
+  .sp2-cell.is-ticket .sp2-card-in,
+  .sp2-cell[data-cell="extend"] .sp2-card-in {
+    display: grid;
+    container-type: size;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto auto auto 1fr;
+    grid-template-areas: "band band" "art ." "art big" "art what" "art time" "art price" "art .";
+    justify-items: center;
+    align-items: center;
+  }
+}
+@media (max-width: 999px) {
+  .sp2-cell[data-cell="extend"] .sp2-card-in {
+    display: grid;
+    container-type: size;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: auto 1fr auto auto auto auto 1fr;
+    grid-template-areas: "band band" "art ." "art big" "art what" "art time" "art price" "art .";
+    justify-items: center;
+    align-items: center;
+  }
+  .sp2-cell[data-cell="extend"] .sp2-card-in > .sp2-art { width: min(calc(100cqh - 56px), 38cqw); height: min(calc(100cqh - 56px), 38cqw); margin: 0; }
+  .sp2-cell[data-cell="extend"] .sp2-price { margin: 8px 0 0; }
+}
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-band { grid-area: band; }
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > :is(.sp2-art, .sp2-ico) { grid-area: art; }
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-big { grid-area: big; }
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-what { grid-area: what; }
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-time { grid-area: time; }
+:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-price { grid-area: price; }
+@media (min-width: 1000px) {
+  .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
+    --vs: min(calc((100cqh - 44px) / .79), calc(44cqw / .66));
+    width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
+    margin: calc(var(--vs) * -.16) calc(var(--vs) * -.17) calc(var(--vs) * -.05);
+  }
+  .sp2-cell[data-cell="extend"] .sp2-card-in > .sp2-art { width: min(calc(100cqh - 48px), 44cqw); height: min(calc(100cqh - 48px), 44cqw); margin: 0; }
+  .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k44); }
+  :is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-price { margin: 10px 0 0; }
+}
+/* the phone's one-cell SEALED ROLL: the same air trim, so the canister — not its transparent canvas — takes the art slot */
+@media (max-width: 999px) {
+  .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
+    --vs: 92px;
+    flex: 0 0 auto; width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
+    margin: calc(var(--vs) * -.16) 0 calc(var(--vs) * -.05);
+  }
+  .sp2-cell[data-cell="extend"] .sp2-what { text-wrap: balance; }
+}

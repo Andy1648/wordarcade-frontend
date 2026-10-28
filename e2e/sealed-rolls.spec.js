@@ -143,11 +143,16 @@ for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
       const bottom = Math.min(innerHeight, g.bottom);
       return ['epicroll'].map((id) => { const r = box(id); return { id, top: r.top, bottom: r.bottom, view: bottom, gTop: g.top }; });
     });
-    const fit = await page.evaluate(() => [...document.querySelectorAll('.sp2-cell.is-ticket')].map((c) => { const b = c.querySelector('.sp2-big').getBoundingClientRect(); const k = c.querySelector('.kstc-card').getBoundingClientRect(); const v = c.querySelector('.sp2-vessel').getBoundingClientRect(); return { l: b.left - k.left, r: k.right - b.right, v: v.height, overlap: v.bottom - b.top }; }));
+    const fit = await page.evaluate(() => [...document.querySelectorAll('.sp2-cell.is-ticket')].map((c) => { const b = c.querySelector('.sp2-big').getBoundingClientRect(); const k = c.querySelector('.kstc-card').getBoundingClientRect(); const V = c.querySelector('.sp2-vessel').getBoundingClientRect();
+      // the PAINTED canister inside the vessel's 512 square (its transparent air trimmed: 16% top, 5% bottom, 17% a side) —
+      // on the wide desktop card it stands BESIDE the word (oct28), on the phone above it: either way never on it
+      const v = { left: V.left + V.width * 0.17, right: V.right - V.width * 0.17, top: V.top + V.height * 0.16, bottom: V.bottom - V.height * 0.05, height: V.height * 0.79 };
+      const sideBySide = v.right <= b.left + 4 || v.left >= b.right - 4;
+      return { l: b.left - k.left, r: k.right - b.right, v: v.height, overlap: sideBySide ? 0 : v.bottom - b.top }; }));
     for (const f of fit) {
       expect(f.l, 'the tier word stays inside its card').toBeGreaterThanOrEqual(0);
       expect(f.r).toBeGreaterThanOrEqual(0);
-      expect(f.v, 'the canister keeps a readable size').toBeGreaterThanOrEqual(46);
+      expect(f.v, 'the canister keeps a readable size').toBeGreaterThanOrEqual(36);
       expect(f.overlap, 'the canister never sits on the tier word').toBeLessThanOrEqual(4);
     }
     for (const r of m) {
