@@ -18,6 +18,9 @@
   text-transform: uppercase;
 }
 .srr.is-legendary { --srr-tier: #FFC23D; --srr-shade: #B8860B; background: rgba(38, 22, 4, .985); /* gold-brown */ }
+/* THE TELL re-tints the scrim to the PICK's colour (no transition: the white pop covers the swap) */
+.srr.is-mythic { --srr-tier: #FF4FA3; --srr-shade: #B0206A; background: rgba(46, 6, 30, .985); }
+.srr.is-secret { --srr-tier: #2EFFE0; --srr-shade: #12A99A; background: rgba(4, 4, 8, .99); }
 
 .srr-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 
@@ -39,7 +42,7 @@
   text-shadow: 4px 4px 0 #000;
   transform: rotate(-3deg);
 }
-.srr.is-legendary .srr-floor { font-size: var(--fs-k38); }
+.srr-floor.is-long { font-size: var(--fs-k38); }
 
 .srr-pod { position: relative; display: grid; grid-template-columns: 100%; place-items: center; } /* width / min-height / --srr-v / --srr-rim: the hero size, set once on mount in the JSX */
 .srr-vessel {
@@ -58,16 +61,43 @@
 .srr-vessel:not(:disabled):hover .va { transform: translateY(-4px); transition: transform 160ms ease-out; }
 .srr-vessel:not(:disabled):active .va { transform: translateY(3px) scale(.97); transition: transform 90ms ease-out; }
 /* the open phase's REST = the burst's end state: the cog + lid have flown, the glow sits behind the card */
-.srr.is-open .va-cog, .srr.is-open .va-lid { opacity: 0; }
+.srr:is(.is-reveal, .is-open) .va-cog, .srr:is(.is-reveal, .is-open) .va-lid { opacity: 0; }
 /* the glow = a painted ray burst from its BOTTOM CENTRE, seated on the canister's open rim (~63% of the 250 vessel up) */
 /* the painted fan's rays converge at 50% / 74.4% of its 512 canvas (the art's origin) — that point sits on the rim */
 .srr-glow { position: absolute; left: 50%; bottom: calc(var(--srr-rim) - var(--srr-v) * .512); width: calc(var(--srr-v) * 2); height: calc(var(--srr-v) * 2); max-width: none; margin-left: calc(var(--srr-v) * -1); transform-origin: 50% 74.4%; opacity: 0; pointer-events: none; }
-.srr.is-sealed .srr-glow, .srr.is-opening .srr-glow { opacity: .3; }
-.srr.is-open .srr-glow { opacity: .9; }
+.srr-glow-art { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 50% 74.4%; }
+/* MYTHIC / SECRET light: the purple fan turned pink / cyan (a STATIC hue turn — never animated), a few degrees apart */
+.srr-glow-art.is-pink { filter: hue-rotate(50deg) saturate(1.2); }
+.srr-glow-art.is-cyan { filter: hue-rotate(-110deg) saturate(1.3); }
+.srr-glow-art.is-off { transform: rotate(8deg); }
+.srr-glow-art.is-off2 { transform: rotate(-8deg); }
+/* THE LEAK: a sliver of light at rest; each notch (JSX) lets more out */
+.srr.is-sealed .srr-glow, .srr.is-opening .srr-glow, .srr.is-later .srr-glow { transform: scale(.42); opacity: .3; }
+.srr.is-reveal .srr-glow, .srr.is-open .srr-glow { opacity: .9; }
 .srr-shards { position: absolute; left: 50%; bottom: var(--srr-rim); width: 0; height: 0; pointer-events: none; }
 .srr-shard { position: absolute; left: -28px; top: -28px; width: 56px; height: 56px; opacity: 0; }
 
 .srr-card { position: relative; z-index: 2; grid-area: 1 / 1; align-self: start; }
+/* THE FACE-DOWN CARD: the back (card-back.svg, 188 wide for the face's 180 + its hard shadow) over the face; REVEAL
+   rests face-down, OPEN rests face-up (the flip is the WAAPI one-shot between them) */
+.srr-flip { position: relative; }
+.srr-face { position: relative; }
+.srr-back { position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; }
+.srr-back-art { display: block; width: 100%; height: auto; }
+.srr-edge {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--srr-pick, #FFC23D);
+  -webkit-mask: url(/fx/card-back-edge.svg) center / 100% 100% no-repeat;
+  mask: url(/fx/card-back-edge.svg) center / 100% 100% no-repeat;
+}
+.srr.is-reveal .srr-back { opacity: 1; }
+.srr.is-reveal .srr-face { opacity: 0; }
+.srr.is-reveal .srr-stamp { opacity: 0; } /* the UPGRADE! stamp lands with the flip, never before it */
+.srr.is-reveal .srr-btn.is-open { visibility: hidden; }
+/* mid-open the whole screen is the tap target */
+.srr.is-opening, .srr.is-reveal { cursor: pointer; }
 .srr-stamp {
   position: absolute;
   right: -64px;
