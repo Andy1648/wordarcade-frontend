@@ -108,7 +108,7 @@ export function currentCareer() {
 }
 const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
-const CRIT_SHAKE_PX = 7;
+const CRIT_SHAKE_PX = 10; // Andy oct28 "screen shake slightly larger for crit" (was 7)
 const CRIT_PUNCH_MS = 140; // Andy oct9 "cleaner": ONE slam 1.5 → 1, no wobble (was 380: 1.6 → 0.88 → 1.08 → 1)
 const CRIT_SAFE = 90; // px: a crit's burst stays this far inside the layer edges
 const CRIT_TOP = 120; // px: and below the header band (the coin/gem pills and corner tiles)
