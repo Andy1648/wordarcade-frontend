@@ -4,6 +4,9 @@
 .hu.is-gold { --hu-t: #F2B705; }
 .hu.is-elite { --hu-t: #FFC83D; }
 .hu.is-legend { --hu-t: #7CFFE0; }
+/* CHASE drops (oct28): the gear ladder's own colours — MYTHIC pink, SECRET cyan */
+.hu.is-mythic { --hu-t: #FF4FA3; }
+.hu.is-secret { --hu-t: #2EFFE0; }
 .hu-scrim { position: absolute; inset: 0; background: rgba(13, 6, 24, .92); }
 .hu-stage { position: relative; justify-self: end; width: min(440px, 42vw); aspect-ratio: 0.8; }
 .hu-rays {

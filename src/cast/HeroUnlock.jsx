@@ -20,7 +20,7 @@ import { markHeroesSeen } from './heroSeen.js';
 import './HeroUnlock.css';
 
 const SND_TIER = { gold: 'epic', elite: 'legendary', legend: 'mythic' };
-const TIER_WORD = { gold: 'GOLD HERO', elite: 'ELITE HERO', legend: 'LEGEND!' };
+const TIER_WORD = { gold: 'GOLD HERO', elite: 'ELITE HERO', legend: 'LEGEND!', mythic: 'MYTHIC DROP!', secret: 'SECRET DROP!' };
 const T = { drop: 150, flip: 900, pop: 1180, title: 1300, btns: 1750 };
 const EASE_POP = 'cubic-bezier(.2,1.4,.4,1)';
 
@@ -31,6 +31,7 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
   const n = useRef({});
   const reg = (k) => (el) => { n.current[k] = el; };
   const r = rarityOf(h);
+  const word = (h && h.chase) || r.tier; // a CHASE drop names its own tier (MYTHIC / SECRET), louder than LEGEND
 
   useEffect(() => { markHeroesSeen(ids); }, [ids]);
   useEffect(() => {
@@ -60,8 +61,8 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
     // THE FLIP: (the back turned edge-on above) the hero's card turns in — a slam for the rarer tiers
     kitPlay(e.face, [{ transform: 'perspective(900px) rotateY(-90deg) scale(1)', opacity: 0 }, { transform: 'perspective(900px) rotateY(-90deg) scale(1)', opacity: 1, offset: 0.01 }, { transform: 'perspective(900px) rotateY(0deg) scale(1.12)', opacity: 1, offset: 0.7 }, { transform: 'perspective(900px) rotateY(0deg) scale(1)', opacity: 1 }],
       { duration: 380, delay: T.flip + 160, easing: r.tier ? 'cubic-bezier(.2,1.25,.45,1)' : 'cubic-bezier(.1,.6,.3,1)', fill: 'backwards' });
-    timers.push(setTimeout(() => sndRevealFlip(SND_TIER[r.tier] || 'rare'), T.flip));
-    timers.push(setTimeout(() => sndRollSting(SND_TIER[r.tier] || 'rare'), T.pop));
+    timers.push(setTimeout(() => sndRevealFlip(h.chase || SND_TIER[r.tier] || 'rare'), T.flip));
+    timers.push(setTimeout(() => sndRollSting(h.chase || SND_TIER[r.tier] || 'rare'), T.pop));
     kitPlay(e.burst, [{ transform: 'scale(.3) rotate(-10deg)', opacity: 0 }, { transform: 'scale(1.15) rotate(4deg)', opacity: 1, offset: 0.35 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }], { duration: 520, delay: T.pop, easing: EASE_POP, fill: 'backwards' });
     kitPlay(e.hero, [
       { transform: 'translateY(30%) scale(.4)', opacity: 0 },
@@ -86,7 +87,7 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
   const next = () => (last ? onClose() : setIx(ix + 1));
   const isOn = equipped === h.id;
   return createPortal(
-    <div className={`hu is-${r.tier || 'crew'}`} role="dialog" aria-modal="true" aria-label={`New hero: ${h.name}`} data-testid="hero-unlock" data-hero={h.id}
+    <div className={`hu is-${r.tier || 'crew'}${h.chase ? ` is-${h.chase}` : ''}`} role="dialog" aria-modal="true" aria-label={`New hero: ${h.name}`} data-testid="hero-unlock" data-hero={h.id}
       style={{ '--hu-c': h.color, '--hu-d': h.dark }} onClick={(ev) => ev.stopPropagation()} /* a portal still bubbles through React: never let a tap here reach the host's scrim */>
       <div ref={reg('scrim')} className="hu-scrim" />
       <div className="hu-stage">
@@ -99,7 +100,7 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
         <div ref={reg('hero')} className="hu-hero" aria-hidden="true"><CastArt className="hu-art" id={h.id} pose="win" /></div>
       </div>
       <div className="hu-text">
-        <div ref={reg('title')} className="hu-title">{TIER_WORD[r.tier] || 'NEW HERO!'}</div>
+        <div ref={reg('title')} className="hu-title">{TIER_WORD[word] || 'NEW HERO!'}</div>
         <div ref={reg('name')} className="hu-namebox">
           <FitText className="hu-name fit-center">{h.name}</FitText>
           <span className="hu-tag">{h.tag}</span>
