@@ -13,7 +13,7 @@ export const MODE_EXAMPLES = {
   // ENTIRE-WORD racing: everyone types the same words, in order (the one you're on highlighted).
   'word-race': { kind: 'words', words: ['HOUSE', 'RIVER', 'MAGIC', 'LATER'] },
   // MINER: one prompt, answers getting rarer — each with the ore it digs (canon order, backend miner.js).
-  miner: { kind: 'ore', prompt: 'PIZZA TOPPINGS', picks: [['PEPPERONI', 'dirt'], ['CORN', 'coal'], ['TRUFFLE', 'gold']] },
+  miner: { kind: 'ore', prompt: 'THE RAREST PIZZA TOPPING', picks: [['PEPPERONI', 'dirt'], ['CORN', 'coal'], ['TRUFFLE', 'gold']] },
   // A real SAT word → its definition.
   'sat-rush': { kind: 'define', word: 'ELOQUENT', definition: 'FLUENT & PERSUASIVE IN SPEECH' },
 };
