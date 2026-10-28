@@ -1,0 +1,9924 @@
+{
+ "s01-cover-1920x1080": {
+  "issues": [
+   {
+    "k": "textclip-x",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "sw": 669,
+    "cw": 664
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 17
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 624,
+   "t": 175,
+   "r": 624,
+   "b": 175,
+   "w": 672,
+   "h": 729
+  }
+ },
+ "s02-modes-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "button.sr-modecard.sel \"STUDY FIRST LEARN \"",
+    "b": "button.sr-modecard \"QUIZ EVERY WORD — \"",
+    "ix": 549.8,
+    "iy": 0.5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"HOW DO YOU WANT TO\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 648,
+   "t": 301,
+   "r": 648,
+   "b": 301,
+   "w": 624,
+   "h": 479
+  }
+ },
+ "s03-setup-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 11
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 18,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 530,
+   "t": 171,
+   "r": 530,
+   "b": 171,
+   "w": 860,
+   "h": 738
+  }
+ },
+ "s04-study-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"la fierté🔊 NOUN (\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 156.2,
+    "iy": 68
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"poser🔊 VERB to a\"",
+    "by": "ul.sr-brief-list \"la santé🔊 NOUN (F\"",
+    "px": 3.1
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"demander🔊 VERB t\"",
+    "by": "ul.sr-brief-list \"la santé🔊 NOUN (F\"",
+    "px": 0.8
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 11
+   },
+   {
+    "k": "textoverflow",
+    "a": "span.sr-brief-word \"la santé🔊\"",
+    "px": 5.2
+   },
+   {
+    "k": "textoverflow",
+    "a": "span.sr-brief-word \"poser🔊\"",
+    "px": 5.8
+   },
+   {
+    "k": "textoverflow",
+    "a": "span.sr-brief-word \"parler🔊\"",
+    "px": 5.2
+   },
+   {
+    "k": "textoverflow",
+    "a": "span.sr-brief-word \"demander🔊\"",
+    "px": 5.8
+   },
+   {
+    "k": "textoverflow",
+    "a": "span.sr-brief-word \"la fierté🔊\"",
+    "px": 5.2
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"la santé🔊 NOUN (F\"",
+    "h": 943,
+    "ch": 761
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 81,
+    "h": 38
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 400,
+   "t": 27,
+   "r": 400,
+   "b": 27,
+   "w": 1120,
+   "h": 1026
+  }
+ },
+ "s05-play-1920x1080": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000000\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"00\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"0/5\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "s06-review-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 1052,
+    "iy": 326
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"parler\"",
+    "ix": 89.6,
+    "iy": 32
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 290.1,
+    "iy": 68
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 23.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 998,
+    "iy": 33
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 98,
+    "iy": 28
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"P\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"L\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 127.7,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 77.9,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 258,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 205.2,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 23.3,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "ix": 40.6,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 9.8,
+    "iy": 26
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000110 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.got \"BRAVO ! parler🔊 \"",
+    "px": 9
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000110 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000110\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"01\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"1/5\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-reencode-word \"parler🔊\"",
+    "px": 5.8
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 11,
+   "2px": 2,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "s05b-play-hint-1920x1080": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000110 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000110 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000110\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"01\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"1/5\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-fieldbody.sr-sentence \"“Je vous écris pou\"",
+    "px": 2.6
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 9,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "s06b-review-miss-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 1052,
+    "iy": 326
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "mark.sr-brief-fill \"santé\"",
+    "ix": 76.4,
+    "iy": 32
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 285.1,
+    "iy": 69
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 23.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 998,
+    "iy": 33
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 10.3
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 98,
+    "iy": 28
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 37.5,
+    "iy": 3.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 57.6,
+    "iy": 1.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 57.6,
+    "iy": 1.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 57.6,
+    "iy": 1.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 38.5,
+    "iy": 1.7
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 127.7,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 73.9,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 258,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 204.2,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 23.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la sant\"",
+    "ix": 40.6,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 8.8,
+    "iy": 26
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000188 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000188\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"00\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"2/5\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-reencode-word \"la santé🔊\"",
+    "px": 5.8
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 6,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "s07-results-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"4\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 400,
+   "t": 221,
+   "r": 400,
+   "b": 221,
+   "w": 1120,
+   "h": 638
+  }
+ },
+ "s08-bank-1920x1080": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK 548 WORD\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 11
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 47326,
+    "ch": 687
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 580,
+   "t": 12,
+   "r": 580,
+   "b": 12,
+   "w": 760,
+   "h": 1056
+  }
+ },
+ "c00-choose-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 11
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 650,
+   "t": 328,
+   "r": 650,
+   "b": 328,
+   "w": 620,
+   "h": 424
+  }
+ },
+ "c01-setup-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT A LINEUP O\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF SILENT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c02-lobby-empty-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"WGG8ZF\"",
+    "px": 12.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 33
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 1,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c03-join-student-1920x1080": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 11
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 650,
+   "t": 322,
+   "r": 650,
+   "b": 322,
+   "w": 620,
+   "h": 437
+  }
+ },
+ "c04-wait-student-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 11
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 15
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 650,
+   "t": 333,
+   "r": 650,
+   "b": 333,
+   "w": 620,
+   "h": 414
+  }
+ },
+ "c05-lobby-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"WGG8ZF\"",
+    "px": 12.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 33
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c06-word-student-1920x1080": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000000\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"00\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"0/10\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "c06-word-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"value\"",
+    "px": 15
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c07-answered-student-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 1052,
+    "iy": 326
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"valeur\"",
+    "ix": 89.6,
+    "iy": 32
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 998,
+    "iy": 33
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 98,
+    "iy": 28
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"V\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"L\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"U\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 127.7,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 258,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 40.6,
+    "iy": 26
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000160 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000160 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000160\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"01\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"1/10\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-reencode-word \"la valeur🔊\"",
+    "px": 5.8
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 11,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "c07-answered-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"value\"",
+    "px": 15
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c08-review-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"value\"",
+    "px": 15
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"la valeur🔊\"",
+    "px": 22
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c08-review-student-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 1052,
+    "iy": 326
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"valeur\"",
+    "ix": 89.6,
+    "iy": 32
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 998,
+    "iy": 33
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 98,
+    "iy": 28
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 59.6,
+    "iy": 69.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 57.6,
+    "iy": 67.2
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 127.7,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 22.4,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 258,
+    "iy": 51
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la vale\"",
+    "ix": 40.6,
+    "iy": 26
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 1100,
+    "cw": 1096
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"000000\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"00\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.sr-hval \"1/10\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-reencode-word \"la valeur🔊\"",
+    "px": 5.8
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 7,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1920,
+   "h": 1080
+  }
+ },
+ "c09-review-names-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"value\"",
+    "px": 15
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"la valeur🔊\"",
+    "px": 8
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-linkbtn.fr-class-more \"SHOW\"",
+    "w": 51,
+    "h": 24
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 3,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "s01-cover-1536x864": {
+  "issues": [
+   {
+    "k": "textclip-x",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "sw": 556,
+    "cw": 552
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 13
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 488,
+   "t": 95,
+   "r": 488,
+   "b": 95,
+   "w": 560,
+   "h": 674
+  }
+ },
+ "s02-modes-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"HOW DO YOU WANT TO\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 508,
+   "t": 202,
+   "r": 508,
+   "b": 202,
+   "w": 520,
+   "h": 460
+  }
+ },
+ "s03-setup-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 9
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE MOST ON \"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 379,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 18,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 338,
+   "t": 87,
+   "r": 338,
+   "b": 87,
+   "w": 860,
+   "h": 690
+  }
+ },
+ "s04-study-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"l'accueil🔊 NOUN (\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 140.6,
+    "iy": 19.4
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-brief-root \"CUEIL — GATHER · A\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 122.4,
+    "iy": 0.2
+   },
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"le travail🔊 NOUN \"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 139.6,
+    "iy": 41.8
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"découvrir🔊 VERB \"",
+    "by": "ul.sr-brief-list \"la valeur🔊 NOUN (\"",
+    "px": 3.1
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"l'accueil🔊 NOUN (\"",
+    "by": "ul.sr-brief-list \"la valeur🔊 NOUN (\"",
+    "px": 39.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"la valeur🔊 NOUN (\"",
+    "h": 928,
+    "ch": 577
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 74,
+    "h": 34
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 208,
+   "t": 22,
+   "r": 208,
+   "b": 22,
+   "w": 1120,
+   "h": 821
+  }
+ },
+ "s05-play-1536x864": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "s06-review-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 868,
+    "iy": 287.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"valeur\"",
+    "ix": 78.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 265.3,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"V\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"L\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"U\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 74.8,
+    "iy": 42.1
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 183.5,
+    "iy": 42.1
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 16.1
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 12.4,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000160 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.got \"BRAVO ! la valeur\ud83d\"",
+    "px": 17
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000160 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 11,
+   "2px": 2,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "s05b-play-hint-1536x864": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000160 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000160 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 8,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "s06b-review-miss-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 868,
+    "iy": 287.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"penser\"",
+    "ix": 78.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 260.3,
+    "iy": 52
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 70.8,
+    "iy": 38.1
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 182.5,
+    "iy": 38.1
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 17.1
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 11.4,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER penser\ud83d\"",
+    "px": 16
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000232 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 7,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "s07-results-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"4\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 208,
+   "t": 149,
+   "r": 208,
+   "b": 149,
+   "w": 1120,
+   "h": 566
+  }
+ },
+ "s08-bank-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK 548 WORD\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 45602,
+    "ch": 572
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 388,
+   "t": 12,
+   "r": 388,
+   "b": 12,
+   "w": 760,
+   "h": 840
+  }
+ },
+ "c00-choose-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 458,
+   "t": 268,
+   "r": 458,
+   "b": 268,
+   "w": 620,
+   "h": 328
+  }
+ },
+ "c01-setup-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "gap": 7.3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT A LINEUP O\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF SILENT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c02-lobby-empty-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"RJGUGA\"",
+    "px": 12.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 33
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"join at localhost:\"",
+    "h": 541,
+    "ch": 518
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 1,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c03-join-student-1536x864": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 458,
+   "t": 235,
+   "r": 458,
+   "b": 235,
+   "w": 620,
+   "h": 394
+  }
+ },
+ "c04-wait-student-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 12
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 458,
+   "t": 248,
+   "r": 458,
+   "b": 248,
+   "w": 620,
+   "h": 368
+  }
+ },
+ "c05-lobby-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"RJGUGA\"",
+    "px": 12.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 33
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"join at localhost:\"",
+    "h": 541,
+    "ch": 518
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c06-word-student-1536x864": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 14,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "c06-word-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"discrimination\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c07-answered-student-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 868,
+    "iy": 287.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"discrimination\"",
+    "ix": 169.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"S\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"C\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"M\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"N\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"T\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"O\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"N\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la discrim\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000290 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000290 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 19,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "c07-answered-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"discrimination\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c08-review-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"discrimination\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"la discrimination\ud83d\"",
+    "px": 10
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c08-review-student-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 868,
+    "iy": 287.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"discrimination\"",
+    "ix": 169.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER la disc\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 15,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1536,
+   "h": 864
+  }
+ },
+ "c09-review-names-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"discrimination\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"la discrimination\ud83d\"",
+    "px": 7
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-linkbtn.fr-class-more \"SHOW\"",
+    "w": 46,
+    "h": 21
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 3,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c10-done-teacher-1536x864": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 14
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "gap": 7.3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 3,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 46,
+   "t": 17,
+   "r": 46,
+   "b": 17,
+   "w": 1444,
+   "h": 829
+  }
+ },
+ "c10-done-student-1536x864": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 208,
+   "t": 47,
+   "r": 208,
+   "b": 47,
+   "w": 1120,
+   "h": 770
+  }
+ },
+ "s01-cover-1366x768": {
+  "issues": [
+   {
+    "k": "textclip-x",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "sw": 556,
+    "cw": 552
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 13
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 403,
+   "t": 51,
+   "r": 403,
+   "b": 51,
+   "w": 560,
+   "h": 665
+  }
+ },
+ "s02-modes-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"HOW DO YOU WANT TO\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 423,
+   "t": 158,
+   "r": 423,
+   "b": 158,
+   "w": 520,
+   "h": 452
+  }
+ },
+ "s03-setup-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 9
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE MOST ON \"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 379,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 18,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 253,
+   "t": 60,
+   "r": 253,
+   "b": 60,
+   "w": 860,
+   "h": 648
+  }
+ },
+ "s04-study-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"demander🔊 VERB t\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 139.4,
+    "iy": 51.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-brief-root \"DEMANDE — REQUEST \"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 118.2,
+    "iy": 32.7
+   },
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"sain🔊 ADJECTIVE \"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 140.4,
+    "iy": 51.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-brief-root \"SANTÉ — HEALTH · S\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 122.2,
+    "iy": 32.7
+   },
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"l'amour🔊 NOUN (M.\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 139.4,
+    "iy": 9.3
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"jouer🔊 VERB to p\"",
+    "by": "ul.sr-brief-list \"empêcher🔊 VERB t\"",
+    "px": 3.1
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"sain🔊 ADJECTIVE \"",
+    "by": "ul.sr-brief-list \"empêcher🔊 VERB t\"",
+    "px": 71.9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"empêcher🔊 VERB t\"",
+    "h": 850,
+    "ch": 493
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 74,
+    "h": 34
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 123,
+   "t": 19,
+   "r": 123,
+   "b": 19,
+   "w": 1120,
+   "h": 730
+  }
+ },
+ "s05-play-1366x768": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 5,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "s06-review-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 868,
+    "iy": 260.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "mark.sr-brief-fill \"amour\"",
+    "ix": 66.9,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 265.3,
+    "iy": 42.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 16.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"M\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"O\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"U\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 5.9,
+    "iy": 30.3
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000150 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "px": 30.5
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-kbd \"⏎\"",
+    "by": "div.sr-reencode.got \"BRAVO ! l'amour🔊 \"",
+    "px": 9.5
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000150 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 10,
+   "2px": 2,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "s05b-play-hint-1366x768": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000150 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000150 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "s06b-review-miss-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 868,
+    "iy": 260.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 35.1
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 101,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 259.3,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 16.7
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 4.9,
+    "iy": 11.8
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-say \"🔊\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "px": 11.9
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "px": 43
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-kbd \"⏎\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "px": 23
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000210 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 9,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "s07-results-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"5\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 123,
+   "t": 106,
+   "r": 123,
+   "b": 106,
+   "w": 1120,
+   "h": 555
+  }
+ },
+ "s08-bank-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK 548 WORD\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 45600,
+    "ch": 482
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 303,
+   "t": 12,
+   "r": 303,
+   "b": 12,
+   "w": 760,
+   "h": 744
+  }
+ },
+ "c00-choose-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 373,
+   "t": 236,
+   "r": 373,
+   "b": 236,
+   "w": 620,
+   "h": 297
+  }
+ },
+ "c01-setup-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "gap": 5.4
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT A LINEUP O\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF SILENT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c02-lobby-empty-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"4ECRVE\"",
+    "px": 8
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 20
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 1,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c03-join-student-1366x768": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 373,
+   "t": 202,
+   "r": 373,
+   "b": 202,
+   "w": 620,
+   "h": 364
+  }
+ },
+ "c04-wait-student-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 12
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 373,
+   "t": 213,
+   "r": 373,
+   "b": 213,
+   "w": 620,
+   "h": 342
+  }
+ },
+ "c05-lobby-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"4ECRVE\"",
+    "px": 8
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 20
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c06-word-student-1366x768": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "c06-word-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"job, employment\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c07-answered-student-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 868,
+    "iy": 260.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "mark.sr-brief-fill \"emploi\"",
+    "ix": 78.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 7.8
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"M\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"P\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"L\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"O\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'emploi🔊\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000110 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000110 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 11,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "c07-answered-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"job, employment\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c08-review-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 24
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"job, employment\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"l'emploi🔊\"",
+    "px": 14
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c08-review-student-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 868,
+    "iy": 260.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "mark.sr-brief-fill \"emploi\"",
+    "ix": 78.3,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 814,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 7.8
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'emplo\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 916,
+    "cw": 912
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 7,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1366,
+   "h": 768
+  }
+ },
+ "c09-review-names-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 24
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"job, employment\"",
+    "px": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"l'emploi🔊\"",
+    "px": 7
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-linkbtn.fr-class-more \"SHOW\"",
+    "w": 46,
+    "h": 21
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 3,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c10-done-teacher-1366x768": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 8
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "gap": 5.4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 16
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 4,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 93,
+   "t": 15,
+   "r": 93,
+   "b": 15,
+   "w": 1180,
+   "h": 737
+  }
+ },
+ "c10-done-student-1366x768": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 27
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-panel.sr-casefile \"YOUR WORDS l'emplo\"",
+    "h": 678,
+    "ch": 616
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 123,
+   "t": 49,
+   "r": 123,
+   "b": 49,
+   "w": 1120,
+   "h": 670
+  }
+ },
+ "s01-cover-1280x600": {
+  "issues": [
+   {
+    "k": "textclip-x",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "sw": 556,
+    "cw": 552
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 13
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 360,
+   "t": 71,
+   "r": 360,
+   "b": 71,
+   "w": 560,
+   "h": 457
+  }
+ },
+ "s02-modes-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"HOW DO YOU WANT TO\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 380,
+   "t": 82,
+   "r": 380,
+   "b": 82,
+   "w": 520,
+   "h": 437
+  }
+ },
+ "s03-setup-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 5
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"GLOBAL CHALLENGES\"",
+    "w": 186,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"ESSAY CONNECTORS\"",
+    "w": 186,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"EXAM & EMAIL WORDS\"",
+    "w": 186,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE MOST ON \"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 379,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 120,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 120,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 120,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 18,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 210,
+   "t": 57,
+   "r": 210,
+   "b": 57,
+   "w": 860,
+   "h": 487
+  }
+ },
+ "s04-study-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"la mère🔊 NOUN (F.\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 139.2,
+    "iy": 64
+   },
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"également🔊 ADVERB\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 140.4,
+    "iy": 64
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-brief-page \"EXIT STUDY 5 WORDS\"",
+    "gap": 5
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"demander🔊 VERB t\"",
+    "by": "ul.sr-brief-list \"l'enfant🔊 NOUN c\"",
+    "px": 3.1
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"également🔊 ADVERB\"",
+    "by": "ul.sr-brief-list \"l'enfant🔊 NOUN c\"",
+    "px": 219.8
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"l'enfant🔊 NOUN c\"",
+    "h": 850,
+    "ch": 345
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 74,
+    "h": 34
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 80,
+   "t": 15,
+   "r": 80,
+   "b": 15,
+   "w": 1120,
+   "h": 570
+  }
+ },
+ "s05-play-1280x600": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 7,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "s06-review-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 828,
+    "iy": 243.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "mark.sr-brief-fill \"acheter\"",
+    "ix": 89.6,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 265.3,
+    "iy": 46.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"CONTEMPORARY LIFE \"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 774,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"CONTEMPORARY LIFE \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 22.5
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"C\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"H\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"T\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 17.7,
+    "iy": 36.5
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000120 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.got \"BRAVO ! acheter🔊 \"",
+    "px": 10.5
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000120 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 12,
+   "2px": 2,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "s05b-play-hint-1280x600": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000120 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000120 STREA\"",
+    "sw": 876,
+    "cw": 872
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-fieldbody.sr-sentence \"“Cet –––––– joue d\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 7,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "s06b-review-miss-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 828,
+    "iy": 275.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 101,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 259.3,
+    "iy": 44.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "span.sr-kbd \"⏎\"",
+    "ix": 22,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 774,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 19.3
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "ix": 16.7,
+    "iy": 34.7
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE ⏎\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "px": 6.3
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000186 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 9,
+   "1px": 3
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "s07-results-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"4\"",
+    "px": 17
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-panel.sr-casefile \"YOUR WORDS acheter\"",
+    "h": 501,
+    "ch": 458
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 80,
+   "t": 44,
+   "r": 80,
+   "b": 44,
+   "w": 1120,
+   "h": 512
+  }
+ },
+ "s08-bank-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\"",
+    "b": "button.sr-exit-chip \"← BACK\"",
+    "ix": 70.1,
+    "iy": 9.1
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK THEME AL\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 9
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 45600,
+    "ch": 341
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 260,
+   "t": 12,
+   "r": 260,
+   "b": 12,
+   "w": 760,
+   "h": 576
+  }
+ },
+ "c00-choose-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 330,
+   "t": 184,
+   "r": 330,
+   "b": 184,
+   "w": 620,
+   "h": 233
+  }
+ },
+ "c01-setup-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "gap": 2
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT A LINEUP O\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF SILENT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 173,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 173,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 173,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c02-lobby-empty-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"DC6TJQ\"",
+    "px": 8
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 20
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 1,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c03-join-student-1280x600": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 330,
+   "t": 154,
+   "r": 330,
+   "b": 154,
+   "w": 620,
+   "h": 292
+  }
+ },
+ "c04-wait-student-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 12
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 330,
+   "t": 164,
+   "r": 330,
+   "b": 164,
+   "w": 620,
+   "h": 273
+  }
+ },
+ "c05-lobby-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-code \"DC6TJQ\"",
+    "px": 8
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 20
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c06-word-student-1280x600": {
+  "issues": [
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 4,
+   "2px": 5,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "c06-word-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"access\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c07-answered-student-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 828,
+    "iy": 275.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 66.9,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 774,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"C\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"C\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"È\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"È\"",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 13.6,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"S\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"S\"",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 50,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.got \"BRAVO ! l'accès🔊 \"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000100 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000100 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 10,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "c07-answered-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"access\"",
+    "px": 9
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "1px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c08-review-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"access\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"l'accès🔊\"",
+    "px": 16
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 2,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c08-review-student-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 828,
+    "iy": 275.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 66.9,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 774,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 50,
+    "iy": 58
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 11.6,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 48,
+    "iy": 56
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "mark.sr-brief-fill \"accès\"",
+    "ix": 48,
+    "iy": 26
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint ⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 118.2,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"⏎\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 21.3,
+    "iy": 23
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 229.8,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-kbd \"esc\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER l'accès\"",
+    "ix": 36.8,
+    "iy": 23
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-hud-exit \"← HOME\"",
+    "by": "div.sr-stage \"SCORE 000000 STREA\"",
+    "px": 3.6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"SCORE 000000 STREA\"",
+    "sw": 876,
+    "cw": 872
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "0px": 1,
+   "3px": 6,
+   "2px": 6,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 1280,
+   "h": 600
+  }
+ },
+ "c09-review-names-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"access\"",
+    "px": 9
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"l'accès🔊\"",
+    "px": 7
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-linkbtn.fr-class-more \"SHOW\"",
+    "w": 46,
+    "h": 21
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 3,
+   "1px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "s01-cover-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 7
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 83,
+   "r": 16,
+   "b": 83,
+   "w": 358,
+   "h": 678
+  }
+ },
+ "s02-modes-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect \"HOW DO YOU WANT TO\"",
+    "gap": 6
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 202,
+   "r": 16,
+   "b": 202,
+   "w": 358,
+   "h": 440
+  }
+ },
+ "s03-setup-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"QUIZ SET UP YOUR P\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 5
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 310,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE MOST ON \"",
+    "w": 310,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 310,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 10,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 55,
+   "r": 16,
+   "b": 55,
+   "w": 358,
+   "h": 734
+  }
+ },
+ "s03b-setup-picker-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"QUIZ SET UP YOUR P\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 5
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 310,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE MOST ON \"",
+    "w": 310,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 310,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 10,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 55,
+   "r": 16,
+   "b": 55,
+   "w": 358,
+   "h": 734
+  }
+ },
+ "s04-study-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"grandir🔊 VERB to\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 267.4,
+    "iy": 35.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-brief-root \"GRAND — BIG · GRAN\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 265.7,
+    "iy": 16.3
+   },
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"augmenter🔊 VERB \"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 267.4,
+    "iy": 21.2
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-say \"🔊\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 44.5,
+    "iy": 3.9
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-brief-page \"EXIT STUDY 5 WORDS\"",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"proche🔊 ADJECTIVE\"",
+    "by": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "px": 1.9
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"grandir🔊 VERB to\"",
+    "by": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "px": 55.5
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"augmenter🔊 VERB \"",
+    "by": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "px": 354.9
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"parler🔊 VERB to \"",
+    "by": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "px": 652.7
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"le portable🔊 NOUN\"",
+    "by": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "px": 981.5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 4
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"proche🔊 ADJECTIVE\"",
+    "h": 1541,
+    "ch": 559
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 74,
+    "h": 34
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 16,
+   "t": 21,
+   "r": 16,
+   "b": 21,
+   "w": 358,
+   "h": 802
+  }
+ },
+ "s05-play-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "sw": 353,
+    "cw": 350
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 7
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "s06-review-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 334,
+    "iy": 322.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "mark.sr-brief-fill \"grandir\"",
+    "ix": 80.8,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 217.4,
+    "iy": 65.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 304,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 20.6
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"G\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"N\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"I\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 64,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 146.4,
+    "iy": 47
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "by": "div.sr-reencode.got \"BRAVO ! grandir🔊 \"",
+    "px": 5.8
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 353,
+    "cw": 350
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 12,
+   "2px": 2
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "s05b-play-hint-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 353,
+    "cw": 350
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-fieldbody.sr-sentence \"“Chaque année, la \"",
+    "px": 3.2
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 8
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "s06b-review-miss-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 334,
+    "iy": 333.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "mark.sr-brief-fill \"proche\"",
+    "ix": 70.7,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 212.4,
+    "iy": 63
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 304,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"FAMILIES & COMMUNI\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 4.1
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 49.3,
+    "iy": 57.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 2.1,
+    "iy": 9.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 47.3,
+    "iy": 55.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 47.3,
+    "iy": 7.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 47.3,
+    "iy": 55.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 47.3,
+    "iy": 7.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 47.3,
+    "iy": 55.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 47.3,
+    "iy": 7.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 47.3,
+    "iy": 55.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 47.3,
+    "iy": 7.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 47.3,
+    "iy": 55.2
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 3.1,
+    "iy": 7.3
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 60,
+    "iy": 45.7
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER proche\ud83d\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 145.4,
+    "iy": 45.7
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 2/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 2/\"",
+    "sw": 353,
+    "cw": 350
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 6,
+   "2px": 7
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "s07-results-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-respage \"TERMINÉ ! 4 OF 5 C\"",
+    "by": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "px": 419.4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "sw": 399,
+    "cw": 390
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"4\"",
+    "px": 11
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "h": 1279,
+    "ch": 844
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 25,
+   "r": 7,
+   "b": -409,
+   "w": 367,
+   "h": 1228
+  }
+ },
+ "s08-bank-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK 548 WORD\"",
+    "gap": 5.7
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 5959.4
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 9007.4
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 9939.4
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 13504.4
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 18099.4
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 18099.4
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\"",
+    "gap": -18000.1
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 5
+   },
+   {
+    "k": "textclip-x",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "sw": 420,
+    "cw": 331
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\""
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 53625,
+    "ch": 405
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 12,
+   "t": 12,
+   "r": 12,
+   "b": 12,
+   "w": 367,
+   "h": 820
+  }
+ },
+ "c00-choose-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM THE WHO\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM THE WHO\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM THE WHO\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 259,
+   "r": 8,
+   "b": 259,
+   "w": 374,
+   "h": 325
+  }
+ },
+ "c01-setup-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM PICK TH\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "gap": -2
+   },
+   {
+    "k": "clipped",
+    "a": "button.fr-pick-btn \"ALL THEMES ▼\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"30\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT A LINEUP O\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF SILENT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "h": 572,
+    "ch": 551
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 17,
+   "r": 8,
+   "b": 17,
+   "w": 374,
+   "h": 810
+  }
+ },
+ "c02-lobby-empty-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 8
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 27,
+   "r": 8,
+   "b": 27,
+   "w": 374,
+   "h": 789
+  }
+ },
+ "c03-join-student-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"JOIN A CLASS YOUR \"",
+    "by": "div.sr-app.fr-app \"JOIN A CLASS YOUR \"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"JOIN A CLASS YOUR \"",
+    "gap": -2
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 226,
+   "r": 8,
+   "b": 226,
+   "w": 374,
+   "h": 393
+  }
+ },
+ "c04-wait-student-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"YOU'RE IN CLASS VS\"",
+    "by": "div.sr-app.fr-app \"YOU'RE IN CLASS VS\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"YOU'RE IN CLASS VS\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 268,
+   "r": 8,
+   "b": 268,
+   "w": 374,
+   "h": 308
+  }
+ },
+ "c05-lobby-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 8
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 17,
+   "r": 8,
+   "b": 17,
+   "w": 374,
+   "h": 810
+  }
+ },
+ "c06-word-student-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "sw": 353,
+    "cw": 350
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-case-theme \"PERSONAL & PUBLIC \"",
+    "sw": 287,
+    "cw": 257
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 7
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "c06-word-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE CL\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to adapt (s'adapte\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 190,
+   "r": 8,
+   "b": 190,
+   "w": 374,
+   "h": 464
+  }
+ },
+ "c07-answered-student-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 334,
+    "iy": 324.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"adapter\"",
+    "ix": 80.8,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 304,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"P\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"T\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.got \"BRAVO ! adapter🔊 \"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 353,
+    "cw": 350
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-case-theme \"PERSONAL & PUBLIC \"",
+    "sw": 287,
+    "cw": 257
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 12,
+   "2px": 2
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "c07-answered-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE CL\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to adapt (s'adapte\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 190,
+   "r": 8,
+   "b": 190,
+   "w": 374,
+   "h": 464
+  }
+ },
+ "c08-review-teacher-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE AN\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to adapt (s'adapte\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"adapter🔊\"",
+    "px": 7
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 112,
+   "r": 8,
+   "b": 112,
+   "w": 374,
+   "h": 621
+  }
+ },
+ "c08-review-student-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 334,
+    "iy": 324.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"PERSONAL & PUBLIC \"",
+    "b": "mark.sr-brief-fill \"adapter\"",
+    "ix": 80.8,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"PERSONAL & PUBLIC \"",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 304,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 42,
+    "iy": 48.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 40,
+    "iy": 46.7
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER adapter\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 1/\"",
+    "sw": 353,
+    "cw": 350
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-case-theme \"PERSONAL & PUBLIC \"",
+    "sw": 287,
+    "cw": 257
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 6,
+   "2px": 8
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 390,
+   "h": 844
+  }
+ },
+ "c09-review-names-teacher-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE AN\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to adapt (s'adapte\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 73,
+   "r": 8,
+   "b": 73,
+   "w": 374,
+   "h": 699
+  }
+ },
+ "c10-done-teacher-390x844": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-btn \"REPLAY THE 1 HARDE\"",
+    "ix": 64,
+    "iy": 12
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-btn \"REPLAY THE 1 HARDE\"",
+    "ix": 60,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-btn.sr-btn-ghost \"NEW SET\"",
+    "ix": 64,
+    "iy": 12
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-btn.sr-btn-ghost \"NEW SET\"",
+    "ix": 60,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-btn.sr-btn-ghost \"NEW SET\"",
+    "ix": 64,
+    "iy": 1.4
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip.fr-class-report \"COPY CLASS REPORT\"",
+    "ix": 62.8,
+    "iy": 4.6
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-exit-chip.fr-class-report \"COPY CLASS REPORT\"",
+    "ix": 60,
+    "iy": 2.6
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip.fr-class-report \"COPY CLASS REPORT\"",
+    "ix": 62.8,
+    "iy": 1.4
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip \"← END CLASS\"",
+    "ix": 26.1,
+    "iy": 0.6
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip \"← END CLASS\"",
+    "ix": 26.1,
+    "iy": 5.4
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-exit-chip \"← END CLASS\"",
+    "ix": 24.1,
+    "iy": 3.4
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS DONE 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 3
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"THE CLASS 95% 19 g\"",
+    "h": 763,
+    "ch": 437
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 4,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 17,
+   "r": 8,
+   "b": 17,
+   "w": 374,
+   "h": 810
+  }
+ },
+ "c10-done-student-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-respage \"TERMINÉ ! 10 OF 10\"",
+    "by": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "px": 715
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "sw": 399,
+    "cw": 390
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 11
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "h": 1574,
+    "ch": 844
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 25,
+   "r": 7,
+   "b": -705,
+   "w": 367,
+   "h": 1524
+  }
+ },
+ "s01-cover-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-cover.fr-cover \"FRENCH RUSH AP FR\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-title.sr-print \"FRENCH RUSH\"",
+    "px": 7
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 81,
+   "r": 16,
+   "b": 81,
+   "w": 328,
+   "h": 477
+  }
+ },
+ "s02-modes-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect \"HOW DO YOU WANT TO\"",
+    "gap": 6
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 109,
+   "r": 16,
+   "b": 109,
+   "w": 328,
+   "h": 422
+  }
+ },
+ "s03-setup-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "button.sr-btn \"START\"",
+    "b": "button.sr-exit-chip \"← BACK\"",
+    "ix": 95.6,
+    "iy": 0
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"QUIZ THEME ALL THE\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 3
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 280,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 280,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 89,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 89,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 89,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 10,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 37,
+   "r": 16,
+   "b": 37,
+   "w": 328,
+   "h": 567
+  }
+ },
+ "s03b-setup-picker-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "button.sr-btn \"START\"",
+    "b": "button.sr-exit-chip \"← BACK\"",
+    "ix": 95.6,
+    "iy": 0
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"QUIZ THEME ALL THE\"",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"QUIZ\"",
+    "px": 3
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS MUST-KNOW\"",
+    "w": 280,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5 HARDER + R\"",
+    "w": 280,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 89,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 89,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 89,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 10,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 37,
+   "r": 16,
+   "b": 37,
+   "w": 328,
+   "h": 567
+  }
+ },
+ "s04-study-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "li.sr-brief-card \"la pauvreté🔊 NOUN\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 267.4,
+    "iy": 62
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-say \"🔊\"",
+    "b": "button.sr-btn \"START THE RUN\"",
+    "ix": 44.5,
+    "iy": 12.9
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-brief-page \"EXIT STUDY 5 WORDS\"",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"la découverte🔊 NO\"",
+    "by": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "px": 1.7
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"la pauvreté🔊 NOUN\"",
+    "by": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "px": 343.1
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"le frère🔊 NOUN (M\"",
+    "by": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "px": 664.9
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"malade🔊 ADJECTIVE\"",
+    "by": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "px": 988.3
+   },
+   {
+    "k": "clipped",
+    "a": "li.sr-brief-card \"demander🔊 VERB t\"",
+    "by": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "px": 1311.6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-brief-title.sr-print \"STUDY\"",
+    "px": 4
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-brief-list \"la découverte🔊 NO\"",
+    "h": 1694,
+    "ch": 381
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-brief-exit \"EXIT\"",
+    "w": 74,
+    "h": 34
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 11,
+   "1px": 5,
+   "3px": 1
+  },
+  "rads": {
+   "16px": 2,
+   "6px": 1
+  },
+  "frame": {
+   "l": 16,
+   "t": 16,
+   "r": 16,
+   "b": 16,
+   "w": 328,
+   "h": 608
+  }
+ },
+ "s05-play-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-case-theme \"SCIENCE & TECHNOLO\"",
+    "sw": 205,
+    "cw": 182
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 9
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "s06-review-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 304,
+    "iy": 237.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "mark.sr-brief-fill \"découverte\"",
+    "ix": 111.1,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 217.4,
+    "iy": 47.6
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 274,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"SCIENCE & TECHNOLO\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 19.4
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"É\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"C\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"O\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"U\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"V\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"T\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 26.7,
+    "iy": 30.8
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 64,
+    "iy": 39.6
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 146.4,
+    "iy": 39.6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "by": "div.sr-reencode.got \"BRAVO ! la découve\"",
+    "px": 9.4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-case-theme \"SCIENCE & TECHNOLO\"",
+    "sw": 205,
+    "cw": 182
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 15,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 1,
+   "4px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "s05b-play-hint-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 323,
+    "cw": 320
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 7
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "s06b-review-miss-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 304,
+    "iy": 297.1
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 90.9,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 212.4,
+    "iy": 39
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 274,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 23.9
+   },
+   {
+    "k": "overlap",
+    "a": "span.sr-fieldlabel \"MEANING\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 87.8,
+    "iy": 25
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 60,
+    "iy": 31
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "ix": 145.4,
+    "iy": 31
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 2/\"",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-btn.sr-continue \"CONTINUE\"",
+    "by": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "px": 13
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 2/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-fields \"MEANING to ask (fo\"",
+    "h": 150,
+    "ch": 147
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 6,
+   "2px": 9
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "s07-results-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-respage \"TERMINÉ ! 4 OF 5 C\"",
+    "by": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "px": 689.8
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "sw": 370,
+    "cw": 360
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"4\"",
+    "px": 11
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 4 OF 5 C\"",
+    "h": 1339,
+    "ch": 640
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 6,
+   "2px": 10
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 19,
+   "r": 6,
+   "b": -680,
+   "w": 338,
+   "h": 1301
+  }
+ },
+ "s08-bank-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-bank \"WORD BANK THEME AL\"",
+    "gap": 4.8
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 2920.2
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\"",
+    "gap": -2831
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 6453.2
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "gap": -6364
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 8235.2
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "gap": -8146
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 15468.2
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "gap": -15379
+   },
+   {
+    "k": "clipped",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "by": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "px": 19384.2
+   },
+   {
+    "k": "edge",
+    "a": "span.sr-bank-tag \"STUDIED\"",
+    "gap": -19295
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD BANK\"",
+    "px": 5
+   },
+   {
+    "k": "textclip-x",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "sw": 373,
+    "cw": 302
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag.warn \"FALSE FRIEND\""
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag \"STUDIED\""
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag \"STUDIED\""
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag \"STUDIED\""
+   },
+   {
+    "k": "text-offscreen",
+    "a": "span.sr-bank-tag \"STUDIED\""
+   },
+   {
+    "k": "el-scroll",
+    "a": "ul.sr-bank-list \"accepter 🔊 to acc\"",
+    "h": 58701,
+    "ch": 230
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 549,
+   "1px": 43
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 11,
+   "t": 12,
+   "r": 11,
+   "b": 12,
+   "w": 338,
+   "h": 616
+  }
+ },
+ "c00-choose-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM THE WHO\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM THE WHO\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM THE WHO\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 184,
+   "r": 8,
+   "b": 184,
+   "w": 344,
+   "h": 272
+  }
+ },
+ "c01-setup-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM PICK TH\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM PICK TH\"",
+    "gap": -2
+   },
+   {
+    "k": "clipped",
+    "a": "button.fr-pick-btn \"ALL THEMES ▼\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"SCORE 5\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"30\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"PICK IT\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "button.sr-setup-opt \"OFF\"",
+    "by": "div.fr-class-body \"THEME ALL THEMES ▼\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 3
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"BASICS\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"EXAM CORE\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"SCORE 5\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"TYPE IT\"",
+    "w": 144,
+    "h": 38
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"PICK IT\"",
+    "w": 144,
+    "h": 38
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"BOARD\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"PHONES\"",
+    "w": 95,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"OFF\"",
+    "w": 95,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 16,
+   "r": 8,
+   "b": 16,
+   "w": 344,
+   "h": 609
+  }
+ },
+ "c02-lobby-empty-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"0\"",
+    "px": 8
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"join at localhost:\"",
+    "h": 464,
+    "ch": 434
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 13,
+   "r": 8,
+   "b": 13,
+   "w": 344,
+   "h": 614
+  }
+ },
+ "c03-join-student-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "input",
+    "b": "button.sr-btn \"JOIN\"",
+    "ix": 300,
+    "iy": 1
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"JOIN A CLASS YOUR \"",
+    "by": "div.sr-app.fr-app \"JOIN A CLASS YOUR \"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"JOIN A CLASS YOUR \"",
+    "gap": -2
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 3
+   },
+   {
+    "k": "clipped",
+    "a": "input",
+    "by": "div.fr-class-body \"CLASS CODE YOUR NA\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"JOIN A CLASS\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 153,
+   "r": 8,
+   "b": 153,
+   "w": 344,
+   "h": 334
+  }
+ },
+ "c04-wait-student-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"YOU'RE IN CLASS G3\"",
+    "by": "div.sr-app.fr-app \"YOU'RE IN CLASS G3\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"YOU'RE IN CLASS G3\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"YOU'RE IN\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-hi \"ana\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 196,
+   "r": 8,
+   "b": 196,
+   "w": 344,
+   "h": 248
+  }
+ },
+ "c05-lobby-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS ROOM 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS ROOM 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b.fr-class-joined-n \"2\"",
+    "px": 8
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"join at localhost:\"",
+    "h": 476,
+    "ch": 434
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 2,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 13,
+   "r": 8,
+   "b": 13,
+   "w": 344,
+   "h": 614
+  }
+ },
+ "c06-word-student-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 0/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-fields.fit-1 \"to ask (for someth\"",
+    "h": 130,
+    "ch": 126
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 4,
+   "2px": 7
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "c06-word-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE CL\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to ask (for someth\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 118,
+   "r": 8,
+   "b": 118,
+   "w": 344,
+   "h": 405
+  }
+ },
+ "c07-answered-student-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 304,
+    "iy": 276.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 90.9,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 274,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 9.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 23,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 33.6,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"M\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"M\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 32.3,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"A\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"N\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"D\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"E\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.typed \"R\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.got \"BRAVO ! demander🔊\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 01 WORDS 1/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-fields.fit-1 \"to ask (for someth\"",
+    "h": 130,
+    "ch": 126
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 13,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "c07-answered-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE CL\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE CL\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to ask (for someth\"",
+    "px": 4
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 1
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 118,
+   "r": 8,
+   "b": 118,
+   "w": 344,
+   "h": 405
+  }
+ },
+ "c08-review-teacher-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE AN\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to ask (for someth\"",
+    "px": 4
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-answer \"demander🔊\"",
+    "px": 5
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"THE ANSWER to ask \"",
+    "h": 498,
+    "ch": 461
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 2
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 13,
+   "r": 8,
+   "b": 13,
+   "w": 344,
+   "h": 614
+  }
+ },
+ "c08-review-student-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 304,
+    "iy": 276.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 44
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-cardframe \"EXAM & EMAIL WORDS\"",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 90.9,
+    "iy": 24
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 274,
+    "iy": 30
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-masthead.plain \"EXAM & EMAIL WORDS\"",
+    "b": "button.sr-say \"🔊\"",
+    "ix": 44,
+    "iy": 9.3
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 33.6,
+    "iy": 38.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot.cur",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 23,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 31.6,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "mark.sr-brief-fill \"demander\"",
+    "ix": 31.6,
+    "iy": 23.5
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "div.sr-slot",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 31.6,
+    "iy": 36.9
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act \"Hint\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 81.9,
+    "iy": 47
+   },
+   {
+    "k": "overlap",
+    "a": "button.sr-act.ghost \"Show answer\"",
+    "b": "div.sr-reencode.miss \"THE ANSWER demande\"",
+    "ix": 167.3,
+    "iy": 47
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage \"STREAK 00 WORDS 1/\"",
+    "gap": 6
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-stage \"STREAK 00 WORDS 1/\"",
+    "sw": 323,
+    "cw": 320
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-fields.fit-1 \"to ask (for someth\"",
+    "h": 130,
+    "ch": 126
+   }
+  ],
+  "bws": {
+   "4px": 1,
+   "3px": 6,
+   "2px": 8
+  },
+  "rads": {
+   "16px": 1
+  },
+  "frame": {
+   "l": 0,
+   "t": 0,
+   "r": 0,
+   "b": 0,
+   "w": 360,
+   "h": 640
+  }
+ },
+ "c09-review-names-teacher-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "by": "div.sr-app.fr-app \"WORD 1 / 10 THE AN\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"WORD 1 / 10 THE AN\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"WORD 1 / 10\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-gloss \"to ask (for someth\"",
+    "px": 4
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"THE ANSWER to ask \"",
+    "h": 520,
+    "ch": 461
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 3,
+   "2px": 3
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 13,
+   "r": 8,
+   "b": 13,
+   "w": 344,
+   "h": 614
+  }
+ },
+ "c10-done-teacher-360x640": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-btn \"REPLAY THE 1 HARDE\"",
+    "ix": 64,
+    "iy": 12
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-btn \"REPLAY THE 1 HARDE\"",
+    "ix": 60,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-btn.sr-btn-ghost \"NEW SET\"",
+    "ix": 64,
+    "iy": 11.5
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-btn.sr-btn-ghost \"NEW SET\"",
+    "ix": 60,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip.fr-class-report \"COPY CLASS REPORT\"",
+    "ix": 64,
+    "iy": 12
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-exit-chip.fr-class-report \"COPY CLASS REPORT\"",
+    "ix": 60,
+    "iy": 8
+   },
+   {
+    "k": "overlap",
+    "a": "span.fr-class-bar.mini",
+    "b": "button.sr-exit-chip \"← END CLASS\"",
+    "ix": 41.1,
+    "iy": 12
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "button.sr-exit-chip \"← END CLASS\"",
+    "ix": 39.1,
+    "iy": 8
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "by": "div.sr-app.fr-app \"CLASS DONE 10 WORD\"",
+    "px": 2
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "gap": -2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 3
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.fr-class-body \"THE CLASS 95% 19 g\"",
+    "h": 762,
+    "ch": 283
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 4,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 8,
+   "t": 13,
+   "r": 8,
+   "b": 13,
+   "w": 344,
+   "h": 614
+  }
+ },
+ "c10-done-student-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "clipped",
+    "a": "div.sr-respage \"TERMINÉ ! 10 OF 10\"",
+    "by": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "px": 956.4
+   },
+   {
+    "k": "textclip-x",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "sw": 370,
+    "cw": 360
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 11
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-screen.sr-results \"TERMINÉ ! 10 OF 10\"",
+    "h": 1606,
+    "ch": 640
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 19,
+   "r": 6,
+   "b": -946,
+   "w": 338,
+   "h": 1567
+  }
+ }
+}

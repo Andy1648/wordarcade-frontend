@@ -164,20 +164,25 @@ function sitemapPlugin(outDir) {
   }
 }
 
-// DAILY BLITZ LINK CARD (oct22 launch polish): crawlers (Reddit, Discord, iMessage, X) never run JS, so the link
+// ROUTE LINK CARDS (oct22 launch polish): crawlers (Reddit, Discord, iMessage, X) never run JS, so the link
 // card for typeaword.com/daily comes from the HTML the server sends. /daily is an SPA route, so it cannot have a
 // hand-written public/daily/index.html (that would shadow the app — routeShadow.test.js); instead the build
 // writes dist/daily/index.html = the built app shell (same hashed assets, same boot) with /daily's own title,
 // description, canonical, og:* and twitter:* tags. Vercel matches the filesystem before the SPA rewrite, so
 // /daily (and /daily?s=share) serve this copy; vercelStaticParity does the same under vite preview.
-export const DAILY_META = {
-  path: '/daily',
-  title: 'DAILY BLITZ — one answer each, rarer = more points | TYPE A WORD',
-  ogTitle: 'DAILY BLITZ',
-  description: '6 prompts, one answer each, 20 seconds a prompt. The rarer your answer, the more it scores. Same prompts for everyone today — free, no account.',
-  image: 'https://typeaword.com/og-daily.png',
-  imageAlt: 'DAILY BLITZ — 6 prompts, one answer each, rarer = more points',
+// MINER replaced DAILY BLITZ (oct26): /daily now lands in MINER, so both routes carry MINER's card — an old
+// shared /daily link must not preview a mode that no longer exists.
+const MINER_CARD = {
+  title: 'MINER — race to the core, rarer answers dig deeper | TYPE A WORD',
+  ogTitle: 'MINER',
+  description: 'Race your friends to the core: every prompt, type an answer — the rarer it is, the deeper you dig. Free, no account.',
+  image: 'https://typeaword.com/og-miner.png',
+  imageAlt: 'MINER — race to the core, rarer answers dig deeper',
 }
+export const PAGE_METAS = [
+  { path: '/miner', ...MINER_CARD },
+  { path: '/daily', ...MINER_CARD },
+]
 export function withPageMeta(html, m) {
   const url = `https://typeaword.com${m.path}`
   const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
@@ -206,9 +211,12 @@ function pageMetaPlugin(outDir) {
     closeBundle() {
       const shell = resolve(outDir, 'index.html')
       if (!existsSync(shell)) return
-      const dir = resolve(outDir, DAILY_META.path.slice(1))
-      mkdirSync(dir, { recursive: true })
-      writeFileSync(resolve(dir, 'index.html'), withPageMeta(readFileSync(shell, 'utf8'), DAILY_META))
+      const html = readFileSync(shell, 'utf8')
+      for (const m of PAGE_METAS) {
+        const dir = resolve(outDir, m.path.slice(1))
+        mkdirSync(dir, { recursive: true })
+        writeFileSync(resolve(dir, 'index.html'), withPageMeta(html, m))
+      }
     },
   }
 }

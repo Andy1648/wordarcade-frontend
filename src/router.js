@@ -57,9 +57,14 @@ const PATH_TO_QUERY = {
   // race on-switch (race/config.js), `play=race` the launch intent App reads to send the EXISTING
   // quick match once the socket opens. No landing page: /race/play falls through to the SPA.
   '/race/play': 'race=1&play=race',
-  // DAILY BLITZ (dailyBlitz/): the share link is /daily?s=share. No landing page, so the SPA receives it.
-  '/daily': 'dailyblitz=1',
-  '/daily/play': 'dailyblitz=1',
+  // MINER (miner/, Andy oct26): no landing page yet, so the SPA receives both; `play=miner` is the launch intent
+  // App reads to send the quick match once the socket opens.
+  '/miner': 'play=miner',
+  '/miner/play': 'play=miner',
+  // DAILY BLITZ was RETIRED for MINER (oct26): its old share links (/daily?s=share) open a mine instead. The
+  // /daily/answers + /daily/<n> SEO pages are server-rendered (api/daily-answers.js) and never reach the SPA.
+  '/daily': 'play=miner',
+  '/daily/play': 'play=miner',
   // Fallback only (shadowed by the landing pages in production — see the note above).
   '/sat-rush': 'satRush=1&satrush=1',
   '/chain': 'chain=1',
@@ -94,7 +99,6 @@ const VIEW_TO_PATH = {
   'sat-rush': '/sat-rush/play',
   chain: '/chain/play',
   fuse: '/fuse/play',
-  'daily-blitz': '/daily',
 };
 
 // SAT/CHAIN/FUSE view ids come from their config modules; keep this in sync via the constants the
@@ -193,6 +197,5 @@ export function viewIntentFromPath(pathname = window.location.pathname) {
   if (path === '/sat-rush/play' || path === '/sat-rush') return 'sat-rush';
   if (path === '/chain/play' || path === '/chain') return 'chain';
   if (path === '/fuse/play' || path === '/fuse') return 'fuse';
-  if (path === '/daily' || path === '/daily/play') return 'daily-blitz';
   return null; // /room/* and anything else: leave the app as-is
 }

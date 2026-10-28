@@ -1,0 +1,108 @@
+{
+ "c01-setup-teacher-360x640": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 3
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"10\"",
+    "w": 92,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"20\"",
+    "w": 92,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"30\"",
+    "w": 92,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"TYPE IT\"",
+    "w": 140,
+    "h": 36
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"PICK IT\"",
+    "w": 140,
+    "h": 36
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt.sel \"BOARD\"",
+    "w": 92,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"PHONES\"",
+    "w": 92,
+    "h": 40
+   },
+   {
+    "k": "small-target",
+    "a": "button.sr-setup-opt \"OFF\"",
+    "w": 92,
+    "h": 40
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 14
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 33,
+   "r": 16,
+   "b": 33,
+   "w": 328,
+   "h": 575
+  }
+ },
+ "c01-setup-teacher-390x844": {
+  "issues": [
+   {
+    "k": "edge",
+    "a": "div.sr-stage",
+    "gap": 6
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS ROOM\"",
+    "px": 5
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 14
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 16,
+   "t": 71,
+   "r": 16,
+   "b": 71,
+   "w": 358,
+   "h": 703
+  }
+ }
+}

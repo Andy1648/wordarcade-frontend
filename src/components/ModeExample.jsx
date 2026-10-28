@@ -11,6 +11,7 @@ import { frenzyShort, formatFrenzy, frenzyMinutes } from '../progress/frenzy';
 import { useFrenzyClock } from '../frenzy/useFrenzyClock';
 import KitIcon from './kit/KitIcon.jsx';
 import { V3 } from '../progress/season';
+import { ORES } from '../miner/config.js';
 
 /** WHERE THIS MODE'S GEMS COME FROM (Andy oct10: "ABSOLUTELY know where the gems come from") — the season-2 gem
  *  table (v3/econ), so every number here is the one the payout uses. [big, what] rows; [] outside season 2. */
@@ -54,8 +55,10 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
   const frenzy = useFrenzyClock();
   const ex = MODE_EXAMPLES[mode];
   if (!ex) return null;
-  const rateNow = perWordRateNow({ mode });
-  const gemRows = modeGemRows(mode);
+  // MINER banks on the Blitz rails (miner/minerPayout.js), so it quotes Blitz's base rate + gem sources
+  const payMode = mode === 'miner' ? 'category-blitz' : mode;
+  const rateNow = perWordRateNow({ mode: payMode });
+  const gemRows = modeGemRows(payMode);
 
   let body = null;
   if (ex.kind === 'chain') {
@@ -107,6 +110,20 @@ export default function ModeExample({ mode, accent = '#2EFFE0' }) {
         <span className="mode-ex-word" style={{ color: accent }}>“{ex.prompt}”</span>
         <span className="mode-ex-arrow" aria-hidden="true">→</span>
         <span className="mode-ex-word">{ex.answers.join(', ')}</span>
+      </div>
+    );
+  } else if (ex.kind === 'ore') {
+    body = (
+      <div className="mode-ex-line mode-ex-orewrap">
+        <span className="mode-ex-word" style={{ color: accent }}>“{ex.prompt}”</span>
+        <span className="mode-ex-ores">
+          {ex.picks.map(([w, ore]) => (
+            <span key={w} className="mode-ex-orechip">
+              <img className="mode-ex-ore" src={ORES[ore].art} alt={ORES[ore].name} draggable="false" />
+              <span className="mode-ex-ore-w">{w}</span>
+            </span>
+          ))}
+        </span>
       </div>
     );
   } else if (ex.kind === 'define') {

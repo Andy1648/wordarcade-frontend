@@ -67,7 +67,7 @@ test('renderRequest: /daily/answers is real HTML for the latest finished day; to
   assert.match(r.body, /<link rel="canonical" href="https:\/\/typeaword.com\/daily\/answers" \/>/);
   assert.match(r.body, /property="og:title" content="Daily Blitz #296 answers — Oct 23"/);
   assert.match(r.body, /application\/ld\+json/);
-  assert.match(r.body, /PLAY TODAY'S #298/);
+  assert.match(r.body, /href="\/miner\/play">PLAY MINER/); // DAILY BLITZ retired for MINER (oct26)
   for (const name of promptsForDay(296)) assert.ok(r.body.includes(name.replace(/&/g, '&amp;')), name);
   assert.match(r.body, /\(estimated\)/);
   const past = await renderRequest({ path: '/daily/295', nowMs: t, tallies: async () => null, dataJson: DATA });
