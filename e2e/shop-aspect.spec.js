@@ -53,6 +53,7 @@ const measure = (page) => page.evaluate(() => [...document.querySelectorAll('.sp
   const w = parseFloat(cs.width);
   const h = parseFloat(cs.height);
   if (!(w >= 2 && h >= 2) || cs.display === 'none' || !img.naturalWidth) return [];
+  if (img.classList.contains('mc-sheen-band')) return []; // a gear card's light SWEEP: a shapeless glare strip, drawn to the card on purpose
   const natural = img.naturalWidth / img.naturalHeight;
   const drawn = cs.objectFit === 'fill' ? w / h : natural;
   return [{ src: img.getAttribute('src'), cls: img.className, fit: cs.objectFit, w: +w.toFixed(1), h: +h.toFixed(1), natural: +natural.toFixed(3), drawn: +drawn.toFixed(3) }];

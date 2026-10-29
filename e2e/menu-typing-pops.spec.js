@@ -19,7 +19,7 @@ import { menuReady } from './support/menu.js';
 
 test.use({ reducedMotion: 'no-preference' });
 
-const POP_POOL = 20; // MenuXp.jsx POP_POOL
+const POP_POOL = 28; // MenuXp.jsx POP_POOL
 
 for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
   test(`typing on the menu pops "+N XP" (no letter) and no centre text box @ ${vp.width}x${vp.height}`, async ({ page }) => {
@@ -112,4 +112,51 @@ test('a key pop never scales or stretches its number box', async ({ page }) => {
   expect(arc.opacity[arc.opacity.length - 1]).toBe(0);
   expect(Math.min(...arc.ys)).toBeGreaterThanOrEqual(-24); // a small drift, not a launch
   expect(arc.ms).toBeGreaterThanOrEqual(1200);
+});
+
+// oct28 (Andy: "at a certain amount of key animations … i think all animations just get cleared … looks buggy"): a 30
+// keys/sec mash for 10s — level-ups included — never wipes the screen. Over the cap the OLDEST pop fades out (it is
+// fast-forwarded into its fade tail), one per key; no pop is ever cancelled while it is still visible, and a level-up
+// leaves the live pops to finish their own fade.
+test('a 10s mash recycles the oldest pop with a fade — never a mass clear', async ({ page }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1366, height: 657 });
+  await installBackendMock(page);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.menu-xp-fx').waitFor({ state: 'attached' });
+  await page.evaluate(() => {
+    // every cancel() of a pop that is still visibly on screen is a hard cut
+    const pops = new Set([...document.querySelectorAll('.menu-xp-pop')]);
+    window.__cuts = 0;
+    const cancel = Animation.prototype.cancel;
+    Animation.prototype.cancel = function () {
+      const t = this.effect && this.effect.target;
+      if (pops.has(t) && this.playState === 'running' && +getComputedStyle(t).opacity > 0.5) window.__cuts++;
+      return cancel.call(this);
+    };
+    window.__samples = [];
+    const tick = () => {
+      window.__samples.push([...pops].filter((el) => +getComputedStyle(el).opacity > 0.05).length);
+      window.__raf = requestAnimationFrame(tick);
+    };
+    tick();
+  });
+  const keys = 'abcdefghijklmnopqrstuvwxyz';
+  for (let n = 0; n < 300; n++) {
+    await page.keyboard.press(keys[n % keys.length]);
+    await page.waitForTimeout(33);
+  }
+  const { samples, cuts, nodes } = await page.evaluate(() => {
+    cancelAnimationFrame(window.__raf);
+    return { samples: window.__samples, cuts: window.__cuts, nodes: document.querySelectorAll('.menu-xp-pop').length };
+  });
+  expect(nodes).toBe(POP_POOL); // still the fixed pool
+  expect(cuts, 'pops hard-cut while visible').toBe(0);
+  // after the first second of the mash the screen always holds pops, and no frame loses more than a few at once
+  const busy = samples.slice(60);
+  expect(Math.min(...busy), 'the screen emptied mid-mash').toBeGreaterThanOrEqual(2);
+  let worst = 0;
+  for (let n = 1; n < busy.length; n++) worst = Math.max(worst, busy[n - 1] - busy[n]);
+  expect(worst, 'pops vanished at once').toBeLessThanOrEqual(4);
 });

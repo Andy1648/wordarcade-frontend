@@ -686,25 +686,6 @@
   .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k20); white-space: nowrap; }
 }
 
-/* 069 (Andy oct26): the LEGENDARY+ ROLL left the shop — 7 cards, which leaves a lone card on the last row of both the
-   3-column desktop shelf and the 2-column phone shelf. Two WIDE cards rebalance it, so every row is full:
-   desktop  [chest][ EPIC+ ROLL  ] / [xp][wins][luck] / [overdrive][ EVERYTHING ]
-   phone    [EPIC+][chest] / [xp][wins] / [luck][overdrive] / [ EVERYTHING ]
-   The wide cards keep their content column at a card's width (the price bar never stretches across two cells). */
-@media (min-width: 1000px) {
-  .sp2-cell.is-ticket,
-  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
-}
-@media (max-width: 999px) {
-  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
-}
-@media (min-width: 1000px) {
-  .sp2-cell.is-ticket .sp2-price,
-  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 20px), 260px); }
-}
-@media (max-width: 999px) {
-  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 10px), 170px); }
-}
 /* ---- THE POWER LADDER (Andy oct26): the plate is a button — a tap opens every form (PowerLadder.jsx) ---- */
 button.sp2-plate { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; transition: transform 160ms cubic-bezier(.3, 1.4, .5, 1); }
 @media (hover: hover) { button.sp2-plate:hover { transform: scale(1.05) rotate(-2deg); } }
@@ -842,60 +823,40 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   .sp2-look.is-trying .sp2-look-stage, .sp2-try { animation: none; }
 }
 
-/* ===== WIDE CARDS, LAID OUT WIDE (Andy oct28 "dont make anything stretched on the shop screen (the sealed gear already
-   looks horrendous)"): a card spanning two cells kept a one-cell column of content floating in a stretched empty field —
-   the canister a speck in the middle of a purple slab. Now the art stands big on the left, at its own ratio, and the word
-   + price sit on the right. The vessel's 512 canvas holds transparent air round the canister (it sits low, ~64% wide), so
-   its square box is sized past the slot and the air trimmed off with negative margins (--vs = the square's side): the
-   painted canister itself fills the card's height. The card is a size container so the art sizes to the card it's in.
-   e2e/shop-aspect.spec.js holds every shop image at its native ratio and the vessel square. ===== */
+/* the shelf tabs' NEW dot (oct28): the same pink dot as the chest card, on the tab's corner */
+.sp2-tab { position: relative; }
+.sp2-tab-dot { top: -9px; right: -9px; }
+
+/* ===== EVERY CARD THE SAME WIDTH (Andy oct28 "i dont want any horizontally stretched cards on shop"): no card spans two
+   columns any more. The SEALED ROLL is the FEATURED card — TALL, two rows high, the canister standing big — and the other
+   seven are equal cells: 4 × 2 on desktop (the whole shelf in one view, no scroll) and 2 × 4 on the phone. The canister's
+   512 canvas carries transparent air (it sits low, ~64% wide), so its square box (--vs) is sized past the slot and the
+   air trimmed off with negative margins: the painted canister fills the card. The card is a size container so the art
+   sizes to the card it's in. e2e/shop-aspect.spec.js holds every shop image at its native ratio and every card one cell wide. */
 @media (min-width: 1000px) {
-  .sp2-cell.is-ticket .sp2-card-in,
-  .sp2-cell[data-cell="extend"] .sp2-card-in {
-    display: grid;
-    container-type: size;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto auto auto auto 1fr;
-    grid-template-areas: "band band" "art ." "art big" "art what" "art time" "art price" "art .";
-    justify-items: center;
-    align-items: center;
-  }
+  .sp2-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+.sp2-cell.is-ticket { grid-column: 1; grid-row: 1 / span 2; }
+.sp2-cell.is-ticket .sp2-card-in { container-type: size; justify-content: center; }
+.sp2-cell.is-ticket .sp2-card-in > .sp2-band { position: absolute; top: 0; left: 0; }
+.sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
+  --vs: min(calc(86cqw / .66), calc((100cqh - 150px) / .79));
+  flex: 0 0 auto; width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
+  margin: calc(var(--vs) * -.16) 0 calc(var(--vs) * -.05);
+}
+.sp2-cell.is-ticket .sp2-big { margin-top: 10px; font-size: var(--fs-k44); }
+.sp2-cell.is-ticket .sp2-price { margin: 14px 0 0; align-self: center; width: calc(100% - 24px); }
 @media (max-width: 999px) {
-  .sp2-cell[data-cell="extend"] .sp2-card-in {
-    display: grid;
-    container-type: size;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    grid-template-rows: auto 1fr auto auto auto auto 1fr;
-    grid-template-areas: "band band" "art ." "art big" "art what" "art time" "art price" "art .";
-    justify-items: center;
-    align-items: center;
-  }
-  .sp2-cell[data-cell="extend"] .sp2-card-in > .sp2-art { width: min(calc(100cqh - 56px), 38cqw); height: min(calc(100cqh - 56px), 38cqw); margin: 0; }
-  .sp2-cell[data-cell="extend"] .sp2-price { margin: 8px 0 0; }
+  .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k30); }
+  .sp2-cell.is-ticket .sp2-price { width: calc(100% - 12px); }
 }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-band { grid-area: band; }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > :is(.sp2-art, .sp2-ico) { grid-area: art; }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-big { grid-area: big; }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-what { grid-area: what; }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-time { grid-area: time; }
-:is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-card-in > .sp2-price { grid-area: price; }
-@media (min-width: 1000px) {
-  .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
-    --vs: min(calc((100cqh - 44px) / .79), calc(44cqw / .66));
-    width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
-    margin: calc(var(--vs) * -.16) calc(var(--vs) * -.17) calc(var(--vs) * -.05);
-  }
-  .sp2-cell[data-cell="extend"] .sp2-card-in > .sp2-art { width: min(calc(100cqh - 48px), 44cqw); height: min(calc(100cqh - 48px), 44cqw); margin: 0; }
-  .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k44); }
-  :is(.sp2-cell.is-ticket, .sp2-cell[data-cell="extend"]) .sp2-price { margin: 10px 0 0; }
-}
-/* the phone's one-cell SEALED ROLL: the same air trim, so the canister — not its transparent canvas — takes the art slot */
-@media (max-width: 999px) {
-  .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
-    --vs: 92px;
-    flex: 0 0 auto; width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
-    margin: calc(var(--vs) * -.16) 0 calc(var(--vs) * -.05);
-  }
-  .sp2-cell[data-cell="extend"] .sp2-what { text-wrap: balance; }
+/* the narrower desktop cell: the busiest card (EVERYTHING BOOST: a 3-part WHAT + a long TIME) sets its words tighter */
+.sp2-card-in[data-stock="extend"] .sp2-what { text-wrap: balance; line-height: 1.05; }
+.sp2-card-in[data-stock="extend"] .sp2-time { text-wrap: balance; }
+/* a long NAME (EVERYTHING BOOST) is set smaller, never ellipsized (Andy: names never cut) */
+.sp2-card-in[data-stock="extend"] .sp2-name { overflow: visible; text-overflow: clip; font-size: var(--fs-k13); letter-spacing: 0; }
+/* a SHORT desktop row (≤ 680 tall): the narrow cell's two small lines tighten so the price stays on its card */
+@media (min-width: 1000px) and (max-height: 680px) {
+  .sp2-cell:not(.is-ticket) :is(.sp2-what, .sp2-time) { font-size: var(--fs-k13); line-height: 1.05; margin-top: 1px; }
+  .sp2-cell:not(.is-ticket) .sp2-big { font-size: var(--fs-k24); }
 }

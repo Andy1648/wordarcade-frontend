@@ -164,7 +164,7 @@ const WORD_RACE_GAME = {
   description: 'SAME WORDS FOR EVERYONE. FIRST TO 25.', // H6: not "25 WINS" (the currency)
   baseColor: '#FF4FA3',
   iconBg: '#1a0b2e',
-  badgeText: 'MULTI',
+  badgeText: 'SOLO/MULTI', // takes bots: playable alone (Andy oct28)
   badgeBg: '#000',
   badgeColor: '#FF4FA3',
   textColor: '#000',
@@ -182,7 +182,7 @@ const MINER_GAME = {
   description: 'RARER ANSWERS DIG DEEPER. FIRST TO THE CORE.',
   baseColor: '#FFD23F',
   iconBg: '#2a1a10',
-  badgeText: 'MULTI',
+  badgeText: 'SOLO/MULTI', // takes bots: playable alone (Andy oct28)
   badgeBg: '#000',
   badgeColor: '#FFD23F',
   textColor: '#000',

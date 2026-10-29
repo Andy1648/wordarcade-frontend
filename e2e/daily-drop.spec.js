@@ -37,6 +37,9 @@ async function boot(page, { gems = 100, drop = null, rng = null, open = true } =
     localStorage.setItem('taw.s2.wins', '0'); // nothing affordable: the dot is the drop's alone
     localStorage.setItem('taw.s2.keytier', '0');
     localStorage.setItem('taw.s2.gems', JSON.stringify({ bal: gems, mig: 1 }));
+    // every look already SEEN (v3/shopDots.js): the LOOKS dot stays out, so the UPGRADES dot is the drop's alone
+    localStorage.setItem('taw.s2.shopseen.looks', JSON.stringify(['chrome', 'inferno', 'void', 'prism', 'toxic', 'ember', 'frost', 'gold', 'plasma', 'nova', 'eclipse',
+      'thock', 'clack', 'cream', 'marble', 'typewriter', 'silent', 'arcade', 'vinyl', 'glass', 'steel', 'bass', 'crystal']));
     if (drop) localStorage.setItem('taw.s2.drop', JSON.stringify(drop));
   }, { secret: SECRET, id: row.id, gems, drop });
   await page.goto('/?portal=1&season2=1');
