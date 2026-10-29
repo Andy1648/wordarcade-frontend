@@ -38,7 +38,7 @@ async function seed(page) {
   });
 }
 
-for (const [w, h, tag] of [[1366, 657, 'desktop'], [390, 844, 'phone']]) {
+for (const [w, h, tag] of [[1366, 657, 'desktop'], [1920, 1080, 'wide'], [390, 844, 'phone']]) {
   test(`title surfaces @${tag}`, async ({ page }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: w, height: h });

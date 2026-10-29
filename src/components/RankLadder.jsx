@@ -128,7 +128,7 @@ export default function RankLadder({ onClose }) {
                       onClick={() => wear(i)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wear(i); } }}
                     >
-                      <span className="rl-plate"><KitRankPlate rank={x.req} w={176} shine={false} label={i > you + 2 ? '???' : undefined} /></span>
+                      <span className="rl-plate"><KitRankPlate rank={x.req} fit shine={false} label={i > you + 2 ? '???' : undefined} /></span>
                       <span className="rl-how">{i === wearing ? 'WEARING' : i === you ? 'YOURS' : how(x)}</span>
                     </li>
                   );
