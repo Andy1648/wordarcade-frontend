@@ -142,7 +142,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                   <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
                   {/* TITLE (oct28): the painted title sits ON your name, the way everyone else sees it; tap → TITLES */}
                   <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
-                    <KitRankPlate rank={title.req} w={132} />
+                    <KitRankPlate rank={title.req} fit className="pf-title-plate" />
                     <span className="pf-titlerow-go" aria-hidden="true">CHANGE ▸</span>
                   </button>
                 </div>

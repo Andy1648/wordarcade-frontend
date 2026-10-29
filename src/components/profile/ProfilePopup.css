@@ -90,6 +90,8 @@
 .pf-titlerow:hover { transform: rotate(0) scale(1.05); }
 .pf-titlerow:active { transform: rotate(-3deg) scale(0.96); }
 .pf-titlerow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; border-radius: 8px; }
+.pf-title-plate { --krp-h: min(30px, calc(150px / var(--krp-aspect, 4))); } /* never taller than the name it sits beside */
+@media (max-width: 600px) { .pf-title-plate { --krp-h: min(40px, calc(200px / var(--krp-aspect, 4))); } }
 .pf-titlerow-go {
   flex: none; margin-left: 6px;
   font: 400 var(--fs-k13, 13px) 'Bungee', sans-serif; color: #0d0618; white-space: nowrap;
