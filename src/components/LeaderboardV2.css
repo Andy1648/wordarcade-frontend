@@ -1116,3 +1116,52 @@
 }
 .lb2-bio::before { content: '\201C'; }
 .lb2-bio::after { content: '\201D'; }
+
+/* ===== oct29 OVERLAP AUDIT (item 9, after #565) =====
+   - a row GROWS to hold its bio / a two-line name (THIS WEEK's bios were cut at the bottom of a fixed 38-43px row);
+     a phone row is never under the 44px touch floor
+   - a row name never SHRINKS (FitText took it to 6.5px): it keeps the readable size - 13px floor desktop, 16px phone -
+     and wraps to a second line
+   - the header (YOU / CLAIM, tabs) sits above the podium: the #1 column's box no longer swallows its clicks at 1024-1366 */
+.lb2 .lb2-list .lb2-row { height: auto; min-height: calc(51px * var(--lb2-k)); padding-top: 3px; padding-bottom: 3px; }
+.lb2 .lb2-list .lb2-row.is-me { min-height: calc(68px * var(--lb2-k)); }
+.lb2--narrow .lb2-list .lb2-row { min-height: 44px; }
+.lb2--narrow .lb2-list .lb2-row.is-me { min-height: 50px; }
+.lb2 .lb2-row .lb2-name.lb2-name--wrap {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  line-height: 1.05;
+  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc(100cqw / var(--nl, 8))));
+}
+.lb2 .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: max(13px, min(max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))), calc((100cqw - 64px) / var(--nl, 8)))); }
+.lb2--narrow .lb2-row .lb2-name.lb2-name--wrap,
+.lb2--narrow .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
+/* a tag on the name's line (RIVAL, a weekly prize) takes its width out of the name's fit, so a name shrinks to the floor
+   before it ever wraps mid-word */
+.lb2 .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap {
+  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc((100cqw - 76px) / var(--nl, 8))));
+}
+.lb2--narrow .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
+/* the podium name: sized to its column down to a readable floor; past that it WRAPS (Andy oct21: a name is NEVER cut
+   with an ellipsis) - at a word gap if it has one, else between letters */
+.lb2 .lb2-pod-name-t.lb2-pod-name-t--cut {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  line-height: 1.05;
+  text-align: center;
+  padding: 0 3px;
+}
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t.lb2-pod-name-t--cut { white-space: normal; overflow: visible; text-overflow: clip; word-break: normal; overflow-wrap: anywhere; }
+/* a little more margin than the old 92cqw: the name-width estimate runs short for wide Bungee caps (GLYPHQUEE… at 1280) */
+.lb2 .lb2-col .lb2-pod-name-t.lb2-pod-name-t--cut { font-size: min(max(var(--fs-k14), calc(var(--fs-k18) * var(--pk))), max(13px, calc(82cqw / var(--nl, 8)))); }
+.lb2 .lb2-col--1 .lb2-pod-name-t.lb2-pod-name-t--cut { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(82cqw / var(--nl, 8)))); }
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t { font-size: var(--fs-body); }
+.lb2 .lb2-head { z-index: 6; }

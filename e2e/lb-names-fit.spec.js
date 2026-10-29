@@ -1,6 +1,7 @@
 // e2e/lb-names-fit.spec.js — NAMES ARE NEVER CUT (Andy oct21: "you have to let them shrink the name … find room"). On the
-// season-2 LEADERBOARD every name — YOUR pill in the header, the podium, the rows — is drawn WHOLE: scaled down to its
-// slot, never an ellipsis, never past its slot, and YOUR pill never reaches the centred LEADERBOARD title. The names here
+// season-2 LEADERBOARD every name — YOUR pill in the header, the podium, the rows — is drawn WHOLE: never an ellipsis,
+// never past its slot (YOUR pill scales to its slot; since the oct29 audit the podium + rows keep a readable floor and
+// WRAP instead of shrinking to 6.5px), and YOUR pill never reaches the centred LEADERBOARD title. The names here
 // are the 16-character maximum (the widest letters too), at the Chromebook sizes and on phones.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -50,11 +51,22 @@ for (const [w, h] of [[1280, 720], [1366, 768], [1280, 551], [1920, 1080], [390,
         const b = el.getBoundingClientRect();
         if (b.width === 0) continue;
         const cs = getComputedStyle(el);
+        if (cs.textOverflow === 'ellipsis' || (cs.webkitLineClamp && cs.webkitLineClamp !== 'none')) { bad.push(`${el.textContent}: cut (ellipsis / clamp)`); continue; }
         const inner = el.querySelector('.fit-in');
-        if (!inner) { bad.push(`${el.textContent}: not a FitText`); continue; }
-        const v = inner.getBoundingClientRect();
-        if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) bad.push(`${el.textContent}: ellipsis`);
+        if (inner) {
+          // YOUR pill: a FitText scaled down to its slot
+          const v = inner.getBoundingClientRect();
+          if (v.left < b.left - 1.5 || v.right > b.right + 1.5) bad.push(`${el.textContent}: drawn past its slot (${Math.round(v.left)}..${Math.round(v.right)} in ${Math.round(b.left)}..${Math.round(b.right)})`);
+          continue;
+        }
+        // the podium + the rows (oct29 audit): never shrunk under a readable floor - they WRAP instead. Whole = every
+        // letter drawn inside the name's box, nothing hidden by an overflow clip, at >= 13px (16px on a phone)
+        const rg = document.createRange(); rg.selectNodeContents(el);
+        const v = rg.getBoundingClientRect();
         if (v.left < b.left - 1.5 || v.right > b.right + 1.5) bad.push(`${el.textContent}: drawn past its slot (${Math.round(v.left)}..${Math.round(v.right)} in ${Math.round(b.left)}..${Math.round(b.right)})`);
+        if (cs.overflow !== 'visible' && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 3)) bad.push(`${el.textContent}: clipped`);
+        const floor = document.querySelector('.lb2--narrow') ? 16 : 13;
+        if (parseFloat(cs.fontSize) < floor - 0.5) bad.push(`${el.textContent}: ${cs.fontSize} (under ${floor}px)`);
       }
       const me = document.querySelector('.lb2-me-btn');
       const title = document.querySelector('.lb2-title');
