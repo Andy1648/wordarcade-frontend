@@ -109,7 +109,7 @@
   background: var(--k-panel-deep, #12071f);
   box-shadow: 3px 3px 0 #000;
   font-family: 'Bungee', cursive;
-  font-size: 16px;
+  font-size: var(--fs-k16);
   line-height: 1;
   text-transform: uppercase;
   color: #fff;
@@ -230,7 +230,7 @@
   margin: 0;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-k15);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--k-dim, #c9b8e8);
@@ -276,7 +276,7 @@
   color: var(--k-dim, #c9b8e8);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-k15);
   letter-spacing: 0.1em;
   cursor: pointer;
 }
