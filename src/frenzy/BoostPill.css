@@ -76,3 +76,6 @@
 @media (prefers-reduced-motion: reduce) {
   .boost-pill, .boost-pill.is-ending { animation: none; }
 }
+
+/* OVERDRIVE's painting (progress/boostArt.js — the same rocket as the shop card + the dock), tucked in front of its name */
+.boost-pill-art { flex: none; width: 1.7em; height: 1.7em; margin: -0.4em 0.1em -0.4em -0.3em; object-fit: contain; filter: drop-shadow(1px 1px 0 #000); pointer-events: none; user-select: none; }

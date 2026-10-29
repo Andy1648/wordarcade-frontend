@@ -655,6 +655,8 @@
   border-radius: 8px;
   box-shadow: 5px 5px 0 #000;
 }
+.st2-bt.has-art { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: 'art mult name clock' 'art mult what clock'; }
+.st2-bt-art { grid-area: art; width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(3px 3px 0 #000); pointer-events: none; user-select: none; } /* the boost's painting (boostArt.js) */
 .st2-bt.bd-boost1, .st2-bt.bd-rush { --bd-tone: #FF4FA3; --bd-line: #B8226E; }
 .st2-bt.bd-frenzy { --bd-tone: #FF6B3D; --bd-line: #B8401C; }
 .st2-bt.bd-xp { --bd-tone: #2EFFE0; --bd-line: #12A99A; }

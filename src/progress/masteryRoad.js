@@ -71,7 +71,7 @@ export function rewardInfo(mode, shape) {
     case 'badge':
       return { kind: 'badge', tier: shape.tier, roman: ROMAN[shape.tier], name: `${m.badge} ${ROMAN[shape.tier]}`, art: SEAL_ART, size: 's' };
     case 'chest':
-      return { kind: 'chest', name: 'GEM CHEST', art: '/shop/chest.webp', gems: shape.gems, size: shape.gems >= 25 ? 'm' : 's' };
+      return { kind: 'chest', name: 'GEM CHEST', art: '/shop/chest-v2.webp', gems: shape.gems, size: shape.gems >= 25 ? 'm' : 's' };
     case 'ticket':
       return { kind: 'ticket', name: 'FREE ROLL', art: '/icons/gears.webp', gems: TICKET_GEMS, size: 'm' };
     case 'hero': {
