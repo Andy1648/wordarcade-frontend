@@ -134,3 +134,38 @@ for (const [w, h] of [[2560, 1440], [1600, 900], [1536, 864], [1440, 900], [1366
     expect(off, JSON.stringify(off, null, 1)).toEqual([]);
   });
 }
+
+// oct29 (Andy: the SEALED ROLL "flowing off" the card): every box inside a shop card — art (its painted plate rides the
+// vessel's box), words, price — stays inside that card's face, and every card stays inside the shelf and the viewport. The
+// corner gem, the dot and the hover shine sit outside / sweep across on purpose.
+for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844], [360, 640]]) {
+  test(`${w}x${h}: nothing on a shop card runs off the card; no card runs off the shelf or the screen`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page);
+    await settle(page);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/fit-${w}x${h}.png` });
+    // the whole shelf is in the first view on a desktop (8 cards, 4 × 2); a phone scrolls the page, so its cards are
+    // measured against the shelf only
+    if (w < 1000) await page.setViewportSize({ width: w, height: 4000 });
+    const m = await page.evaluate(() => {
+      const out = [];
+      const grid = document.querySelector('.sp2-grid').getBoundingClientRect();
+      for (const cell of document.querySelectorAll('.sp2-grid > .sp2-cell')) {
+        const face = cell.querySelector('.kstc-card').getBoundingClientRect();
+        const id = cell.dataset.cell || 'chest';
+        if (face.left < grid.left - 1 || face.right > grid.right + 1) out.push({ id, card: 'off the shelf' });
+        if (face.left < -1 || face.right > innerWidth + 1 || face.bottom > innerHeight + 1) out.push({ id, card: 'off the screen', bottom: Math.round(face.bottom - innerHeight) });
+        if (face.bottom > grid.bottom + 1) out.push({ id, card: 'cut by the shelf', by: Math.round(face.bottom - grid.bottom) });
+        for (const e of cell.querySelectorAll('.kstc-card *')) {
+          if (e.closest('.sp2-gem, .sp2-dot, .sp2-shine, .sp2-float')) continue;
+          const r = e.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) continue;
+          const by = Math.max(face.left - r.left, r.right - face.right, face.top - r.top, r.bottom - face.bottom);
+          if (by > 2) out.push({ id, cls: String(e.className).slice(0, 40), by: Math.round(by) });
+        }
+      }
+      return out;
+    });
+    expect(m, JSON.stringify(m)).toEqual([]);
+  });
+}
