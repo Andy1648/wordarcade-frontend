@@ -883,4 +883,4 @@
    20px floors outgrow the scaled stage, so the WINS / XP / BOOSTS tabs ran over the centred STATS title and REBIRTH
    spilled out of its chip. The title moves beside ← MENU, and the chip names step down to 15px (the desktop floor is 13). */
 .st2[data-tight]:not(.st2--narrow) .st2-title { left: calc(200px * var(--st2-k)); right: auto; text-align: left; }
-.st2[data-tight]:not(.st2--narrow) .st2-chip-name { font-size: 15px; }
+.st2[data-tight]:not(.st2--narrow) .st2-chip-name { font-size: var(--fs-k15); }
