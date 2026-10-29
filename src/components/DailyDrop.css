@@ -110,6 +110,7 @@
 
 /* ---- CLAIMED: the reward line in the tier row's place ---- */
 .dd-reward { grid-area: row; justify-self: start; }
+.dd-pay-art { flex: none; object-fit: contain; filter: drop-shadow(2px 2px 0 #000); } /* OVERDRIVE's painting (boostArt.js) */
 .dd-pay { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .dd-pay-n { font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k20); line-height: 1; color: var(--k-yellow); -webkit-text-stroke: var(--k-stroke-s) var(--k-ink); paint-order: stroke fill; }
 .dd-pay-u { font-weight: 700; font-size: var(--fs-k18); color: var(--k-white); }

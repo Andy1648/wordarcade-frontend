@@ -36,6 +36,7 @@ import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
+import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
@@ -43,10 +44,8 @@ const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollRev
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
 // each cut file lands in public/shop/ (never a path that is not there: no 404s, no broken-image frame).
-const SHOP_ART = {
-  xp25: '/shop/xp.webp', wins25: '/shop/wins.webp', luck2: '/shop/luck.webp',
-  overdrive: '/shop/overdrive.webp', extend: '/shop/everything.webp',
-};
+// oct29: the ChatGPT gear-quality set (progress/boostArt.js — the SAME pictures the dock / STATS / pill show)
+const SHOP_ART = SHOP_ITEM_ART;
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -127,8 +126,7 @@ function DailyChestCard({ now, onOpen }) {
           <span className="sp2-left">{claimed ? '×0' : '×1'}<span className="sp2-left-w"> LEFT</span></span>
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
-          <img className="sp2-chest-base" src="/art/drop/chest-base.svg" alt="" draggable="false" />
-          <img className="sp2-chest-lid" src="/art/drop/chest-lid.svg" alt="" draggable="false" />
+          <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
         </span>
         <span className="sp2-big">CHEST</span>
         <span className="sp2-what">ONCE A DAY</span>
