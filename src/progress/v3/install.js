@@ -14,7 +14,7 @@ import * as ranks from './ranks.js';
 import * as hooks from './hooks.js';
 import * as stock from './stock.js'; // the SHOP's STOCK (P3) — ShopV2 reads it as V3.stock
 import * as drop from './dailyDrop.js'; // the DAILY FREE DROP — ShopV2 + the menu's UPGRADES dot read it as V3.drop
-import * as dots from './shopDots.js'; // the SHOP's new-thing dots (BOOSTS / LOOKS) — the menu's UPGRADES dot + ShopV2's tabs read it as V3.dots
+import * as dots from './shopDots.js'; // the SHOP's NEW dots — the menu's UPGRADES dot reads it as V3.dots (ShopV2 imports it)
 import { __v3 as xpV3, storedLevel } from '../xp.js';
 import { __v3 as starsV3 } from '../stars.js';
 import { __v3 as gemsV3, dropGemsForWord, gemsMigrated, stampGemsMigrated } from '../gemsCore.js';

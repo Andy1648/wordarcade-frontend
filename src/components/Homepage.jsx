@@ -716,20 +716,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       document.removeEventListener('visibilitychange', re);
     };
   }, []);
-  // THE SHOP's NEW-THING DOTS (oct28, v3/shopDots.js): an unseen hourly restock with something payable, or a newly affordable
-  // look, also lights UPGRADES — the same reads the shelf tabs inside the shop dot. Re-read on gems, a seen-mark, a tab return.
+  // THE SHOP's NEW-THING DOTS (oct28, v3/shopDots.js): a newly affordable look also lights UPGRADES (the shelf tabs read the same)
   const [shopNew, setShopNew] = useState(false);
-  useEffect(() => {
-    if (!SEASON2 || !V3.dots) return undefined;
-    const re = () => setShopNew(V3.dots.boostsNew(gems) || V3.dots.looksNew(gems));
-    re();
-    window.addEventListener(V3.dots.SHOP_DOTS_CHANGE, re);
-    document.addEventListener('visibilitychange', re);
-    return () => {
-      window.removeEventListener(V3.dots.SHOP_DOTS_CHANGE, re);
-      document.removeEventListener('visibilitychange', re);
-    };
-  }, [gems]);
+  useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
   const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());

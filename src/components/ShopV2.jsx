@@ -23,6 +23,7 @@ import { letterXpNow } from '../progress/letterXp';
 import { buyKeyPower } from '../progress/shop';
 // v3/stock.js rides in the v3 chunk (installed before the first render in season 2) — read through the V3 holder, so
 // no extra shared chunk is added to the eager index's preload map (payload ratchet)
+import * as DOTS from '../progress/v3/shopDots.js'; // the shelf tabs' NEW dots (oct28)
 import { V3 } from '../progress/season';
 import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '../lib/events.js';
 import { sndPurchase } from '../audio/gameSounds';
@@ -192,13 +193,11 @@ export default function ShopV2({ onBack }) {
   useStageScale(rootRef);
 
   useEffect(() => subscribeGems(setGems), []);
-  // the shelf tabs' NEW dots (oct28, v3/shopDots.js — the menu's UPGRADES dot reads the same): the shelf you're on is SEEN
+  // the shelf tabs' NEW dots (oct28, v3/shopDots.js — the menu's UPGRADES dot reads the same): LOOKS opened = its new looks SEEN
   useEffect(() => {
-    if (!V3.dots) return;
-    if (shelf === 'boosts') V3.dots.markBoostsSeen(now);
-    else if (shelf === 'looks') V3.dots.markLooksSeen(gems);
-  }, [shelf, gems, now]);
-  const tabDot = V3.dots ? { boosts: V3.dots.boostsNew(gems, now), looks: V3.dots.looksNew(gems), codes: false } : {};
+    if (shelf === 'looks') DOTS.markLooksSeen(gems);
+  }, [shelf, gems]);
+  const tabDot = { boosts: DOTS.boostsNew(now), looks: DOTS.looksNew(gems), codes: false };
   useEffect(() => {
     evShopOpened();
     rootRef.current?.focus();
