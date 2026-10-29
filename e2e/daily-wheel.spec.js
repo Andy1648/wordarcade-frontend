@@ -25,7 +25,7 @@ const noScroll = (page) => page.evaluate(() => ({
   y: document.documentElement.scrollHeight - innerHeight, x: document.documentElement.scrollWidth - innerWidth,
 }));
 
-test('menu: the WHEEL takes the top-right slot; NEWS + SETTINGS sit bottom-right; CREDITS lives in SETTINGS', async ({ page }) => {
+test('menu: the WHEEL takes the top-right slot; NEWS sits bottom-right, SETTINGS in the rail; CREDITS lives in SETTINGS', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page);
   const tile = page.locator('.hp-icons [data-nav="wheel"]');
@@ -33,10 +33,12 @@ test('menu: the WHEEL takes the top-right slot; NEWS + SETTINGS sit bottom-right
   await expect(tile.locator('.kb-idot')).toBeVisible(); // today's free spin is waiting
   await expect(page.locator('.hp-icons [data-nav="news"], .hp-icons [data-nav="settings"]')).toHaveCount(0);
   await expect(page.locator('.hp-util [data-nav="news"]')).toBeVisible();
-  await expect(page.locator('.hp-util [data-nav="settings"]')).toBeVisible();
+  // oct28: SETTINGS left that corner for a named button in the left rail (Andy "tf why is it at the corner")
+  await expect(page.locator('.hp-util [data-nav="settings"]')).toHaveCount(0);
+  await expect(page.locator('.hp-rail [data-nav="settings"]')).toBeVisible();
   await expect(page.locator('.homepage-credits-link')).toHaveCount(0);
   if (SHOTS) await page.screenshot({ path: `${DIR}/menu-1366x768.png` });
-  await page.locator('.hp-util [data-nav="settings"]').click();
+  await page.locator('.hp-rail [data-nav="settings"]').click();
   await page.locator('.sp-credits:visible').click();
   await expect(page.locator('.credits-wrap')).toBeVisible();
 });

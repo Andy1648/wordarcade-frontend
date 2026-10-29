@@ -83,7 +83,7 @@ const SCREENS = {
   rebirth: async (p) => { await navControl(p, 'rebirth').click(); await p.locator('.rb2').waitFor(); },
   stats: async (p) => { await navControl(p, 'stats').click(); await p.locator('.st2').waitFor(); },
   // oct24 DAILY WHEEL: CREDITS lives inside SETTINGS (the cog moved to the bottom-right cluster)
-  credits: async (p) => { await p.locator('.hp-util [data-nav="settings"]').first().click(); await p.locator('.sp-credits:visible').click(); await p.locator('.credits-wrap').waitFor(); },
+  credits: async (p) => { await p.locator('[data-nav="settings"]:visible').first().click(); await p.locator('.sp-credits:visible').click(); await p.locator('.credits-wrap').waitFor(); },
   'word bomb dialog': async (p) => { await (await revealMode(p, 'word-bomb')).click(); await p.locator('.mode-dialog-shell').waitFor(); },
   'chain dialog': async (p) => { await (await revealMode(p, 'chain')).click(); await p.locator('.mode-dialog-shell').waitFor(); },
   'join room': async (p) => { await (await revealMode(p, 'word-bomb')).click(); await p.locator('.mode-dialog-btn-join').click(); await p.locator('.browser-wrap').waitFor(); },

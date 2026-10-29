@@ -136,6 +136,7 @@ function sayGate(g) {
  *               `value` = the live line under the label; `locked` = its gate ("R2" / "LV10") while it is closed.
  * @param wins / gems  balances; gems null hides its pill (MARKS not revealed yet)
  * @param extra  rendered after the pills (the phone puts CREDITS there)
+ * @param settings  the desktop's SETTINGS button (AudioControls variant 'rail'), full width under the four tiles
  * @param daily  the DAILY tile (contracts/DailyTile — streak flame + contracts), full width under the four tiles
  */
 // THE DOT NUDGE (MENU MOTION LAW, Andy oct9 "the 4 icons in the menu … at least some animation"): a rail tile with an
@@ -185,7 +186,7 @@ function useDotNudge(rootRef, enabled) {
   }, [rootRef, enabled]);
 }
 
-export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, daily = null, foot = null }) {
+export function MenuRail({ items, wins, gems, navigating, className = '', extra = null, settings = null, daily = null, foot = null }) {
   const navRef = useRef(null);
   const reduced = useReduceMotion();
   useDotNudge(navRef, !reduced);
@@ -222,6 +223,8 @@ export function MenuRail({ items, wins, gems, navigating, className = '', extra 
           />
         );
       })}
+      {/* SETTINGS (Andy oct28): the desktop's named SETTINGS button, full width under the four doors */}
+      {settings}
       {daily}
       {foot}
     </nav>
