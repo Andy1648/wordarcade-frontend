@@ -452,8 +452,71 @@
 .rs2--narrow .rs2-contract { gap: 6px; padding: 2px 8px 2px 2px; }
 .rs2--narrow .rs2-contract img { width: 24px; height: 24px; }
 .rs2--narrow[data-ko-tight] .rs2-learn .missed-hold-prompt { display: none; }
-/* a NARROW LAPTOP (1024 wide, the sheet at ~0.75): the labels keep their 14px floors while the columns shrink, so the
-   tally (the middle column) was the one squeezed — the hero and the player list give it 80u (overlap audit oct29) */
-@media (min-width: 701px) and (max-width: 1100px) {
-  .game-over-overlay .game-over-card.rs2:not(.rs2--narrow) { grid-template-columns: calc(410px * var(--u)) minmax(0, 1fr) calc(320px * var(--u)); }
+
+/* ===== HEAVY WINS (oct29, after the overlap audit) =====================================================================
+   A 6-player WIN that also finished a CONTRACT and paid gems from three sources (WIN · WORDS · STREAK) is the tallest
+   tally the card draws: XP, the WINS line with its chain, WINNER BONUS (+ its note), CONTRACT DONE, then GEMS + TOTAL.
+   On the fixed 1366×657 sheet that ran 62px (1366×768), 77px (1280×551) and ~100px (1024) into the PLAY AGAIN row,
+   the third gem chip hung out of its box, and at 1024 a three-digit TOTAL ran out of its own. Three moves, no content
+   dropped:
+   1. THE SHEET USES THE WINDOW. It was 1366×657 × k — on a 4:3 laptop 280px of the window sat empty above and below it,
+      on a short-wide one 180px either side. It now grows to the window: taller (to 900u) on a tall window, wider (to
+      1.2×) on a wide one. The extra lands in the middle row / the tally column (the 1fr track); the hero and the player
+      list keep their scaled sizes.
+   2. THE TALLY READS ITS OWN SIZE (a container): tall, GEMS sits over the TOTAL (the room the taller sheet bought);
+      short, GEMS sits beside the TOTAL — and where the column is wide the XP block and CONTRACT DONE share a row.
+   3. THE GEMS box grows to hold every source chip (a third one hung out of it), and the TOTAL's figure is sized by its own box and its digit count (--len, ResultsCard.jsx) — a 3+ digit total
+      never leaves it. */
+.game-over-overlay .game-over-card.rs2:not(.rs2--narrow) {
+  width: min(calc(100vw - 16px), calc(1640px * var(--u)));
+  max-width: none;
+  height: min(calc(100vh - 16px), calc(900px * var(--u)));
+  max-height: none;
 }
+.rs2:not(.rs2--narrow) .rs2-tally { container: rs2tally / size; } /* its height is the grid rows', never its content's */
+/* the FOOT row is edge controls only — MENU (+ the extras) under the hero, PLAY AGAIN under the players — so the
+   tally column runs down through it: a long tally takes the space between them instead of the PLAY AGAIN row's */
+.rs2:not(.rs2--narrow) .rs2-tally { grid-row: 2 / 4; z-index: 1; }
+.rs2:not(.rs2--narrow) .rs2-foot .rs2-extras { max-width: calc(var(--rs2-hero-w, 470px) * var(--u) - 100px); flex-wrap: wrap; white-space: normal; }
+/* the gem sources stack in their column and the box grows to hold them (a third chip used to hang out of it) */
+.rs2:not(.rs2--narrow) .rs2-sum > .rs2-gems { flex: 0 0 auto; height: auto; min-height: max(44px, calc(60px * var(--u))); padding-block: 4px; }
+.rs2:not(.rs2--narrow) .rs2-sum > .rs2-total { flex: 1 1 0; min-width: 0; container: rs2total / inline-size; }
+.rs2:not(.rs2--narrow) .rs2-total-num {
+  /* the one big number, but never wider than its box: (box − the wins icon − gaps − padding) ÷ its characters */
+  font-size: min(max(var(--fs-k38), calc(var(--fs-k44) * var(--u))), calc((100cqi - max(28px, calc(40px * var(--u))) - 12px) / (var(--len, 4) * 0.84)));
+  white-space: nowrap;
+}
+/* a TALL tally (a 4:3 laptop, a 1366×768, a 1920×1080 — the sheet grew to the window): GEMS over the TOTAL, each the
+   column's width, so the sources never squeeze the TOTAL's figure */
+@container rs2tally (min-height: 480px) {
+  .rs2-sum:has(.gems-earned-srcs) { flex-direction: column; gap: calc(8px * var(--u)); }
+  .rs2-sum:has(.gems-earned-srcs) > .rs2-total { flex: none; }
+  /* the GEMS row has the column's width: its sources run two to a column, so the row stays one chip-pair tall */
+  .rs2-gems .gems-earned-srcs { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; gap: 1px 4px; justify-items: start; }
+}
+/* The tally WRAPS as a row: every block takes a full line, except XP and CONTRACT DONE, which share one when the column
+   is wide enough for both (a short-wide laptop) — a container query cannot restyle the container itself, so the
+   pairing is plain flex-wrap */
+.rs2:not(.rs2--narrow) .rs2-tally { flex-flow: row wrap; align-content: flex-start; gap: calc(7px * var(--u)) calc(10px * var(--u)); }
+.rs2:not(.rs2--narrow) .rs2-tally > * { flex: 1 0 100%; min-width: 0; }
+/* CONTRACT DONE (a gems receipt) rides up beside XP — where a wide column pairs them; a narrow one gives it its own line */
+.rs2:not(.rs2--narrow) .rs2-tally > * { order: 3; }
+.rs2:not(.rs2--narrow) .rs2-tally > .rs2-stats { order: 0; }
+.rs2:not(.rs2--narrow) .rs2-tally > .rs2-xp { order: 1; }
+.rs2:not(.rs2--narrow) .rs2-tally > .rs2-contract { order: 2; }
+.rs2:not(.rs2--narrow) .rs2-tally > .rs2-xp { flex: 1 1 auto; }
+.rs2:not(.rs2--narrow) .rs2-tally > .rs2-contract { flex: 0 0 auto; align-self: center; }
+/* XP is ONE row: +XP and its why, then the level + bar beside them (the bar row was a second ~40u line) */
+.rs2:not(.rs2--narrow) .rs2-xp { display: flex; flex-wrap: wrap; align-items: center; column-gap: 14px; row-gap: 6px; }
+.rs2:not(.rs2--narrow) .rs2-xp-top { flex: 0 0 auto; }
+.rs2:not(.rs2--narrow) .rs2-xp-bar-row { flex: 1 1 0; min-width: 100px; margin-top: 0; }
+/* the bar row only reserves the LV +N sticker's corner when there is one */
+.rs2:not(.rs2--narrow) .rs2-xp:not(:has(.rs2-xp-pop)) .rs2-xp-bar-row { padding-right: 0; }
+/* a big round (rebirths: "= +1,982") drops its result under the equation instead of running out of the box */
+.rs2:not(.rs2--narrow) .rs2-wins-eq { flex-wrap: wrap; row-gap: 4px; }
+.rs2:not(.rs2--narrow) .rs2-wins-n { flex: 1 0 auto; }
+/* a narrow laptop (≤ 1100 wide): the hero and the player list give the tally 80u, so the WINS chain keeps to two rows */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .game-over-overlay .game-over-card.rs2:not(.rs2--narrow) { --rs2-hero-w: 410px; grid-template-columns: calc(410px * var(--u)) minmax(0, 1fr) calc(320px * var(--u)); }
+}
+

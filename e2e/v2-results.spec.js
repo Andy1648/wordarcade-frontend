@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 import { pinDay } from './support/fixedDay.js';
-import { expectNoLayoutDefects } from './support/overlap.js';
+import { expectNoLayoutDefects, layoutDefects } from './support/overlap.js';
 
 const ME = 'e2e-player';
 const NAMES = ['YOU', 'RIVAL', 'KIMBERLY', 'SAMWISE', 'LEXI', 'ZZZAP'];
@@ -304,5 +304,69 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 551 }, { 
     }
     await expectNoLayoutDefects(expect, page, `results ${vp.width}x${vp.height}`, { scope: '.rs2' });
     if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/overlap-audit/results-${vp.width}x${vp.height}.png` });
+  });
+}
+
+// HEAVY WIN (oct29, after the overlap audit): the tallest tally the card draws — a 6-player WIN on a day whose CONTRACT
+// the round finishes (pinned), word drops on every few words (Math.random pinned low → a WORDS gem source beside WIN and
+// STREAK), and rebirths behind it (×27: a 4-digit TOTAL). It ran 62–100px into the PLAY AGAIN row, its third gem chip
+// hung out of the gems box, and at 1024 a 3+ digit TOTAL ran out of its own box. At each size: no tally / hero / player
+// block reaches the footer, nothing overlaps or spills, the card does not scroll, no fit-check content is dropped
+// (data-ko-tight), the gem sources are inside their box and the TOTAL's figure inside its own.
+for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 551 }, { width: 1024, height: 768 }, { width: 1366, height: 657 }, { width: 1920, height: 1080 }]) {
+  test(`@${vp.width}x${vp.height} heavy win: the whole tally fits above the footer`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.addInitScript(() => { Math.random = () => 0.05; });
+    await play(page, { outcome: 'win', vp, reduce: true, season2: true, seed: {
+      'taw.s2.gems': JSON.stringify({ v: 1, bal: 1840, peak: 60, streak: 3, mig: 1 }),
+      'taw.s2.rebirths': '3', 'taw.s2.xp': JSON.stringify({ lv: 5, f: 0.1, rc: 3, v: 10 }),
+    } });
+    const card = page.locator('.rs2');
+    await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(300);
+    await expect(card.locator('[data-testid="contract-done"]')).toBeVisible();
+    expect(await card.locator('.rs2-gems .gems-earned-src').count(), 'three gem sources').toBeGreaterThanOrEqual(3);
+    const m = await page.evaluate(() => {
+      const c = document.querySelector('.rs2');
+      const foot = document.querySelector('.rs2-foot').getBoundingClientRect();
+      const vis = (el) => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().height > 0; };
+      // the hero + players stay above the footer; the tally may run down BETWEEN the footer's edge controls (MENU + the
+      // extras under the hero, PLAY AGAIN under the players) but never into one, nor past the card
+      const ctrls = [...document.querySelectorAll('.rs2-foot button, .rs2-foot a, .rs2-extras > *')].filter(vis).map((e) => e.getBoundingClientRect());
+      const cb = c.getBoundingClientRect();
+      const hit = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const intoFoot = [
+        ...['.rs2-hero', '.rs2-players'].map((sel) => document.querySelector(sel)).filter((el) => el && vis(el))
+          .filter((el) => [...el.querySelectorAll('*')].some((k) => vis(k) && k.getBoundingClientRect().bottom > foot.top + 1)).map((el) => el.className),
+        ...[...document.querySelectorAll('.rs2-tally *')].filter(vis).filter((k) => { const r = k.getBoundingClientRect(); return r.bottom > cb.bottom - 4 || ctrls.some((q) => hit(r, q)); }).map((k) => `tally ${k.className}`).slice(0, 4),
+      ];
+      const inside = (sel, boxSel) => [...document.querySelectorAll(sel)].map((e) => {
+        const r = e.getBoundingClientRect(); const b = e.closest(boxSel).getBoundingClientRect();
+        return r.left >= b.left - 1 && r.right <= b.right + 1 && r.top >= b.top - 1 && r.bottom <= b.bottom + 1;
+      });
+      const num = document.querySelector('.rs2-total-num');
+      const rg = document.createRange(); rg.selectNodeContents(num); const nr = rg.getBoundingClientRect(); const tb = document.querySelector('.rs2-total').getBoundingClientRect();
+      return {
+        intoFoot, tight: c.dataset.koTight || '', over: c.scrollHeight - c.clientHeight, overX: c.scrollWidth - c.clientWidth,
+        players: vis(document.querySelector('.rs2-players')),
+        chipsInside: inside('.rs2-gems .gems-earned-src', '.rs2-gems').every(Boolean),
+        totalInside: nr.left >= tb.left && nr.right <= tb.right, totalPx: parseFloat(getComputedStyle(num).fontSize), total: num.dataset.winsTotal,
+      };
+    });
+    if (process.env.SHOTS) { await page.waitForTimeout(6000); await page.screenshot({ path: `claude/shots/overlap-audit/heavy-win-${vp.width}x${vp.height}.png` }); }
+    expect(Number(m.total), 'a 4-digit TOTAL (rebirths ×27)').toBeGreaterThanOrEqual(1000);
+    expect(m.intoFoot, 'nothing runs into a footer control or off the card').toEqual([]);
+    expect(m.over, 'the card does not scroll').toBeLessThanOrEqual(0);
+    expect(m.overX, 'the card does not scroll sideways').toBeLessThanOrEqual(0);
+    expect(m.tight, 'nothing had to be dropped to fit').toBe('');
+    expect(m.players, 'the player list is on the card').toBe(true);
+    expect(m.chipsInside, 'every gem source inside the gems box').toBe(true);
+    expect(m.totalInside, 'the TOTAL figure inside its box').toBe(true);
+    expect(m.totalPx, 'the TOTAL still reads big').toBeGreaterThanOrEqual(20);
+    const d = await layoutDefects(page, { scope: '.rs2' });
+    expect(d.overlaps).toEqual([]);
+    expect(d.spills).toEqual([]);
+    expect(d.offscreen).toEqual([]);
   });
 }

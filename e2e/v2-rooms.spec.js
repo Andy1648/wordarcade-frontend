@@ -247,3 +247,20 @@ for (const vp of [{ width: 1024, height: 768 }, { width: 1366, height: 768 }, { 
     if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/overlap-audit/lobby-${vp.width}x${vp.height}.png` });
   });
 }
+
+// oct29: under the lobby's fit-zoom (0.8 at 1280x551) the "TAP TO COPY" caption under the code rendered 11px. It holds
+// the 13px desktop floor now (useFitZoom exposes the zoom as --fit-zoom) and stays clear of the code tiles above it.
+for (const vp of [{ width: 1280, height: 551 }, { width: 1163, height: 450 }, { width: 1366, height: 657 }]) {
+  test(`@${vp.width}x${vp.height}: TAP TO COPY reads ≥ 13px under the fit-zoom`, async ({ page }) => {
+    await lobby(page, { vp });
+    await page.waitForTimeout(300);
+    const r = await page.locator('.room-code-copied').evaluate((e) => {
+      const px = parseFloat(getComputedStyle(e).fontSize) * (e.currentCSSZoom || 1);
+      const c = e.getBoundingClientRect();
+      const tiles = [...document.querySelectorAll('.room-code-tile')].map((t) => t.getBoundingClientRect());
+      return { px, clear: tiles.every((t) => c.top >= t.bottom - 1) };
+    });
+    expect(r.px).toBeGreaterThanOrEqual(13);
+    expect(r.clear, 'the caption sits under the tiles').toBe(true);
+  });
+}
