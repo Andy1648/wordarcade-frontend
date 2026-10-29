@@ -1,69 +1,55 @@
-// KitRankPlate.jsx — 03 RANK PLATES (claude/mockups/v2/KitLevelUp.dc.html): the v3 rank as a NAME BADGE whose shape and
-// trim escalate up the 16-step ladder (bare slab → notch → keycap → hex … → horns, crown, wings + fangs → the ★ tiers).
+// KitRankPlate.jsx — a TITLE as a painted object (Andy oct28: "titles … have no personality … mix it up with the design
+// formats"). The 16 v3 titles climb through six FORMATS (titleFormats.js): masking TAPE → a die-cut STICKER → a riveted
+// STEEL plate → a ribbon BANNER → a NEON sign → a gold MARQUEE. The art is one painted image per format (public/titles/);
+// the name is Bungee in the title's own ink on the art's calm centre, sized from its length (no layout read).
 //
 //   <KitRankPlate rank="R6" />                    KEYFIEND, 156 px wide
 //   <KitRankPlate rank={11} w={120} />            VOIDTYPER by ladder index
 //   <KitRankPlate rank="R2" label="#7" />          the board's "#7" on CLACKER's plate
-//   <KitRankPlate rank="R6" fit />                 FIT: sized by its name (13 px) and the CSS height
-//                                                  (--krp-h, default 28 px) — the art stretches to the text,
-//                                                  strokes stay true (non-scaling). For dense lists (the board).
+//   <KitRankPlate rank="R6" fit />                 FIT: as tall as the CSS height (--krp-h, default 28 px), as wide as
+//                                                  the art's aspect makes it — never stretched. For dense lists.
 //
-// SVG art (rankPlates.js), never CSS shapes. The ★ tiers get ONE sheen pass when the plate mounts (`shine`, default on)
-// — finite, transform only, skipped under REDUCE MOTION; the mockup's looping shimmer is a one-shot here (CLAUDE.md:
-// zero new infinite animations). Nothing else moves; the parent animates the plate as a whole.
-import { useEffect, useId, useRef } from 'react';
-import { plateFor } from './rankPlates.js';
+// The art keeps its aspect (Andy: no stretched art). The lit formats (NEON, MARQUEE) SWITCH ON once when the plate
+// mounts (`shine`, default on) — a finite opacity flicker, skipped under REDUCE MOTION; nothing loops.
+import { useEffect, useRef } from 'react';
+import { titleLook, nameScale } from './titleFormats.js';
 import { kitPlay } from './motion.js';
 import './tokens.css';
 import './KitRankPlate.css';
 
-const NONE = 'M0 0';
-const SHEEN = [{ transform: 'translateX(0) skewX(-20deg)' }, { transform: 'translateX(260px) skewX(-20deg)' }];
+const SWITCH_ON = [{ opacity: 0.35 }, { opacity: 1, offset: 0.25 }, { opacity: 0.55, offset: 0.4 }, { opacity: 1 }];
 
 export function KitRankPlate({ rank = 'R0', w = 156, label, shine = true, fit = false, className = '', innerRef, ...rest }) {
-  const p = plateFor(rank);
-  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
-  const gid = `krp-g${uid}`;
-  const cid = `krp-c${uid}`;
-  const sheen = useRef(null);
+  const t = titleLook(rank);
+  const f = t.fmt;
+  const text = label != null ? label : t.name;
+  const art = useRef(null);
+  const lit = t.f === 'neon' || t.f === 'marquee';
   useEffect(() => {
-    if (p.star && shine) kitPlay(sheen.current, SHEEN, { duration: 700, delay: 450, easing: 'ease-in' });
-  }, [p.star, shine]);
-  const h = Math.round(w * 0.4);
-  const fx = `drop-shadow(3px 3px 0 #000)${p.glow ? ` drop-shadow(0 0 7px ${p.glow})` : ''}`;
-  const size = fit ? 'fit' : w >= 170 ? 'l' : w >= 140 ? 'm' : 's';
-  const vfx = fit ? 'non-scaling-stroke' : undefined;
+    if (lit && shine) kitPlay(art.current, SWITCH_ON, { duration: 520, delay: 300, easing: 'steps(1, end)' });
+  }, [lit, shine]);
+  const [l, top, r, b] = f.box;
+  const h = Math.round(w / f.aspect);
+  const style = {
+    '--krp-ink': t.ink,
+    '--krp-k': nameScale(t, text),
+    '--krp-tilt': `${f.tilt}deg`,
+    '--krp-box': `${top * 100}% ${r * 100}% ${b * 100}% ${l * 100}%`,
+    '--krp-aspect': f.aspect,
+    ...(fit ? null : { width: `${w}px`, height: `${h}px`, '--krp-h': `${h}px` }),
+  };
   return (
     <span
       ref={innerRef}
-      className={`krp krp-${size}${p.star ? ' is-star' : ''}${className ? ` ${className}` : ''}`}
-      style={fit ? { '--krp-txt': p.txt } : { width: `${w}px`, height: `${h}px`, '--krp-txt': p.txt }}
-      data-rank-plate={p.req}
-      data-rank-title={p.name}
+      className={`krp krp-${t.f}${fit ? ' krp-fit' : ''}${f.stroke ? ' is-stroked' : ''}${className ? ` ${className}` : ''}`}
+      style={style}
+      data-rank-plate={t.req}
+      data-rank-title={t.name}
+      data-title-format={t.f}
       {...rest}
     >
-      <svg className="krp-art" viewBox="0 0 180 72" width={fit ? '100%' : w} height={fit ? '100%' : h} preserveAspectRatio={fit ? 'none' : undefined} style={{ filter: fx }} aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor={p.g[0]} />
-            <stop offset=".5" stopColor={p.g[1]} />
-            <stop offset="1" stopColor={p.g[2]} />
-          </linearGradient>
-          <clipPath id={cid}>
-            <path d={p.shape} />
-          </clipPath>
-        </defs>
-        <path d={p.back || NONE} fill={p.c3 || '#000'} stroke="#000" strokeWidth={fit ? 2 : 4} vectorEffect={vfx} strokeLinejoin="round" fillRule="evenodd" />
-        <g clipPath={`url(#${cid})`}>
-          <rect x="-10" y="-10" width="200" height="90" fill={p.lip} />
-          <rect x="-10" y="-10" width="200" height="57" fill={`url(#${gid})`} />
-          <rect x="-10" y="21" width="200" height="3" fill="#fff" opacity=".35" />
-          {p.star ? <path ref={sheen} className="krp-sheen" d="M-40 -10 H-18 L-38 82 H-60 Z" fill="#fff" opacity=".6" /> : null}
-        </g>
-        <path d={p.shape} fill="none" stroke="#000" strokeWidth={fit ? 2.5 : p.star ? 5.5 : 4.5} vectorEffect={vfx} strokeLinejoin="round" />
-        <path d={p.front || NONE} fill={p.c4 || '#000'} stroke="#000" strokeWidth={fit ? 1.5 : 2.5} vectorEffect={vfx} strokeLinejoin="round" />
-      </svg>
-      <span className={`krp-name${p.txt !== '#000' ? ' is-stroked' : ''}`}>{label != null ? label : p.name}</span>
+      <img ref={art} className="krp-art" src={f.src} alt="" aria-hidden="true" draggable="false" decoding="async" />
+      <span className="krp-name">{text}</span>
     </span>
   );
 }
