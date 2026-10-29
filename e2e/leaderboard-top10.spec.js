@@ -1,4 +1,4 @@
-// e2e/leaderboard-top10.spec.js — Andy oct2 LB10 → oct13 TOP 20 → oct14 TOP 50: the board shows the TOP 50 only. A claimed player
+// e2e/leaderboard-top10.spec.js — Andy oct2 LB10 → oct13 TOP 20 → oct14 TOP 50 → oct28 TOP 100: the board shows the TOP 100 only. A claimed player
 // below it gets ONE pinned row with their real rank (fetched from the server), never "unranked"; the
 // end-screen "YOU'D BE #N" is the true rank past 10 (a server-side count), not capped at 10.
 import { test, expect } from '@playwright/test';
@@ -10,11 +10,11 @@ const seed = (n) => Array.from({ length: n }, (_, i) => ({
   id: `seed-${i + 1}`, username: `Player${i + 1}`, level: 60 - i, rebirths: 0, lifetime_words: 10000 - i * 100, wins_per_word: 10,
 }));
 
-test('the board shows 50 rows; a claimed player at #52 gets a pinned row with that rank', async ({ page }) => {
+test('the board shows 100 rows; a claimed player at #102 gets a pinned row with that rank', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await installBackendMock(page);
-  const rows = [...seed(55)];
-  rows.splice(51, 0, { id: 'me-1', username: 'Typer_47', level: 9, rebirths: 0, lifetime_words: 4950, wins_per_word: 5 }); // between #51 (LV10) and seed #52 (LV9, 4900 words)
+  const rows = [...seed(105)];
+  rows.splice(101, 0, { id: 'me-1', username: 'Typer_47', level: -41, rebirths: 0, lifetime_words: -50, wins_per_word: 5 }); // between seed #101 (LV-40) and seed #102 (LV-41, -100 words)
   await mockBoard(page, rows);
   await page.addInitScript(() => {
     localStorage.setItem('taw.seenMenuSpotlight', '1');
@@ -24,10 +24,10 @@ test('the board shows 50 rows; a claimed player at #52 gets a pinned row with th
   await page.goto('/?portal=1');
   await menuReady(page);
   await page.locator('.homepage-nav-btn.is-board').click();
-  await expect(page.locator('.lb-list:not(.lb-list--me) .lb-row')).toHaveCount(50); // TOP 50 (Andy oct14; was 20 oct13)
+  await expect(page.locator('.lb-list:not(.lb-list--me) .lb-row')).toHaveCount(100); // TOP 100 (Andy oct28; 50 oct14, 20 oct13)
   const me = page.locator('.lb-list--me .lb-row.is-me');
-  await expect(me).toHaveAttribute('data-rank', '52');
-  await expect(me.locator('.lb-rank')).toHaveText('52');
+  await expect(me).toHaveAttribute('data-rank', '102');
+  await expect(me.locator('.lb-rank')).toHaveText('102');
   await expect(me.locator('.lb-you-badge')).toHaveText('YOU');
   await expect(page.locator('body')).not.toContainText(/unranked/i);
 });
