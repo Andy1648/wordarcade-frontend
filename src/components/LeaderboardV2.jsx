@@ -569,8 +569,7 @@ export default function LeaderboardV2({ onBack }) {
                     {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : null}
                     {mine && <span className="lb2-you">YOU</span>}
                     {/* oct29 audit: FitText shrank a long name to ~9px here. The CSS sizes it to the column with a readable
-                        floor (13px desktop, 16px phone); past that it ends in an ellipsis (oct18: never a mid-word break on the
-                        podium) and a tap opens the full name */}
+                        floor (13px desktop, 16px phone); past that it wraps - never an ellipsis (Andy oct21) */}
                     <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{name}</span>
                   </span>
                   {p && bios[p.id] ? <span className="lb2-pod-bio" data-testid="lb2-pod-bio">{bios[p.id]}</span> : null}

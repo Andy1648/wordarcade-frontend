@@ -1140,9 +1140,8 @@
 .lb2--narrow .lb2-list .lb2-row { min-height: 44px; }
 .lb2--narrow .lb2-list .lb2-row.is-me { min-height: 50px; }
 .lb2 .lb2-row .lb2-name.lb2-name--wrap {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  display: block;
+  overflow: visible;
   white-space: normal;
   overflow-wrap: anywhere;
   text-overflow: clip;
@@ -1158,16 +1157,21 @@
   font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc((100cqw - 76px) / var(--nl, 8))));
 }
 .lb2--narrow .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
-/* the podium name: one line at a readable floor, then an ellipsis (no FitText shrink, no mid-word break) */
+/* the podium name: sized to its column down to a readable floor; past that it WRAPS (Andy oct21: a name is NEVER cut
+   with an ellipsis) - at a word gap if it has one, else between letters */
 .lb2 .lb2-pod-name-t.lb2-pod-name-t--cut {
   display: block;
   min-width: 0;
   max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  line-height: 1.05;
+  text-align: center;
   padding: 0 3px;
 }
+.lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t.lb2-pod-name-t--cut { white-space: normal; overflow: visible; text-overflow: clip; word-break: normal; overflow-wrap: anywhere; }
 /* a little more margin than the old 92cqw: the name-width estimate runs short for wide Bungee caps (GLYPHQUEE… at 1280) */
 .lb2 .lb2-col .lb2-pod-name-t.lb2-pod-name-t--cut { font-size: min(max(var(--fs-k14), calc(var(--fs-k18) * var(--pk))), max(13px, calc(82cqw / var(--nl, 8)))); }
 .lb2 .lb2-col--1 .lb2-pod-name-t.lb2-pod-name-t--cut { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(82cqw / var(--nl, 8)))); }

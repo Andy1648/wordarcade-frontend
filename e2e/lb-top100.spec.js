@@ -74,6 +74,10 @@ function overlapsIn(page) {
         if (px < (narrowStage ? 16 : 13) - 0.5) out.push(`podium ${col.dataset.place}: name at ${px.toFixed(1)}px`);
         const nb = pn.getBoundingClientRect(); const cb = col.getBoundingClientRect();
         if (nb.left < cb.left - 2 || nb.right > cb.right + 2) out.push(`podium ${col.dataset.place}: name runs out of its column`);
+        // Andy oct21: a name is NEVER cut - no ellipsis, nothing clipped (it wraps instead)
+        const pcs = getComputedStyle(pn);
+        const clipsP = pcs.overflow !== 'visible' && (pn.scrollWidth > pn.clientWidth + 1 || pn.scrollHeight > pn.clientHeight + 3);
+        if (pcs.textOverflow === 'ellipsis' || clipsP) out.push(`podium ${col.dataset.place}: name is cut`);
       }
       const parts = ['.lb2-pod-name', '.lb2-pod-bio', '.lb2-pod-plate', '.lb2-pod-stats'].map((s) => [s, col.querySelector(s)]).filter(([, e]) => e);
       for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
@@ -94,6 +98,9 @@ function overlapsIn(page) {
       if (nm) {
         const px = drawnPx(nm);
         if (px < (narrow ? 16 : 13) - 0.5) out.push(`row #${r.dataset.rank}: name at ${px.toFixed(1)}px`);
+        const ncs = getComputedStyle(nm);
+        const clipsN = ncs.overflow !== 'visible' && nm.scrollWidth > nm.clientWidth + 1;
+        if (ncs.textOverflow === 'ellipsis' || ncs.webkitLineClamp !== 'none' || clipsN) out.push(`row #${r.dataset.rank}: name is cut`);
       }
       for (const t of r.querySelectorAll('.lb2-name-line, .lb2-bio, .lb2-chase')) {
         const tb = box(t);
