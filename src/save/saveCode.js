@@ -16,7 +16,7 @@
 // ratchet), so the paste cleaning and the plain-English messages live here.
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate';
 import { exportSave, parseSaveObject, writeSaveKeys, PRE_RESTORE_KEY } from './saveBackup.js';
-import { isMissingRpc } from './cloudSave.js';
+import { isMissingRpc, progressScoreFromKeys } from './cloudSave.js';
 
 export const CODE_PREFIX = 'TAW2.';
 const CLOUD_PREFIX = 'tawz1:'; // the gzip-packed cloud copy (cloudCodec.js)
@@ -265,9 +265,67 @@ export const SHORT_ERRORS = {
 };
 const shortFail = (reason) => ({ ok: false, reason, error: SHORT_ERRORS[reason] || SHORT_ERRORS.offline });
 
-/** Upload this browser's save (the TAW2 code, with the account) → { ok, code } | { ok:false, reason }. Never throws. */
-export async function issueShortCode({ rpc, secret, storage } = {}) {
+// NEVER SHRINK A CODE (save-safety oct28): SETTINGS uploads this device's save the moment it opens (so COPY can put the
+// code on the clipboard inside the tap) and the server REPLACES what the account's code holds. A device BEHIND the code —
+// the second device of a shared account, a heavy save whose cloud copy is too big to back up — opened SETTINGS to paste
+// the code and silently overwrote it with its own lower save first: the code then loaded the LOWER save. Each device now
+// remembers its account's code (taw.lb.saveCode — account state, not progress: never inside a save code); with it known,
+// the upload first reads what the code holds and KEEPS it when it is ahead of this device (the same progress score the
+// cloud restore and the load confirm compare). A device that never saw its code (a wiped browser that kept only its
+// secret cookie) cannot know it and uploads as before.
+export const SHORT_CACHE_KEY = 'taw.lb.saveCode';
+const storeOf = (storage) => storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+/** The short code this device last issued / loaded for board account `profileId`, or null. */
+export function cachedShortCode(profileId, storage) {
+  try {
+    const o = JSON.parse(storeOf(storage).getItem(SHORT_CACHE_KEY) || 'null');
+    return o && profileId && o.id === profileId ? normalizeShort(o.code) : null;
+  } catch {
+    return null;
+  }
+}
+export function rememberShortCode(profileId, code, storage) {
+  const c = normalizeShort(code);
+  if (!profileId || !c) return;
+  try {
+    storeOf(storage).setItem(SHORT_CACHE_KEY, JSON.stringify({ id: profileId, code: c }));
+  } catch {
+    /* blocked: the next open just uploads unguarded, as before */
+  }
+}
+const S2_DUP = ['taw.xp', 'taw.xpv10', 'taw.rebirths'];
+/** A save's progress score (cloudSave.progressScoreFromKeys, as converted) from a getter; a season-2 save's mapped keys
+ *  fall back to their taw.s2.* copy (an unpatched storage, or a code that carries only one of the two). */
+export function saveScore(get) {
+  const keys = {};
+  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters', 'taw.s2.stars']) {
+    let v = get(k);
+    if (v == null && S2_DUP.includes(k)) v = get(`taw.s2.${k.slice(4)}`);
+    if (v != null) keys[k] = v;
+  }
+  return progressScoreFromKeys(keys, { asConverted: true });
+}
+const NET = new Set(['offline', 'busy', 'unavailable']);
+
+/** Upload this browser's save (the TAW2 code, with the account) → { ok, code } | { ok:false, reason }. Never throws.
+ *  With `profileId` and this device's remembered code for that account, a code holding a save AHEAD of this device is
+ *  kept, not replaced → { ok, code, kept: true, held } (`held` = the parsed save it holds, for the UI to offer). */
+export async function issueShortCode({ rpc, secret, storage, profileId = null } = {}) {
   if (!rpc || !secret) return shortFail('unavailable');
+  const known = profileId ? cachedShortCode(profileId, storage) : null;
+  if (known) {
+    const held = await fetchShortSave(known, { rpc });
+    if (held.ok && (!held.acct || held.acct.profile.id === profileId)) {
+      const s = storeOf(storage);
+      const mine = saveScore((k) => {
+        try { return s.getItem(k); } catch { return null; }
+      });
+      const theirs = saveScore((k) => (Object.prototype.hasOwnProperty.call(held.keys, k) ? held.keys[k] : null));
+      if (theirs > mine) return { ok: true, code: known, kept: true, held };
+    } else if (!held.ok && NET.has(held.reason)) {
+      return shortFail(held.reason); // can't see what the code holds: never overwrite it blind
+    }
+  }
   let blob;
   try {
     blob = exportSaveCode(storage);
@@ -277,6 +335,7 @@ export async function issueShortCode({ rpc, secret, storage } = {}) {
   try {
     const r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
     const code = r && r.ok ? normalizeShort(r.code) : null;
+    if (code && profileId) rememberShortCode(profileId, code, storage);
     return code ? { ok: true, code } : shortFail(r && r.reason === 'busy' ? 'busy' : 'unavailable');
   } catch (e) {
     return shortFail(isMissingRpc(e) || (e && e.status >= 400 && e.status < 500) ? 'unavailable' : 'offline');

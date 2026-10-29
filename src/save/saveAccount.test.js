@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { exportSave, PRE_RESTORE_KEY } from './saveBackup.js';
 import {
   exportSaveCode, parseAnySave, importAnySave, applySave, adoptAccount, cleanAccount, readPreRestore,
-  normalizeShort, formatShort, issueShortCode, fetchShortSave, SHORT_ALPHABET, SHORT_ERRORS, SAVE_ERRORS, crc32,
+  normalizeShort, formatShort, issueShortCode, fetchShortSave, cachedShortCode, rememberShortCode, SHORT_CACHE_KEY, SHORT_ALPHABET, SHORT_ERRORS, SAVE_ERRORS, crc32,
 } from './saveCode.js';
 import { resetOutcome, isMissingRpc } from './cloudSave.js';
 
@@ -187,4 +187,42 @@ test('RESET ACCOUNT never drops the account when the server can\'t reset it: off
   assert.equal(resetOutcome({ named: false }), 'local');
   assert.equal(isMissingRpc({ status: 404 }), true);
   assert.equal(isMissingRpc({ code: 'no_profile', status: 400 }), false);
+});
+
+test('save-safety: opening SETTINGS on a device BEHIND the code never overwrites the higher save the code holds', async () => {
+  const db = fakeServer();
+  const a = makeStore(DAAN); // R27 LV514
+  const up = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: a, profileId: 'fe57cdaf' });
+  assert.equal(up.ok, true);
+  assert.equal(cachedShortCode('fe57cdaf', a), up.code, 'the device remembers the code of its account');
+  assert.equal(cachedShortCode('someone-else', a), null);
+  // device B shares the account (it loaded the code once) but is behind: R5
+  const b = makeStore({ 'taw.econ': '13', 'taw.s2.rebirths': '5', 'taw.s2.xp': JSON.stringify({ lv: 3, f: 0, rc: 5, v: 10 }), ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  rememberShortCode('fe57cdaf', up.code, b);
+  const puts = () => db.calls.filter((c) => c === 'lb_save_code_put').length;
+  const before = puts();
+  const kept = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: b, profileId: 'fe57cdaf' });
+  assert.equal(kept.ok, true);
+  assert.equal(kept.kept, true);
+  assert.equal(kept.code, up.code);
+  assert.equal(kept.held.keys['taw.s2.rebirths'], '27');
+  assert.equal(puts(), before, 'no upload: the code still holds R27');
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '27');
+  // B moves ahead (R28) → its save goes up as before
+  b.setItem('taw.s2.rebirths', '28');
+  b.setItem('taw.s2.xp', JSON.stringify({ lv: 1, f: 0, rc: 28, v: 10 }));
+  const ahead = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: b, profileId: 'fe57cdaf' });
+  assert.equal(ahead.kept, undefined);
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '28');
+  // can't read what the code holds (offline) → never overwrite blind
+  const c = makeStore({ 'taw.econ': '13', 'taw.s2.rebirths': '1', ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  rememberShortCode('fe57cdaf', up.code, c);
+  db.down = true;
+  const off = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: c, profileId: 'fe57cdaf' });
+  db.down = false;
+  assert.equal(off.ok, false);
+  assert.equal(off.reason, 'offline');
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '28');
+  // the cache is account state, never progress: a save code does not carry it
+  assert.equal(parseAnySave(exportSaveCode(b)).keys[SHORT_CACHE_KEY], undefined);
 });

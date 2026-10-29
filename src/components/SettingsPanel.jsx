@@ -22,7 +22,7 @@ import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
 import { exportSave } from '../save/saveBackup';
-import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort } from '../save/saveCode';
+import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort, rememberShortCode } from '../save/saveCode';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, rpc } from '../leaderboard/client';
 import { progressScoreFromKeys, localScore } from '../save/cloudSave';
 import { resolveXpState } from '../progress/xp';
@@ -145,10 +145,13 @@ function SaveRow({ onCredits = null }) {
   // SHORT CODE (daan oct27): the save goes up the moment SETTINGS opens, so COPY can put the 10-character code on the
   // clipboard inside the tap (Safari drops the permission after an await). Offline / no name / 071 not run → the long code.
   const refresh = useCallback(() => {
-    const secret = LEADERBOARD_ENABLED && getMyProfile() ? peekSecret() : null;
+    const me = LEADERBOARD_ENABLED ? getMyProfile() : null;
+    const secret = me ? peekSecret() : null;
     if (!secret) return Promise.resolve(null);
-    return issueShortCode({ rpc, secret }).then((r) => {
+    // save-safety (oct28): a code that holds a save AHEAD of this device is kept, never overwritten (saveCode.js)
+    return issueShortCode({ rpc, secret, profileId: me.id }).then((r) => {
       if (r.ok) setShort({ code: r.code });
+      if (r.ok && r.kept) setMsg(`YOUR CODE HOLDS A HIGHER SAVE (${codeHeadline(r.held.keys).text}) — RESTORE IT BELOW`);
       return r;
     });
   }, []);
@@ -187,7 +190,7 @@ function SaveRow({ onCredits = null }) {
       setMsg('LOADING…');
       fetchShortSave(text, { rpc }).then((r) => {
         setBusy(false);
-        confirmParsed(r, false);
+        confirmParsed(r.ok ? { ...r, short: normalizeShort(text) } : r, false);
       });
       return;
     }
@@ -200,6 +203,8 @@ function SaveRow({ onCredits = null }) {
   const load = () => {
     if (!ask) return;
     applySave(ask.parsed, undefined, { source: 'code' });
+    // this device now knows its account's code: its next SETTINGS open can't overwrite a higher save the code holds
+    if (ask.parsed.short && ask.parsed.acct) rememberShortCode(ask.parsed.acct.profile.id, ask.parsed.short);
     setAsk(null);
     setMsg(ask.undo ? 'PUT BACK — RELOADING…' : 'RESTORED — RELOADING…');
     setTimeout(() => {
