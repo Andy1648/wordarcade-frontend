@@ -1335,6 +1335,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the corners are exactly as they were.
   const wheel = SEASON2 && reveal.core ? { dot: wheelDot, onClick: () => { sound.click(); setShowWheel(true); } } : null;
   const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? handleCredits : null} />;
+  // oct28 (Andy "tf why is it at the corner"): once the rail is up, the desktop's SETTINGS is a NAMED button in it, not a cog
+  // in the bottom-right corner; NEWS keeps that corner
+  const settingsRail = wheel ? <AudioControls variant="rail" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={handleCredits} /> : null;
   const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
@@ -1563,7 +1566,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} foot={gearSlot} />}
+        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1580,7 +1583,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
         <div className="homepage-footer-links hp-extras">
-          {wheel ? <MenuUtility news={reveal.gears ? news : null} settingsSlot={settingsSlot} navigating={navigating} /> : (
+          {wheel ? <MenuUtility news={reveal.gears ? news : null} navigating={navigating} /> : (
             <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
               CREDITS
             </button>
