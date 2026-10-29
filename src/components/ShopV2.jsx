@@ -42,7 +42,7 @@ const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollRev
 // CUSTOMIZE menu over the shop (pop styles first) — the shop keeps no cosmetics screen of its own
 const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
-const SHELVES = [['boosts', 'BOOSTS', '/shop/everything.webp'], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
+const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
