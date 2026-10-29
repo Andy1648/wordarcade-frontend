@@ -4,6 +4,7 @@
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { PATCH_GIFT_ROLLS } from '../src/components/patchNotes/patchNotesData.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const S2_ROLL_PRICE = 75; // v3/econ.js ROLL_PRICE
 
@@ -101,3 +102,21 @@ test('PATCH NOTES: a BRAND-NEW save does not get them on the title — they wait
   await expect(page.getByTestId('patch-notes')).toHaveCount(0);
   await expect(page.locator('[data-nav="news"]')).toHaveCount(0);
 });
+
+// OVERLAP AUDIT (oct29): on a phone COLLECT was position:sticky over the scrolling notes, cutting rows in half under it
+// ("GUARANTEED ROLLS…" at 390, "15 NEW GEARS…" at 360). The notes scroll inside the sheet now and COLLECT sits under
+// that region: nothing overlaps it, at the top of the list or scrolled to the end, and it is on screen.
+for (const [w, h] of [[390, 844], [360, 640], [1280, 600]]) {
+  test(`@${w}x${h} overlap audit: COLLECT never sits over the notes`, async ({ page }) => {
+    await boot(page, w, h);
+    const pn = page.getByTestId('patch-notes');
+    await expect(pn).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(1200); // the rows' one-shot rise
+    await expectNoLayoutDefects(expect, page, `patch notes ${w}x${h} (top)`, { scope: '[data-testid="patch-notes"]' });
+    await page.evaluate(() => { const s = document.querySelector('.pn-scroll'); if (s) s.scrollTop = s.scrollHeight; });
+    await page.waitForTimeout(200);
+    await expectNoLayoutDefects(expect, page, `patch notes ${w}x${h} (end)`, { scope: '[data-testid="patch-notes"]' });
+    const btn = await page.getByTestId('patch-notes-collect').boundingBox();
+    expect(btn.y + btn.height, 'COLLECT is on screen').toBeLessThanOrEqual(h);
+  });
+}

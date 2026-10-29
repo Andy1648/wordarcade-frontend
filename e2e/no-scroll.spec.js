@@ -33,6 +33,7 @@ const ALLOW_PHONE = [
   ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
   ['.sp2', 'the UPGRADES page'],
   ['.pn', 'the patch notes'],
+  ['.pn-scroll', 'the patch notes: the notes scroll INSIDE the sheet, COLLECT under them (overlap audit oct29)'],
   ['.rb2', 'rebirth on the smallest phone'],
   ['.rb2-track-list', 'the UNLOCKS row swipes sideways (Andy oct15: a list)'],
   ['.sr-lineup', 'the SAT suspects on the smallest phone'],
