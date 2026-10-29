@@ -48,16 +48,27 @@ async function boot(page) {
 // The ratio an <img> is DRAWN at: object-fit contain / cover / scale-down always keep the art's own ratio (the box may
 // differ); fill (the default) draws it at the box's ratio. The box is the LAYOUT box (computed width / height), not the
 // bounding rect: the shop's cards are tilted a degree, which grows a wide image's bounding rect taller than it is drawn.
-const measure = (page) => page.evaluate(() => [...document.querySelectorAll('.sp2 img')].flatMap((img) => {
-  const cs = getComputedStyle(img);
-  const w = parseFloat(cs.width);
-  const h = parseFloat(cs.height);
-  if (!(w >= 2 && h >= 2) || cs.display === 'none' || !img.naturalWidth) return [];
-  if (img.classList.contains('mc-sheen-band')) return []; // a gear card's light SWEEP: a shapeless glare strip, drawn to the card on purpose
-  const natural = img.naturalWidth / img.naturalHeight;
-  const drawn = cs.objectFit === 'fill' ? w / h : natural;
-  return [{ src: img.getAttribute('src'), cls: img.className, fit: cs.objectFit, w: +w.toFixed(1), h: +h.toFixed(1), natural: +natural.toFixed(3), drawn: +drawn.toFixed(3) }];
-}));
+const measure = (page) => page.evaluate(async () => {
+  // an SVG with no width/height reports the 300×150 default as its natural size: its real ratio is its viewBox's
+  const viewBox = {};
+  for (const src of new Set([...document.querySelectorAll('.sp2 img')].map((i) => i.getAttribute('src')).filter((u) => /\.svg$/.test(u || '')))) {
+    try {
+      const m = (await (await fetch(src)).text()).match(/<svg[^>]*\sviewBox="[\d.]+ [\d.]+ ([\d.]+) ([\d.]+)"/);
+      if (m) viewBox[src] = Number(m[1]) / Number(m[2]);
+    } catch { /* measured by its natural size */ }
+  }
+  return [...document.querySelectorAll('.sp2 img')].flatMap((img) => {
+    const cs = getComputedStyle(img);
+    const w = parseFloat(cs.width);
+    const h = parseFloat(cs.height);
+    if (!(w >= 2 && h >= 2) || cs.display === 'none' || !img.naturalWidth) return [];
+    if (img.classList.contains('mc-sheen-band')) return []; // a gear card's light SWEEP: a shapeless glare strip, drawn to the card on purpose
+    const src = img.getAttribute('src');
+    const natural = viewBox[src] || img.naturalWidth / img.naturalHeight;
+    const drawn = cs.objectFit === 'fill' ? w / h : natural;
+    return [{ src, cls: img.className, fit: cs.objectFit, w: +w.toFixed(1), h: +h.toFixed(1), natural: +natural.toFixed(3), drawn: +drawn.toFixed(3) }];
+  });
+});
 const vesselBoxes = (page) => page.locator('.sp2 .va').evaluateAll((els) => els.map((e) => {
   const cs = getComputedStyle(e);
   return { w: parseFloat(cs.width), h: parseFloat(cs.height) };

@@ -60,6 +60,9 @@ const NOTE = {
 const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
 const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
+// RARITY READS BEYOND COLOUR (Andy oct28 "for rarer items maybe make the design more than just color"): RARE / EPIC cards
+// sweep their tier's shine band on hover, an EPIC card wears a gold-set gem on its corner, and the featured canister stands
+// on its painted crystal backplate (ShopV2.css, RARITY BEYOND COLOUR). COMMON stays plain: the ladder has a bottom.
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
 function StockCard({ it, left, onBuy, floatRef }) {
@@ -73,6 +76,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
+      badge={it.rarity === 'epic' ? <img className="sp2-gem" src="/shop/gem-epic-v1.webp" width="512" height="512" alt="" draggable="false" /> : null}
       ariaLabel={`${it.name || ''} ${it.big}${it.what ? ` ${it.what}` : ''}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
@@ -84,6 +88,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
         <span className="sp2-big">{it.big}</span>
         {it.what ? <span className="sp2-what">{it.what}</span> : null}
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
+        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : formatNum(it.price)}
