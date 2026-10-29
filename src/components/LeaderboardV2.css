@@ -352,7 +352,9 @@
 .lb2-row.is-me {
   z-index: 2;
   height: calc(68px * var(--lb2-k));
-  margin: -3px calc(-16px * var(--lb2-k));
+  /* the -1deg tilt lifts a ~540px row's corners ~5px: the vertical margin clears them, so YOUR row never covers the rows
+     beside it (UI checklist oct28: zero overlaps; e2e/lb-top100.spec.js) */
+  margin: calc(8px * var(--lb2-k)) calc(-16px * var(--lb2-k));
   background: #FFE94A;
   border: 5px solid #000;
   box-shadow: 7px 7px 0 #000;
@@ -557,7 +559,7 @@
 .lb2--narrow .lb2-cols { height: 18px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; letter-spacing: 0; } /* NIGHT oct8 #5: at 14 px the Bungee headers collided (REBIRTHSLEVELS) — the mono face fits the columns */
 .lb2--narrow .lb2-list { border-width: 4px; box-shadow: 5px 5px 0 #000; }
 .lb2--narrow .lb2-row { height: 40px; }
-.lb2--narrow .lb2-row.is-me { height: 50px; margin: -2px -6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+.lb2--narrow .lb2-row.is-me { height: 50px; margin: 5px -6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
 .lb2--narrow .lb2-rk { min-width: 26px; height: 28px; font-size: var(--fs-k18); }
 .lb2--narrow .lb2-row.is-me .lb2-rk { font-size: var(--fs-k18); }
 .lb2--narrow .lb2-name { font-size: var(--fs-k14); }
@@ -1099,7 +1101,7 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   max-width: 100%;
-  margin-top: 2px;
+  margin: 2px 0 calc(8px * var(--pk, 1));
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-body);
