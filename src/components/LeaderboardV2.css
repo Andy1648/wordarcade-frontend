@@ -352,7 +352,9 @@
 .lb2-row.is-me {
   z-index: 2;
   height: calc(68px * var(--lb2-k));
-  margin: -3px calc(-16px * var(--lb2-k));
+  /* the -1deg tilt lifts a ~540px row's corners ~5px: the vertical margin clears them, so YOUR row never covers the rows
+     beside it (UI checklist oct28: zero overlaps; e2e/lb-top100.spec.js) */
+  margin: calc(8px * var(--lb2-k)) calc(-16px * var(--lb2-k));
   background: #FFE94A;
   border: 5px solid #000;
   box-shadow: 7px 7px 0 #000;
@@ -557,7 +559,7 @@
 .lb2--narrow .lb2-cols { height: 18px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; letter-spacing: 0; } /* NIGHT oct8 #5: at 14 px the Bungee headers collided (REBIRTHSLEVELS) — the mono face fits the columns */
 .lb2--narrow .lb2-list { border-width: 4px; box-shadow: 5px 5px 0 #000; }
 .lb2--narrow .lb2-row { height: 40px; }
-.lb2--narrow .lb2-row.is-me { height: 50px; margin: -2px -6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+.lb2--narrow .lb2-row.is-me { height: 50px; margin: 5px -6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
 .lb2--narrow .lb2-rk { min-width: 26px; height: 28px; font-size: var(--fs-k18); }
 .lb2--narrow .lb2-row.is-me .lb2-rk { font-size: var(--fs-k18); }
 .lb2--narrow .lb2-name { font-size: var(--fs-k14); }
@@ -780,10 +782,12 @@
 .lb2-sep[data-band='gold'] { color: #FFE94A; }
 .lb2-sep[data-band='cyan'] { color: #2EFFE0; }
 .lb2-sep[data-band='violet'] { color: #c08bff; }
+.lb2-sep[data-band='stone'] { color: #c9b48f; }
 .lb2-sep[data-band='you'] { color: #FF4FA3; }
 .lb2-row[data-band='gold'] .lb2-rk { color: #FFE94A; }
 .lb2-row[data-band='cyan'] .lb2-rk { color: #2EFFE0; }
 .lb2-row[data-band='violet'] .lb2-rk { color: #c08bff; }
+.lb2-row[data-band='stone'] .lb2-rk { color: #c9b48f; }
 .lb2-row.is-me .lb2-rk { color: #FFE94A; }
 
 /* RIVAL + CHASE (oct15 night): the player right above you wears a red RIVAL chip and a red edge; your row says what
@@ -1087,3 +1091,40 @@
 .lb2-who-cell > .lb2-name-line { max-width: 100%; }
 .lb2--narrow .lb2-row.is-me .lb2-who-cell > .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row .lb2-rival { display: none; }
+
+/* DESCRIPTIONS (Andy oct28 "descriptions for top accounts"): the TOP 10's bios. The podium's sits under the name, two lines
+   at most; a row's is the second line under the name (one line, its full text in the profile card). Space Mono, quiet ink -
+   the name stays the loudest thing on the row. */
+.lb2-pod-bio {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  margin: 2px 0 calc(8px * var(--pk, 1));
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  text-align: center;
+  color: #d9c8f5;
+  overflow-wrap: anywhere;
+}
+.lb2-pod-bio::before { content: '\201C'; }
+.lb2-pod-bio::after { content: '\201D'; }
+.lb2-who-cell.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
+.lb2-who-cell.has-bio .lb2-name-line { max-width: 100%; }
+.lb2-bio {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  color: #b9a6dd;
+}
+.lb2-bio::before { content: '\201C'; }
+.lb2-bio::after { content: '\201D'; }

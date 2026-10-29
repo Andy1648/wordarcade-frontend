@@ -112,8 +112,9 @@ const FINAL = {
   casual: { R1: 49.5, R3: 5.83 * H, R5: null, END: 3 },
   median: { R1: 19.0, R3: 131.2, R5: 9.49 * H, END: 5 }, // R1 held at 18–25 min (Andy 22:31 / 23:20)
   fast: { R1: 8.5, R3: 56.8, R5: 4.15 * H, END: 8 }, // END 6 → 8 (Andy oct13): the R5 JACKPOT ×15 speeds R6+ on purpose
-  // 035 (Andy oct12, SKUF): a rebirth needs 25 GAME words since the last one — the 0-game menu masher never rebirths
-  menu: { R1: null, R3: null, R5: null, END: 0 },
+  // 074 (Andy oct28 "people deserve to rebirth if they can rebirth"): no game-words gate, so the 0-game menu masher
+  // rebirths on level alone (was null / END 0 under 035/037's words gate)
+  menu: { R1: 8.2, R3: 3.45 * H, R5: null, END: 3 },
 };
 const BOTS = [
   { id: 'casual', lpm: 60, wpm: 8, mkpm: 20, game: 0.6, seed: 1 },

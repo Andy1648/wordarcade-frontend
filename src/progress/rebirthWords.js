@@ -5,7 +5,7 @@
 import { GAME_WORD_MODES, masteryWords } from './mastery.js';
 import { SEASON2 } from './season.js';
 
-export const WORDS_PER_REBIRTH = 10; // = 037 WORDS_PER_RB (was 25 in 035; Andy oct13) (rebirthRules.js WORDS_PER_RB; rebirthWords.test.js pins it)
+export const WORDS_PER_REBIRTH = 0; // = 074 WORDS_PER_RB (Andy oct28: no words gate; was 10 in 037, 25 in 035)
 export const RB_WORDS_KEY = 'taw.s2.rbw0'; // lifetime game words at the last rebirth (absent = 0, like the server)
 
 /** Every word played in a game, all modes (the board's lifetime_words). */
