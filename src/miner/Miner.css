@@ -114,7 +114,9 @@
   pointer-events: none;
   z-index: 0;
 }
-.mn-root > :not(.mn-wall) {
+/* the board's content above its wall - but never the LOBBY's wall, which is its own absolute background
+   (oct28: matching it here turned it into an in-flow image that buried the seats, +BOT and START) */
+.mn-root > :not(.mn-wall):not(.mn-lobby-wall) {
   position: relative;
   z-index: 1;
 }
@@ -831,6 +833,13 @@
 .mn-seat.is-me {
   border-color: var(--mn-gold);
 }
+.mn-seat.is-bot-fill {
+  border-style: dashed;
+  box-shadow: none;
+  animation: none;
+}
+.mn-seat.is-bot-fill .mn-seat-digger { opacity: 0.45; }
+.mn-seat.is-bot-fill .mn-seat-name { color: #c9b48f; }
 .mn-seat.is-open {
   background: rgba(13, 6, 24, 0.45);
   border-style: dashed;
