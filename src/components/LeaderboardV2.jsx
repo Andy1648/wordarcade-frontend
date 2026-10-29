@@ -568,7 +568,10 @@ export default function LeaderboardV2({ onBack }) {
                   <span className="lb2-pod-name">
                     {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : null}
                     {mine && <span className="lb2-you">YOU</span>}
-                    <FitText className="lb2-pod-name-t" min={0.5} style={{ '--nl': nameEms(name) }}>{name}</FitText>
+                    {/* oct29 audit: FitText shrank a long name to ~9px here. The CSS sizes it to the column with a readable
+                        floor (13px desktop, 16px phone); past that it ends in an ellipsis (oct18: never a mid-word break on the
+                        podium) and a tap opens the full name */}
+                    <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{name}</span>
                   </span>
                   {p && bios[p.id] ? <span className="lb2-pod-bio" data-testid="lb2-pod-bio">{bios[p.id]}</span> : null}
                   {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : null}
@@ -619,7 +622,9 @@ export default function LeaderboardV2({ onBack }) {
                 <span className={`lb2-who-cell${bios[r.id] && !(mine && (newTier || rival || r.rank > 10)) ? ' has-bio' : ''}`}>
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <FitText className="lb2-name" min={0.5} style={{ '--nl': nameEms(r.username) }}>{r.username}</FitText>
+                    {/* oct29 audit: FitText shrank long names to 6.5px. A row name keeps a readable size (13px floor desktop,
+                        16px phone) and takes a SECOND LINE instead; the row grows to hold it */}
+                    <span className="lb2-name lb2-name--wrap" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>

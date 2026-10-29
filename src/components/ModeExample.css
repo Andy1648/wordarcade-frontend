@@ -181,7 +181,11 @@
   object-fit: contain;
 }
 .mode-ex-ore-w {
+  max-width: 100%;
   font-size: var(--fs-label);
   letter-spacing: 0.06em;
   text-align: center;
+  overflow-wrap: anywhere; /* oct29 audit: TRUFFLE ran 11-23px out of the card at 390 */
 }
+/* oct29 audit: "THE RAREST PIZZA TOPPING" was cut at the right edge on a phone - the MINER prompt may take two lines */
+.mode-ex-orewrap .mode-ex-word { white-space: normal; }
