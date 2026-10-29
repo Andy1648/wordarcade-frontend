@@ -38,7 +38,7 @@ test('the 16 shaped rank plates are the v3 ladder, in order; ★ tiers glow + sh
   await expect(plates).toHaveCount(16);
   expect(await plates.locator('.krp-name').allTextContents()).toEqual(V3_LADDER);
   // every plate is PAINTED art (oct28 title formats: public/titles/), never a CSS box
-  for (let i = 0; i < 16; i += 1) await expect(plates.nth(i).locator('img.krp-art')).toHaveAttribute('src', /^\/titles\/title-[a-z]+-v\d+\.webp$/);
+  for (let i = 0; i < 16; i += 1) await expect(plates.nth(i).locator('img.krp-art')).toHaveAttribute('src', /^\/titles\/title-[a-z]+-v\d+\.png$/);
   // the five ★ titles are the LIT formats (NEON ★1–★5, MARQUEE ★10–★20) — each switches on once, never loops
   await expect(page.getByTestId('lu-plates').locator('.krp[data-title-format="neon"], .krp[data-title-format="marquee"]')).toHaveCount(5);
   // names stay ≥ 13 px

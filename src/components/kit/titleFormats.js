@@ -12,14 +12,15 @@
 //
 // The art is a painted PNG per FORMAT (public/titles/, ART VS MOTION — never CSS shapes); the name is Bungee laid on its
 // calm centre. Within a format each title has its own ink. `box` = the text area as [left, top, right, bottom] insets
-// (fractions of the art), `tilt` = the name's static lean, `aspect` = the art's width / height. Pure data.
+// (fractions of the art), `tilt` = the name's static lean, `aspect` = the art's own width / height (each painted piece keeps
+// its shape — the NEON board is slim, the STICKER tall with its splats). Pure data.
 export const TITLE_FORMATS = {
-  tape: { label: 'TAPE', src: '/titles/title-tape-v1.webp', aspect: 4, box: [0.14, 0.24, 0.14, 0.24], tilt: -2, stroke: 0 },
-  sticker: { label: 'STICKER', src: '/titles/title-sticker-v1.webp', aspect: 4, box: [0.15, 0.24, 0.17, 0.26], tilt: -3, stroke: 3 },
-  steel: { label: 'STEEL', src: '/titles/title-plate-v1.webp', aspect: 4, box: [0.15, 0.25, 0.15, 0.25], tilt: 0, stroke: 0 },
-  banner: { label: 'BANNER', src: '/titles/title-banner-v1.webp', aspect: 4, box: [0.2, 0.3, 0.2, 0.22], tilt: 0, stroke: 3 },
-  neon: { label: 'NEON', src: '/titles/title-neon-v1.webp', aspect: 4, box: [0.15, 0.25, 0.15, 0.25], tilt: 0, stroke: 3 },
-  marquee: { label: 'MARQUEE', src: '/titles/title-marquee-v1.webp', aspect: 4, box: [0.16, 0.28, 0.16, 0.24], tilt: -1, stroke: 4 },
+  tape: { label: 'TAPE', src: '/titles/title-tape-v1.png', aspect: 3.95, box: [0.12, 0.22, 0.12, 0.2], tilt: -2, stroke: 0 },
+  sticker: { label: 'STICKER', src: '/titles/title-sticker-v1.png', aspect: 3.46, box: [0.12, 0.24, 0.14, 0.3], tilt: -3, stroke: 3 },
+  steel: { label: 'STEEL', src: '/titles/title-plate-v1.png', aspect: 4.44, box: [0.1, 0.18, 0.1, 0.2], tilt: 0, stroke: 0 },
+  banner: { label: 'BANNER', src: '/titles/title-banner-v1.png', aspect: 3.57, box: [0.16, 0.34, 0.16, 0.2], tilt: 0, stroke: 3 },
+  neon: { label: 'NEON', src: '/titles/title-neon-v1.png', aspect: 5.88, box: [0.07, 0.2, 0.07, 0.2], tilt: 0, stroke: 3 },
+  marquee: { label: 'MARQUEE', src: '/titles/title-marquee-v1.png', aspect: 4.01, box: [0.08, 0.32, 0.08, 0.2], tilt: -1, stroke: 4 },
 };
 
 // In RANKS_V3 order (index 0 … 15): the title's format + its ink.

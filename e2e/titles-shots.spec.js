@@ -3,7 +3,7 @@
 import { test } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
-import { menuReady } from './support/menu.js';
+import { menuReady, navControl } from './support/menu.js';
 
 const DIR = process.env.TITLE_SHOT_DIR || '';
 test.skip(!DIR, 'screenshot harness: set TITLE_SHOT_DIR');
@@ -50,10 +50,12 @@ for (const [w, h, tag] of [[1366, 657, 'desktop'], [1920, 1080, 'wide'], [390, 8
     await page.getByTestId('profile-plate').click();
     const pf = page.getByTestId('profile-popup');
     await pf.waitFor();
+    await page.waitForFunction(() => [...document.querySelectorAll('.krp-art')].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(700);
     await page.screenshot({ path: `${DIR}/${tag}-1-profile.png` });
     await pf.getByTestId('profile-title').click();
     await page.getByTestId('rank-ladder').waitFor();
+    await page.waitForFunction(() => [...document.querySelectorAll('.krp-art')].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${DIR}/${tag}-2-titles.png` });
     await page.screenshot({ path: `${DIR}/${tag}-2-titles-full.png`, fullPage: true });
@@ -61,7 +63,10 @@ for (const [w, h, tag] of [[1366, 657, 'desktop'], [1920, 1080, 'wide'], [390, 8
     await page.keyboard.press('Escape');
     await page.goto('/?portal=1&season2=1');
     await menuReady(page);
-    await page.getByRole('button', { name: /Open leaderboard/ }).click();
+    await page.waitForTimeout(2500); // the nav wipe clears
+    const lbBtn = navControl(page, 'leaderboard');
+    if (!(await lbBtn.isVisible().catch(() => false))) return; // the phone menu reaches the board another way — the podium shot is desktop-only
+    await lbBtn.click();
     await page.locator('.lb2-row').first().waitFor();
     await page.waitForTimeout(900);
     await page.screenshot({ path: `${DIR}/${tag}-3-board.png` });

@@ -89,14 +89,14 @@ export default function RankLadder({ onClose }) {
           <h2 id="rl-title" className="rl-title">TITLES</h2>
           <div className={`rl-show${hidden ? ' is-hidden' : ''}${shown > you ? ' is-locked' : ''}`} key={shown}>
             <span className="rl-show-name">{name}</span>
-            <KitRankPlate rank={sx.req} w={300} className="rl-show-plate" />
+            <KitRankPlate rank={sx.req} fit className="rl-show-plate" />
             <span className="rl-show-quip">{hidden ? '…climb to find out.' : QUIP[sx.name]}</span>
             <span className="rl-show-tag">{shown === wearing ? 'WEARING' : shown > you ? `LOCKED · ${how(sx)}` : 'TAP TO WEAR'}</span>
           </div>
           {next ? (
             <div className="rl-next" data-testid="rank-next">
               <span className="rl-next-k">NEXT TITLE</span>
-              <KitRankPlate rank={next.req} w={150} shine={false} />
+              <KitRankPlate rank={next.req} fit shine={false} className="rl-next-plate" />
               <span className="rl-next-go">{togo(next)}</span>
               {next.s == null && <span className="rl-next-lv">{gateLine()}</span>}
             </div>

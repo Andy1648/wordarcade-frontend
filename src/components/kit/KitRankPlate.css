@@ -6,7 +6,8 @@
   display: inline-block;
   flex: none;
   vertical-align: middle;
-  max-width: 100%;
+  height: var(--krp-h);
+  width: calc(var(--krp-h) * var(--krp-aspect, 4));
 }
 .krp-art {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -30,12 +31,8 @@
   transform: rotate(var(--krp-tilt, 0deg));
 }
 /* the bright inks get the house black stroke; the tape / steel inks sit IN the material (no stroke) */
-.krp.is-stroked .krp-name { -webkit-text-stroke: calc(var(--krp-h) * 0.06) #000; paint-order: stroke fill; }
+.krp.is-stroked .krp-name { -webkit-text-stroke: max(2px, calc(var(--krp-h) * 0.06)) #000; paint-order: stroke fill; }
 .krp-tape .krp-name { letter-spacing: 0.02em; }
 .krp-steel .krp-name { letter-spacing: 0.06em; }
 
-/* FIT: as tall as --krp-h, as wide as the art's aspect — dense lists (the board) */
-.krp-fit {
-  height: var(--krp-h);
-  aspect-ratio: var(--krp-aspect, 3);
-}
+/* FIT: the caller's --krp-h (default 28 px) — dense lists (the board) */

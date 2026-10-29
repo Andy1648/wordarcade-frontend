@@ -7,7 +7,11 @@
 //   <KitRankPlate rank={11} w={120} />            VOIDTYPER by ladder index
 //   <KitRankPlate rank="R2" label="#7" />          the board's "#7" on CLACKER's plate
 //   <KitRankPlate rank="R6" fit />                 FIT: as tall as the CSS height (--krp-h, default 28 px), as wide as
-//                                                  the art's aspect makes it — never stretched. For dense lists.
+//                                                  the art's aspect makes it — never stretched. A box that must cap
+//                                                  it sets --krp-h from its own width (see RankLadder.css).
+//
+// Every size runs off ONE number, --krp-h: width = h × the art's aspect, the name = h × its scale — so a plate always
+// shrinks as one piece and the name never outgrows the art.
 //
 // The art keeps its aspect (Andy: no stretched art). The lit formats (NEON, MARQUEE) SWITCH ON once when the plate
 // mounts (`shine`, default on) — a finite opacity flicker, skipped under REDUCE MOTION; nothing loops.
@@ -29,14 +33,13 @@ export function KitRankPlate({ rank = 'R0', w = 156, label, shine = true, fit = 
     if (lit && shine) kitPlay(art.current, SWITCH_ON, { duration: 520, delay: 300, easing: 'steps(1, end)' });
   }, [lit, shine]);
   const [l, top, r, b] = f.box;
-  const h = Math.round(w / f.aspect);
   const style = {
     '--krp-ink': t.ink,
     '--krp-k': nameScale(t, text),
     '--krp-tilt': `${f.tilt}deg`,
     '--krp-box': `${top * 100}% ${r * 100}% ${b * 100}% ${l * 100}%`,
     '--krp-aspect': f.aspect,
-    ...(fit ? null : { width: `${w}px`, height: `${h}px`, '--krp-h': `${h}px` }),
+    ...(fit ? null : { '--krp-h': `${Math.round(w / f.aspect)}px` }),
   };
   return (
     <span

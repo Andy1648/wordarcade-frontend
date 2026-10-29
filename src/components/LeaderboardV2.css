@@ -589,7 +589,6 @@
    the flat skewed tag's fill / border / skew / shadow are dropped here. Height only: the art's aspect sets the width. */
 .lb2 .lb2-plate.krp-fit {
   --krp-h: max(30px, calc(34px * var(--lb2-k)));
-  max-width: 100%;
   margin-left: 0;
   padding: 0;
   transform: none;
@@ -600,9 +599,9 @@
 .lb2 .lb2-row-plate.krp-fit { --krp-h: max(26px, calc(30px * var(--lb2-k))); }
 .lb2 .lb2-row .lb2-who-cell { gap: 1px; }
 .lb2 .lb2-row .lb2-name-line { line-height: 1; }
-.lb2 .lb2-pod-plate.krp-fit { --krp-h: max(36px, calc(44px * var(--pk))); }
+.lb2 .lb2-pod-plate.krp-fit { --krp-h: min(calc(44px * var(--pk)), calc(210px * var(--pk) / var(--krp-aspect, 4))); } /* the slim NEON board caps by width */
 .lb2--narrow .lb2-row-plate.krp-fit { --krp-h: 26px; }
-.lb2--narrow .lb2-pod-plate.krp-fit { --krp-h: 30px; }
+.lb2--narrow .lb2-pod-plate.krp-fit { --krp-h: min(30px, calc(116px / var(--krp-aspect, 4))); }
 /* YOUR row (taller, YOU tag + a bigger name): its plate drops under the name so the name never ellipsises */
 .lb2-row.is-me .lb2-who-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
 /* phone: the column is too narrow for name + plate on one line — keep the plate under the name, and let the CHASE /
