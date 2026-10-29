@@ -192,6 +192,13 @@ export default function ShopV2({ onBack }) {
   useStageScale(rootRef);
 
   useEffect(() => subscribeGems(setGems), []);
+  // the shelf tabs' NEW dots (oct28, v3/shopDots.js — the menu's UPGRADES dot reads the same): the shelf you're on is SEEN
+  useEffect(() => {
+    if (!V3.dots) return;
+    if (shelf === 'boosts') V3.dots.markBoostsSeen(now);
+    else if (shelf === 'looks') V3.dots.markLooksSeen(gems);
+  }, [shelf, gems, now]);
+  const tabDot = V3.dots ? { boosts: V3.dots.boostsNew(gems, now), looks: V3.dots.looksNew(gems), codes: false } : {};
   useEffect(() => {
     evShopOpened();
     rootRef.current?.focus();
@@ -381,13 +388,14 @@ export default function ShopV2({ onBack }) {
               {[['boosts', 'BOOSTS'], ['looks', 'LOOKS'], ['codes', 'CODES']].map(([k, label]) => (
                 <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k} onClick={() => setShelf(k)}>
                   {label}
+                  {tabDot[k] && shelf !== k ? <span className="sp2-dot sp2-tab-dot" data-testid={`shop-tab-dot-${k}`} aria-hidden="true" /> : null}
                 </button>
               ))}
             </div>
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
           <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'BOUGHT ONCE, KEPT FOREVER · POP STYLES MULTIPLY YOUR XP' : 'REDEEM A CODE'}
+            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR' : shelf === 'looks' ? 'BOUGHT ONCE, KEPT FOREVER · POP STYLES MULTIPLY YOUR XP' : 'REDEEM A CODE'}
           </div>
           {/* LOOKS TRY-ON (oct26): the menu's own pop layer (MenuXpFx — the pooled pops, shards and painted bursts) over the
               shelf, so a tried pop style throws exactly what it throws on the menu, at the player's menu tier */}

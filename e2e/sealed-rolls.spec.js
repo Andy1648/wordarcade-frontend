@@ -132,7 +132,7 @@ test('ADVERSARIAL: the server says no (over the gem budget) → the gems come ba
 
 // Andy: nothing scrolls unless it is a list, and the new thing must be SEEN — the SEALED ROLL sits in the shop's first view.
 for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
-  test(`${w}x${h}: the SEALED EPIC+ ROLL is in the first view of BOOSTS (no scroll), every row full`, async ({ page }) => {
+  test(`${w}x${h}: the SEALED EPIC+ ROLL is in the first view of BOOSTS (no scroll), every cell full, no wide card`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     const { shop } = await boot(page);
     await expect(card(shop, 'epicroll')).toBeVisible();
@@ -141,10 +141,12 @@ for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
       const g = document.querySelector('.sp2-grid').getBoundingClientRect();
       const box = (id) => document.querySelector(`.sp2-card:has([data-stock="${id}"])`).getBoundingClientRect();
       const bottom = Math.min(innerHeight, g.bottom);
-      return ['epicroll'].map((id) => { const r = box(id); return { id, top: r.top, bottom: r.bottom, view: bottom, gTop: g.top }; });
+      // the featured card stands TALL (oct28): on a phone its CANISTER is what the first view must show, the price under it
+      const v = document.querySelector('.sp2-cell.is-ticket .sp2-vessel').getBoundingClientRect();
+      return ['epicroll'].map((id) => { const r = box(id); return { id, top: r.top, bottom: innerWidth < 1000 ? v.bottom - v.height * 0.05 : r.bottom, view: bottom, gTop: g.top }; });
     });
     const fit = await page.evaluate(() => [...document.querySelectorAll('.sp2-cell.is-ticket')].map((c) => { const b = c.querySelector('.sp2-big').getBoundingClientRect(); const k = c.querySelector('.kstc-card').getBoundingClientRect(); const V = c.querySelector('.sp2-vessel').getBoundingClientRect();
-      // the PAINTED canister inside the vessel's 512 square (its transparent air trimmed: 16% top, 5% bottom, 17% a side) �
+      // the PAINTED canister inside the vessel's 512 square (its transparent air trimmed: 16% top, 5% bottom, 17% a side) —
       // on the wide desktop card it stands BESIDE the word (oct28), on the phone above it: either way never on it
       const v = { left: V.left + V.width * 0.17, right: V.right - V.width * 0.17, top: V.top + V.height * 0.16, bottom: V.bottom - V.height * 0.05, height: V.height * 0.79 };
       const sideBySide = v.right <= b.left + 4 || v.left >= b.right - 4;
@@ -162,19 +164,25 @@ for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
     // 069: no LEGENDARY+ card, and NO HOLE — every shelf row (the scrolled-to last one too) runs edge to edge
     await expect(card(shop, 'legroll')).toHaveCount(0);
     await expect(card(shop, 'epicroll').locator('.sp2-price')).toHaveText('500');
-    const rows = await page.evaluate(() => {
+    // oct28: every card is ONE column wide (no horizontally stretched card); the SEALED ROLL stands TALL (two rows). NO HOLE:
+    // every cell of the grid's columns × rows is covered by a card (the scrolled-to last row too)
+    const grid = await page.evaluate(() => {
       const g = document.querySelector('.sp2-grid');
-      const gl = g.getBoundingClientRect().left;
-      const cells = [...g.querySelectorAll(':scope > .sp2-cell')].map((c) => { const r = c.getBoundingClientRect(); return { top: Math.round(r.top), l: r.left - gl, r: r.right - gl }; });
-      const by = new Map();
-      for (const c of cells) { const k = [...by.keys()].find((t) => Math.abs(t - c.top) < 4) ?? c.top; by.set(k, [...(by.get(k) || []), c]); }
-      return [...by.values()].map((row) => ({ l: Math.min(...row.map((c) => c.l)), r: Math.max(...row.map((c) => c.r)) }));
+      const cells = [...g.querySelectorAll(':scope > .sp2-cell')].map((c) => c.getBoundingClientRect());
+      const cols = getComputedStyle(g).gridTemplateColumns.split(' ').length;
+      const colW = Math.min(...cells.map((r) => r.width));
+      const lefts = [...new Set(cells.map((r) => Math.round(r.left)))].sort((a, b) => a - b);
+      const tops = [...new Set(cells.map((r) => Math.round(r.top)))].sort((a, b) => a - b);
+      const holes = [];
+      for (const l of lefts) for (const t of tops) {
+        const x = l + 5; const y = t + 5;
+        if (!cells.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)) holes.push({ l, t });
+      }
+      return { cols, lefts: lefts.length, widest: Math.max(...cells.map((r) => r.width)) / colW, holes };
     });
-    expect(rows.length).toBeGreaterThanOrEqual(3);
-    for (const r of rows) {
-      expect(Math.abs(r.l - rows[0].l), 'every row starts at the same edge').toBeLessThanOrEqual(2);
-      expect(Math.abs(r.r - rows[0].r), 'every row is full (no hole)').toBeLessThanOrEqual(2);
-    }
+    expect(grid.lefts, 'every grid column holds a card').toBe(grid.cols);
+    expect(grid.widest, 'no card is wider than one column').toBeLessThan(1.05);
+    expect(grid.holes, 'no hole in the shelf').toEqual([]);
     if (SHOTS) {
       await page.evaluate(() => { const g = document.querySelector('.sp2-grid'); g.scrollTop = g.scrollHeight; const s = document.querySelector('.sp2'); s.scrollTop = s.scrollHeight; });
       await page.waitForTimeout(300);

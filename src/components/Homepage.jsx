@@ -716,6 +716,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       document.removeEventListener('visibilitychange', re);
     };
   }, []);
+  // THE SHOP's NEW-THING DOTS (oct28, v3/shopDots.js): an unseen hourly restock with something payable, or a newly affordable
+  // look, also lights UPGRADES — the same reads the shelf tabs inside the shop dot. Re-read on gems, a seen-mark, a tab return.
+  const [shopNew, setShopNew] = useState(false);
+  useEffect(() => {
+    if (!SEASON2 || !V3.dots) return undefined;
+    const re = () => setShopNew(V3.dots.boostsNew(gems) || V3.dots.looksNew(gems));
+    re();
+    window.addEventListener(V3.dots.SHOP_DOTS_CHANGE, re);
+    document.addEventListener('visibilitychange', re);
+    return () => {
+      window.removeEventListener(V3.dots.SHOP_DOTS_CHANGE, re);
+      document.removeEventListener('visibilitychange', re);
+    };
+  }, [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
   const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
@@ -1356,7 +1370,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
     // THE POWER FORM (Andy oct26): the tile wears the painted form your POWER has reached (powerArt.js), not a stock bolt
-    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady || shopNew, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden
