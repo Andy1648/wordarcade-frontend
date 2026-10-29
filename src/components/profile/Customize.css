@@ -31,4 +31,22 @@
 .pf.is-customize { display: flex; flex-direction: column; height: min(900px, calc(100dvh - 32px)); overflow: hidden; }
 .pf.is-customize .cz { flex: 1 1 auto; min-height: 0; }
 .pf.is-customize .cz-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 10px 10px 2px; }
-.cz.is-frame .cz-body, .cz.is-fx .cz-body { display: flex; flex-direction: column; justify-content: center; }
+.cz.is-frame .cz-body, .cz.is-fx .cz-body { display: flex; flex-direction: column; }
+/* centred by auto margins, never justify-content: a try-on taller than the room then starts at the top and the list
+   scrolls — a centred flex child overflowed UPWARD, under the tabs (e2e/customize-fit.spec.js caught it) */
+.cz.is-frame .cz-body > *, .cz.is-fx .cz-body > * { margin-block: auto; }
+/* a hero's PREVIEW is a page of its own (it has ‹ ALL HEROES): the tab strip steps aside so it fits without a scroll */
+.cz:has(.hpv) .cz-tabs { display: none; }
+/* the try-on was sized for a card with no tab strip: inside CUSTOMIZE it gives back the strip's row (~64px), so FRAME /
+   WIN FX fit whole on a laptop, HOLD TO BUY in view (e2e/customize-fit.spec.js) */
+@media (min-width: 761px) {
+  .cz .skp-stage .hs { max-width: min(400px, calc(100dvh - 300px)); }
+  .cz .skp-stage .fc { width: min(300px, calc((100dvh - 320px) * .6)); }
+  .cz .skp-fx { width: min(380px, calc(100dvh - 330px)); }
+}
+@media (min-width: 761px) {
+  .cz .skp-grid.is-frames { grid-template-columns: repeat(7, minmax(0, 1fr)); } /* 10 frames in two shorter rows */
+}
+@media (min-width: 761px) {
+  .cz .skp-grid:not(.is-frames) { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; } /* WIN FX: one short block */
+}

@@ -30,6 +30,7 @@ const ALLOW = [
 const ALLOW_PHONE = [
   ['.hp-m', 'the phone menu column (64px tap rows)'],
   ['.pf', 'the profile / hero preview page'],
+  ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
   ['.sp2', 'the UPGRADES page'],
   ['.pn', 'the patch notes'],
   ['.rb2', 'rebirth on the smallest phone'],
