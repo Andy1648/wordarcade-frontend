@@ -564,7 +564,7 @@
 .lb2--narrow .lb2-row.is-me .lb2-rk { font-size: var(--fs-k18); }
 .lb2--narrow .lb2-name { font-size: var(--fs-k14); }
 .lb2--narrow .lb2-row.is-me .lb2-name { font-size: var(--fs-k15); }
-.lb2--narrow .lb2-who-cell { gap: 1px; }
+.lb2--narrow .lb2-who-text { gap: 1px; }
 .lb2--narrow .lb2-row-plate { padding: 0 4px; line-height: 1.1; }
 .lb2--narrow .lb2-mv svg, .lb2--narrow .lb2-mv img { width: 16px; height: 16px; }
 .lb2--narrow .lb2-r { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; }
@@ -599,16 +599,16 @@
   box-shadow: none;
 }
 .lb2 .lb2-row-plate.krp-fit { --krp-h: max(26px, calc(30px * var(--lb2-k))); }
-.lb2 .lb2-row .lb2-who-cell { gap: 1px; }
+.lb2 .lb2-row .lb2-who-text { gap: 1px; }
 .lb2 .lb2-row .lb2-name-line { line-height: 1; }
 .lb2 .lb2-pod-plate.krp-fit { --krp-h: min(calc(44px * var(--pk)), calc(210px * var(--pk) / var(--krp-aspect, 4))); } /* the slim NEON board caps by width */
 .lb2--narrow .lb2-row-plate.krp-fit { --krp-h: 26px; }
 .lb2--narrow .lb2-pod-plate.krp-fit { --krp-h: min(30px, calc(116px / var(--krp-aspect, 4))); }
 /* YOUR row (taller, YOU tag + a bigger name): its plate drops under the name so the name never ellipsises */
-.lb2-row.is-me .lb2-who-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
+.lb2-row.is-me .lb2-who-text { flex-direction: column; align-items: flex-start; gap: 2px; }
 /* phone: the column is too narrow for name + plate on one line — keep the plate under the name, and let the CHASE /
    CLIMB headline wrap rather than run past the panel */
-.lb2--narrow .lb2-who-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
+.lb2--narrow .lb2-who-text { flex-direction: column; align-items: flex-start; gap: 2px; }
 .lb2--narrow .lb2-panel-top { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
 .lb2--narrow .lb2-panel { min-width: 0; overflow: hidden; }
 .lb2--narrow .lb2-panel { padding-top: 6px; gap: 2px; }
@@ -673,7 +673,7 @@
 
 /* FULL USERNAMES (Andy oct8): rows 4+ dropped their plate, and a long name SHRINKS to the cell (its em width comes
    from nameEms → --nl) instead of being cut; the ellipsis is only a last resort under the 13px floor. */
-.lb2-who-cell { container-type: inline-size; }
+.lb2-who-text { container-type: inline-size; } /* the name fits the text column, beside the row's face */
 .lb2-row .lb2-name { font-size: min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), max(13px, calc(100cqw / var(--nl, 8)))); }
 .lb2-row.is-me .lb2-name { font-size: min(max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))), max(13px, calc((100cqw - 64px) / var(--nl, 8)))); }
 /* the podium names fit their column the same way (a phone cut TUNGTUNGSA…) */
@@ -1076,8 +1076,8 @@
 .lb2--narrow .lb2-who > .lb2-pod-name .fit-box.lb2-pod-name-t { flex: 1 1 0; text-align: center; }
 /* the RIVAL pill ran into R12 on a phone row (~120px name cell): there the row's pink edge + YOUR "PASS <rival>" line
    already mark it, so the pill steps aside; every row's name line is capped to its cell */
-.lb2-who-cell > .lb2-name-line { max-width: 100%; }
-.lb2--narrow .lb2-row.is-me .lb2-who-cell > .lb2-name-line { max-width: calc(100% + 40px); }
+.lb2-who-text > .lb2-name-line { max-width: 100%; }
+.lb2--narrow .lb2-row.is-me .lb2-who-text > .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row .lb2-rival { display: none; }
 
 /* DESCRIPTIONS (Andy oct28 "descriptions for top accounts"): the TOP 10's bios. The podium's sits under the name, two lines
@@ -1100,8 +1100,11 @@
 }
 .lb2-pod-bio::before { content: '\201C'; }
 .lb2-pod-bio::after { content: '\201D'; }
-.lb2-who-cell.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
-.lb2-who-cell.has-bio .lb2-name-line { max-width: 100%; }
+.lb2 .lb2-row .lb2-who-cell { flex-direction: row; align-items: center; gap: calc(10px * var(--lb2-k)); }
+.lb2--narrow .lb2-row .lb2-who-cell { gap: 6px; }
+.lb2-who-text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.lb2-who-text.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
+.lb2-who-text.has-bio .lb2-name-line { max-width: 100%; }
 .lb2-bio {
   display: block;
   max-width: 100%;
@@ -1202,3 +1205,30 @@
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
 }
+/* A FACE ON EVERY ROW (oct28): the player's hero, cropped to the head, in the house frame (black border, hard shadow) */
+.lb2-face {
+  flex: none;
+  width: calc(40px * var(--lb2-k));
+  height: calc(40px * var(--lb2-k));
+  position: relative;
+  overflow: hidden;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: #2a1647;
+  box-shadow: 2px 2px 0 #000;
+}
+.lb2-face > img {
+  /* the HEAD: the 512px hero art zoomed so its head + shoulders fill the frame (the body is below the fold) */
+  position: absolute;
+  left: -45%;
+  top: -12%;
+  width: 190%;
+  height: 190%;
+  object-fit: contain;
+  object-position: 50% 0;
+}
+.lb2-row.is-me .lb2-face { width: calc(48px * var(--lb2-k)); height: calc(48px * var(--lb2-k)); background: #fff3b0; }
+.lb2--narrow .lb2-face { width: 28px; height: 28px; border-width: 2px; box-shadow: none; border-radius: 6px; }
+/* YOUR phone row has no face: there the name column is ~88px and the PASS <rival> / TO TOP line needs all of it (with the
+   face it ran into REBIRTHS - power-popup-lb.spec "nothing crosses on YOUR row"). The yellow row + YOU tag mark it. */
+.lb2--narrow .lb2-row.is-me .lb2-face { display: none; }

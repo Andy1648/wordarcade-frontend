@@ -124,14 +124,15 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 053: the podium heroes in one read — { heroes: { id: hero }, bios: { id: bio } } (bios: Andy oct28, the top 10's descriptions). */
+/** 053: the board's heroes in one read — { heroes: { id: hero }, bios: { id: bio } } (oct28: every TOP 100 row wears its hero's
+ *  head; bios are the descriptions). Only the three columns it uses, so 100 rows stay a small read. */
 export async function fetchPodium(ids) {
-  const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 80);
+  const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 100);
   const out = { heroes: {}, bios: {} };
   if (!BASE || !KEY || !list.length) return out;
   try {
     const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
-    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=*&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
+    const r = await fetch(`${BASE}/rest/v1/profile_showcase?select=profile_id,hero,bio&profile_id=in.(${list.map(encodeURIComponent).join(',')})`, { headers });
     if (!r.ok) return out;
     for (const row of (await r.json()) || []) {
       if (!row || !row.profile_id) continue;
