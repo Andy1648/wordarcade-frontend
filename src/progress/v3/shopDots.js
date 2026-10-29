@@ -43,8 +43,8 @@ export function markLooksSeen(gems) {
 /** BOOSTS dot: today's free chest is waiting. */
 export const boostsNew = (now = Date.now()) => dropReady(now);
 
-/** The menu's UPGRADES dot (Homepage): calls `cb(new?)` now and on every change; returns the unsubscribe. In this lazy
- *  chunk, not the menu's, so the first paint carries one line for it (payload ratchet). */
+/** The menu's UPGRADES dot (Homepage): calls `cb(new?)` now and on every change; returns the unsubscribe. In the v3
+ *  install chunk, not the menu's, so the menu carries one line for it (payload ratchet). */
 export function watchShopNew(gems, cb) {
   const re = () => cb(boostsNew() || looksNew(gems));
   re();
