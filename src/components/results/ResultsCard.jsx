@@ -420,7 +420,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
             {/* Andy oct10: the WINS icon is the label (as the gem is on the gems box) — the room goes to the gem sources */}
             <KitIcon name="wins" size={40} shadow={2} extras={false} className="rs2-total-ico" />
             <span className="rs2-sr">WINS EARNED</span>
-            <span className="rs2-total-num" data-wins-total={total}><N to={total} at={tTotal + 80} prefix="+" /></span>
+            <span className="rs2-total-num" data-wins-total={total} style={{ '--len': `+${formatNum(total)}`.length }}><N to={total} at={tTotal + 80} prefix="+" /></span>
           </div>
         </div>
       </section>
