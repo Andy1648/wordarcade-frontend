@@ -496,12 +496,12 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
         <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>
           <span className="rs-close-arrow" aria-hidden="true">←</span> <span className="rs-close-t">MENU</span>
         </button>
-        {/* INDEX + RATES share one grid cell (gear card v4: the odds live behind the RATES button, never on the screen) */}
+        {/* INDEX (RATES moved to the options cluster beside AUTO — overlap audit oct29: in the top row the EQUIPPED pill
+            lay over it at 1024 and at 360 it sat off-canvas past the gems pill, scrolling the screen sideways) */}
         <span className="rs-top-pair">
           <button type="button" className="rs-index-btn" onClick={openIndex} data-testid="roll-index">
             <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
           </button>
-          <RatesPop />
         </span>
         <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
           <span className="rs-equipped-k">EQUIPPED</span>
@@ -602,6 +602,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               {countOf(tickets, offer.tier) > 1 ? <span className="rs-ticket-n">×{formatNum(countOf(tickets, offer.tier))}</span> : null}
             </button>
           ) : null}
+          {/* RATES: the odds of YOUR next roll, behind a button in the options cluster (gear card v4) */}
+          <RatesPop />
         </div>
       </div>
 

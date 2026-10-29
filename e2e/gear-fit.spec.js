@@ -92,3 +92,35 @@ for (const [w, h] of SIZES) {
     expect(await overflowsIn(page, '.mx-grid .mx-tile .mc')).toEqual([]);
   });
 }
+
+// OVERLAP AUDIT (oct29): the phone INDEX drew two 164px cards a row with the face scaled to 0.91, so a card's stat lines
+// — its substats and stat kind ("+25% CRIT POWER", "WINS IN WORD BOMB"), the card's actual information — read 12.5–12.8px.
+// One 216px card a row puts them at the gear sheet's own ×1.2. Every visible text on an INDEX card (bar the "—" / "?"
+// placeholders of an unused / hidden line) reads ≥ 16px, at 390 and 360 wide.
+for (const [w, h] of [[390, 844], [360, 640]]) {
+  test(`INDEX card text reads ≥ 16px @ ${w}x${h}`, async ({ page }) => {
+    await boot(page, w, h, WORN.legendary);
+    await page.locator('[data-nav="gears"]').first().click();
+    await page.locator('[data-testid="roll-index"]').click();
+    await expect(page.locator('.mx-tile').first()).toBeVisible();
+    await page.waitForTimeout(400);
+    const small = await page.evaluate(() => {
+      const out = [];
+      for (const tile of [...document.querySelectorAll('.mx-grid .mx-tile')].slice(0, 12)) {
+        const walk = document.createTreeWalker(tile, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const t = n.nodeValue.trim();
+          if (!t || t === '—' || t === '?') continue;
+          const el = n.parentElement;
+          if (el.closest('[aria-hidden="true"]') || getComputedStyle(el).visibility === 'hidden') continue;
+          const k = el.getBoundingClientRect().height / (el.offsetHeight || 1); // the card face is scaled by transform
+          const px = parseFloat(getComputedStyle(el).fontSize) * k;
+          if (px < 15.75) out.push(`${t} ${px.toFixed(1)}px`);
+        }
+      }
+      return out;
+    });
+    expect(small).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no sideways scroll').toBe(true);
+  });
+}

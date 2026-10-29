@@ -40,7 +40,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-top {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  /* ← MENU · INDEX · EQUIPPED (takes the slack, may wrap to two lines) · gems. Overlap audit oct29: EQUIPPED was an
+     `auto` column with nowrap, so at 1024 the row was ~100px wider than the screen and the squeezed cells overlapped. */
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
 }
@@ -48,16 +50,21 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* EQUIPPED <stat> - the worn mark's number in its tier colour (RollV3 mockup) */
 .rs-equipped {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 0 10px;
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
   min-height: 56px;
-  padding: 0 16px;
+  padding: 4px 16px;
   box-sizing: border-box;
   background: #1a0b2e;
   border: 4px solid #000;
   box-shadow: 6px 6px 0 #000;
-  white-space: nowrap;
 }
+.rs-equipped-k, .rs-equipped-v { white-space: nowrap; line-height: 1.15; min-width: 0; }
+@media (max-width: 900px) { .rs-equipped-v { white-space: normal; } }
 .rs-equipped-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k20); color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-equipped-v { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: var(--rs-tier, #c79bff); -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .rs-index-btn,
@@ -109,7 +116,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   letter-spacing: 0.04em;
   color: #2EFFE0;
 }
-.rs-topr { grid-column: 5; justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rs-topr { grid-column: 4; justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
 .rs-sub { display: flex; align-items: center; gap: 10px; }
 .rs-gems-bal {
   display: inline-flex;
@@ -655,7 +662,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* ---- shorter laptops (1366x657, 1280x551) ---- */
 @media (max-height: 760px) {
   .rs-overlay { gap: 8px; padding-top: 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); --cw: 187px; --cs: 1.0389; --band: calc(var(--cw) * 1.6667 + 22px); }
-  .rs-index-btn, .rs-close, .rs-gems-bal, .rs-equipped { min-height: 48px; height: 48px; }
+  .rs-index-btn, .rs-close, .rs-gems-bal { min-height: 48px; height: 48px; }
+  .rs-equipped { min-height: 48px; }
   .rs-roll { height: 96px; width: 340px; }
   .rs-roll-lbl { font-size: var(--fs-k34); } /* "HOLD TO ROLL" at h2 (42px) ran border to border on the 340 slab */
   .rs-auto-btn { min-height: 56px; }
@@ -734,7 +742,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   .rs-controls { grid-template-columns: minmax(0, 1fr); }
   .rs-pity { grid-row: 2; width: 100%; }
   .rs-opts { grid-row: 3; justify-self: stretch; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
-  .rs-auto-btn { flex: 1 1 100%; } /* the ONE auto control (Andy oct11): AUTO fills the row */
+  .rs-auto-btn { flex: 1 1 0; } /* the ONE auto control (Andy oct11): AUTO fills the row — beside the RATES icon */
+  .rs-opts .rs-rates-btn { flex: none; min-width: 48px; min-height: 48px; justify-content: center; border-width: 4px; box-shadow: 4px 4px 0 #000; }
   .rs-opts:has(.rs-ticket-btn) .rs-auto-btn { flex: 0 1 auto; }
   /* phones: TIER+ on top, TICKET ×N under it (one line clipped at 360 wide); USE goes — the plate is the verb */
   .rs-ticket-btn { flex: 1 1 0; min-width: 0; flex-wrap: wrap; justify-content: center; align-content: center; min-height: 48px; padding: 3px 8px; gap: 2px 6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
@@ -811,6 +820,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* RATES (gear card v4, Andy oct11 "have a rate icon … popup"): a small button beside INDEX; the popup lists YOUR NEXT
    ROLL's odds per tier (RatesPop.jsx reads the roll's own table). Flat panel, ink, hard shadow; nothing loops. */
 .rs-top-pair { display: inline-flex; align-items: center; gap: 10px; justify-self: start; min-width: 0; }
+/* RATES lives in the options cluster with AUTO (overlap audit oct29 — it was squeezed out of the top row) */
 .rs-rates-btn {
   min-height: 56px;
   min-width: 56px;

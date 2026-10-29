@@ -1372,6 +1372,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
     stats: !reveal.core ? null : { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
+  // the first-run tour never draws over a screen that covers the menu (overlap audit oct29 — see its render below)
+  const tourCovered = !!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showWheel || showPatch);
   const trophy = V3.Trophy && reveal.core && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const board = reveal.core && LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = reveal.core ? { count: claims.length, onClick: handleAchievements } : null;
@@ -1793,7 +1795,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
           responds to typing/clicks. pointer-events:none — the dismissing key/click still counts. */}
-      {tourStep === 2 && tourReady && (
+      {/* OVERLAP AUDIT (oct29): the tour waits while a screen covers the menu. It used to stay drawn UNDER the ROLL screen
+          (a fresh visitor's first roll): its ring framed a menu card through the roll screen and "PLAY GAMES = WINS" bled
+          over the ROLL highlight, stacked with the roll screen's own TAP ROLL spotlight. It comes back on close. */}
+      {tourStep === 2 && tourReady && !tourCovered && (
         <Spotlight
           key="tour-games"
           targetSelector={reveal.title ? '.tp-play' : isPhoneMenu ? '.hp-m-row--word-bomb' : '.game-card-magnet[data-game="word-bomb"]'}
@@ -1810,7 +1815,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           onDismiss={dismissMenuSpot}
         />
       )}
-      {tourStep === 1 && tourReady && (
+      {tourStep === 1 && tourReady && !tourCovered && (
         <Spotlight
           key="tour-type"
           targetSelector=".menu-xp-bar"

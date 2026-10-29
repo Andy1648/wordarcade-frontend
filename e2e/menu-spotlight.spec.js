@@ -53,3 +53,36 @@ test.describe('first-run menu spotlight', () => {
     await expect(page.locator('.spotlight-overlay')).toHaveCount(0); // once ever
   });
 });
+
+// OVERLAP AUDIT (oct29): a fresh visitor who opened GEARS during the first-run tour got TWO spotlights at once — the
+// tour's step 2 ("PLAY GAMES = WINS") came up after its gap UNDER the ROLL screen, its ring framing a menu card through
+// it and its caption bleeding over the ROLL highlight, stacked with the ROLL screen's own "TAP ROLL" spotlight. The
+// tour now waits while a screen covers the menu: with ROLL open only ROLL's spotlight shows; the tour resumes on close.
+for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width}x${vp.height} the tour never draws under the ROLL screen`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await installBackendMock(page);
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('tour.seeded')) return;
+      sessionStorage.setItem('tour.seeded', '1');
+      localStorage.setItem('taw.rollsOn', '1');
+      localStorage.setItem('taw.marksRevealed', '1');
+      localStorage.setItem('taw.xp', JSON.stringify({ lv: 12, into: 0 }));
+      localStorage.setItem('taw.gems', JSON.stringify({ v: 1, bal: 300, peak: 12, streak: 0, mig: 1 }));
+    });
+    await page.goto('/?portal=1');
+    await expect(page.locator('.spotlight-caption-text')).toHaveText('TYPE ANYTHING = XP', { timeout: 10_000 });
+    await page.waitForTimeout(800); // past its hold
+    // the click that ends step 1 is the one that opens GEARS (the spotlight lets it through)
+    await page.locator('[data-nav="gears"]:visible').first().click();
+    await expect(page.locator('.rs-overlay')).toBeVisible();
+    await page.waitForTimeout(2600); // past the tour's 1.2s gap: step 2 would have come up by now
+    await expect(page.locator('.spotlight-overlay'), 'no menu-tour spotlight under the ROLL screen').toHaveCount(0);
+    await expect(page.locator('.spotlight-caption-text')).toHaveCount(0);
+    expect(await page.locator('.ut-overlay').count(), 'at most ONE spotlight (ROLL\'s own)').toBeLessThanOrEqual(1);
+    if (await page.locator('.ut-overlay').count()) { await page.locator('.ut-overlay').click(); await expect(page.locator('.ut-overlay')).toHaveCount(0); } // ROLL's tip ends on a tap
+    await page.locator('.rs-close').click(); // ← MENU
+    await expect(page.locator('.rs-overlay')).toHaveCount(0);
+    await expect(page.locator('.spotlight-caption-text')).toHaveText('PLAY GAMES = WINS', { timeout: 8_000 }); // resumes on the menu
+  });
+}
