@@ -12,20 +12,57 @@
 }
 .dw {
   --dw-c: var(--k-pink, #FF4FA3);
-  /* the wheel's diameter: fits 360x640 phones and 1280x600 laptops with the head + foot, never scrolls */
-  --wd: min(480px, 88vw, calc(100dvh - 308px)); /* 308 = head + foot (SPIN plate + ODDS) + padding: the ODDS button stays inside at 1280x600 */
+  /* THE WHEEL DOMINATES (oct28 redesign, Andy "it's so small … there's overlap"). PHONE / PORTRAIT: the wordmark, the
+     wheel as wide as the panel, the foot — stacked; the wheel takes everything the head + foot leave (330 = the
+     wordmark plate + the streak / ODDS row + the foot's one fixed height + padding). */
+  --wd: min(600px, calc(100vw - 40px), calc(100dvh - 330px));
+  --dw-drop-x: 0px; /* where the landing's prize drops: into the result card under the wheel */
+  --dw-drop-y: calc(var(--wd) * 0.62);
   position: relative;
-  width: min(520px, 100%);
+  width: min(640px, 100%);
   max-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px 16px;
+  gap: 8px;
+  padding: 12px 10px 14px;
   background: var(--k-panel, #1a0b2e);
-  border: 4px solid #b0186a;
+  border: 5px solid #b0186a;
   border-radius: 8px;
-  box-shadow: 8px 8px 0 #000;
+  box-shadow: 10px 10px 0 #000;
+}
+/* portrait: the side column dissolves, so the head reads above the wheel and the foot below it */
+.dw-side { display: contents; }
+.dw-head { order: 0; }
+.dw-stage { order: 1; }
+.dw-foot { order: 2; }
+/* DESKTOP / LANDSCAPE: the wheel fills the panel's height on the right; the wordmark + SPIN column reads first, on its left */
+@media (min-width: 900px) and (min-aspect-ratio: 6/5) {
+  .dw {
+    --dw-side: clamp(330px, 28vw, 440px);
+    --wd: min(880px, calc((100dvh - 78px) / 1.062), calc(100vw - 120px - var(--dw-side)));
+    --dw-drop-x: calc(var(--wd) * -0.5 - 28px - var(--dw-side) * 0.5); /* …or in the column on its left */
+    --dw-drop-y: calc(var(--wd) * 0.1);
+    width: auto;
+    flex-direction: row;
+    gap: 28px;
+    padding: 16px 24px 16px 22px;
+  }
+  .dw-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    width: var(--dw-side);
+    align-self: stretch;
+    padding-top: 52px; /* the ✕'s row: the wordmark always starts under it */
+  }
+}
+/* a big desktop's wheel is ~830px: the column's controls grow with it (zoom, not transform — it lays out, so nothing
+   it grows into can be overlapped unseen) */
+@media (min-width: 900px) and (min-aspect-ratio: 6/5) and (min-height: 860px) {
+  .dw-foot, .dw-head-row { zoom: 1.3; }
 }
 .dw-close {
   position: absolute;
@@ -33,67 +70,69 @@
   right: 6px;
   width: 44px;
   height: 44px;
-  border: 3px solid #5d4a78;
+  border: 3px solid #7a5fa8;
   border-radius: 8px;
   background: var(--k-panel-deep, #12071f);
+  box-shadow: 3px 3px 0 #000;
   color: #fff;
   font-family: 'Space Mono', monospace;
   font-size: var(--fs-k20);
   font-weight: 700;
   cursor: pointer;
+  z-index: 2;
 }
-.dw-close:active { transform: translate(2px, 2px); }
+.dw-close:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .dw-close:disabled { opacity: 0.35; cursor: default; } /* mid-spin: the result lands before anything closes */
 .dw-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 0 48px;
+  gap: 8px;
+  width: 100%;
+  padding: 0 50px; /* the ✕ sits in the corner: the wordmark never runs under it */
 }
-.dw-title {
-  margin: 0;
-  font-family: 'Bungee', cursive;
-  font-size: var(--fs-panel);
-  text-transform: uppercase;
-  line-height: 0.98;
-  color: var(--k-yellow, #FFE94A);
-  -webkit-text-stroke: 1px #000;
-  paint-order: stroke fill;
-  transform: rotate(-2deg);
+/* THE WORDMARK: painted (public/wheel/title-v1.webp, ChatGPT oct28) — no CSS lettering */
+.dw-title { margin: 0; width: 100%; line-height: 0; }
+.dw-title-art { display: block; width: min(100%, 360px); height: auto; margin: 0 auto; aspect-ratio: 900 / 323; user-select: none; }
+@media (min-width: 900px) and (min-aspect-ratio: 6/5) {
+  .dw-head { padding: 0; gap: 14px; }
+  .dw-title-art { width: 100%; }
 }
 .dw-streak {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 10px;
-  border: 3px solid #5d4a78;
+  gap: 10px;
+  min-height: 34px;
+  padding: 4px 14px;
+  border: 3px solid #7a5fa8;
   border-radius: 8px;
   background: var(--k-panel-deep, #12071f);
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-k14);
-  font-weight: 700;
+  box-shadow: 3px 3px 0 #000;
+  font-family: 'Bungee', cursive;
+  font-size: 16px;
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--k-dim, #c9b8e8);
+  color: #fff;
+  transform: rotate(-1.5deg);
 }
+.dw-head-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .dw-streak.is-hot { border-color: #D9381E; color: var(--k-orange, #FF6B3D); }
 .dw-streak.is-super { border-color: #a87400; color: var(--k-gold, #FFC23D); }
-.dw-streak-b { color: #fff; }
+.dw-streak-b { color: var(--k-yellow, #FFE94A); }
 
 /* ---- the wheel ---- */
-.dw-stage { position: relative; }
+.dw-stage { position: relative; padding-top: calc(var(--wd) * 0.062); } /* the pointer stands proud of the rim: its headroom is the stage's own */
 .dw-wheel {
   position: relative;
   width: var(--wd);
   height: var(--wd);
   container-type: size;
 }
-/* the THIN painted RIM (ChatGPT, oct27) is the whole wheel box; its hand-drawn opening runs 0.779–0.818 of its
-   half-width, so the code-exact FACE (face.svg: disc = 0.918 of its box) reaches 0.825 — a rotor box of 0.825 / 0.918 =
-   89.9% of the wheel — and tucks under the rim all the way round */
+/* THE PAINTED RIM (rim-v2.webp, ChatGPT oct28) is the whole wheel box; its inner lip runs --dw-open of its half-width,
+   so the code-exact FACE (face.svg: disc = 0.918 of its box) is sized to reach just past it and tuck under the lip */
+.dw-wheel { --dw-open: 0.742; --dw-rot: calc((var(--dw-open) + 0.016) / 0.918); }
 .dw-face, .dw-rim, .dw-lit { position: absolute; inset: 0; width: 100%; height: 100%; }
-.dw-rotor { position: absolute; inset: 5.05%; transform: rotate(0deg); container-type: size; }
+.dw-rotor { position: absolute; inset: calc((1 - var(--dw-rot)) * 50%); transform: rotate(0deg); container-type: size; }
 .dw-face, .dw-rim, .dw-lit { pointer-events: none; user-select: none; }
 /* the chase lights: two lit-bulb sets over the rim, dark at rest (the spin + the landing blink them, WAAPI opacity) */
 .dw-lit { opacity: 0; }
@@ -111,11 +150,11 @@
 .dw-slice-lab {
   position: absolute;
   left: 50%;
-  top: 7.4cqw;
+  top: 12.6cqw; /* r = 37.4 of the face's ~45: the outer band, clear of the rim's lip and of the prize below it */
   transform: translate(-50%, -50%);
   font-family: 'Bungee', cursive;
   text-transform: uppercase;
-  font-size: 7.4cqw;
+  font-size: 6.4cqw;
   line-height: 1;
   white-space: nowrap;
   color: #fff;
@@ -123,16 +162,16 @@
   paint-order: stroke fill;
   text-shadow: 0.5cqw 0.6cqw 0 #000;
 }
-.dw-slice-lab.is-long { font-size: 5.4cqw; -webkit-text-stroke-width: 1.2cqw; }
+.dw-slice-lab.is-long { font-size: 4.7cqw; -webkit-text-stroke-width: 1.1cqw; }
 .dw-slice.is-jackpot .dw-slice-lab { color: #FFE94A; }
 .dw-slice-ico {
   /* the painted prize IS the slice: big, centred in the wedge, always upright to the viewer (JSX counter-rotates it),
      inked off the wedge with a static hard shadow */
   position: absolute;
   left: 50%;
-  top: 24cqw;
-  width: 23cqw;
-  height: 23cqw;
+  top: 26.5cqw; /* r = 23.5: the widest stretch of the wedge clear of the hub and of the name */
+  width: 18.5cqw;
+  height: 18.5cqw;
   object-fit: contain;
   filter: drop-shadow(0.7cqw 0.7cqw 0 #0d0618);
 }
@@ -140,8 +179,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 17.5cqw;
-  height: 17.5cqw;
+  width: 15cqw;
+  height: 15cqw;
   min-width: 64px;
   min-height: 64px;
   margin: 0;
@@ -164,13 +203,15 @@
 .dw-hub:disabled { cursor: default; }
 .dw-hub:not(:disabled):active { transform: translate(-50%, -50%) scale(0.94); }
 .dw-pointer {
+  /* THE FLAPPER (pointer-v2.webp, ChatGPT oct28): its gold cap stands above the rim, the tip reaches just past the lip
+     into the top wedge's band; it pivots on the cap */
   position: absolute;
   left: 50%;
-  top: -3.2cqw; /* stands proud of the thin rim; the tip just reaches the face, clear of the top wedge's name */
-  width: 9cqw;
-  margin-left: -4.5cqw;
+  top: -5.9cqw;
+  width: 10.4cqw;
+  margin-left: -5.2cqw;
   z-index: 1;
-  transform-origin: 50% 12%;
+  transform-origin: 50% 11.8%;
   pointer-events: none;
 }
 
@@ -180,15 +221,16 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  /* ONE height for every phase (ready: SPIN + ODDS = 156, landed: result + next + ODDS = 159): the foot used to shrink
-     to 92 while spinning, so the centred panel re-centred and the wheel JUMPED 32px the instant it started to turn */
-  min-height: 160px;
+  /* ONE height for every phase (ready: the SPIN plate, landed: the result card + NEXT line): the foot used to shrink
+     while spinning, so the centred panel re-centred and the wheel JUMPED the instant it started to turn */
+  min-height: 122px;
 }
+@media (min-width: 900px) and (min-aspect-ratio: 6/5) { .dw-foot { gap: 14px; } }
 .dw-msg {
   margin: 0;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-k14);
+  font-size: 15px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--k-dim, #c9b8e8);
@@ -198,8 +240,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 100%;
   padding: 6px 14px 6px 8px;
-  border: 3px solid #12A99A;
+  border: 4px solid #12A99A;
   border-radius: 8px;
   background: var(--k-panel-deep, #12071f);
   box-shadow: 4px 4px 0 #000;
@@ -223,20 +266,21 @@
   color: var(--k-dim, #c9b8e8);
 }
 .dw-odds-btn {
-  min-width: 88px;
+  min-width: 112px;
   min-height: 44px;
-  padding: 0 14px;
-  border: 3px solid #5d4a78;
+  padding: 0 16px;
+  border: 3px solid #7a5fa8;
   border-radius: 8px;
-  background: transparent;
+  background: var(--k-panel-deep, #12071f);
+  box-shadow: 3px 3px 0 #000;
   color: var(--k-dim, #c9b8e8);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-k14);
+  font-size: 15px;
   letter-spacing: 0.1em;
   cursor: pointer;
 }
-.dw-odds-btn:active { transform: translate(2px, 2px); }
+.dw-odds-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 
 /* ---- the odds sheet (inside the panel, over the wheel) ---- */
 .dw-odds {
@@ -251,6 +295,7 @@
   border: 3px solid #5d4a78;
   border-radius: 8px;
 }
+.dw-odds > * { width: min(100%, 620px); align-self: center; }
 .dw-odds-h {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -287,6 +332,7 @@
   color: var(--k-dim, #c9b8e8);
 }
 .dw-odds-x {
+  width: auto;
   margin-top: auto;
   align-self: center;
   min-width: 120px;
@@ -305,13 +351,19 @@
 .dw-odds-x:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
 
 /* short screens (1280x600 laptops, 360x640 phones): the odds sheet tightens so all 8 rows + BACK fit, no scroll */
+/* short phones (360x640): a smaller wordmark + the ✕'s gutter, so the wheel keeps the height */
+@media (max-height: 700px) and (max-aspect-ratio: 6/5) {
+  .dw { --wd: min(600px, calc(100vw - 40px), calc(100dvh - 318px)); }
+  .dw-head { padding: 0 46px; gap: 6px; }
+  .dw-title-art { width: min(100%, 220px); }
+}
 @media (max-height: 700px) {
   .dw-odds { gap: 6px; padding: 12px 14px; }
   .dw-odds ul { gap: 4px; }
   .dw-odds li { min-height: 32px; }
   .dw-odds-ico { width: 28px; height: 28px; }
 }
-@media (max-height: 560px) {
+@media (max-height: 560px) and (max-aspect-ratio: 6/5) {
   .dw { --wd: min(300px, 84vw, calc(100dvh - 250px)); gap: 6px; padding-top: 8px; }
 }
 
