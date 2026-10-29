@@ -158,8 +158,9 @@ export async function layoutDefects(page, { scope = 'body', tol = 2 } = {}) {
 /** Asserts a clean screen: no overlaps, spills, off-screen text or sideways scroll. `label` names the screen + size. */
 export async function expectNoLayoutDefects(expect, page, label, opts) {
   const d = await layoutDefects(page, opts);
-  expect.soft(d.overlaps, `${label}: overlapping text / controls`).toEqual([]);
-  expect.soft(d.spills, `${label}: text spilling out of its card`).toEqual([]);
-  expect.soft(d.offscreen, `${label}: text past the viewport`).toEqual([]);
+  // the offenders ride in the MESSAGE too, so a CI log names them even when the diff is folded
+  expect.soft(d.overlaps, `${label}: overlapping text / controls: ${JSON.stringify(d.overlaps)}`).toEqual([]);
+  expect.soft(d.spills, `${label}: text spilling out of its card: ${JSON.stringify(d.spills)}`).toEqual([]);
+  expect.soft(d.offscreen, `${label}: text past the viewport: ${JSON.stringify(d.offscreen)}`).toEqual([]);
   expect(d.hscroll, `${label}: the page scrolls sideways`).toBe(false);
 }
