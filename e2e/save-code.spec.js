@@ -36,6 +36,7 @@ async function boot(page, seed, vp, routes = null) {
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.econ', '13');
+    localStorage.setItem('taw.seen.codeNudge', '["lv15","r1","lv50"]'); // the WRITE DOWN YOUR CODE card has been said (its own test seeds [])
     for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
   }, seed);
   await page.goto('/?portal=1&season2=1');
@@ -240,4 +241,66 @@ test('SHORT CODE: COPY gives XXXXX-XXXXX; a wiped phone types it and gets the sa
   expect(await rebirths(b)).toBe('7');
   await actx.close();
   await bctx.close();
+});
+
+// save-safety (oct28): WRITE DOWN YOUR CODE. A named save past LV 15 / its first rebirth gets ONE sticky card in the right-edge
+// toast stack — the code big + COPY — never centred, never a dialog; it is said once. PROFILE carries the same code as a chip.
+test('WRITE DOWN YOUR CODE: one sticky edge card with the code + COPY, said once; PROFILE shows the SAVE CODE chip', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const SECRET = 'd4'.repeat(24);
+  const held = new Map();
+  const mockCodes = async (pg) => {
+    await pg.route('**/rpc/lb_save_code_put', async (route) => {
+      held.set('K7M2QX9PAH', route.request().postDataJSON().p_blob);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, code: 'K7M2QX9PAH' }) });
+    });
+    await pg.route('**/rpc/lb_save_code_get', async (route) => {
+      const blob = held.get(String(route.request().postDataJSON().p_code));
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(blob ? { ok: true, blob } : { ok: false, reason: 'not_found' }) });
+    });
+  };
+  const named = { ...small(7, 44), 'taw.lb.secret': SECRET, 'taw.lb.profile': JSON.stringify({ id: 'row-daan', username: 'Daan' }), 'taw.seen.codeNudge': '[]' };
+  for (const vp of [DESK, PHONE]) {
+    const ctx = await browser.newContext({ viewport: vp, permissions: ['clipboard-read', 'clipboard-write'], ...(vp === PHONE ? { isMobile: true, hasTouch: true } : {}) });
+    const page = await ctx.newPage();
+    await boot(page, named, vp, mockCodes);
+    const card = page.getByTestId('save-code-nudge');
+    await expect(card).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('save-code-nudge-code')).toHaveText('K7M2Q-X9PAH');
+    await page.waitForTimeout(600); // the stack's slide-in settles
+    await shot(page, `nudge-${vp.width}x${vp.height}`);
+    expect(await page.locator('[role="dialog"], [aria-modal="true"]').count(), 'a toast, not a dialog').toBe(0);
+    const m = await card.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const fs = [...el.querySelectorAll('*')].filter((n) => n.childElementCount === 0).map((n) => parseFloat(getComputedStyle(n).fontSize));
+      const btn = [...el.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height);
+      const outer = el.closest('.ket').getBoundingClientRect();
+      const rights = [...el.querySelectorAll('button, .scn-code')].map((n) => n.getBoundingClientRect().right);
+      return { right: Math.max(r.right, outer.right, ...rights), left: Math.min(r.left, outer.left), minFont: Math.min(...fs), minBtn: Math.min(...btn) };
+    });
+    expect(m.right, 'the whole card is on screen (COPY and ✕ included)').toBeLessThanOrEqual(vp.width + 1);
+    expect(m.left).toBeGreaterThanOrEqual(0);
+    expect(m.minFont).toBeGreaterThanOrEqual(16);
+    expect(m.minBtn).toBeGreaterThanOrEqual(44);
+    await card.getByRole('button', { name: 'COPY' }).click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('K7M2Q-X9PAH');
+    await expect(card).toBeHidden({ timeout: 5_000 });
+    expect(JSON.parse(await page.evaluate(() => localStorage.getItem('taw.seen.codeNudge'))).sort()).toEqual(['lv15', 'r1']);
+    // said once: the next visit is quiet
+    await page.reload();
+    await menuReady(page);
+    await page.waitForTimeout(2_500);
+    await expect(card).toHaveCount(0);
+    if (vp === DESK) {
+      await page.locator('[data-nav="profile"]:visible').first().click();
+      const chip = page.getByTestId('profile-save-code');
+      await expect(chip).toContainText('K7M2Q-X9PAH', { timeout: 10_000 });
+      await shot(page, 'profile-chip');
+      await chip.click();
+      await expect(chip).toContainText('COPIED');
+      const pf = await page.getByTestId('profile-popup').evaluate((el) => ({ sh: el.scrollHeight, ch: el.clientHeight }));
+      expect(pf.sh, 'the profile card still fits without scrolling').toBeLessThanOrEqual(pf.ch + 1);
+    }
+    await ctx.close();
+  }
 });

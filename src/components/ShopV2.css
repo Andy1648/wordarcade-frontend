@@ -860,3 +860,28 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   .sp2-cell:not(.is-ticket) :is(.sp2-what, .sp2-time) { font-size: var(--fs-k13); line-height: 1.05; margin-top: 1px; }
   .sp2-cell:not(.is-ticket) .sp2-big { font-size: var(--fs-k24); }
 }
+
+/* ===== RARITY BEYOND COLOUR (Andy oct28 "for rarer items maybe make the design more than just color"), three signals:
+   1. the FEATURED canister stands on a painted EPIC crystal-burst backplate (a background on the vessel's own oversized,
+      trimmed square, so it frames the body; the small cards' art is too small to share its box with a plate — tried);
+   2. an EPIC card wears a gold-set gem pinned to its top-left corner (outside the face's overflow, like the dot);
+   3. RARE / EPIC cards sweep their tier's shine band (the gear cards' /fx/shine-<tier>.svg, drawn at its own ratio) across
+      the face ONCE on hover — a transform transition in, none out (it snaps back unseen, off the face). Nothing loops. ===== */
+.sp2-card.is-epic .sp2-card-in > .sp2-art.sp2-vessel { background: url(/shop/backplate-epic-v1.webp) 50% 58% / 112% 112% no-repeat; }
+.sp2-shine {
+  position: absolute; z-index: 2; left: 0; top: 0; height: 100%; width: auto; aspect-ratio: 200 / 320;
+  pointer-events: none; user-select: none; transform: translateX(-110%);
+}
+@media (hover: hover) {
+  .sp2-card.kstc:hover .sp2-shine { transform: translateX(300%); transition: transform 650ms cubic-bezier(.3, .6, .3, 1); }
+}
+@media (prefers-reduced-motion: reduce) { .sp2-shine { display: none; } }
+.sp2-gem {
+  position: absolute; z-index: 3; left: -14px; top: -14px; width: 44px; height: 44px;
+  pointer-events: none; user-select: none; transform: rotate(-10deg);
+  transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1);
+}
+@media (hover: hover) { .sp2-card.kstc:hover .sp2-gem { transform: rotate(-22deg) scale(1.12); } }
+.sp2-card.kstc:active .sp2-gem { transform: rotate(-4deg) scale(.94); transition-duration: 80ms; }
+@media (max-width: 999px) { .sp2-gem { left: -10px; top: -10px; width: 34px; height: 34px; } }
+@media (prefers-reduced-motion: reduce) { .sp2-gem { transition: none; } }

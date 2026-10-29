@@ -33,6 +33,8 @@ import './ProfilePopup.css';
 
 // ALL TITLES (Andy oct21 "include title popup in the profile"): the TITLE row opens the ladder on top of the profile
 const RankLadder = lazy(() => import('../RankLadder.jsx'));
+// SAVE CODE (save-safety oct28): your short code + COPY under your name — lazy (the save-code chunk carries the codec)
+const SaveCodeChip = lazy(() => import('../../save/SaveCodeNudge.jsx'));
 function wornTitle() {
   try {
     const you = Math.max(0, RANKS_V3.indexOf(liveRankV3()));
@@ -145,6 +147,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
               <div className="pf-id">
                 <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
+                {me ? <Suspense fallback={null}><SaveCodeChip /></Suspense> : null}
               </div>
               <div className="pf-stats">
                 <Stat icon="clock" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />

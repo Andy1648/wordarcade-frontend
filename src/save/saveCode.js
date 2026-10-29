@@ -16,7 +16,7 @@
 // ratchet), so the paste cleaning and the plain-English messages live here.
 import { gzipSync, gunzipSync, strToU8, strFromU8 } from 'fflate';
 import { exportSave, parseSaveObject, writeSaveKeys, PRE_RESTORE_KEY } from './saveBackup.js';
-import { isMissingRpc } from './cloudSave.js';
+import { isMissingRpc, progressScoreFromKeys } from './cloudSave.js';
 
 export const CODE_PREFIX = 'TAW2.';
 const CLOUD_PREFIX = 'tawz1:'; // the gzip-packed cloud copy (cloudCodec.js)
@@ -75,6 +75,7 @@ function legacyJson(clean, raw) {
 
 /** { at, src, code } of the save the last restore replaced (saveBackup.writeSaveKeys), or null. */
 export function readPreRestore(storage = globalThis.localStorage) {
+  // (`secret`: the bare device secret the replaced save had — UNDO puts it back when the save had no claimed account)
   try {
     const o = JSON.parse(storage.getItem(PRE_RESTORE_KEY) || 'null');
     return o && typeof o.code === 'string' && Number.isFinite(o.at) ? o : null;
@@ -231,7 +232,36 @@ export function adoptAccount(acct, storage = globalThis.localStorage) {
 export function applySave(parsed, storage, opts) {
   const res = writeSaveKeys(parsed.keys, storage, opts);
   if (parsed.acct) adoptAccount(parsed.acct, storage || globalThis.localStorage);
+  else if (opts && opts.exact) restoreBareSecret(storage || globalThis.localStorage, opts.secret);
   return res;
+}
+/** UNDO of a load onto a device whose save carried NO claimed account: put its identity back exactly — the bare device
+ *  secret it had (`secret`, recorded in the snapshot), or none — so the account that load adopted does not stay (the next
+ *  boot's cloud restore for it would bring the undone save straight back). The adopted account is not lost: the snapshot
+ *  the undo just took (taw.preRestore) carries it, and so does the code it came from. */
+function restoreBareSecret(storage, secret) {
+  if (!storage) return;
+  const s = typeof secret === 'string' && SECRET_RE.test(secret) ? secret : null;
+  try {
+    if (s && storage.getItem('taw.lb.secret') === s && !storage.getItem('taw.lb.profile')) return; // nothing was adopted
+  } catch {
+    /* fall through */
+  }
+  for (const k of ['taw.lb.secret', 'taw.lb.profile', SHORT_CACHE_KEY, ...ACCOUNT_STATE_KEYS]) {
+    try { storage.removeItem(k); } catch { /* never throw */ }
+  }
+  try {
+    if (s) storage.setItem('taw.lb.secret', s);
+  } catch {
+    /* blocked */
+  }
+  try {
+    if (typeof document !== 'undefined') {
+      document.cookie = s ? `taw_lb=${s}; max-age=${400 * 24 * 3600}; path=/; samesite=lax; secure` : 'taw_lb=; max-age=0; path=/; samesite=lax; secure'; // client.js SECRET_COOKIE
+    }
+  } catch {
+    /* no cookies */
+  }
 }
 
 /** Restore from ANY save code: validates fully first, snapshots the replaced save (taw.preRestore), then writes. */
@@ -265,18 +295,95 @@ export const SHORT_ERRORS = {
 };
 const shortFail = (reason) => ({ ok: false, reason, error: SHORT_ERRORS[reason] || SHORT_ERRORS.offline });
 
-/** Upload this browser's save (the TAW2 code, with the account) → { ok, code } | { ok:false, reason }. Never throws. */
-export async function issueShortCode({ rpc, secret, storage } = {}) {
+// NEVER SHRINK A CODE (save-safety oct28): SETTINGS uploads this device's save the moment it opens (so COPY can put the
+// code on the clipboard inside the tap) and the server REPLACES what the account's code holds. A device BEHIND the code —
+// the second device of a shared account, a heavy save whose cloud copy is too big to back up — opened SETTINGS to paste
+// the code and silently overwrote it with its own lower save first: the code then loaded the LOWER save. Each device now
+// remembers its account's code (taw.lb.saveCode — account state, not progress: never inside a save code); with it known,
+// the upload first reads what the code holds and KEEPS it when it is ahead of this device (the same progress score the
+// cloud restore and the load confirm compare). A device that never saw its code (a wiped browser that kept only its
+// secret cookie) cannot know it and uploads as before.
+export const SHORT_CACHE_KEY = 'taw.lb.saveCode';
+const storeOf = (storage) => storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+/** The short code this device last issued / loaded for board account `profileId`, or null. */
+export function cachedShortCode(profileId, storage) {
+  try {
+    const o = JSON.parse(storeOf(storage).getItem(SHORT_CACHE_KEY) || 'null');
+    return o && profileId && o.id === profileId ? normalizeShort(o.code) : null;
+  } catch {
+    return null;
+  }
+}
+export function rememberShortCode(profileId, code, storage) {
+  const c = normalizeShort(code);
+  if (!profileId || !c) return;
+  try {
+    storeOf(storage).setItem(SHORT_CACHE_KEY, JSON.stringify({ id: profileId, code: c }));
+  } catch {
+    /* blocked: the next open just uploads unguarded, as before */
+  }
+}
+const S2_DUP = ['taw.xp', 'taw.xpv10', 'taw.rebirths'];
+/** A save's progress score (cloudSave.progressScoreFromKeys, as converted) from a getter; a season-2 save's mapped keys
+ *  fall back to their taw.s2.* copy (an unpatched storage, or a code that carries only one of the two). */
+export function saveScore(get) {
+  const keys = {};
+  for (const k of ['taw.xp', 'taw.xpv10', 'taw.econ', 'taw.rebirths', 'taw.letters', 'taw.s2.stars']) {
+    let v = get(k);
+    if (v == null && S2_DUP.includes(k)) v = get(`taw.s2.${k.slice(4)}`);
+    if (v != null) keys[k] = v;
+  }
+  return progressScoreFromKeys(keys, { asConverted: true });
+}
+const NET = new Set(['offline', 'busy', 'unavailable']);
+
+/** Upload this browser's save (the TAW2 code, with the account) → { ok, code } | { ok:false, reason }. Never throws.
+ *  With `profileId` and this device's remembered code for that account, a code holding a save AHEAD of this device is
+ *  kept, not replaced → { ok, code, kept: true, held } (`held` = the parsed save it holds, for the UI to offer). */
+export async function issueShortCode({ rpc, secret, storage, profileId = null } = {}) {
   if (!rpc || !secret) return shortFail('unavailable');
+  const known = profileId ? cachedShortCode(profileId, storage) : null;
+  if (known) {
+    const held = await fetchShortSave(known, { rpc });
+    if (held.ok && (!held.acct || held.acct.profile.id === profileId)) {
+      const s = storeOf(storage);
+      const mine = saveScore((k) => {
+        try { return s.getItem(k); } catch { return null; }
+      });
+      const theirs = saveScore((k) => (Object.prototype.hasOwnProperty.call(held.keys, k) ? held.keys[k] : null));
+      if (theirs > mine) return { ok: true, code: known, kept: true, held };
+    } else if (!held.ok && NET.has(held.reason)) {
+      return shortFail(held.reason); // can't see what the code holds: never overwrite it blind
+    }
+  }
   let blob;
   try {
     blob = exportSaveCode(storage);
   } catch {
     return shortFail('unavailable');
   }
+  // 073_save_code_guard.sql: the server keeps a code's save when it is AHEAD of this one, judged by p_score (the same
+  // ★-first score). Before 073 runs, the 2-argument function is the only one: a missing-function answer re-sends without.
+  let score = '0';
   try {
-    const r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
+    const s = storeOf(storage);
+    score = saveScore((k) => {
+      try { return s.getItem(k); } catch { return null; }
+    }).toString();
+  } catch {
+    score = '0';
+  }
+  try {
+    let r;
+    try {
+      r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob, p_score: score });
+    } catch (e) {
+      if (!isMissingRpc(e)) throw e;
+      r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
+    }
     const code = r && r.ok ? normalizeShort(r.code) : null;
+    if (code && profileId) rememberShortCode(profileId, code, storage);
+    if (code && r.reason === 'lower') return { ok: true, code, kept: true }; // 073 kept the higher save it holds
     return code ? { ok: true, code } : shortFail(r && r.reason === 'busy' ? 'busy' : 'unavailable');
   } catch (e) {
     return shortFail(isMissingRpc(e) || (e && e.status >= 400 && e.status < 500) ? 'unavailable' : 'offline');
@@ -296,4 +403,37 @@ export async function fetchShortSave(text, { rpc, ...opts } = {}) {
   }
   if (!r || !r.ok || typeof r.blob !== 'string') return shortFail((r && r.reason) || 'not_found');
   return parseAnySave(r.blob, opts);
+}
+
+// (moved from SettingsPanel oct28: the SAVE CODE card and the PROFILE chip copy the same way)
+/** Put `text` on the clipboard → Promise<boolean>. The Clipboard API first; a hidden textarea + execCommand('copy')
+ *  where it is missing or refused. */
+export function copyText(text) {
+  const legacy = () => {
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      ta.style.fontSize = '16px'; // iOS: no zoom-on-focus
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch {
+      ok = false;
+    }
+    return ok;
+  };
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(text).then(() => true, () => legacy());
+    }
+  } catch {
+    /* fall through */
+  }
+  return Promise.resolve(legacy());
 }

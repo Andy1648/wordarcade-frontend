@@ -124,10 +124,10 @@ export async function fetchShowcase(id) {
   }
 }
 
-/** 053: the podium heroes in one read — { heroes: { id: hero } }. */
+/** 053: the podium heroes in one read — { heroes: { id: hero }, bios: { id: bio } } (bios: Andy oct28, the top 10's descriptions). */
 export async function fetchPodium(ids) {
   const list = (ids || []).filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)).slice(0, 80);
-  const out = { heroes: {} };
+  const out = { heroes: {}, bios: {} };
   if (!BASE || !KEY || !list.length) return out;
   try {
     const headers = { apikey: KEY, Authorization: `Bearer ${KEY}` };
@@ -136,6 +136,7 @@ export async function fetchPodium(ids) {
     for (const row of (await r.json()) || []) {
       if (!row || !row.profile_id) continue;
       if (typeof row.hero === 'string') out.heroes[row.profile_id] = row.hero;
+      if (typeof row.bio === 'string' && row.bio.trim()) out.bios[row.profile_id] = row.bio.trim();
     }
     return out;
   } catch {

@@ -23,7 +23,8 @@ V3.Trophy = S2Trophy;
 // THE ONE-NOTICE RULE (SEASON 2 checklist, Andy oct6): the game has exactly ONE notice — the EDITOR'S NOTE welcome
 // (season2Boot.js). Every other progression / economy notice is gone: no rank-up banner, no unlock / bought /
 // dev-reset toast, no centre card (wrapFx). EXCEPT (Andy oct19 "I want pop-ups for the achievements"): the edge layer
-// is mounted again for ONE kind — a tier that just became claimable (S2Notify `check`); `news` stays off.
+// is mounted again for ONE kind — a tier that just became claimable (S2Notify `check`); `news` stays off. And (save-safety
+// oct28) the WRITE DOWN YOUR CODE card at LV 15 / the first rebirth / LV 50 — an account-safety line, not progression news.
 const SILENT = true;
 const none = () => {};
 V3.Notify = (props) => (
