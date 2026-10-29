@@ -1229,4 +1229,6 @@
 }
 .lb2-row.is-me .lb2-face { width: calc(48px * var(--lb2-k)); height: calc(48px * var(--lb2-k)); background: #fff3b0; }
 .lb2--narrow .lb2-face { width: 28px; height: 28px; border-width: 2px; box-shadow: none; border-radius: 6px; }
-.lb2--narrow .lb2-row.is-me .lb2-face { width: 34px; height: 34px; }
+/* YOUR phone row has no face: there the name column is ~88px and the PASS <rival> / TO TOP line needs all of it (with the
+   face it ran into REBIRTHS - power-popup-lb.spec "nothing crosses on YOUR row"). The yellow row + YOU tag mark it. */
+.lb2--narrow .lb2-row.is-me .lb2-face { display: none; }

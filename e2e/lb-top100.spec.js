@@ -112,8 +112,10 @@ function overlapsIn(page) {
       const bio = r.querySelector('.lb2-bio');
       if (name && bio && hit(box(name), box(bio))) out.push(`row #${r.dataset.rank}: name x bio`);
       const face = r.querySelector('.lb2-face');
-      if (!face) out.push(`row #${r.dataset.rank}: no face`);
-      else {
+      const faceShown = face && face.getClientRects().length > 0;
+      // every row wears a face - except YOUR row on a phone, whose name column needs its width for the chase line
+      if (!faceShown && !(narrow && r.classList.contains('is-me'))) out.push(`row #${r.dataset.rank}: no face`);
+      else if (faceShown) {
         if (name && hit(box(face), box(name))) out.push(`row #${r.dataset.rank}: face x name`);
         const fb = box(face); const rb = box(r);
         if (fb.top < rb.top - 1 || fb.bottom > rb.bottom + 1) out.push(`row #${r.dataset.rank}: face spills out of its row`);
