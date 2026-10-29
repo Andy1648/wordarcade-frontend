@@ -99,7 +99,7 @@ const decodeSrc = (src) => {
   return im.decode ? im.decode().catch(() => {}) : Promise.resolve();
 };
 const BURST_SRC = '/fx/burst-win.webp';
-const WHEEL_ART = [...['face', 'rim', 'rim-lit-a', 'rim-lit-b', 'wedge-hi', 'hub', 'pointer', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
+const WHEEL_ART = [...['title-v1', 'face', 'rim-v2', 'rim-v2-lit-a', 'rim-v2-lit-b', 'wedge-hi', 'hub', 'pointer-v2', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
 
 // THE CHASE LIGHTS: one lit set's opacity, flipped at every peg tick of the spin (held between — steps), so the bulbs
 // race at launch and crawl into the landing with the wheel
@@ -250,14 +250,15 @@ export default function DailyWheel({ onClose }) {
     ], { duration: big ? 520 : 340, easing: 'ease-out' });
     const art = popArtRef.current;
     if (art) art.setAttribute('src', prizeArt(s));
-    const drop = 'calc(var(--wd) * 0.62)';
+    // the drop heads for the result card: below the wheel on a phone, to its right on desktop (DailyWheel.css --dw-drop-*)
+    const drop = 'translate(calc(-50% + var(--dw-drop-x)), calc(-50% + var(--dw-drop-y)))';
     playOnce(popRef.current, [
       { transform: 'translate(-50%,-50%) scale(0.2) rotate(-20deg)', opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
       { transform: `translate(-50%,-50%) scale(${big ? 1.5 : 1.25}) rotate(6deg)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
       { transform: 'translate(-50%,-50%) scale(1.1) rotate(0deg)', opacity: 1, offset: 0.34, easing: 'linear' },
       { transform: 'translate(-50%,-50%) scale(1.12) rotate(0deg)', opacity: 1, offset: 0.62, easing: 'cubic-bezier(.6,0,1,.6)' },
-      { transform: `translate(-50%, calc(-50% + ${drop})) scale(0.4) rotate(0deg)`, opacity: 0.2, offset: 0.96 },
-      { transform: `translate(-50%, calc(-50% + ${drop})) scale(0.4) rotate(0deg)`, opacity: 0 },
+      { transform: `${drop} scale(0.4) rotate(0deg)`, opacity: 0.2, offset: 0.96 },
+      { transform: `${drop} scale(0.4) rotate(0deg)`, opacity: 0 },
     ], { duration: POP_MS });
     playOnce(popBurstRef.current, [
       { transform: 'translate(-50%,-50%) scale(0.3) rotate(0deg)', opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
@@ -349,14 +350,6 @@ export default function DailyWheel({ onClose }) {
     <div className="dw-scrim" role="dialog" aria-modal="true" aria-label="Daily wheel" data-testid="daily-wheel" onClick={(e) => { if (e.target === e.currentTarget) tryClose(); }} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="dw">
         <button type="button" className="dw-close" onClick={tryClose} disabled={st.phase === 'spinning'} aria-label="Close the daily wheel" data-testid="wheel-close">✕</button>
-        <div className="dw-head">
-          <h2 className="dw-title">DAILY WHEEL</h2>
-          <span className={`dw-streak${bonusNow ? ` is-${bonusNow}` : ''}`} aria-label={`Spin streak ${streak} days`}>
-            <span className="dw-streak-n">DAY {Math.max(1, streak)}</span>
-            {bonusNow ? <span className="dw-streak-b">{bonusText(bonusNow)}</span> : null}
-          </span>
-        </div>
-
         <div className="dw-stage">
           <div ref={wheelRef} className="dw-wheel">
             <div ref={rotorRef} className="dw-rotor">
@@ -378,8 +371,8 @@ export default function DailyWheel({ onClose }) {
                 </div>
               ))}
             </div>
-            <img className="dw-rim" src={artSrc('rim')} alt="" aria-hidden="true" draggable="false" />
-            {['rim-lit-a', 'rim-lit-b'].map((n, i) => (
+            <img className="dw-rim" src={artSrc('rim-v2')} alt="" aria-hidden="true" draggable="false" />
+            {['rim-v2-lit-a', 'rim-v2-lit-b'].map((n, i) => (
               <img key={n} ref={(el) => { litRefs.current[i] = el; }} className="dw-lit" src={artSrc(n)} alt="" aria-hidden="true" draggable="false" />
             ))}
             <button
@@ -391,7 +384,7 @@ export default function DailyWheel({ onClose }) {
             >
               <img src={artSrc('hub')} alt="" aria-hidden="true" draggable="false" />
             </button>
-            <img ref={pointerRef} className="dw-pointer" src={artSrc('pointer')} alt="" aria-hidden="true" draggable="false" />
+            <img ref={pointerRef} className="dw-pointer" src={artSrc('pointer-v2')} alt="" aria-hidden="true" draggable="false" />
             <div ref={popRef} className="dw-pop" aria-hidden="true">
               <img ref={popBurstRef} className="dw-pop-burst" src={BURST_SRC} alt="" draggable="false" />
               <img ref={popArtRef} className="dw-pop-art" src={artSrc('prize-gems-s')} alt="" draggable="false" />
@@ -399,28 +392,41 @@ export default function DailyWheel({ onClose }) {
           </div>
         </div>
 
-        <div className="dw-foot">
-          {st.phase === 'load' ? <p className="dw-msg">LOADING…</p> : null}
-          {st.phase === 'off' ? <p className="dw-msg">THE WHEEL NEEDS A CONNECTION · TRY AGAIN SOON</p> : null}
-          {st.phase === 'ready' ? (
-            <KitButton tone="pink" label="SPIN" sub="FREE TODAY" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
-          ) : null}
-          {st.phase === 'spinning' ? <p className="dw-msg">…</p> : null}
-          {(st.phase === 'landed' || st.phase === 'done') && s ? (
-            <div ref={resultRef} className={`dw-result is-${s.prize}`} data-testid="wheel-result">
-              <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
-              <span className="dw-result-t">
-                <span className="dw-result-l">{cos ? cos.name : resultText(s)}</span>
-                <span className="dw-result-s">
-                  {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
-                  {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}
-                </span>
+        <div className="dw-side">
+          <div className="dw-head">
+            <h2 className="dw-title"><img className="dw-title-art" src={artSrc('title-v1')} alt="Daily wheel" draggable="false" /></h2>
+            {/* the streak + ODDS share one row under the wordmark: the foot keeps one job (SPIN, then the result) */}
+            <div className="dw-head-row">
+              <span className={`dw-streak${bonusNow ? ` is-${bonusNow}` : ''}`} aria-label={`Spin streak ${streak} days`}>
+                <span className="dw-streak-n">DAY {Math.max(1, streak)}</span>
+                {bonusNow ? <span className="dw-streak-b">{bonusText(bonusNow)}</span> : null}
               </span>
+              <button type="button" className="dw-odds-btn" onClick={() => setOdds((o) => !o)} aria-expanded={odds}>ODDS</button>
             </div>
-          ) : null}
-          {(st.phase === 'landed' || st.phase === 'done') ? <p className="dw-msg is-next">NEXT FREE SPIN TOMORROW</p> : null}
-          {canAd ? <KitButton tone="cyan" label="WATCH AD" sub="+1 SPIN TODAY" labelSize={24} width={200} onClick={watchAd} /> : null}
-          <button type="button" className="dw-odds-btn" onClick={() => setOdds((o) => !o)} aria-expanded={odds}>ODDS</button>
+          </div>
+
+          <div className="dw-foot">
+            {st.phase === 'load' ? <p className="dw-msg">LOADING…</p> : null}
+            {st.phase === 'off' ? <p className="dw-msg">THE WHEEL NEEDS A CONNECTION · TRY AGAIN SOON</p> : null}
+            {st.phase === 'ready' ? (
+              <KitButton tone="pink" label="SPIN" sub="FREE TODAY" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
+            ) : null}
+            {st.phase === 'spinning' ? <p className="dw-msg">…</p> : null}
+            {(st.phase === 'landed' || st.phase === 'done') && s ? (
+              <div ref={resultRef} className={`dw-result is-${s.prize}`} data-testid="wheel-result">
+                <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
+                <span className="dw-result-t">
+                  <span className="dw-result-l">{cos ? cos.name : resultText(s)}</span>
+                  <span className="dw-result-s">
+                    {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
+                    {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}
+                  </span>
+                </span>
+              </div>
+            ) : null}
+            {(st.phase === 'landed' || st.phase === 'done') ? <p className="dw-msg is-next">NEXT FREE SPIN TOMORROW</p> : null}
+            {canAd ? <KitButton tone="cyan" label="WATCH AD" sub="+1 SPIN TODAY" labelSize={24} width={200} onClick={watchAd} /> : null}
+          </div>
         </div>
 
         {odds ? (
