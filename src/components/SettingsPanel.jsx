@@ -1,18 +1,17 @@
-// SettingsPanel.jsx — the v2 SETTINGS (claude/mockups/v2/RoomSettings.dc.html). TRIMMED (Andy oct9: "honestly too much
-// useless settings") to what matters — three rows, each a label + a one-line "what it does" + one control, then the
-// RANK PLATE picker and SAVE PROGRESS:
+// SettingsPanel.jsx — SETTINGS. FRIENDLY PASS (Andy oct28: "make settings a bit more user friendly (tf why is it at the
+// corner....) too ai tell"): a centred sheet over a dimmed menu, in FOUR labelled groups instead of a wall of rows —
 //
-//   SOUND            MUTE + a 10-step bar = the master volume (0 = sound off)     audio/audioCore + gameSounds + clack
-//   MUSIC            ON / OFF (App owns the music; it ducks it per screen)        onToggleMusic
-//   REDUCE MOTION    ON / OFF, live (<html data-reduce-motion>) — accessibility    lib/reduceMotion
-//   BEAT SYNC        ON / OFF — the menu bouncing to the music (oct14)            lib/beatSync
+//   SOUND        VOLUME (MUTE + a 10-step bar = the master volume, 0 = sound off) · MUSIC · GAME SFX (in a match)
+//   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music)
+//   SAVE CODE    the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
+//   DANGER ZONE  RESET ACCOUNT, two steps — its own red card, apart from everything else
 //
-// NUMBER STYLE and KEYBOARD SOUNDS have no UI any more; their stored values (format.js taw.numStyle, clack taw.clack)
-// still apply exactly as saved. MUTE silences the keyboard clack too, so a save that had it on is never stuck with it.
+// No one-line "what it does" taglines (every label says it). CREDITS sits in the title bar beside CLOSE. Chunky house
+// switches (a knob that slides — transform only), thick coloured outlines, hard black offset shadows. NUMBER STYLE and
+// KEYBOARD SOUNDS have no UI; their stored values still apply. MUTE silences the keyboard clack too.
 //
-// It lives where the app's settings already live — the ONE sound/settings control (AudioControls), which renders this
-// panel in its popover under SEASON2 (CLAUDE.md NO ORPHAN FIXED UI: no new fixed element). Every control is a real
-// ≥ 44 px button; nothing animates but the press.
+// It opens from the ONE settings control (AudioControls: the desktop menu's named SETTINGS button in the left rail, the
+// phone rail's cog, the in-game cog) — no new fixed element of its own (CLAUDE.md NO ORPHAN FIXED UI).
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getMasterVolume, setMasterVolume, ensureCtx } from '../audio/audioCore';
@@ -32,13 +31,19 @@ import { beatSyncOn, setBeatSync } from '../lib/beatSync';
 
 const STEPS = 10;
 
-function Row({ tone, label, sub, wide = false, children }) {
+function Group({ title, tone, edge, className = '', children, ...rest }) {
   return (
-    <div className={`sp-row${wide ? ' sp-row--wide' : ''}`} style={{ '--sp-c': tone }}>
-      <div className="sp-text">
-        <span className="sp-label">{label}</span>
-        <span className="sp-sub">{sub}</span>
-      </div>
+    <section className={`sp-group${className ? ` ${className}` : ''}`} style={{ '--g': tone, '--g-edge': edge }} aria-label={title} {...rest}>
+      <h3 className="sp-group-title">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function Row({ label, className = '', children }) {
+  return (
+    <div className={`sp-row${className ? ` ${className}` : ''}`}>
+      <span className="sp-label">{label}</span>
       <div className="sp-ctl">{children}</div>
     </div>
   );
@@ -47,8 +52,8 @@ function Row({ tone, label, sub, wide = false, children }) {
 function OnOff({ on, onClick, label }) {
   return (
     <button type="button" role="switch" aria-checked={on} aria-label={label} className={`sp-switch${on ? ' is-on' : ''}`} onClick={onClick}>
-      <span className="sp-switch-k">{on ? 'ON' : 'OFF'}</span>
-      <span className="sp-switch-box" aria-hidden="true">{on ? '✓' : '✕'}</span>
+      <span className="sp-switch-k" aria-hidden="true">{on ? 'ON' : 'OFF'}</span>
+      <span className="sp-switch-box" aria-hidden="true" />
     </button>
   );
 }
@@ -103,7 +108,7 @@ const selectAll = (e) => {
 };
 const loud = (s) => String(s || 'THAT CODE DID NOT WORK').toUpperCase();
 
-function SaveRow({ onCredits = null }) {
+function SaveRow() {
   const [code, setCode] = useState(''); // the LONG code on screen (the fallback)
   const [short, setShort] = useState(null); // { code } once the server holds this save (071) — the code COPY gives
   const [draft, setDraft] = useState('');
@@ -182,12 +187,7 @@ function SaveRow({ onCredits = null }) {
     }, 700);
   };
   return (
-    <div className="sp-save" style={{ '--sp-c': '#2EFFE0' }}>
-      <div className="sp-text">
-        <span className="sp-label">SAVE PROGRESS</span>
-        {/* phones: CREDITS sits in this header's empty right end (the top bar is CLOSE's corner of the SOUND row there) */}
-        {onCredits ? <button type="button" className="sp-credits sp-credits--phone" onClick={onCredits}>CREDITS</button> : null}
-      </div>
+    <Group title="SAVE CODE" tone="#FF4FA3" edge="#b0206a" className="sp-save">
       {ask ? (
         <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
           <p className="sp-msg" data-testid="sp-load-compare">{ask.undo ? 'PUT BACK' : 'THIS CODE'}: {ask.mine.text} · THIS DEVICE: {ask.here.text}</p>
@@ -201,20 +201,20 @@ function SaveRow({ onCredits = null }) {
         <>
           <div className="sp-restore">
             {short ? <span className="sp-short" data-testid="sp-save-short">{formatShort(short.code)}</span> : null}
-            <button type="button" className="sp-btn" onClick={copy} data-testid="sp-save-copy">{short ? 'COPY' : 'COPY SAVE CODE'}</button>
+            <button type="button" className={`sp-btn${short ? '' : ' sp-btn--wide'}`} onClick={copy} data-testid="sp-save-copy">{short ? 'COPY' : 'COPY SAVE CODE'}</button>
           </div>
           {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" data-testid="sp-save-code" onFocus={selectAll} onClick={selectAll} /> : null}
           <form className="sp-restore" onSubmit={check}>
-            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
+            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE A CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
             <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim() || busy}>RESTORE</button>
           </form>
           {undo && !code ? (
-            <button type="button" className="sp-btn sp-btn--ghost" onClick={() => offer(undo.code, true)} data-testid="sp-undo">UNDO LAST RESTORE</button>
+            <button type="button" className="sp-btn sp-btn--ghost sp-btn--wide" onClick={() => offer(undo.code, true)} data-testid="sp-undo">UNDO LAST RESTORE</button>
           ) : null}
         </>
       )}
       {msg ? <p className="sp-msg" role="status" aria-live="polite">{msg}</p> : null}
-    </div>
+    </Group>
   );
 }
 
@@ -233,24 +233,20 @@ function ResetRow() {
     import('../progress/resetAll').then((m) => m.resetAllProgress()).then((r) => { if (r && r.aborted) fail(); }, fail);
   };
   return (
-    <div className="sp-save sp-reset" style={{ '--sp-c': '#FF5C5C' }} data-testid="sp-reset">
-      <div className="sp-text">
-        <span className="sp-label">RESET ACCOUNT</span>
-        <span className="sp-sub">START OVER FROM LV 1 · YOUR NAME STAYS</span>
-      </div>
+    <Group title="DANGER ZONE" tone="#FF5C5C" edge="#a82424" className="sp-reset" data-testid="sp-reset">
       {confirming ? (
         <div className="sp-reset-confirm" role="alertdialog" aria-label="Confirm account reset">
-          <p className="sp-msg sp-reset-warn">THIS WIPES YOUR LEVEL, REBIRTHS, GEARS, GEMS AND STATS — ON THIS DEVICE AND THE LEADERBOARD. IT CANNOT BE UNDONE.</p>
+          <p className="sp-msg sp-reset-warn">THIS WIPES YOUR LEVEL, REBIRTHS, GEARS, GEMS AND STATS — ON THIS DEVICE AND THE LEADERBOARD. YOUR NAME STAYS. IT CANNOT BE UNDONE.</p>
           <div className="sp-restore">
             <button type="button" className="sp-btn sp-btn--danger" onClick={go} disabled={busy} data-testid="sp-reset-yes">{busy ? 'RESETTING…' : 'YES, RESET'}</button>
             <button type="button" className="sp-btn sp-btn--ghost" onClick={() => setConfirming(false)} disabled={busy}>CANCEL</button>
           </div>
         </div>
       ) : (
-        <button type="button" className="sp-btn sp-btn--danger" onClick={() => setConfirming(true)} data-testid="sp-reset-open">RESET ACCOUNT</button>
+        <button type="button" className="sp-btn sp-btn--danger sp-btn--wide" onClick={() => setConfirming(true)} data-testid="sp-reset-open">RESET ACCOUNT</button>
       )}
       {msg ? <p className="sp-msg" role="status" aria-live="polite">{msg}</p> : null}
-    </div>
+    </Group>
   );
 }
 
@@ -260,6 +256,13 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
   const [back, setBack] = useState(() => Math.max(1, Math.round(getMasterVolume() * STEPS)) || STEPS);
   const reduceOn = useReduceMotion();
   const [beatOn, setBeatOn] = useState(() => beatSyncOn());
+  // the sheet is a modal: Esc closes it (the dim behind it does too)
+  useEffect(() => {
+    if (!sheet || !onClose) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [sheet, onClose]);
 
   const setLevel = (n) => {
     ensureCtx(); // a user gesture: safe to warm the context so the change is audible
@@ -277,68 +280,81 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
 
   const rows = (
     <div className="sp" role="group" aria-label="Settings">
-      <Row tone="#FFE94A" label="SOUND" sub="BOOMS, DINGS, BUZZERS" wide>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={vol === 0}
-          aria-label="Mute sound"
-          className={`sp-mute${vol === 0 ? ' is-on' : ''}`}
-          onClick={() => setLevel(vol === 0 ? back : 0)}
-        >
-          {vol === 0 ? 'MUTED' : 'MUTE'}
-        </button>
-        <div className="sp-bars" role="radiogroup" aria-label={`Sound ${vol * 10}`}>
-          {Array.from({ length: STEPS }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              role="radio"
-              aria-checked={vol === i + 1}
-              aria-label={`Sound ${(i + 1) * 10}`}
-              className={`sp-bar${i < vol ? ' is-on' : ''}`}
-              style={{ '--sp-h': `${40 + i * 6}%` }}
-              onClick={() => setLevel(vol === i + 1 ? 0 : i + 1)}
-            />
-          ))}
-        </div>
-        <span className="sp-val">{vol === 0 ? 'OFF' : formatNum(vol * 10)}</span>
-      </Row>
-      <Row tone="#B04BFF" label="MUSIC" sub="LOBBY + MATCH TRACKS">
-        <OnOff on={!musicMuted} onClick={onToggleMusic} label="Music" />
-      </Row>
-      <Row tone="#2EFFE0" label="REDUCE MOTION" sub="ON = CALMER">
-        <OnOff on={reduceOn} onClick={() => setReduceMotion(!reduceOn)} label="Reduce motion" />
-      </Row>
-      {/* Andy oct14: the music bounce (cards, title, tiles) is its own switch, separate from REDUCE MOTION */}
-      <Row tone="#FF4FA3" label="BEAT SYNC" sub="MENU BOUNCES TO THE MUSIC">
-        <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
-      </Row>
-      <SaveRow onCredits={onCredits ? () => { if (onClose) onClose(); onCredits(); } : null} />
-      <ResetRow />
+      {/* two columns on desktop (the switches | the save code + the danger zone), one stack on a phone — same order */}
+      <div className="sp-col">
+      <Group title="SOUND" tone="#FFE94A" edge="#b8a300" className="sp-sound">
+        <Row label="VOLUME" className="sp-row--vol">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={vol === 0}
+            aria-label="Mute sound"
+            className={`sp-mute${vol === 0 ? ' is-on' : ''}`}
+            onClick={() => setLevel(vol === 0 ? back : 0)}
+          >
+            {vol === 0 ? 'MUTED' : 'MUTE'}
+          </button>
+          <div className="sp-bars" role="radiogroup" aria-label={`Sound ${vol * 10}`}>
+            {Array.from({ length: STEPS }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="radio"
+                aria-checked={vol === i + 1}
+                aria-label={`Sound ${(i + 1) * 10}`}
+                className={`sp-bar${i < vol ? ' is-on' : ''}`}
+                style={{ '--sp-h': `${34 + i * 7.3}%` }}
+                onClick={() => setLevel(vol === i + 1 ? 0 : i + 1)}
+              />
+            ))}
+          </div>
+          {/* PHONES: ten bars can't each be a 44 px target in 300 px, so the phone steps the level with − / + (each a full
+              44 px button) around a read-only meter; the bars stay the desktop's control */}
+          <button type="button" className="sp-step" aria-label="Volume down" disabled={vol === 0} onClick={() => setLevel(Math.max(0, vol - 1))}>−</button>
+          <span className="sp-meter" aria-hidden="true">
+            {Array.from({ length: STEPS }, (_, i) => <span key={i} className={`sp-seg${i < vol ? ' is-on' : ''}`} style={{ '--sp-h': `${34 + i * 7.3}%` }} />)}
+          </span>
+          <button type="button" className="sp-step" aria-label="Volume up" disabled={vol === STEPS} onClick={() => setLevel(Math.min(STEPS, vol + 1))}>+</button>
+          <span className="sp-val">{vol === 0 ? 'OFF' : formatNum(vol * 10)}</span>
+        </Row>
+        <Row label="MUSIC">
+          <OnOff on={!musicMuted} onClick={onToggleMusic} label="Music" />
+        </Row>
+        {onToggleSfx ? (
+          <Row label="GAME SFX">
+            <OnOff on={!sfxMuted} onClick={onToggleSfx} label="Game sound effects" />
+          </Row>
+        ) : null}
+      </Group>
+      <Group title="GAMEPLAY" tone="#2EFFE0" edge="#129e8a" className="sp-play">
+        <Row label="REDUCE MOTION">
+          <OnOff on={reduceOn} onClick={() => setReduceMotion(!reduceOn)} label="Reduce motion" />
+        </Row>
+        {/* Andy oct14: the music bounce (cards, title, tiles) is its own switch, separate from REDUCE MOTION */}
+        <Row label="BEAT SYNC">
+          <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
+        </Row>
+      </Group>
+      </div>
+      <div className="sp-col">
+        <SaveRow />
+        <ResetRow />
+      </div>
     </div>
   );
   if (!sheet || typeof document === 'undefined') return rows;
-  // the SHEET: season 2's sound-control popover (AudioControls opens/closes it; it never opens on its own)
+  // the SHEET: centred over a dimmed screen (a tap on the dim or Esc closes it). AudioControls opens/closes it.
   return createPortal(
-    <div className="audio-panel--v2 sp-sheet" role="group" aria-label="Sound settings">
-      {/* Andy oct14: CLOSE sits on TOP (was bottom-right, under every row) */}
-      {/* CREDITS (Andy oct24 "put credits in settings"): beside CLOSE on the top bar — its menu link gave its corner to
-          NEWS + SETTINGS; the top bar already exists, so the sheet grows no taller */}
-      {onCredits ? (
-        <div className="sp-top">
-          <button type="button" className="sp-credits sp-credits--top" onClick={() => { if (onClose) onClose(); onCredits(); }}>CREDITS</button>
+    <div className="sp-scrim" onClick={(e) => { if (e.target === e.currentTarget && onClose) onClose(); }}>
+      <div className="audio-panel--v2 sp-sheet" role="dialog" aria-modal="true" aria-label="Settings">
+        <div className="sp-head">
+          <h2 className="sp-title">SETTINGS</h2>
+          {/* CREDITS (Andy oct24 "put credits in settings"): in the title bar, beside CLOSE — no row of its own */}
+          {onCredits ? <button type="button" className="sp-credits" onClick={() => { if (onClose) onClose(); onCredits(); }}>CREDITS</button> : null}
           <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
         </div>
-      ) : (
-        <button type="button" className="sp-close" onClick={onClose} aria-label="Close settings">CLOSE</button>
-      )}
-      {rows}
-      {onToggleSfx ? (
-        <Row tone="#FF6B3D" label="GAME SFX" sub="THIS MATCH">
-          <OnOff on={!sfxMuted} onClick={onToggleSfx} label="Game sound effects" />
-        </Row>
-      ) : null}
+        {rows}
+      </div>
     </div>,
     document.body,
   );

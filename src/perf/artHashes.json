@@ -1047,7 +1047,7 @@
  "wheel/face.svg": "c9578a3bb549f70d",
  "wheel/hub.webp": "7fbd1ba73db9fabd",
  "wheel/icon.webp": "d4195e617390c6a4",
- "wheel/pointer.webp": "14d7cbf95d14b760",
+ "wheel/pointer-v2.webp": "6ba6bd84350892a1",
  "wheel/prize-cosmetic.webp": "b2f7e185496dfd77",
  "wheel/prize-gems-l.webp": "9e8ffb1c9080c671",
  "wheel/prize-gems-m.webp": "2911cea9e7c7a808",
@@ -1056,8 +1056,9 @@
  "wheel/prize-ticket-rare.webp": "da8e0eed6f332c8a",
  "wheel/prize-wins.webp": "ba0017dd95669f7a",
  "wheel/prize-xp.webp": "51aa569c7e7cbdb5",
- "wheel/rim-lit-a.webp": "d52bd9a5c7f1822d",
- "wheel/rim-lit-b.webp": "088e879b3fc371e1",
- "wheel/rim.webp": "3309cd3341ce59e5",
+ "wheel/rim-v2-lit-a.webp": "870c6489b5f87624",
+ "wheel/rim-v2-lit-b.webp": "557c4ca95601e6d1",
+ "wheel/rim-v2.webp": "e84bb996c477eb78",
+ "wheel/title-v1.webp": "ff04965719820519",
  "wheel/wedge-hi.svg": "05ac2ddaf6affd4a"
 }

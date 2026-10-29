@@ -15,6 +15,7 @@
 import { Suspense, useState } from 'react';
 import './AudioControls.css';
 import { KitIconButton } from './kit/KitNavButton.jsx';
+import KitIcon from './kit/KitIcon.jsx';
 import { isEventSoundsEnabled } from '../audio/gameSounds';
 import { isClackEnabled } from '../progress/clack';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -53,6 +54,31 @@ export default function AudioControls({
       />
     </Suspense>
   );
+
+  // RAIL (Andy oct28 "tf why is it at the corner"): the desktop menu's SETTINGS — a NAMED full-width button in the left
+  // rail under UPGRADES · GEARS · REBIRTH · STATS (MenuRail `settings`), where the menu's other doors already are. A member
+  // of that cluster, never a fixed element of its own (CLAUDE.md NO ORPHAN FIXED UI).
+  if (variant === 'rail') {
+    return (
+      <div className="audio-ctrl audio-ctrl--inline audio-ctrl--rail">
+        {panel}
+        <button
+          type="button"
+          className="hp-settings-btn"
+          data-nav="settings"
+          onClick={() => { warm(); setOpen((o) => !o); }}
+          onPointerEnter={warm}
+          onFocus={warm}
+          aria-label="Settings — sound, music, save code"
+          aria-expanded={open}
+        >
+          <KitIcon name="settings" size={30} shadow={2} extras={false} className="hp-settings-ico" />
+          <span className="hp-settings-label">SETTINGS</span>
+          {allOff ? <span className="hp-settings-muted">MUTED</span> : null}
+        </button>
+      </div>
+    );
+  }
 
   if (variant === 'kit') {
     return (
