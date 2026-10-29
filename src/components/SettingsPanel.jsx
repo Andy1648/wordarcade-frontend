@@ -202,7 +202,8 @@ function SaveRow({ onCredits = null }) {
   };
   const load = () => {
     if (!ask) return;
-    applySave(ask.parsed, undefined, { source: 'code' });
+    // UNDO puts back EXACTLY the replaced save (and its bare device secret when it had no claimed account)
+    applySave(ask.parsed, undefined, ask.undo ? { source: 'code', exact: true, secret: undo && undo.secret } : { source: 'code' });
     // this device now knows its account's code: its next SETTINGS open can't overwrite a higher save the code holds
     if (ask.parsed.short && ask.parsed.acct) rememberShortCode(ask.parsed.acct.profile.id, ask.parsed.short);
     setAsk(null);

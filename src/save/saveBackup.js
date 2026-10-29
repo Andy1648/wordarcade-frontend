@@ -245,12 +245,38 @@ export const PRE_RESTORE_KEY = 'taw.preRestore';
  *  board account, so UNDO brings the account back too — saveCode.js adoptAccount).
  *  `source`: 'code' (a pasted save code — SETTINGS offers UNDO for it) or 'restore' (the cloud; no UNDO: the cloud
  *  would only bring the higher save back on the next load). */
-export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore' } = {}) {
+export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore', exact = false } = {}) {
   if (snapshot) {
     try {
-      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage, { account: true }) }));
+      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage, { account: true }), secret: storage.getItem('taw.lb.secret') || null }));
     } catch {
       /* quota: the restore still goes ahead */
+    }
+  }
+  // UNDO IS EXACT (save-safety oct28): a restore MERGES (a progress key the code does not carry is left alone — a load
+  // never drops anything), so UNDO LAST RESTORE onto a fresh device was a no-op: the fresh save's snapshot has none of
+  // the code's keys, so nothing was put back (seen on prod: PUT BACK "R0 · LV 1" reloaded into the code's LV 7). With
+  // `exact` (the UNDO path) a progress key the snapshot does not hold goes too; it is in the new snapshot above, so the
+  // undo itself can be undone. Only allowlisted progress keys are touched (never a device key, the account, the snapshot).
+  if (exact) {
+    const stale = [];
+    try {
+      const n = Number(storage.length);
+      if (Number.isFinite(n) && typeof storage.key === 'function') {
+        for (let i = 0; i < n; i++) {
+          const k = storage.key(i);
+          if (isProgressKey(k) && !Object.prototype.hasOwnProperty.call(keys, k)) stale.push(k);
+        }
+      }
+    } catch {
+      /* no enumeration: the load merges, as before */
+    }
+    for (const k of stale) {
+      try {
+        if (typeof storage.removeItem === 'function') storage.removeItem(k);
+      } catch {
+        /* never throw */
+      }
     }
   }
   for (const [k, v] of Object.entries(keys)) {

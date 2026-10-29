@@ -75,6 +75,7 @@ function legacyJson(clean, raw) {
 
 /** { at, src, code } of the save the last restore replaced (saveBackup.writeSaveKeys), or null. */
 export function readPreRestore(storage = globalThis.localStorage) {
+  // (`secret`: the bare device secret the replaced save had — UNDO puts it back when the save had no claimed account)
   try {
     const o = JSON.parse(storage.getItem(PRE_RESTORE_KEY) || 'null');
     return o && typeof o.code === 'string' && Number.isFinite(o.at) ? o : null;
@@ -231,7 +232,36 @@ export function adoptAccount(acct, storage = globalThis.localStorage) {
 export function applySave(parsed, storage, opts) {
   const res = writeSaveKeys(parsed.keys, storage, opts);
   if (parsed.acct) adoptAccount(parsed.acct, storage || globalThis.localStorage);
+  else if (opts && opts.exact) restoreBareSecret(storage || globalThis.localStorage, opts.secret);
   return res;
+}
+/** UNDO of a load onto a device whose save carried NO claimed account: put its identity back exactly — the bare device
+ *  secret it had (`secret`, recorded in the snapshot), or none — so the account that load adopted does not stay (the next
+ *  boot's cloud restore for it would bring the undone save straight back). The adopted account is not lost: the snapshot
+ *  the undo just took (taw.preRestore) carries it, and so does the code it came from. */
+function restoreBareSecret(storage, secret) {
+  if (!storage) return;
+  const s = typeof secret === 'string' && SECRET_RE.test(secret) ? secret : null;
+  try {
+    if (s && storage.getItem('taw.lb.secret') === s && !storage.getItem('taw.lb.profile')) return; // nothing was adopted
+  } catch {
+    /* fall through */
+  }
+  for (const k of ['taw.lb.secret', 'taw.lb.profile', SHORT_CACHE_KEY, ...ACCOUNT_STATE_KEYS]) {
+    try { storage.removeItem(k); } catch { /* never throw */ }
+  }
+  try {
+    if (s) storage.setItem('taw.lb.secret', s);
+  } catch {
+    /* blocked */
+  }
+  try {
+    if (typeof document !== 'undefined') {
+      document.cookie = s ? `taw_lb=${s}; max-age=${400 * 24 * 3600}; path=/; samesite=lax; secure` : 'taw_lb=; max-age=0; path=/; samesite=lax; secure'; // client.js SECRET_COOKIE
+    }
+  } catch {
+    /* no cookies */
+  }
 }
 
 /** Restore from ANY save code: validates fully first, snapshots the replaced save (taw.preRestore), then writes. */

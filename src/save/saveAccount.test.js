@@ -226,3 +226,37 @@ test('save-safety: opening SETTINGS on a device BEHIND the code never overwrites
   // the cache is account state, never progress: a save code does not carry it
   assert.equal(parseAnySave(exportSaveCode(b)).keys[SHORT_CACHE_KEY], undefined);
 });
+
+test('save-safety: UNDO onto a FRESH device puts back exactly the fresh save — progress and the bare secret', () => {
+  const code = exportSaveCode(makeStore(DAAN));
+  for (const bare of [SECRET_B, null]) {
+    const fresh = makeStore({ 'taw.econ': '13', 'taw.s2.seenWelcome': '1', ...(bare ? { 'taw.lb.secret': bare } : {}) });
+    assert.equal(importAnySave(code, fresh, { source: 'code' }).ok, true);
+    assert.equal(fresh.getItem('taw.s2.rebirths'), '27');
+    assert.equal(fresh.getItem('taw.lb.secret'), SECRET_A);
+    const pre = readPreRestore(fresh);
+    assert.equal(pre.secret, bare);
+    const undo = parseAnySave(pre.code);
+    assert.equal(undo.ok, true);
+    assert.equal(undo.acct, undefined, 'the fresh save had no claimed account');
+    applySave(undo, fresh, { source: 'code', exact: true, secret: pre.secret });
+    const d = fresh._dump();
+    assert.equal(d['taw.s2.rebirths'], undefined, 'the code\'s progress is gone again (it used to stay: a merge)');
+    assert.equal(d['taw.s2.xp'], undefined);
+    assert.equal(d['taw.records'], undefined);
+    assert.equal(d['taw.econ'], '13');
+    assert.equal(d['taw.s2.seenWelcome'], '1', 'device keys are never touched');
+    assert.equal(d['taw.lb.secret'], bare ?? undefined, 'the device secret it had (or none) is back');
+    assert.equal(d['taw.lb.profile'], undefined, 'the adopted account does not stay (its cloud restore would undo the undo)');
+    // the undo itself can be undone: the account it dropped is in the new snapshot
+    assert.equal(parseAnySave(readPreRestore(fresh).code).acct.secret, SECRET_A);
+  }
+});
+
+test('save-safety: a normal code load still MERGES (never drops a key the code does not carry)', () => {
+  const code = exportSaveCode(makeStore(DAAN));
+  const dev = makeStore({ 'taw.econ': '13', 'taw.s2.heroes': '["riot"]', ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  importAnySave(code, dev, { source: 'code' });
+  assert.equal(dev.getItem('taw.s2.heroes'), '["riot"]');
+  assert.equal(dev.getItem('taw.s2.rebirths'), '27');
+});
