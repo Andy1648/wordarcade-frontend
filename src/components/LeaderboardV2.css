@@ -1165,3 +1165,40 @@
 .lb2 .lb2-col--1 .lb2-pod-name-t.lb2-pod-name-t--cut { font-size: min(max(var(--fs-k14), calc(var(--fs-k20) * var(--pk))), max(13px, calc(82cqw / var(--nl, 8)))); }
 .lb2--narrow .lb2-who > .lb2-pod-name .lb2-pod-name-t { font-size: var(--fs-body); }
 .lb2 .lb2-head { z-index: 6; }
+
+/* ===== THE CUT LINES, PAINTED (oct29): each band divider wears hero-art's ribbon at its own 6.6:1 shape (never stretched)
+   with the band name set on it in the house Bungee; the line runs on beside it. One neutral grey strip, tinted per band:
+   the band colour MULTIPLIES over the ribbon (so its shading and black outline survive), masked to the ribbon's shape. */
+.lb2 .lb2-sep { padding-top: calc(5px * var(--lb2-k)); padding-bottom: calc(5px * var(--lb2-k)); }
+.lb2 .lb2-sep .lb2-sep-rib {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: max(30px, calc(36px * var(--lb2-k)));
+  aspect-ratio: 1200 / 182;
+  isolation: isolate;
+  -webkit-text-stroke: 0;
+}
+.lb2-sep-rib::before,
+.lb2-sep-rib::after { content: ''; position: absolute; inset: 0; }
+.lb2-sep-rib::before { z-index: -2; background: url('/lb/cutline-ribbon.webp') center / contain no-repeat; }
+.lb2-sep-rib::after {
+  z-index: -1;
+  background: currentColor;
+  mix-blend-mode: multiply;
+  -webkit-mask: url('/lb/cutline-ribbon.webp') center / contain no-repeat;
+  mask: url('/lb/cutline-ribbon.webp') center / contain no-repeat;
+}
+.lb2-sep-rib b {
+  position: relative;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: max(var(--fs-k16), calc(var(--fs-k18) * var(--lb2-k)));
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}

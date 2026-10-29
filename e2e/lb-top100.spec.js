@@ -141,6 +141,16 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '61');
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
     await expect(lb.locator('.lb2-row.is-rival')).toHaveAttribute('data-rank', '60');
+    // the TOP 100 tier wears its painted stone seal (51-100), and every painted cut line keeps the ribbon's own shape
+    await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
+    const ribs = await lb.locator('.lb2-sep-rib').evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return b.width / b.height; }));
+    expect(ribs.length, 'the TOP 50 / TOP 100 cut lines are on the board').toBeGreaterThanOrEqual(2);
+    for (const r of ribs) expect(Math.abs(r - 1200 / 182), `a ribbon at ${r.toFixed(2)}:1 is stretched`).toBeLessThan(0.15);
+    if (SHOTS) {
+      await lb.locator('.lb2-sep[data-band="stone"]').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `${SHOTS}/lb-cutline-${vp.width}.png` });
+    }
   });
 }
 
