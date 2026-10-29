@@ -85,6 +85,15 @@ export const PROGRESS_KEYS = [
   'taw.wordsenseRefunded',
   'taw.ulwish',
   'taw.boost',
+  // SAVE SAFETY (oct28 audit): progress a code still left behind — the CHAIN / FUSE personal bests, the SAT / FRENCH RUSH
+  // word-learning state (Leitner boxes), the daily streak, an unpaid theme refund, and the profile description
+  'wa_solo_chain_best',
+  'wa_solo_fuse_best',
+  'wa_satrush_lexicon',
+  'wa_frenchrush_lexicon',
+  'wa_daily',
+  'taw.themeRefundPending',
+  'taw.bio',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
