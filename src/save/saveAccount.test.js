@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { exportSave, PRE_RESTORE_KEY } from './saveBackup.js';
 import {
   exportSaveCode, parseAnySave, importAnySave, applySave, adoptAccount, cleanAccount, readPreRestore,
-  normalizeShort, formatShort, issueShortCode, fetchShortSave, SHORT_ALPHABET, SHORT_ERRORS, SAVE_ERRORS, crc32,
+  normalizeShort, formatShort, issueShortCode, fetchShortSave, cachedShortCode, rememberShortCode, SHORT_CACHE_KEY, SHORT_ALPHABET, SHORT_ERRORS, SAVE_ERRORS, crc32,
 } from './saveCode.js';
 import { resetOutcome, isMissingRpc } from './cloudSave.js';
 
@@ -187,4 +187,99 @@ test('RESET ACCOUNT never drops the account when the server can\'t reset it: off
   assert.equal(resetOutcome({ named: false }), 'local');
   assert.equal(isMissingRpc({ status: 404 }), true);
   assert.equal(isMissingRpc({ code: 'no_profile', status: 400 }), false);
+});
+
+test('save-safety: opening SETTINGS on a device BEHIND the code never overwrites the higher save the code holds', async () => {
+  const db = fakeServer();
+  const a = makeStore(DAAN); // R27 LV514
+  const up = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: a, profileId: 'fe57cdaf' });
+  assert.equal(up.ok, true);
+  assert.equal(cachedShortCode('fe57cdaf', a), up.code, 'the device remembers the code of its account');
+  assert.equal(cachedShortCode('someone-else', a), null);
+  // device B shares the account (it loaded the code once) but is behind: R5
+  const b = makeStore({ 'taw.econ': '13', 'taw.s2.rebirths': '5', 'taw.s2.xp': JSON.stringify({ lv: 3, f: 0, rc: 5, v: 10 }), ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  rememberShortCode('fe57cdaf', up.code, b);
+  const puts = () => db.calls.filter((c) => c === 'lb_save_code_put').length;
+  const before = puts();
+  const kept = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: b, profileId: 'fe57cdaf' });
+  assert.equal(kept.ok, true);
+  assert.equal(kept.kept, true);
+  assert.equal(kept.code, up.code);
+  assert.equal(kept.held.keys['taw.s2.rebirths'], '27');
+  assert.equal(puts(), before, 'no upload: the code still holds R27');
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '27');
+  // B moves ahead (R28) → its save goes up as before
+  b.setItem('taw.s2.rebirths', '28');
+  b.setItem('taw.s2.xp', JSON.stringify({ lv: 1, f: 0, rc: 28, v: 10 }));
+  const ahead = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: b, profileId: 'fe57cdaf' });
+  assert.equal(ahead.kept, undefined);
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '28');
+  // can't read what the code holds (offline) → never overwrite blind
+  const c = makeStore({ 'taw.econ': '13', 'taw.s2.rebirths': '1', ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  rememberShortCode('fe57cdaf', up.code, c);
+  db.down = true;
+  const off = await issueShortCode({ rpc: db.rpc, secret: SECRET_A, storage: c, profileId: 'fe57cdaf' });
+  db.down = false;
+  assert.equal(off.ok, false);
+  assert.equal(off.reason, 'offline');
+  assert.equal((await fetchShortSave(up.code, { rpc: db.rpc })).keys['taw.s2.rebirths'], '28');
+  // the cache is account state, never progress: a save code does not carry it
+  assert.equal(parseAnySave(exportSaveCode(b)).keys[SHORT_CACHE_KEY], undefined);
+});
+
+test('save-safety: UNDO onto a FRESH device puts back exactly the fresh save — progress and the bare secret', () => {
+  const code = exportSaveCode(makeStore(DAAN));
+  for (const bare of [SECRET_B, null]) {
+    const fresh = makeStore({ 'taw.econ': '13', 'taw.s2.seenWelcome': '1', ...(bare ? { 'taw.lb.secret': bare } : {}) });
+    assert.equal(importAnySave(code, fresh, { source: 'code' }).ok, true);
+    assert.equal(fresh.getItem('taw.s2.rebirths'), '27');
+    assert.equal(fresh.getItem('taw.lb.secret'), SECRET_A);
+    const pre = readPreRestore(fresh);
+    assert.equal(pre.secret, bare);
+    const undo = parseAnySave(pre.code);
+    assert.equal(undo.ok, true);
+    assert.equal(undo.acct, undefined, 'the fresh save had no claimed account');
+    applySave(undo, fresh, { source: 'code', exact: true, secret: pre.secret });
+    const d = fresh._dump();
+    assert.equal(d['taw.s2.rebirths'], undefined, 'the code\'s progress is gone again (it used to stay: a merge)');
+    assert.equal(d['taw.s2.xp'], undefined);
+    assert.equal(d['taw.records'], undefined);
+    assert.equal(d['taw.econ'], '13');
+    assert.equal(d['taw.s2.seenWelcome'], '1', 'device keys are never touched');
+    assert.equal(d['taw.lb.secret'], bare ?? undefined, 'the device secret it had (or none) is back');
+    assert.equal(d['taw.lb.profile'], undefined, 'the adopted account does not stay (its cloud restore would undo the undo)');
+    // the undo itself can be undone: the account it dropped is in the new snapshot
+    assert.equal(parseAnySave(readPreRestore(fresh).code).acct.secret, SECRET_A);
+  }
+});
+
+test('save-safety: a normal code load still MERGES (never drops a key the code does not carry)', () => {
+  const code = exportSaveCode(makeStore(DAAN));
+  const dev = makeStore({ 'taw.econ': '13', 'taw.s2.heroes': '["riot"]', ...acctKeys(SECRET_A, 'fe57cdaf', 'Daan') });
+  importAnySave(code, dev, { source: 'code' });
+  assert.equal(dev.getItem('taw.s2.heroes'), '["riot"]');
+  assert.equal(dev.getItem('taw.s2.rebirths'), '27');
+});
+
+test('073: the upload sends the ★-first score; before 073 (no 3-argument function) it re-sends without; a server "lower" keeps', async () => {
+  const bodies = [];
+  let has073 = false;
+  let lower = false;
+  const rpc = async (fn, body) => {
+    bodies.push(body);
+    if ('p_score' in body && !has073) throw Object.assign(new Error('Could not find the function'), { code: 'PGRST202', status: 404 });
+    return lower ? { ok: true, code: 'K7M2QX9PAH', kept: true, reason: 'lower' } : { ok: true, code: 'K7M2QX9PAH' };
+  };
+  const st = makeStore(DAAN);
+  const pre = await issueShortCode({ rpc, secret: SECRET_A, storage: st });
+  assert.deepEqual(pre, { ok: true, code: 'K7M2QX9PAH' });
+  assert.equal(bodies.length, 2, 'with p_score first, then the 2-argument call');
+  assert.ok(/^\d+$/.test(bodies[0].p_score) && BigInt(bodies[0].p_score) >= 27n * 10n ** 24n, 'R27 dominates the score');
+  assert.equal('p_score' in bodies[1], false);
+  has073 = true;
+  lower = true;
+  bodies.length = 0;
+  const kept = await issueShortCode({ rpc, secret: SECRET_A, storage: st });
+  assert.deepEqual(kept, { ok: true, code: 'K7M2QX9PAH', kept: true });
+  assert.equal(bodies.length, 1);
 });
