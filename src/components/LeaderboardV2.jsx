@@ -615,7 +615,8 @@ export default function LeaderboardV2({ onBack }) {
             const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
               <Fragment key={r.id}>
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span>{sep}</span></div>}
+              {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
+              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
                 <span className={`lb2-who-cell${bios[r.id] && !(mine && (newTier || rival || r.rank > 10)) ? ' has-bio' : ''}`}>
