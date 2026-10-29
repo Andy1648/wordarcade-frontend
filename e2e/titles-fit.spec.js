@@ -46,7 +46,7 @@ for (const [w, h] of VPS) {
     const sideBySide = name.x + name.width <= plate.x + 1;
     const stacked = name.y + name.height <= plate.y + 1;
     expect(sideBySide || stacked, 'name and title plate overlap').toBe(true);
-    expect(plate.height).toBeGreaterThanOrEqual(w <= 480 ? 44 : 32); // a finger target on the phone
+    expect(plate.height).toBeGreaterThanOrEqual(w <= 480 ? 44 : 22); // a finger target on the phone; on a laptop it stays within the name line (the slim NEON board is ~25px)
 
     await pf.getByTestId('profile-title').click();
     const rl = page.getByTestId('rank-ladder');
