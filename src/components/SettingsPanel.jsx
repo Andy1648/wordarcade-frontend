@@ -120,7 +120,7 @@ function SaveRow({ onCredits = null }) {
     // save-safety (oct28): a code that holds a save AHEAD of this device is kept, never overwritten (saveCode.js)
     return issueShortCode({ rpc, secret, profileId: me.id }).then((r) => {
       if (r.ok) setShort({ code: r.code });
-      if (r.ok && r.kept) setMsg(`YOUR CODE HOLDS A HIGHER SAVE (${codeHeadline(r.held.keys).text}) — RESTORE IT BELOW`);
+      if (r.ok && r.kept) setMsg(r.held ? `YOUR CODE HOLDS A HIGHER SAVE (${codeHeadline(r.held.keys).text}) — RESTORE IT BELOW` : 'YOUR CODE HOLDS A HIGHER SAVE — RESTORE IT BELOW');
       return r;
     });
   }, []);

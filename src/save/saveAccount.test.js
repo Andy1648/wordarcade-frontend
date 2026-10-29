@@ -260,3 +260,26 @@ test('save-safety: a normal code load still MERGES (never drops a key the code d
   assert.equal(dev.getItem('taw.s2.heroes'), '["riot"]');
   assert.equal(dev.getItem('taw.s2.rebirths'), '27');
 });
+
+test('073: the upload sends the ★-first score; before 073 (no 3-argument function) it re-sends without; a server "lower" keeps', async () => {
+  const bodies = [];
+  let has073 = false;
+  let lower = false;
+  const rpc = async (fn, body) => {
+    bodies.push(body);
+    if ('p_score' in body && !has073) throw Object.assign(new Error('Could not find the function'), { code: 'PGRST202', status: 404 });
+    return lower ? { ok: true, code: 'K7M2QX9PAH', kept: true, reason: 'lower' } : { ok: true, code: 'K7M2QX9PAH' };
+  };
+  const st = makeStore(DAAN);
+  const pre = await issueShortCode({ rpc, secret: SECRET_A, storage: st });
+  assert.deepEqual(pre, { ok: true, code: 'K7M2QX9PAH' });
+  assert.equal(bodies.length, 2, 'with p_score first, then the 2-argument call');
+  assert.ok(/^\d+$/.test(bodies[0].p_score) && BigInt(bodies[0].p_score) >= 27n * 10n ** 24n, 'R27 dominates the score');
+  assert.equal('p_score' in bodies[1], false);
+  has073 = true;
+  lower = true;
+  bodies.length = 0;
+  const kept = await issueShortCode({ rpc, secret: SECRET_A, storage: st });
+  assert.deepEqual(kept, { ok: true, code: 'K7M2QX9PAH', kept: true });
+  assert.equal(bodies.length, 1);
+});

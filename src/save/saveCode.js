@@ -362,10 +362,28 @@ export async function issueShortCode({ rpc, secret, storage, profileId = null } 
   } catch {
     return shortFail('unavailable');
   }
+  // 073_save_code_guard.sql: the server keeps a code's save when it is AHEAD of this one, judged by p_score (the same
+  // ★-first score). Before 073 runs, the 2-argument function is the only one: a missing-function answer re-sends without.
+  let score = '0';
   try {
-    const r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
+    const s = storeOf(storage);
+    score = saveScore((k) => {
+      try { return s.getItem(k); } catch { return null; }
+    }).toString();
+  } catch {
+    score = '0';
+  }
+  try {
+    let r;
+    try {
+      r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob, p_score: score });
+    } catch (e) {
+      if (!isMissingRpc(e)) throw e;
+      r = await rpc('lb_save_code_put', { p_secret: secret, p_blob: blob });
+    }
     const code = r && r.ok ? normalizeShort(r.code) : null;
     if (code && profileId) rememberShortCode(profileId, code, storage);
+    if (code && r.reason === 'lower') return { ok: true, code, kept: true }; // 073 kept the higher save it holds
     return code ? { ok: true, code } : shortFail(r && r.reason === 'busy' ? 'busy' : 'unavailable');
   } catch (e) {
     return shortFail(isMissingRpc(e) || (e && e.status >= 400 && e.status < 500) ? 'unavailable' : 'offline');
