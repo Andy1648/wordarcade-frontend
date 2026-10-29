@@ -51,13 +51,13 @@ async function boot(page) {
 const measure = (page) => page.evaluate(async () => {
   // an SVG with no width/height reports the 300×150 default as its natural size: its real ratio is its viewBox's
   const viewBox = {};
-  for (const src of new Set([...document.querySelectorAll('.sp2 img')].map((i) => i.getAttribute('src')).filter((u) => /\.svg$/.test(u || '')))) {
+  for (const src of new Set([...document.querySelectorAll('.sp2 img, .pf img')].map((i) => i.getAttribute('src')).filter((u) => /\.svg$/.test(u || '')))) {
     try {
       const m = (await (await fetch(src)).text()).match(/<svg[^>]*\sviewBox="[\d.]+ [\d.]+ ([\d.]+) ([\d.]+)"/);
       if (m) viewBox[src] = Number(m[1]) / Number(m[2]);
     } catch { /* measured by its natural size */ }
   }
-  return [...document.querySelectorAll('.sp2 img')].flatMap((img) => {
+  return [...document.querySelectorAll('.sp2 img, .pf img')].flatMap((img) => {
     const cs = getComputedStyle(img);
     const w = parseFloat(cs.width);
     const h = parseFloat(cs.height);
@@ -75,7 +75,7 @@ const vesselBoxes = (page) => page.locator('.sp2 .va').evaluateAll((els) => els.
 }).filter((b) => b.w > 2));
 
 // every image decoded (lazy ones off-screen may never load: measured only once they have)
-const settle = (page) => page.waitForFunction(() => [...document.querySelectorAll('.sp2 img')].every((i) => i.complete), null, { timeout: 5000 }).catch(() => {});
+const settle = (page) => page.waitForFunction(() => [...document.querySelectorAll('.sp2 img, .pf img')].every((i) => i.complete), null, { timeout: 5000 }).catch(() => {});
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 const offRatio = (imgs) => imgs.filter((m) => Math.abs(m.drawn / m.natural - 1) > 0.02);
 
@@ -96,11 +96,16 @@ for (const vp of [{ w: 1366, h: 768 }, { w: 1280, h: 600 }, { w: 1920, h: 1080 }
     await check('boosts'); await shot(page, `${tag}-boosts`);
     await shop.locator('.sp2-cell[data-cell="extend"]').scrollIntoViewIfNeeded(); // the other WIDE card, down the shelf
     await check('boosts-end'); await shot(page, `${tag}-boosts-end`);
-    // LOOKS shelf
-    await shop.locator('.sp2-tab[data-shelf="looks"]').click();
-    await page.waitForTimeout(400);
-    await check('looks'); await shot(page, `${tag}-looks`);
-    await shop.locator('.sp2-tab[data-shelf="boosts"]').click();
+    // COSMETICS (oct28): the profile's CUSTOMIZE menu over the shop — its pop styles, then every other tab
+    await shop.locator('.sp2-tab[data-shelf="cosmetics"]').click();
+    await page.getByTestId('customize').waitFor({ state: 'visible' });
+    for (const t of ['pop', 'sound', 'hero', 'frame', 'fx']) {
+      await page.locator(`.cz-tab[data-cz="${t}"]`).click();
+      await page.waitForTimeout(400);
+      await check(`cosmetics-${t}`); await shot(page, `${tag}-cosmetics-${t}`);
+    }
+    await page.keyboard.press('Escape');
+    await page.getByTestId('profile-popup').waitFor({ state: 'detached' });
     // the POWER LADDER
     await shop.locator('.sp2-plate').click();
     await page.waitForTimeout(400);

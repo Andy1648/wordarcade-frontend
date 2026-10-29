@@ -27,18 +27,21 @@ async function boot(page, gems) {
 const tabDot = (page, k) => page.getByTestId(`shop-tab-dot-${k}`);
 
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
-  test(`@${vp.width}: a new restock + an affordable look light UPGRADES; LOOKS carries its own dot until opened`, async ({ page }) => {
+  test(`@${vp.width}: a new restock + an affordable look light UPGRADES; COSMETICS carries its own dot until its looks are seen`, async ({ page }) => {
     await page.setViewportSize(vp);
     await boot(page, 100);
     await expect(navDot(page, 'shop')).toHaveCount(1);
     await navControl(page, 'shop').click();
     await page.locator('.sp2').waitFor({ state: 'visible' });
-    await expect(tabDot(page, 'looks')).toBeVisible();
+    await expect(tabDot(page, 'cosmetics')).toBeVisible();
     await expect(tabDot(page, 'boosts')).toHaveCount(0); // the shelf you're on is seen
-    await page.locator('.sp2-tab[data-shelf="looks"]').click();
-    await expect(tabDot(page, 'looks')).toHaveCount(0);
-    await page.locator('.sp2-tab[data-shelf="boosts"]').click();
-    await expect(tabDot(page, 'looks')).toHaveCount(0); // seen stays seen
+    // oct28: COSMETICS opens the profile's CUSTOMIZE menu on POP STYLE — showing the looks marks them seen
+    await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();
+    await page.getByTestId('customize').waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    await page.getByTestId('profile-popup').waitFor({ state: 'detached' });
+    await expect(page.locator('.sp2')).toBeVisible(); // Escape closed CUSTOMIZE, not the shop
+    await expect(tabDot(page, 'cosmetics')).toHaveCount(0); // seen stays seen
     await page.reload();
     await menuReady(page);
     await expect(navDot(page, 'shop')).toHaveCount(0); // both shelves seen: the menu dot is out too

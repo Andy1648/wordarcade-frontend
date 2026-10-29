@@ -86,7 +86,7 @@ for (const [w, h] of [[360, 640], [390, 844]]) {
   test(`YOUR PROFILE never scrolls sideways at ${w}x${h}`, async ({ page }) => {
     await boot(page, w, h);
     await page.locator('[data-nav="profile"]:visible').first().click();
-    await page.locator('.pf-change').waitFor({ state: 'visible' });
+    await page.getByTestId('profile-kit').waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
     const m = await page.locator('.pf').evaluate((el) => ({ sw: el.scrollWidth, cw: el.clientWidth }));
     expect(m.sw, 'the profile panel has no sideways scroll').toBeLessThanOrEqual(m.cw + 1);

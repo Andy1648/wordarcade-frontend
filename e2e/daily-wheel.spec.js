@@ -158,7 +158,7 @@ for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']
       await page.locator('[data-nav="profile"]:visible').first().click();
       await page.getByTestId('profile-kit').click();
       const pk = page.getByTestId('kit-picker');
-      await pk.getByRole('tab', { name: tab }).click();
+      await page.getByTestId('customize').getByRole('tab', { name: tab }).click();
       await pk.getByRole('radio', { name: new RegExp(name) }).click();
       await pk.getByRole('button', { name: `WEAR ${name}` }).click();
       await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible();

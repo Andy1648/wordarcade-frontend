@@ -29,7 +29,7 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   test(`chase heroes ${vn}: locked at the end of the grid with their odds; the preview never sells them`, async ({ page }) => {
     await boot(page, vp);
     await page.locator('[data-nav="profile"]:visible').first().click();
-    await page.locator('.pf-change').click();
+    await page.getByTestId('profile-kit').click(); // CUSTOMIZE opens on its HERO tab (oct28)
     await expect(page.locator('.hp2-coll')).toBeVisible();
     for (const [id, odds] of [['drake', '1 IN 500'], ['magma', '1 IN 500'], ['facet', '1 IN 2500']]) {
       const c = page.locator(`.hc[data-hero="${id}"]`);
