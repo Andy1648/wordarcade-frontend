@@ -780,10 +780,12 @@
 .lb2-sep[data-band='gold'] { color: #FFE94A; }
 .lb2-sep[data-band='cyan'] { color: #2EFFE0; }
 .lb2-sep[data-band='violet'] { color: #c08bff; }
+.lb2-sep[data-band='stone'] { color: #c9b48f; }
 .lb2-sep[data-band='you'] { color: #FF4FA3; }
 .lb2-row[data-band='gold'] .lb2-rk { color: #FFE94A; }
 .lb2-row[data-band='cyan'] .lb2-rk { color: #2EFFE0; }
 .lb2-row[data-band='violet'] .lb2-rk { color: #c08bff; }
+.lb2-row[data-band='stone'] .lb2-rk { color: #c9b48f; }
 .lb2-row.is-me .lb2-rk { color: #FFE94A; }
 
 /* RIVAL + CHASE (oct15 night): the player right above you wears a red RIVAL chip and a red edge; your row says what
@@ -1087,3 +1089,40 @@
 .lb2-who-cell > .lb2-name-line { max-width: 100%; }
 .lb2--narrow .lb2-row.is-me .lb2-who-cell > .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row .lb2-rival { display: none; }
+
+/* DESCRIPTIONS (Andy oct28 "descriptions for top accounts"): the TOP 10's bios. The podium's sits under the name, two lines
+   at most; a row's is the second line under the name (one line, its full text in the profile card). Space Mono, quiet ink -
+   the name stays the loudest thing on the row. */
+.lb2-pod-bio {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 2px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  text-align: center;
+  color: #d9c8f5;
+  overflow-wrap: anywhere;
+}
+.lb2-pod-bio::before { content: '\201C'; }
+.lb2-pod-bio::after { content: '\201D'; }
+.lb2-who-cell.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
+.lb2-who-cell.has-bio .lb2-name-line { max-width: 100%; }
+.lb2-bio {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  color: #b9a6dd;
+}
+.lb2-bio::before { content: '\201C'; }
+.lb2-bio::after { content: '\201D'; }
