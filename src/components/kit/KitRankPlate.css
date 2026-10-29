@@ -22,7 +22,7 @@
   font-family: 'Bungee', sans-serif;
   font-weight: 400;
   text-transform: uppercase;
-  font-size: max(13px, calc(var(--krp-h) * var(--krp-k, 0.4))); /* never under the house 13 px floor — a long name on a
+  font-size: max(var(--fs-k13), calc(var(--krp-h) * var(--krp-k, 0.4))); /* never under the house 13 px floor — a long name on a
      small plate may run onto the art's rim rather than shrink past it */
   line-height: 1;
   white-space: nowrap;

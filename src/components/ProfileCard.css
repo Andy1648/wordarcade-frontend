@@ -49,6 +49,8 @@
 .pc-rank { flex: none; font-size: var(--fs-k24); color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pc-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k28); -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pc-plate { flex: none; --krp-h: 40px; }
+/* a phone card: the title plate drops to its own line under the name, so the name keeps the whole width (never clipped) */
+@media (max-width: 480px) { .pc-head { flex-wrap: wrap; row-gap: 6px; } .pc-head .pc-name { flex-basis: calc(100% - 64px); } .pc-plate { --krp-h: 34px; } }
 .pc-name.fit-box { overflow: visible; text-overflow: clip; } /* FitText scales the name to its box — no ellipsis */
 .pc-sub { display: flex; gap: 10px; }
 .pc-sub-c {

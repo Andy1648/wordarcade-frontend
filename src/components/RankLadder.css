@@ -28,7 +28,7 @@
 /* ── STAGE ── */
 .rl-stage { display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 0; }
 .rl-title {
-  margin: 0; align-self: flex-start; font-family: 'Bungee Shade', 'Bungee', system-ui, sans-serif; font-weight: 400;
+  margin: 0; align-self: flex-start; font-family: 'Bungee Shade', 'Bungee', system-ui, sans-serif; font-weight: 400; text-transform: uppercase;
   font-size: var(--fs-k44); line-height: 1; color: #FFE94A;
   -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000;
   transform: rotate(-2deg) skewX(-4deg);
