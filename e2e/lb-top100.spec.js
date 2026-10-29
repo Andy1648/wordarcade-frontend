@@ -1,6 +1,7 @@
 // e2e/lb-top100.spec.js — the TOP 100 board with descriptions (Andy oct28: "extend to top 100" + bios for the top
 // accounts), held to the UI checklist (oct28): at 1366 / 1920 / 390, ZERO overlaps between the podium's name, bio,
-// plate and numbers or between list rows, the bios are readable (>= 16px), and the board really goes to #100.
+// plate and numbers or between list rows, every row wears a face that stays in its row and off its name, the bios are
+// readable (>= 16px), and the board really goes to #100.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -110,6 +111,20 @@ function overlapsIn(page) {
       const name = r.querySelector('.lb2-name-line');
       const bio = r.querySelector('.lb2-bio');
       if (name && bio && hit(box(name), box(bio))) out.push(`row #${r.dataset.rank}: name x bio`);
+      const face = r.querySelector('.lb2-face');
+      if (!face) out.push(`row #${r.dataset.rank}: no face`);
+      else {
+        if (name && hit(box(face), box(name))) out.push(`row #${r.dataset.rank}: face x name`);
+        const fb = box(face); const rb = box(r);
+        if (fb.top < rb.top - 1 || fb.bottom > rb.bottom + 1) out.push(`row #${r.dataset.rank}: face spills out of its row`);
+        if (fb.width < 26) out.push(`row #${r.dataset.rank}: face too small (${Math.round(fb.width)}px)`);
+      }
+      // the name (and its bio / chase line) stays INSIDE its row, beside the face - never pushed under it
+      for (const t of r.querySelectorAll('.lb2-name-line, .lb2-bio, .lb2-chase')) {
+        const tb = box(t); const rb = box(r);
+        if (tb.top < rb.top - 1 || tb.bottom > rb.bottom + 1) out.push(`row #${r.dataset.rank}: ${t.className.split(' ')[0]} spills out of its row`);
+        if (face && tb.left < box(face).right - 1) out.push(`row #${r.dataset.rank}: ${t.className.split(' ')[0]} sits under the face`);
+      }
     }
     return out;
   });

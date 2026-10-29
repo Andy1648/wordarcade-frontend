@@ -43,7 +43,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, heroById } from '../cast/cast.js';
+import { CAST, castFor, castSrc, heroById } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
@@ -381,8 +381,8 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  // the podium heroes + the TOP 10's bios ride one showcase read
-  const podIds = rows.slice(0, 10).map((p) => (p ? p.id : '')).join(',');
+  // the heroes of the whole board (podium + every row's head) + the TOP 10's bios ride one showcase read
+  const podIds = rows.slice(0, BOARD_SIZE).map((p) => (p ? p.id : '')).join(',');
   // HEROES (053, Andy oct17 "make sure the heros shown on the leaderboard correspond to what the user actually equips"):
   // a podium player who has sent their equipped hero shows THAT hero (duplicates allowed — it's their pick). Only a player
   // with no hero on file (053 not run / an old client) falls back to three DIFFERENT id-hashed members.
@@ -605,6 +605,8 @@ export default function LeaderboardV2({ onBack }) {
             // player right above you is the strongest pull a board has — a near, beatable target beats a distant top 10)
             const meK = myId ? list.findIndex((x) => x.id === myId) : -1;
             const rival = meK > 0 && list[meK - 1].rank === list[meK].rank - 1 ? list[meK - 1] : null;
+            // the TOP 10's descriptions (yours steps aside for the chase / tier news on your own row)
+            const showBio = (row, isMine) => row.rank <= 10 && !!bios[row.id] && !(isMine && (newTier || rival || row.rank > 10));
             const isRival = !!(rival && r.id === rival.id);
             const n = nums(r, tab, gains);
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
@@ -619,7 +621,11 @@ export default function LeaderboardV2({ onBack }) {
               {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
-                <span className={`lb2-who-cell${bios[r.id] && !(mine && (newTier || rival || r.rank > 10)) ? ' has-bio' : ''}`}>
+                <span className="lb2-who-cell">
+                  {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
+                      member their seat colour gives them (the podium's rule) */}
+                  <span className="lb2-face" aria-hidden="true"><img src={castSrc(heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
+                  <span className={`lb2-who-text${showBio(r, mine) ? ' has-bio' : ''}`}>
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
                     {/* oct29 audit: FitText shrank long names to 6.5px. A row name keeps a readable size (13px floor desktop,
@@ -629,7 +635,7 @@ export default function LeaderboardV2({ onBack }) {
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {/* a TOP 10 player's description owns the second line (yours steps aside for the chase / tier news) */}
-                  {bios[r.id] && !(mine && (newTier || rival || r.rank > 10)) ? <span className="lb2-bio">{bios[r.id]}</span> : null}
+                  {showBio(r, mine) ? <span className="lb2-bio">{bios[r.id]}</span> : null}
                   {/* the visit you climbed INTO a tier, that news owns the second line (the chase is back next look) */}
                   {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
                   {mine && !newTier && (rival || r.rank > 10) ? (
@@ -644,6 +650,7 @@ export default function LeaderboardV2({ onBack }) {
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
+                  </span>
                 </span>
                 <Move n={data.moves[r.id] || 0} />
                 <span className="lb2-r">{n.r}</span>
