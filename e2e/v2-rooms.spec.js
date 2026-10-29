@@ -218,7 +218,7 @@ const AUDIT_PLAYERS = [
   { id: 'bot1', name: 'BOT LEXI', isBot: true, botDifficulty: 'medium' },
 ];
 for (const vp of [{ width: 1024, height: 768 }, { width: 1366, height: 768 }, { width: 390, height: 844 }, { width: 360, height: 640 }]) {
-  test(`@${vp.width}x${vp.height} overlap audit: seats keep whole names, BOT badge one line, START never over the setup or the bot ✕`, async ({ page }) => {
+  test(`@${vp.width}x${vp.height} overlap audit: seats keep whole names, BOT badge inside its seat, START never over the setup or the bot ✕`, async ({ page }) => {
     const mock = await boot(page, { vp, seed: { 'taw.reduceMotion': '1' } });
     mock.pushToClient({ type: 'room_update', payload: { code: 'KZRTB', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: AUDIT_PLAYERS } });
     const wrap = page.locator('.room-wrap');
@@ -229,10 +229,10 @@ for (const vp of [{ width: 1024, height: 768 }, { width: 1366, height: 768 }, { 
     // whole names: none is ellipsised / clipped (they wrap in a narrow seat instead)
     const cut = await wrap.locator('.room-player-name').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
     expect(cut, 'no seat name is cut').toEqual([]);
-    // the bot badge is ONE line
-    const badge = await wrap.locator('.room-bot-badge').boundingBox();
-    const lh = await wrap.locator('.room-bot-badge').evaluate((e) => parseFloat(getComputedStyle(e).lineHeight) || parseFloat(getComputedStyle(e).fontSize) * 1.6);
-    expect(badge.height, 'BOT badge on one line').toBeLessThan(lh * 1.6 + 10);
+    // the bot badge never becomes the old letter-pillar: at most two lines (a narrow seat may break it once at a space),
+    // and its text stays inside the seat (the overlap check below)
+    const lines = await wrap.locator('.room-bot-badge').evaluate((e) => { const r = document.createRange(); r.selectNodeContents(e); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; });
+    expect(lines, 'BOT badge on at most two lines').toBeLessThanOrEqual(2);
     // START and the bot's ✕ are the topmost thing at their own centres (nothing covers them; they cover nothing)
     for (const sel of ['.room-start-btn', '.room-bot-remove']) {
       const el = wrap.locator(sel);
