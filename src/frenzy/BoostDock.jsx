@@ -17,6 +17,7 @@ import KitIcon from '../components/kit/KitIcon.jsx';
 import { readSpans, spanOf, SPAN_KEY } from './boostSpan.js';
 import '../components/kit/kitIconData.js'; // boost / overdrive / luck / levels live in the full set
 import '../components/kit/tokens.css';
+import { boostArt } from '../progress/boostArt.js';
 import './BoostDock.css';
 
 export default function BoostDock() {
@@ -48,7 +49,9 @@ export default function BoostDock() {
         <li key={`${b.id}:${b.bump}`}
           className={`bd-tile bd-${b.id}${b.icon === 'overdrive' ? ' bd-hero' : ''}${b.ms <= 10000 ? ' is-ending' : ''}${b.bump ? ' is-bumped' : ''}`}
           role="status" aria-label={`${b.name} ${b.mult} on ${b.what}, ${formatFrenzy(b.ms)} left`}>
-          <span className="bd-badge" aria-hidden="true"><KitIcon name={b.icon} size={30} /></span>
+          <span className={`bd-badge${boostArt(b.icon) ? ' has-art' : ''}`} aria-hidden="true">
+            {boostArt(b.icon) ? <img className="bd-art" src={boostArt(b.icon)} width="256" height="256" alt="" draggable="false" /> : <KitIcon name={b.icon} size={30} />}
+          </span>
           <span className="bd-name">{b.name}</span>
           <span className="bd-sub"><span className="bd-mult">{b.mult}</span><span className="bd-what">{b.what}</span></span>
           <span className="bd-clock">{formatFrenzy(b.ms)}</span>

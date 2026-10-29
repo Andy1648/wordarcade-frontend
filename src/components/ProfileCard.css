@@ -48,7 +48,9 @@
 .pc-head { display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 24px; }
 .pc-rank { flex: none; font-size: var(--fs-k24); color: #FFE94A; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pc-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-k28); -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
-.pc-plate { flex: none; height: 34px; }
+.pc-plate { flex: none; --krp-h: min(40px, calc(220px / var(--krp-aspect, 4))); }
+/* a phone card: the title plate drops to its own line under the name, so the name keeps the whole width (never clipped) */
+@media (max-width: 480px) { .pc-head { flex-wrap: wrap; row-gap: 6px; } .pc-head .pc-name { flex-basis: calc(100% - 64px); } .pc-plate { --krp-h: min(34px, calc(200px / var(--krp-aspect, 4))); } }
 .pc-name.fit-box { overflow: visible; text-overflow: clip; } /* FitText scales the name to its box — no ellipsis */
 .pc-sub { display: flex; gap: 10px; }
 .pc-sub-c {
@@ -255,7 +257,7 @@
   .pc { width: min(640px, 100%); gap: 18px; padding: 24px 26px 26px; }
   .pc-name { font-size: var(--fs-k38); }
   .pc-rank { font-size: var(--fs-k30); }
-  .pc-plate { height: 42px; }
+  .pc-plate { --krp-h: min(48px, calc(260px / var(--krp-aspect, 4))); }
   .pc-sub-c { font-size: var(--fs-k20); }
   .pc-gears { gap: 16px; }
   .pc-gear-art, .pc-gear-hole { width: 104px; height: 104px; }

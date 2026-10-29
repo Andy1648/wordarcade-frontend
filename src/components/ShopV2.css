@@ -491,10 +491,11 @@
 
 /* ---- THE DAILY CHEST shelf item + its popup (Andy oct10) ---- */
 .sp2-chest-art { position: relative; flex: 0 0 auto; width: 60px; height: 60px; margin-top: 2px; display: block; }
-.sp2-chest-art img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
-.sp2-chest-lid { transform-origin: 8% 46%; transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1); }
-@media (hover: hover) { .sp2-chest.is-ready:hover .sp2-chest-lid { transform: translate(-2%, -8%) rotate(-10deg); } } /* the lid peeks on hover */
-.sp2-chest.is-claimed .sp2-chest-lid { transform: translate(-4%, -10%) rotate(-24deg); }
+.sp2-chest-art img { position: absolute; inset: -12%; width: 124%; height: 124%; display: block; object-fit: contain; pointer-events: none; user-select: none; }
+/* the painted chest (oct29, boostArt CHEST_ART): it hops + tilts on hover, sits back dimmer once claimed */
+.sp2-chest-paint { transform-origin: 50% 85%; transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1); }
+@media (hover: hover) { .sp2-chest.is-ready:hover .sp2-chest-paint { transform: translateY(-6%) rotate(-6deg) scale(1.06); } }
+.sp2-chest.is-claimed .sp2-chest-paint { transform: scale(.9); opacity: .55; }
 .sp2-chest .sp2-price { background: var(--k-yellow, #FFE94A); color: #000; }
 .sp2-dot { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 3px solid #000; pointer-events: none; z-index: 4; }
 @media (max-width: 999px) { .sp2-chest-art { width: 44px; height: 44px; } }

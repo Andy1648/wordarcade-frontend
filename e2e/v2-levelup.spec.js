@@ -37,9 +37,10 @@ test('the 16 shaped rank plates are the v3 ladder, in order; ★ tiers glow + sh
   const plates = page.getByTestId('lu-plates').locator('.krp');
   await expect(plates).toHaveCount(16);
   expect(await plates.locator('.krp-name').allTextContents()).toEqual(V3_LADDER);
-  // every plate is SVG art (shape + outline paths), never a CSS box
-  for (let i = 0; i < 16; i += 1) expect(await plates.nth(i).locator('svg path').count()).toBeGreaterThanOrEqual(4);
-  await expect(page.getByTestId('lu-plates').locator('.krp.is-star')).toHaveCount(5);
+  // every plate is PAINTED art (oct28 title formats: public/titles/), never a CSS box
+  for (let i = 0; i < 16; i += 1) await expect(plates.nth(i).locator('img.krp-art')).toHaveAttribute('src', /^\/titles\/title-[a-z]+-v\d+\.png$/);
+  // the five ★ titles are the LIT formats (NEON ★1–★5, MARQUEE ★10–★20) — each switches on once, never loops
+  await expect(page.getByTestId('lu-plates').locator('.krp[data-title-format="neon"], .krp[data-title-format="marquee"]')).toHaveCount(5);
   // names stay ≥ 13 px
   const sizes = await plates.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
   expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
@@ -157,7 +158,7 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
       const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate`); // podium (★20, ★10, ★5)
       await expect(where).toHaveAttribute('data-rank-title', title);
       await expect(where).toHaveClass(/(^| )krp( |$)/);
-      expect(await where.locator('svg path').count(), `${title} is the shaped SVG plate`).toBeGreaterThanOrEqual(4);
+      await expect(where.locator('img.krp-art'), `${title} is the painted title plate`).toHaveAttribute('src', /^\/titles\//);
       await expect(where.locator('.krp-name')).toHaveText(title);
     }
     const sizes = await lb.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));

@@ -111,13 +111,6 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
         <div className="pf-head">
           {view !== 'profile' ? <button type="button" className="pf-back" onClick={() => setView('profile')} aria-label="Back to your profile">←<span className="pf-back-w"> PROFILE</span></button> : null}
           <span className="pf-title">{view === 'customize' ? 'CUSTOMIZE' : 'PROFILE'}</span>
-          {/* TITLE (oct21): your worn title rides the header (no height — the card never scrolls on a laptop); tap → ALL TITLES */}
-          {view === 'profile' ? (
-            <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
-              <span className="pf-titlerow-plate"><KitRankPlate rank={title.req} w={100} /></span>
-              <span className="pf-titlerow-go">ALL TITLES ▸</span>
-            </button>
-          ) : null}
           <button type="button" className="pf-x" onClick={onClose} aria-label="Close profile">✕</button>
         </div>
         {view === 'customize' ? (
@@ -138,7 +131,14 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
             </div>
             <div className="pf-right">
               <div className="pf-id">
-                <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
+                <div className="pf-nameline">
+                  <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
+                  {/* TITLE (oct28): the painted title sits ON your name, the way everyone else sees it; tap → TITLES */}
+                  <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
+                    <KitRankPlate rank={title.req} fit className="pf-title-plate" />
+                    <span className="pf-titlerow-go" aria-hidden="true">CHANGE ▸</span>
+                  </button>
+                </div>
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
                 {me ? <Suspense fallback={null}><SaveCodeChip /></Suspense> : null}
               </div>
