@@ -840,7 +840,9 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-cell.is-ticket .sp2-card-in { container-type: size; justify-content: center; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-band { position: absolute; top: 0; left: 0; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
-  --vs: min(calc(86cqw / .66), calc((100cqh - 150px) / .79));
+  /* oct29 (Andy: the sealed card was "flowing off"): the square carries the painted plate, so it stays INSIDE the card —
+     88% of its width at most (it was 130%: the plate's shards ran off both edges) */
+  --vs: min(88cqw, calc((100cqh - 150px) / .79));
   flex: 0 0 auto; width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
   margin: calc(var(--vs) * -.16) 0 calc(var(--vs) * -.05);
 }
@@ -867,7 +869,7 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    2. an EPIC card wears a gold-set gem pinned to its top-left corner (outside the face's overflow, like the dot);
    3. RARE / EPIC cards sweep their tier's shine band (the gear cards' /fx/shine-<tier>.svg, drawn at its own ratio) across
       the face ONCE on hover — a transform transition in, none out (it snaps back unseen, off the face). Nothing loops. ===== */
-.sp2-card.is-epic .sp2-card-in > .sp2-art.sp2-vessel { background: url(/shop/backplate-epic-v1.webp) 50% 58% / 112% 112% no-repeat; }
+.sp2-card.is-epic .sp2-card-in > .sp2-art.sp2-vessel { background: url(/shop/backplate-epic-v1.webp) 50% 58% / 100% 100% no-repeat; }
 .sp2-shine {
   position: absolute; z-index: 2; left: 0; top: 0; height: 100%; width: auto; aspect-ratio: 200 / 320;
   pointer-events: none; user-select: none; transform: translateX(-110%);
@@ -885,3 +887,7 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-card.kstc:active .sp2-gem { transform: rotate(-4deg) scale(.94); transition-duration: 80ms; }
 @media (max-width: 999px) { .sp2-gem { left: -10px; top: -10px; width: 34px; height: 34px; } }
 @media (prefers-reduced-motion: reduce) { .sp2-gem { transition: none; } }
+/* oct29: the shelf scrolls, so it CLIPS — the dealt cards' tilt (±1.4°) put their corners past its left edge (padding 0),
+   cut off mid-border. An inset on both sides keeps every tilted card whole inside the clip (e2e/shop-aspect.spec.js). */
+.sp2-grid { padding-left: 8px; padding-right: 12px; }
+@media (max-width: 999px) { .sp2-grid { padding-left: 6px; padding-right: 8px; } }
