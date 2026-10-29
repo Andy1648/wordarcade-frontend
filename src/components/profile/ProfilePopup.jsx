@@ -1,17 +1,18 @@
 // ProfilePopup.jsx — YOUR PROFILE (Andy oct17: "change the area to 'profile' as a popup and move the whole avatar thing
 // inside the profile … the most basic and important user stats (like time played) as well as a space for the profile
 // description (the same that transfers to the leaderboard when others click)"). Left: your hero alive on its pedestal
-// (signature idle + layered props; tap = WIN) and CHANGE HERO → the card picker in place. Right: your name + worn title,
-// six stat tiles, the DESCRIPTION editor (ProfileCard's own Bio — what others see when they tap you on the board) and
-// the title picker. Lazy (its own chunk); the card pops in once, nothing loops.
+// (signature idle + layered props; tap = WIN) and ONE button, CUSTOMIZE → every cosmetic in one menu (Customize.jsx —
+// hero, frame, WIN FX, pop style, sound; the shop's COSMETICS button opens the same menu). Right: your name + worn title,
+// six stat tiles and the DESCRIPTION editor (ProfileCard's own Bio — what others see when they tap you on the board).
+// oct28 (Andy "unecessarily cramped … reduced unecessary stuff"): the hero's tagline, CHANGE HERO and the YOUR HEROES
+// strip are gone — the HERO tab of CUSTOMIZE is the one place to pick. Lazy (its own chunk); pops in once, nothing loops.
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { heroById, readMain, writeMain, CAST, castSrc, ALL_HEROES, ownsHero } from '../../cast/cast.js';
+import { heroById, readMain, writeMain, CAST } from '../../cast/cast.js';
 import HeroShowcase from '../../cast/HeroShowcase.jsx';
 import { readKit } from '../../cast/kit.js';
-import KitPicker from '../../cast/KitPicker.jsx';
 import FramedCard from '../../cast/FramedCard.jsx';
-import HeroPicker from '../../cast/HeroPicker.jsx';
+import Customize from './Customize.jsx';
 import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
 import { rarityOf } from '../../cast/CastArt.jsx';
@@ -56,12 +57,12 @@ function Stat({ icon, glyph, tone, value, label }) {
   );
 }
 
-/** @param onClose · @param onMainChange(id) the menu re-reads your hero */
-export default function ProfilePopup({ onClose, onMainChange }) {
+/** @param onClose · @param onMainChange(id) the menu re-reads your hero
+ *  @param view0 'profile' | 'customize' (the shop's COSMETICS opens straight onto CUSTOMIZE) · @param tab0 CUSTOMIZE's first tab */
+export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile', tab0 = 'hero' }) {
   const [id, setId] = useState(readMain);
-  const [view, setView] = useState('profile'); // 'profile' | 'pick' | 'kit' (CUSTOMIZE: frame + WIN FX)
+  const [view, setView] = useState(view0); // 'profile' | 'customize' (every cosmetic: Customize.jsx)
   const [kit, setKit] = useState(readKit); // the worn components { frame, fx }
-  const [peekId, setPeekId] = useState(null); // the picker can open straight onto one hero's preview
   const [cheer, setCheer] = useState(0);
   const [titles, setTitles] = useState(false); // ALL TITLES open over the profile
   const [title, setTitle] = useState(wornTitle); // re-read when the ladder closes (a new title may be worn)
@@ -79,7 +80,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
   const c = readCounters();
   const play = readPlaySec();
   const show = myShowcase();
-  const mine = ALL_HEROES.filter((x) => ownsHero(x.id)); // YOUR HEROES: what you've got (oct19: no 'next hero' nag)
   // THE UNLISTED: still read once on open — it runs the back-fill (unlisted.js) — but nothing here shows it: no shelf,
   // no found-count on your profile (Andy oct19 "i still see how many unlisted ive found in profile - i dont want that")
   useState(() => unlistedIndex());
@@ -89,17 +89,16 @@ export default function ProfilePopup({ onClose, onMainChange }) {
     const onKey = (e) => {
       if (e.key !== 'Escape' || reveal || titles) return; // the reveal / the title ladder own Escape while up
       e.stopPropagation();
-      if (view !== 'profile') setView('profile'); else onClose();
+      if (view !== 'profile' && view0 === 'profile') setView('profile'); else onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [view, onClose, reveal, titles]);
+  }, [view, view0, onClose, reveal, titles]);
 
   const equip = (next) => {
     writeMain(next);
     setId(next);
     pushShowcaseNow(); // 053: everyone's board shows your new hero
-    setView('profile');
     if (onMainChange) onMainChange(next);
   };
   const bought = (next) => { equip(next); setReveal({ ids: [next], equipped: next }); };
@@ -110,8 +109,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
       <div ref={cardRef} className={`pf is-${view}`} role="dialog" aria-modal="true" aria-label="Your profile" data-testid="profile-popup"
         style={{ '--pf-c': h.color, '--pf-d': h.dark }} onClick={(e) => e.stopPropagation()}>
         <div className="pf-head">
-          {view !== 'profile' ? <button type="button" className="pf-back" onClick={() => setView('profile')}>← BACK</button> : null}
-          <span className="pf-title">{view === 'pick' ? 'CHOOSE YOUR MAIN' : view === 'kit' ? 'CUSTOMIZE' : 'PROFILE'}</span>
+          {view !== 'profile' ? <button type="button" className="pf-back" onClick={() => setView('profile')} aria-label="Back to your profile">←<span className="pf-back-w"> PROFILE</span></button> : null}
+          <span className="pf-title">{view === 'customize' ? 'CUSTOMIZE' : 'PROFILE'}</span>
           {/* TITLE (oct21): your worn title rides the header (no height — the card never scrolls on a laptop); tap → ALL TITLES */}
           {view === 'profile' ? (
             <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
@@ -121,10 +120,8 @@ export default function ProfilePopup({ onClose, onMainChange }) {
           ) : null}
           <button type="button" className="pf-x" onClick={onClose} aria-label="Close profile">✕</button>
         </div>
-        {view === 'pick' ? (
-          <HeroPicker current={id} onEquip={equip} onBought={bought} peekId={peekId} />
-        ) : view === 'kit' ? (
-          <KitPicker hero={h.id} kit={kit} onKit={(slot, v) => setKit((k) => ({ ...k, [slot]: v }))} />
+        {view === 'customize' ? (
+          <Customize hero={h.id} kit={kit} onKit={(slot, v) => setKit((k) => ({ ...k, [slot]: v }))} onEquip={equip} onBought={bought} tab0={tab0} />
         ) : (
           <div className="pf-body">
             <div className="pf-left">
@@ -137,11 +134,7 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                   <FitText className="pf-hero fit-center">{h.name}</FitText>
                 </>
               )}
-              <span className="pf-hero-tag">{h.elite ? `ELITE · ${h.tag}` : h.legend ? `LEGEND · ${h.tag}` : h.gold ? `GOLD · ${h.tag}` : h.tag}</span>
-              <div className="pf-change-row">
-                <button type="button" className="pf-change" onClick={() => { setPeekId(null); setView('pick'); }}>CHANGE HERO</button>
-                <button type="button" className="pf-kit" onClick={() => setView('kit')} data-testid="profile-kit">CUSTOMIZE</button>
-              </div>
+              <button type="button" className="pf-kit" onClick={() => setView('customize')} data-testid="profile-kit">CUSTOMIZE</button>
             </div>
             <div className="pf-right">
               <div className="pf-id">
@@ -157,18 +150,6 @@ export default function ProfilePopup({ onClose, onMainChange }) {
                 <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
                 <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
               </div>
-              <section className="pf-crew" aria-label="Your heroes">
-                <header className="pf-crew-head"><span className="pf-crew-k">YOUR HEROES</span><span className="pf-crew-n">{mine.length}/{ALL_HEROES.length}</span></header>
-                <div className="pf-crew-row">
-                  {mine.map((x) => (
-                    <button key={x.id} type="button" className={`pf-crew-face${x.id === h.id ? ' is-on' : ''}${x.gold ? ' is-gold' : x.elite ? ' is-elite' : x.legend ? ' is-legend' : ''}`}
-                      style={{ '--cf-d': x.dark || h.dark }} onClick={() => { if (x.id !== h.id) equip(x.id); }}
-                      aria-label={x.id === h.id ? `${x.name}, equipped` : `Equip ${x.name}`} aria-pressed={x.id === h.id}>
-                      <img src={castSrc(x.id, 'hero')} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
-                    </button>
-                  ))}
-                </div>
-              </section>
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>

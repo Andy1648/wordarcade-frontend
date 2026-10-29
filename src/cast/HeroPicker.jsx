@@ -72,8 +72,10 @@ function Variants({ m }) {
   );
 }
 
-/** @param current the equipped id · @param onEquip(id) · @param onBought(id) · @param peekId open straight onto this hero's preview */
-export default function HeroPicker({ current, onEquip, onBought, peekId = null }) {
+/** @param current the equipped id · @param onEquip(id) · @param onBought(id) · @param peekId open straight onto this hero's preview
+ *  @param tapEquips (CUSTOMIZE, Andy oct28 "one grid, tap to equip"): a tap on a hero you own wears it at once; the
+ *  preview (variants, price, how to earn) opens only for one you don't own — or for the one you wear */
+export default function HeroPicker({ current, onEquip, onBought, peekId = null, tapEquips = false }) {
   const [peek, setPeek] = useState(peekId); // the variant being previewed (null = the grid)
   const [gems, setGems] = useState(getGems);
   const [hot, setHot] = useState(null); // the card under the pointer / focus plays its flipbook (the equipped one always does)
@@ -109,7 +111,7 @@ export default function HeroPicker({ current, onEquip, onBought, peekId = null }
         {MEMBERS.map((m, k) => {
           const v = shownVariant(m, current);
           return (
-            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} live={hot === v.id || v.id === current} delay={k * 520} onClick={() => setPeek(v.id)}>
+            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} live={hot === v.id || v.id === current} delay={k * 520} onClick={() => (tapEquips && ownsHero(v.id) && v.id !== current ? onEquip(v.id) : setPeek(v.id))}>
               <Status m={m} current={current} />
               <Variants m={m} />
             </HeroCard>

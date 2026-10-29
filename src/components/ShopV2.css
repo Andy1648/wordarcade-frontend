@@ -885,3 +885,17 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-card.kstc:active .sp2-gem { transform: rotate(-4deg) scale(.94); transition-duration: 80ms; }
 @media (max-width: 999px) { .sp2-gem { left: -10px; top: -10px; width: 34px; height: 34px; } }
 @media (prefers-reduced-motion: reduce) { .sp2-gem { transition: none; } }
+/* the shelf tabs wear their painted icons (Andy oct28 "give icons for boosts"): BOOSTS the potion, COSMETICS a pop style,
+   CODES a ticket — the art sits on the tab's left, its own ratio, a hard shadow under it */
+.sp2-tab { display: inline-flex; align-items: center; gap: 8px; padding-left: 8px; }
+.sp2-tab-ico { width: 34px; height: 34px; object-fit: contain; flex: none; margin: -6px 0; filter: drop-shadow(2px 2px 0 #000); }
+@media (max-width: 999px) {
+  .sp2-stock-head .sp2-tab { gap: 4px; padding: 0 8px 0 4px; }
+  .sp2-tab-ico { width: 26px; height: 26px; margin: -4px 0; }
+}
+/* the phone: three equal tabs, the icon over its word, so COSMETICS fits a 360px row */
+@media (max-width: 999px) {
+  .sp2-stock-head .sp2-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .sp2-stock-head .sp2-tab { flex-direction: column; justify-content: center; gap: 2px; min-height: 56px; padding: 4px 2px; font-size: var(--fs-k14); }
+  .sp2-stock-head .sp2-tab .sp2-tab-ico { margin: 0; }
+}

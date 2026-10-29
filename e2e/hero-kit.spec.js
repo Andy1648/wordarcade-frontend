@@ -23,20 +23,21 @@ async function openKit(page, vp, gems, main) {
   await menuReady(page);
   await page.locator('[data-nav="profile"]:visible').first().click();
   await page.getByTestId('profile-kit').click();
+  await page.getByTestId('customize').getByRole('tab', { name: 'FRAME' }).click(); // CUSTOMIZE (oct28) opens on HERO
   await expect(page.getByTestId('kit-picker')).toBeVisible();
 }
 
 // the SIDEKICK slot was removed (oct26): a save that still wears / owns one opens CUSTOMIZE on FRAME, with no ghost tab
 for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width: 390, height: 844 }]]) {
-  test(`no sidekicks ${vn}: an old save with a pet loads clean — two tabs, no sidekick anywhere`, async ({ page }) => {
+  test(`no sidekicks ${vn}: an old save with a pet loads clean — five tabs, no sidekick anywhere`, async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.addInitScript(() => { localStorage.setItem('taw.s2.kit', JSON.stringify({ own: ['pixel', 'lucky'], pet: 'pixel', frame: null, fx: null })); });
     await openKit(page, vp, 1000);
     const pk = page.getByTestId('kit-picker');
-    await expect(pk.getByRole('tab')).toHaveCount(2);
-    await expect(pk.getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
-    await expect(pk.getByRole('tab', { name: /SIDEKICK/ })).toHaveCount(0);
+    await expect(page.getByTestId('customize').getByRole('tab')).toHaveCount(5); // oct28: HERO · FRAME · WIN FX · POP STYLE · SOUND
+    await expect(page.getByTestId('customize').getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('customize').getByRole('tab', { name: /SIDEKICK/ })).toHaveCount(0);
     await expect(page.locator('[data-sidekick], .sk')).toHaveCount(0);
     await page.locator('.pf-back').click();
     await expect(page.locator('.pf-left .hs')).toBeVisible();
@@ -50,7 +51,7 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await openKit(page, vp, 700);
     const pk = page.getByTestId('kit-picker');
     // FRAME is the first tab now (no SIDEKICK)
-    await expect(pk.getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('customize').getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
     // FROST: 40 wins (20 seeded) → its bar + HOLD TO BUY (700 ≥ 600); the try-on shows it
     await expect(pk.locator('.skp-name')).toHaveText('FROST');
     await expect(pk.locator('.skp-stage [data-frame="frost"]')).toBeVisible();
@@ -76,7 +77,7 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
 test('WIN FX: try one on (the burst replays behind the WIN pose), buy it, it is worn', async ({ page }) => {
   await openKit(page, { width: 1366, height: 768 }, 600);
   const pk = page.getByTestId('kit-picker');
-  await pk.getByRole('tab', { name: 'WIN FX' }).click();
+  await page.getByTestId('customize').getByRole('tab', { name: 'WIN FX' }).click();
   await expect(pk.locator('.skp-fx[data-fx="firework"]')).toBeVisible();
   await expect(pk.locator('.skp-prog-n')).toContainText('20 / 25 WINS');
   await page.waitForTimeout(700);

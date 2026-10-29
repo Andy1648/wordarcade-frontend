@@ -1,0 +1,34 @@
+/* Customize — the ONE cosmetics menu (oct28). A tab strip of chunky house buttons over the picked tab's picker; the
+   pickers keep their own art + layout (HeroPicker cards, KitPicker try-on, the LOOKS cards). Lists scroll, the strip never. */
+.cz { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cz-tabs { display: flex; flex-wrap: wrap; gap: 10px; }
+.cz-tab {
+  min-height: 48px; padding: 0 18px; cursor: pointer;
+  font: 400 var(--fs-k20) 'Bungee', sans-serif; text-transform: uppercase; color: #fff;
+  background: #2a1648; border: 4px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000;
+  transition: transform 120ms;
+}
+@media (hover: hover) { .cz-tab:not(.is-on):hover { transform: translate(-2px, -2px); } }
+.cz-tab:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.cz-tab.is-on { color: #000; background: #FFE94A; border-color: #8a7a00; }
+.cz-tab:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
+.cz-body { min-width: 0; }
+.cz-looks { position: relative; }
+.cz-note { min-height: 22px; margin-top: 6px; font: 400 var(--fs-k16) 'Bungee', sans-serif; text-transform: uppercase; color: #FFE94A; }
+/* the phone: five tabs in two rows, every one a full 44px target */
+@media (max-width: 760px) {
+  .cz-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .cz-tab { min-height: 44px; padding: 0 6px; font-size: var(--fs-k16); }
+}
+@media (prefers-reduced-motion: reduce) { .cz-tab { transition: none; } }
+@media (max-width: 760px) {
+  .cz-tab { white-space: nowrap; font-size: var(--fs-k14); }
+  .pf-back-w { display: none; } /* the phone header keeps the arrow; the title says where you are */
+}
+.cz .sp2-looks-h { display: none; } /* the tab already names the shelf */
+/* the card stays put — tabs and header fixed — and only the LIST under them scrolls (the hero grid, the pop styles, the
+   sound packs); the FRAME / WIN FX try-on fits without one (e2e/no-scroll.spec.js) */
+.pf.is-customize { display: flex; flex-direction: column; height: min(900px, calc(100dvh - 32px)); overflow: hidden; }
+.pf.is-customize .cz { flex: 1 1 auto; min-height: 0; }
+.pf.is-customize .cz-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 10px 10px 2px; }
+.cz.is-frame .cz-body, .cz.is-fx .cz-body { display: flex; flex-direction: column; justify-content: center; }
