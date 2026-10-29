@@ -386,3 +386,36 @@ export async function fetchShortSave(text, { rpc, ...opts } = {}) {
   if (!r || !r.ok || typeof r.blob !== 'string') return shortFail((r && r.reason) || 'not_found');
   return parseAnySave(r.blob, opts);
 }
+
+// (moved from SettingsPanel oct28: the SAVE CODE card and the PROFILE chip copy the same way)
+/** Put `text` on the clipboard → Promise<boolean>. The Clipboard API first; a hidden textarea + execCommand('copy')
+ *  where it is missing or refused. */
+export function copyText(text) {
+  const legacy = () => {
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      ta.style.fontSize = '16px'; // iOS: no zoom-on-focus
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch {
+      ok = false;
+    }
+    return ok;
+  };
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(text).then(() => true, () => legacy());
+    }
+  } catch {
+    /* fall through */
+  }
+  return Promise.resolve(legacy());
+}

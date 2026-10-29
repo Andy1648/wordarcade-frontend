@@ -22,7 +22,7 @@ import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
 import { exportSave } from '../save/saveBackup';
-import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort, rememberShortCode } from '../save/saveCode';
+import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort, rememberShortCode, copyText } from '../save/saveCode';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, rpc } from '../leaderboard/client';
 import { progressScoreFromKeys, localScore } from '../save/cloudSave';
 import { resolveXpState } from '../progress/xp';
@@ -97,37 +97,6 @@ function deviceHeadline() {
 function recentUndo() {
   const p = readPreRestore();
   return p && p.src === 'code' && Date.now() - p.at < UNDO_FOR_MS ? p : null;
-}
-/** Put `text` on the clipboard → Promise<boolean>. The Clipboard API first; a hidden textarea + execCommand('copy')
- *  where it is missing or refused. */
-function copyText(text) {
-  const legacy = () => {
-    let ok = false;
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'absolute';
-      ta.style.left = '-9999px';
-      ta.style.fontSize = '16px'; // iOS: no zoom-on-focus
-      document.body.appendChild(ta);
-      ta.select();
-      ta.setSelectionRange(0, text.length);
-      ok = document.execCommand('copy');
-      ta.remove();
-    } catch {
-      ok = false;
-    }
-    return ok;
-  };
-  try {
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      return navigator.clipboard.writeText(text).then(() => true, () => legacy());
-    }
-  } catch {
-    /* fall through */
-  }
-  return Promise.resolve(legacy());
 }
 const selectAll = (e) => {
   try { e.target.select(); e.target.setSelectionRange(0, e.target.value.length); } catch { /* */ }

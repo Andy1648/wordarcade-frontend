@@ -289,3 +289,20 @@ test('banners: a tap closes one early; closing twice is a no-op', () => {
   c.advance(BANNER_LEAVE_MS);
   assert.equal(s.getSnapshot().length, 0);
 });
+
+test('banner store: a STICKY item (the SAVE CODE card) never times out and is retired last when the stack is full', () => {
+  const c = fakeClock();
+  const s = createBannerStore({ setTimer: c.setTimer, clearTimer: c.clearTimer });
+  const code = s.push({ name: 'CODE', sticky: true });
+  s.push({ name: 'B' });
+  s.push({ name: 'C' });
+  s.push({ name: 'D' }); // full: B goes, not the sticky card
+  const live = () => s.getSnapshot().filter((b) => !b.leaving).map((b) => b.name);
+  assert.deepEqual(live(), ['CODE', 'C', 'D']);
+  c.advance(BANNER_MS * 10);
+  c.advance(BANNER_LEAVE_MS);
+  assert.deepEqual(live(), ['CODE'], 'only a close() ends it');
+  s.close(code);
+  c.advance(BANNER_LEAVE_MS);
+  assert.deepEqual(s.getSnapshot(), []);
+});
