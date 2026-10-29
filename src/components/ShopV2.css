@@ -891,3 +891,15 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    cut off mid-border. An inset on both sides keeps every tilted card whole inside the clip (e2e/shop-aspect.spec.js). */
 .sp2-grid { padding-left: 8px; padding-right: 12px; }
 @media (max-width: 999px) { .sp2-grid { padding-left: 6px; padding-right: 8px; } }
+/* oct29 overlap audit: the next-form badge hung off the plate's BOTTOM corner, over the "→" of POWER 0 → 1 under it. It
+   rides the TOP corner now — nothing sits above the plate's corner. */
+.sp2-next { bottom: auto; top: -16px; }
+@media (max-width: 999px) { .sp2-next { bottom: auto; top: -10px; } }
+/* oct29: a 1280×551 window left ~163px a row, and the 172px floor pushed the second row 17px under the shelf's bottom
+   (prices cut). On a very short desktop the floor goes and the card's stack tightens one more step, so 4 × 2 fits whole. */
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-grid { --sp2-row-min: 0px; gap: 10px; }
+  .sp2-card-in > .sp2-art { width: 46px; height: 46px; margin: -4px 0 -4px; }
+  .sp2-cell:not(.is-ticket) .sp2-big { font-size: var(--fs-k20); }
+  .sp2-price { height: 28px; margin: auto 8px 6px; }
+}

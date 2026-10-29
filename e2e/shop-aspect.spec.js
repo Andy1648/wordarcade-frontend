@@ -143,6 +143,10 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844], [360, 
     await page.setViewportSize({ width: w, height: h });
     await boot(page);
     await settle(page);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/fit-${w}x${h}.png` });
+    // the whole shelf is in the first view on a desktop (8 cards, 4 × 2); a phone scrolls the page, so its cards are
+    // measured against the shelf only
+    if (w < 1000) await page.setViewportSize({ width: w, height: 4000 });
     const m = await page.evaluate(() => {
       const out = [];
       const grid = document.querySelector('.sp2-grid').getBoundingClientRect();
@@ -150,7 +154,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844], [360, 
         const face = cell.querySelector('.kstc-card').getBoundingClientRect();
         const id = cell.dataset.cell || 'chest';
         if (face.left < grid.left - 1 || face.right > grid.right + 1) out.push({ id, card: 'off the shelf' });
-        if (face.left < -1 || face.right > innerWidth + 1) out.push({ id, card: 'off the screen' });
+        if (face.left < -1 || face.right > innerWidth + 1 || face.bottom > innerHeight + 1) out.push({ id, card: 'off the screen', bottom: Math.round(face.bottom - innerHeight) });
+        if (face.bottom > grid.bottom + 1) out.push({ id, card: 'cut by the shelf', by: Math.round(face.bottom - grid.bottom) });
         for (const e of cell.querySelectorAll('.kstc-card *')) {
           if (e.closest('.sp2-gem, .sp2-dot, .sp2-shine, .sp2-float')) continue;
           const r = e.getBoundingClientRect();
