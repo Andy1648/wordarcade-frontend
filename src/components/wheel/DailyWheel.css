@@ -353,7 +353,8 @@
 /* short screens (1280x600 laptops, 360x640 phones): the odds sheet tightens so all 8 rows + BACK fit, no scroll */
 /* short phones (360x640): a smaller wordmark + the ✕'s gutter, so the wheel keeps the height */
 @media (max-height: 700px) and (max-aspect-ratio: 6/5) {
-  .dw { --wd: min(600px, calc(100vw - 40px), calc(100dvh - 318px)); }
+  .dw { --wd: min(600px, calc(100vw - 40px), calc(100dvh - 336px)); }
+  .dw-result img { width: 64px; height: 64px; }
   .dw-head { padding: 0 46px; gap: 6px; }
   .dw-title-art { width: min(100%, 220px); }
 }
