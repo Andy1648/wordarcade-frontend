@@ -107,6 +107,10 @@ export default function PatchNotes({ onClose }) {
           <span className="pn-ver pn-rise" style={{ '--pn-d': '0ms' }}>UPDATE · {PATCH_LABEL}</span>
           <h1 id="pn-title" className="pn-title pn-slam">PATCH NOTES</h1>
         </header>
+        {/* .pn-scroll: on a phone the showcase + notes are the part that scrolls, and COLLECT (.pn-foot) sits under it —
+            it used to stick over the scrolling list and cut rows in half (overlap audit oct29). A layout-only wrapper:
+            on a laptop it is display:contents and the two-column grid is unchanged. */}
+        <div className="pn-scroll">
         <div className="pn-show" aria-hidden="true">
           <div className="pn-cards">
             {PATCH_CARDS.map((c, i) => (
@@ -147,9 +151,10 @@ export default function PatchNotes({ onClose }) {
           </span>
           <span className="pn-rolls">{already ? 'COLLECTED ✓' : `= ${rolls} FREE ${rolls === 1 ? 'ROLL' : 'ROLLS'}`}</span>
         </div>
+        </div>
+        </div>
         <div className="pn-foot">
           <KitButton ref={btnRef} tone={phase === 'done' ? 'yellow' : 'cyan'} label={label} labelSize={30} width={280} disabled={phase === 'flying'} onClick={onCollect} data-testid="patch-notes-collect" />
-        </div>
         </div>
       </div>
       <GainLayer ref={fly} icon="gems" target={() => pill.current && pill.current.iconEl()} />

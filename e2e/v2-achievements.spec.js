@@ -8,6 +8,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
 import { isPhoneMenu, navControl } from './support/menu.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const SECRET = 'a1'.repeat(24);
 
@@ -115,5 +116,30 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
     await expect(ach).toHaveCount(0);
     await expect(trophy.locator('.kb-idot')).toHaveCount(0);
     await expect(trophy).toHaveAttribute('aria-label', 'Open achievements');
+  });
+}
+
+// OVERLAP AUDIT (oct29): at 1024 a ready tile's CLAIM label was wider than its button face (8px out) and the hero's big
+// CLAIM 40 ran over LEGENDARIES; on a phone the tile CLAIMs were scaled to 0.55 (a 12px label, a 10px +gems count, a
+// 36px button). Every size: nothing overlaps or spills; on a phone every CLAIM is ≥ 44px tall and its text ≥ 16px.
+for (const vp of [{ width: 1024, height: 768 }, { width: 390, height: 844 }, { width: 360, height: 640 }, { width: 1366, height: 768 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: CLAIM labels fit their buttons, phone CLAIMs are 16px / 44px`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const ach = await boot(page, { count: { words: 2400, bots: 40, mp: 12, reb: 6, epic: 3, chain: 9, power: 4 }, gems: 1840 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600); // the tiles' one-shot rise
+    expect(await ach.locator('.av3-cell.is-ready').count()).toBeGreaterThan(3);
+    await expectNoLayoutDefects(expect, page, `achievements ${vp.width}x${vp.height}`, { scope: '.av3-overlay' });
+    if (vp.width <= 480) {
+      const claims = await ach.locator('.av3-claim').evaluateAll((els) => els.map((b) => {
+        const r = b.getBoundingClientRect();
+        const txt = [...b.querySelectorAll('.kb-gtext, .kb-gcount, .kb-main')].map((t) => { const k = t.getBoundingClientRect().height / (t.offsetHeight || 1); return parseFloat(getComputedStyle(t).fontSize) * k; });
+        return { h: r.height, minFont: Math.min(...txt) };
+      }));
+      for (const c of claims) {
+        expect(c.h, 'a phone CLAIM is a 44px target').toBeGreaterThanOrEqual(44);
+        expect(c.minFont, 'a phone CLAIM reads ≥ 16px').toBeGreaterThanOrEqual(15.75);
+      }
+    }
   });
 }

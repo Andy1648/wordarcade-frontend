@@ -302,6 +302,14 @@
   .av3-head { gap: 12px; }
   .av3-hero-name { font-size: var(--fs-k26); }
   .av3-lg-name { display: none; }
+  /* OVERLAP AUDIT (oct29) at 1024: a ready tile's CLAIM (a k22 label in an 18px-padded face) was ~78px of text in a
+     ~62px face — it spilled 8px out; the badge gives way a size and the face hugs its label */
+  .av3-tile-row { gap: 6px; }
+  .av3-tile-row .av3-badge--small { width: 44px; height: 44px; }
+  .av3-tile-row .av3-claim .kb-gface { padding: 0 4px; }
+  .av3-tile-row .av3-claim .kb-gtext { font-size: var(--fs-k18); }
+  /* ...and the hero's big CLAIM (330px wide) in a 290px column ran 11px over LEGENDARIES: it scales to the column */
+  .av3-claim--big { transform: scale(.74); transform-origin: 50% 50%; }
 }
 
 /* ---- tablets + phones: one column, and still NO scroll (Andy oct22) — the tiles lie flat (badge | name over bar) ---- */
@@ -334,14 +342,17 @@
   .av3-badge--big { width: 64px; height: 64px; }
   .av3-badge--big .av3-badge-roman { font-size: var(--fs-k14); line-height: 20px; padding: 0 6px; }
   .av3-hero-name { grid-area: name; font-size: var(--fs-k20); text-align: left; white-space: normal; -webkit-text-stroke-width: var(--k-stroke-s); }
-  .av3-hero-nums { grid-area: nums; justify-content: flex-start; min-height: 0; gap: 4px; }
+  .av3-hero-nums { grid-area: nums; justify-content: flex-start; flex-wrap: wrap; min-height: 0; gap: 0 4px; }
   .av3-hero-nums .av3-have { font-size: var(--fs-k24); -webkit-text-stroke-width: var(--k-stroke-s); }
   .av3-hero-nums .av3-need { font-size: var(--fs-k15); }
   .av3-hero-foot { grid-area: foot; width: auto; min-height: 0; }
   .av3-hero-reward { font-size: var(--fs-k22); -webkit-text-stroke-width: var(--k-stroke-s); }
-  .av3-claim--big { transform: scale(.42); transform-origin: 100% 50%; margin: -30px 0 -30px -191px; }
+  /* the big CLAIM at ×0.48: its label reads 16px and the button stands ≥ 44px (it was ×0.42 — 14px) */
+  .av3-claim--big { transform: scale(.48); transform-origin: 100% 50%; margin: -29px 0 -29px -172px; }
   .av3-side { flex: 1 1 auto; gap: 10px; }
-  .av3-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px 12px; }
+  /* each row at least the height a ready tile needs (strip + a two-line name + its 48px CLAIM): a tall phone shares the
+     height out as before; a short one (360x640) lets the eight-tile LIST scroll rather than clip the CLAIMs */
+  .av3-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(104px, 1fr)); gap: 10px 12px; overflow-x: hidden; overflow-y: auto; }
   .av3-cell:nth-child(n) .av3-tile { transform: none; }
   .av3-cell:nth-child(4n + 1) .av3-tile, .av3-cell:nth-child(4n) .av3-tile { transform: rotate(-0.6deg); }
   .av3-tile .kstc-card { box-shadow: 4px 4px 0 var(--k-ink); }
@@ -361,7 +372,13 @@
   .av3-tile-row .av3-badge { grid-column: 1; grid-row: 1 / span 2; }
   .av3-tile-name { grid-column: 2; grid-row: 1; font-size: var(--fs-k14); white-space: normal; }
   .av3-tile-row .av3-bar, .av3-tile-row .av3-claim { grid-column: 2; grid-row: 2; }
-  .av3-tile-row .av3-claim { transform: skewX(var(--k-skew)) scale(.55); transform-origin: 0 50%; margin: -15px 0; width: 160px; justify-self: start; }
+  /* a tile's CLAIM at its real size, not ×0.55 (it read 12px, its count 10px, the button 36px tall — overlap audit
+     oct29): a 44px face, CLAIM and the +gems at 16px, wrapping to two lines in a narrow tile instead of shrinking */
+  .av3-tile-row .av3-claim { height: auto; min-height: 48px; max-width: 100%; justify-self: start; }
+  .av3-tile-row .av3-claim .kb-gface { height: auto; min-height: 44px; padding: 2px 8px; }
+  .av3-tile-row .av3-claim .kb-glabel { flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 6px; row-gap: 0; line-height: 1; }
+  .av3-tile-row .av3-claim .kb-gtext,
+  .av3-tile-row .av3-claim .kb-gcount { font-size: var(--fs-k16); }
   .av3-tile .kst-center { scale: .5; }
   .av3-tile .kstc-anchor { left: 50% !important; } /* the MAX stamp sits mid-tile on a narrow tile (KitStampCard sets at inline) */
   .av3-badge--small { width: 40px; height: 40px; }
@@ -398,4 +415,26 @@
 @media (max-width: 999px) {
   .av3-slab { width: 100%; }
   .av3-tab-dot { left: auto; right: -4px; }
+}
+/* a 360-wide phone: the hero's name column sits beside the (now 16px-label) big CLAIM — the badge and the name step
+   down a size so "WORDS" keeps to its column (overlap audit oct29) */
+@media (max-width: 375px) {
+  .av3-hero { column-gap: 8px; }
+  .av3-badge--big { width: 52px; height: 52px; }
+  .av3-hero-name { font-size: var(--fs-k18); }
+}
+/* a SHORT phone (360x640): the eight tiles still fit with no scroll (Andy oct22) AND every CLAIM keeps its 44px / 16px
+   (overlap audit oct29) — the tile's name rides its colour strip (a 20px name bar), so the body is just the badge and
+   the CLAIM (or the bar) side by side */
+@media (max-width: 999px) and (max-height: 700px) {
+  .av3-grid { grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px 12px; overflow: visible; }
+  .av3-tile .kstc-body { position: relative; }
+  .av3-strip { height: 18px; }
+  .av3-tile-name { position: absolute; left: 8px; right: 8px; top: 1px; height: 16px; line-height: 16px; white-space: nowrap; }
+  .av3-cell:nth-child(n) .av3-tile { transform: none; }
+  .av3-tile-body { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto; padding: 0 8px; }
+  .av3-tile-row .av3-claim { min-height: 44px; }
+  .av3-tile-row .av3-claim .kb-gface { min-height: 40px; padding: 0 6px; }
+  .av3-tile-row .av3-bar, .av3-tile-row .av3-claim { grid-row: 1; align-self: center; }
+  .av3-tile-row .av3-badge { grid-row: 1; }
 }

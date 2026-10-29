@@ -145,7 +145,9 @@
 .st2-total-k {
   position: absolute;
   left: calc(-6px * var(--st2-k));
-  top: calc(-30px * var(--st2-k));
+  /* the sticker sits ON TOP of the box, clear of its border (overlap audit oct29: it overlapped the box's top edge) */
+  bottom: calc(100% + 16px * var(--st2-k)); /* clear of the box's -2deg tilt: its right corner rises over the sticker's line */
+  line-height: 1;
   font-family: var(--k-display, 'Bungee', sans-serif);
   font-weight: 400;
   font-size: max(var(--fs-k20), calc(var(--fs-k24) * var(--st2-k)));
@@ -539,8 +541,8 @@
 .st2--narrow .st2-tab-name { font-size: var(--fs-k14); }
 .st2--narrow .st2-tab-total { font-size: var(--fs-k18); }
 .st2--narrow .st2-title { grid-area: title; font-size: calc(var(--fs-k100) * 0.4); }
-.st2--narrow .st2-hero { flex-direction: column; gap: 8px; padding-top: 22px; }
-.st2--narrow .st2-total-k { font-size: var(--fs-k20); top: -26px; -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
+.st2--narrow .st2-hero { flex-direction: column; gap: 8px; padding-top: 30px; }
+.st2--narrow .st2-total-k { bottom: calc(100% + 8px); font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
 .st2--narrow .st2-box { height: 108px; min-width: 220px; padding: 0 24px; box-shadow: 8px 8px 0 #000; }
 .st2--narrow .st2-total { font-size: calc(var(--fs-k100) * 0.84 * min(1, 5 / var(--len))); }
 .st2--narrow .st2-tick { right: -12px; top: -22px; height: 36px; padding: 0 10px; border-left-width: 8px; }
@@ -696,6 +698,14 @@
 .st2--narrow .st2-head { grid-template-areas: 'back title' 'tabs tabs'; }
 .st2--narrow .st2-tabs { justify-self: stretch; display: flex; }
 .st2--narrow .st2-tab { flex: 1 1 0; justify-content: center; padding: 0 6px; }
+/* a PHONE: the board name sits OVER its total (one line ran "BOOSTS" 15px off a 360 screen — overlap audit oct29); the
+   tabs share the row by their content, so the long WINS total gets the room it needs, and the names step up to 16px */
+@media (max-width: 480px) {
+  .st2--narrow .st2-tabs { gap: 6px; }
+  .st2--narrow .st2-tab { flex: 1 1 auto; min-width: 0; flex-direction: column; justify-content: center; gap: 0; padding: 0 6px; line-height: 1.05; }
+  .st2--narrow .st2-tab-name { font-size: var(--fs-k16); }
+  .st2--narrow .st2-tab-total { font-size: var(--fs-k16); white-space: nowrap; }
+}
 
 /* ---- CRIT (Andy oct8): the worn gears' crit — its OWN row, a chance per key, never a chip in the multiplier chain ---- */
 .st2-crit[hidden] { display: none; }
@@ -825,9 +835,9 @@
   .st2--narrow .st2-tab { height: 44px; }
   .st2--narrow .st2-title { font-size: calc(var(--fs-k100) * 0.34); }
 
-  .st2--narrow .st2-hero { flex-direction: row; align-items: center; justify-content: center; gap: 14px; padding: 24px 0 18px; }
+  .st2--narrow .st2-hero { flex-direction: row; align-items: center; justify-content: center; gap: 14px; padding: 30px 0 18px; }
   .st2--narrow .st2-totalwrap { flex: none; }
-  .st2--narrow .st2-total-k { font-size: var(--fs-k16); top: -22px; }
+  .st2--narrow .st2-total-k { font-size: var(--fs-k16); }
   .st2--narrow .st2-box { height: clamp(68px, 12.5vh, 96px); min-width: 132px; padding: 0 12px; box-shadow: 6px 6px 0 #000; }
   .st2--narrow .st2-total { font-size: calc(var(--fs-k38) * 1.15 * min(1, 5 / var(--len))); }
   /* the tick hangs off the box's lower corner: on top it covered TOTAL on a box this narrow */
@@ -868,3 +878,9 @@
   .st2--narrow .st2-life-v { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; }
   .st2--narrow .st2-life-l { font-size: var(--fs-k13); }
 }
+
+/* a TIGHT stage (overlap audit oct29: 1280x551, the stage at ~0.84 — StatsV2.jsx sets data-tight under 0.95): the labels'
+   20px floors outgrow the scaled stage, so the WINS / XP / BOOSTS tabs ran over the centred STATS title and REBIRTH
+   spilled out of its chip. The title moves beside ← MENU, and the chip names step down to 15px (the desktop floor is 13). */
+.st2[data-tight]:not(.st2--narrow) .st2-title { left: calc(200px * var(--st2-k)); right: auto; text-align: left; }
+.st2[data-tight]:not(.st2--narrow) .st2-chip-name { font-size: 15px; }
