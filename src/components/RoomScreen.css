@@ -676,7 +676,7 @@ html[data-beat='true'] .room-leave-btn {
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.08em;
-  font-size: var(--fs-label) /* was --fs-micro: words (fix/min-text-sweep) */;
+  font-size: var(--fs-k16); /* was --fs-label (13px — 12.6 under the lobby's fit-zoom, overlap audit oct29) */
   line-height: 1;
   color: #0d0618 /* contrast: 3.04 -> 6.53 on #ff4fa3 */;
   background: #ff4fa3;
@@ -783,7 +783,8 @@ html[data-beat='true'] .room-leave-btn {
    portrait screen the box is the single column it always was. On a landscape screen >=900px the
    box becomes SHARE | SETUP, which roughly halves its height — so hooks/useFitZoom.js can scale it
    UP to the viewport instead of the old --app-scale shrinking it to fit. */
-.room-col {
+.room-col,
+.room-main {
   display: contents;
 }
 @media (min-width: 900px) and (orientation: landscape) {
@@ -809,13 +810,19 @@ html[data-beat='true'] .room-leave-btn {
   }
   .room-col--share {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 1 / -1;
   }
-  /* The setup column sits level with the roster, not pinned under the exit. */
+  /* The setup column sits level with the roster, not pinned under the exit: SETUP + the START foot are one group,
+     centred in the rows beside the roster by the two 1fr spacer rows (overlap audit oct29: START moved out of the
+     setup column into .room-foot — see RoomScreen.jsx). */
+  .room-box { grid-template-rows: auto 1fr auto auto 1fr; }
   .room-col--setup {
     grid-column: 2;
-    grid-row: 2;
-    align-self: center;
+    grid-row: 3;
+  }
+  .room-foot {
+    grid-column: 2;
+    grid-row: 4;
   }
   /* The code at --fs-h1 in this layout: still the largest thing on the screen, and useFitZoom
      scales the whole box up on a big monitor — --fs-hero here was ~100px of a 625px laptop. */
@@ -891,13 +898,37 @@ html[data-beat='true'] .room-leave-btn {
 .room-difficulty-btn.selected .room-difficulty-desc {
   color: #0d0618;
 }
-/* PHONE: START GAME stays on screen — it rides the bottom of the scrolling room card. */
-@media (max-width: 480px) {
-  .room-start-btn {
-    position: sticky;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    z-index: 3;
+/* PHONE: START GAME stays on screen — and never OVER anything (overlap audit oct29). It used to be position:sticky,
+   riding the bottom of the scrolling card on top of GAME MODE / DIFFICULTY (390x844) and the bot's ✕ (360x640). Now
+   the card is one viewport tall at most: .room-main (code, roster, setup) is the part that scrolls when a tall room
+   doesn't fit, and .room-foot (START) sits below it, outside the scroll — so nothing slides under the button. */
+@media (max-width: 600px) {
+  .room-box {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
   }
+  .room-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* the seats' hard shadows + the heroes stepping over a seat's top edge stay inside the scroll box */
+    margin: 0 -10px;
+    padding: 14px 10px 4px;
+  }
+  .room-foot {
+    flex: none;
+    padding-top: 12px;
+  }
+  .room-foot .room-start-btn { margin-bottom: 4px; }
+  /* the ROSTER is the part that grows (a list — up to 8 seats, each with a hero), so on a phone it comes after the
+     room's settings: LEAVE · the code · GAME MODE · DIFFICULTY are on screen with START, and the seats scroll under */
+  .room-main > .room-col > .room-players-label,
+  .room-main > .room-col > .room-players-list { order: 1; }
+  .room-main > .room-col > .room-players-label { margin-top: 14px; }
 }
 
 /* ...and it stops short of the bottom-right sound button instead of running under it. */

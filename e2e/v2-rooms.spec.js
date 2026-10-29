@@ -13,6 +13,7 @@
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, joinControl } from './support/menu.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const ME = 'e2e-player';
 const PLAYERS = [
@@ -206,5 +207,43 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     expect(j.h).toBe(false);
     expect(j.v).toBe(false);
     expect(j.small).toEqual([]);
+  });
+}
+
+// OVERLAP AUDIT (oct29): the live lobby broke at 1024 and on phones — every name cut to one letter + "…" (K…), the
+// "BOT · <LEVEL>" badge wrapped into a three-line pillar, YOU sat on the hero and the name, and on a phone START
+// (position:sticky) lay over GAME MODE / DIFFICULTY (390x844) and the bot's ✕ (360x640). At each failing size: nothing
+// overlaps or spills, no name is ellipsised, the bot badge is one line, and START + the ✕ are really on top (tappable).
+const AUDIT_PLAYERS = [
+  { id: ME, name: 'KEYFIEND', isHost: true },
+  { id: 'p2', name: 'xX_SPEEDDEMON_Xx' },
+  { id: 'bot1', name: 'BOT LEXI', isBot: true, botDifficulty: 'medium' },
+];
+for (const vp of [{ width: 1024, height: 768 }, { width: 1366, height: 768 }, { width: 390, height: 844 }, { width: 360, height: 640 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: seats keep whole names, BOT badge inside its seat, START never over the setup or the bot ✕`, async ({ page }) => {
+    const mock = await boot(page, { vp, seed: { 'taw.reduceMotion': '1' } });
+    mock.pushToClient({ type: 'room_update', payload: { code: 'KZRTB', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players: AUDIT_PLAYERS } });
+    const wrap = page.locator('.room-wrap');
+    await wrap.waitFor({ state: 'visible' });
+    await expect(wrap.locator('.room-player-chip')).toHaveCount(3);
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(300); // the fit-zoom settles on the ResizeObserver's next frame
+    // whole names: none is ellipsised / clipped (they wrap in a narrow seat instead)
+    const cut = await wrap.locator('.room-player-name').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
+    expect(cut, 'no seat name is cut').toEqual([]);
+    // the bot badge never becomes the old letter-pillar: at most two lines (a narrow seat may break it once at a space),
+    // and its text stays inside the seat (the overlap check below)
+    const lines = await wrap.locator('.room-bot-badge').evaluate((e) => { const r = document.createRange(); r.selectNodeContents(e); return new Set([...r.getClientRects()].map((q) => Math.round(q.top))).size; });
+    expect(lines, 'BOT badge on at most two lines').toBeLessThanOrEqual(2);
+    // START and the bot's ✕ are the topmost thing at their own centres (nothing covers them; they cover nothing)
+    for (const sel of ['.room-start-btn', '.room-bot-remove']) {
+      const el = wrap.locator(sel);
+      await el.scrollIntoViewIfNeeded();
+      const onTop = await el.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === e || e.contains(t)); });
+      expect(onTop, `${sel} is on top at its centre`).toBe(true);
+    }
+    await wrap.locator('.room-main').evaluate((e) => { e.scrollTop = 0; });
+    await expectNoLayoutDefects(expect, page, `lobby ${vp.width}x${vp.height}`, { scope: '.room-wrap' });
+    if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/overlap-audit/lobby-${vp.width}x${vp.height}.png` });
   });
 }

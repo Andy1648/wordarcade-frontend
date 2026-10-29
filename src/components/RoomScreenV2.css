@@ -165,8 +165,8 @@
   .room-wrap[data-skin="v2"] .room-player-chip,
   .room-seat-open { min-height: 50px; }
   .room-wrap[data-skin="v2"] .room-start-btn { min-height: 76px; font-size: var(--fs-k34); }
-  /* phones never fit-zoom (zoom 1), so the 14px floor holds at k14 and a 9-letter name still fits a two-up chip */
-  .room-wrap[data-skin="v2"] .room-player-name { font-size: var(--fs-k14); }
+  /* (names stay k16 on a phone: the seat's name WRAPS now — overlap audit oct29 — so it no longer steps down to k14 to
+     squeeze a 9-letter name into a two-up chip) */
 }
 /* the live chip's slam-in animates its BACKGROUND to white (fill: both); the v2 card keeps its own fill and slams in on
    transform / opacity only */

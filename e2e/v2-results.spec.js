@@ -15,6 +15,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 import { pinDay } from './support/fixedDay.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const ME = 'e2e-player';
 const NAMES = ['YOU', 'RIVAL', 'KIMBERLY', 'SAMWISE', 'LEXI', 'ZZZAP'];
@@ -261,3 +262,47 @@ test('K.O. with a painted K.O. flipbook (oct26): your hero acts out trying to ge
   await expect(page.locator('.rs2-dizzy'), 'the flipbook paints its own stars').toHaveCount(0);
   if (process.env.SHOTS) { await page.waitForTimeout(2500); await page.screenshot({ path: 'claude/shots/ko-results.png' }); }
 });
+
+// OVERLAP AUDIT (oct29): the audited round — a season-2 Word Bomb win over two players (one a bot) that ends before
+// anyone scores, so the gems box holds the gem, the figure and its WIN / STREAK source chips beside a +0 TOTAL. The
+// box was half the tally column and the chips ran 9–23px out of it into the coin card at 1366, 1280x551 and 1024. At
+// each of those sizes the chips are inside their box and nothing on the card overlaps or spills.
+for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 551 }, { width: 1024, height: 768 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: the WIN / STREAK gem chips stay inside the gems box`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize(vp);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const mock = await installBackendMock(page);
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('rs.seeded')) return;
+      sessionStorage.setItem('rs.seeded', '1');
+      localStorage.setItem('taw.seenMenu', '1');
+      localStorage.setItem('taw.seenMenuSpotlight', '1');
+      localStorage.setItem('taw.seenGameSpotlight', '1');
+      localStorage.setItem('taw.reduceMotion', '1');
+      localStorage.setItem('taw.s2.gems', JSON.stringify({ v: 1, bal: 1840, peak: 60, streak: 3, mig: 1 }));
+    });
+    await page.goto('/?portal=1&season2=1');
+    await menuReady(page);
+    const players = [{ id: ME, name: 'KEYFIEND', lives: 3, isHost: true }, { id: 'p2', name: 'xX_SPEEDDEMON_Xx', lives: 2 }, { id: 'p3', name: 'BOT LEXI', lives: 1, isBot: true }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-bomb', hostId: ME, difficultyKey: 'chill', players } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players, combo: 'ing', usedWords: [], timerSeconds: 30 } });
+    await page.waitForTimeout(400);
+    mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
+    const card = page.locator('.game-over-overlay .rs2');
+    await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
+    await page.evaluate(() => document.fonts.ready);
+    const srcs = card.locator('.rs2-gems .gems-earned-src');
+    expect(await srcs.count(), 'the win names where its gems came from').toBeGreaterThan(0);
+    const box = await card.locator('.rs2-gems').boundingBox();
+    for (const r of await srcs.evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right }; }))) {
+      expect(r.l).toBeGreaterThanOrEqual(box.x - 1);
+      expect(r.r, 'a source chip inside the gems box').toBeLessThanOrEqual(box.x + box.width + 1);
+    }
+    await expectNoLayoutDefects(expect, page, `results ${vp.width}x${vp.height}`, { scope: '.rs2' });
+    if (process.env.SHOTS) await page.screenshot({ path: `claude/shots/overlap-audit/results-${vp.width}x${vp.height}.png` });
+  });
+}
