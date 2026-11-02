@@ -746,6 +746,17 @@ function readRivalLog() {
 function localDay(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+/** The `n` rows ranked just below `rank` on the live board - the players you just passed (the end screen's climb, nov2).
+ *  [] on any failure. One GET. */
+export async function fetchRowsBelow(rank, n = 2) {
+  if (!LEADERBOARD_ENABLED) return [];
+  try {
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=rank,id,username&rank=gt.${Number(rank)}&order=rank.asc&limit=${Number(n)}`, { headers: headers() });
+    return r.ok ? (await r.json()) || [] : [];
+  } catch {
+    return [];
+  }
+}
 /** The row just above `rank` on the live board (not me), or null. One GET. */
 export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;
