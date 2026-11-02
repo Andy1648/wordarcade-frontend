@@ -8,15 +8,16 @@ import { menuReady } from './support/menu.js';
 
 const SHOTS = process.env.LOOK_SHOTS; // a folder → one screenshot per look (not part of the gate)
 
-async function menuWith(page, popStyle) {
+async function menuWith(page, popStyle, lv = 0) {
   await installBackendMock(page);
-  await page.addInitScript((popStyle) => {
+  await page.addInitScript(({ popStyle, lv }) => {
     if (sessionStorage.getItem('looks.seeded')) return;
     sessionStorage.setItem('looks.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     if (popStyle) localStorage.setItem('taw.equipped', JSON.stringify({ popStyle, soundPack: 'thock' }));
-  }, popStyle);
+    if (lv) localStorage.setItem('taw.s2.xp', JSON.stringify({ lv, f: 0.05, rc: 0, v: 10 })); // deep in a level: a mash never levels up
+  }, { popStyle, lv });
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
   await page.waitForTimeout(800);
@@ -59,7 +60,7 @@ test('INFERNO: the +N wears the inferno colour and flashes the inferno burst —
 // the textured chip, the look throws no shards, its burst flashes on about every other key only, small and quick.
 test('a worn look stays calm under a mash: burst every other key, small, quick; no chip; no shards', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await menuWith(page, 'legend');
+  await menuWith(page, 'legend', 40); // LV 40: the mash stays inside one level (a level-up throws its own shards)
   await popDress(page, true); // the look is loaded
   await page.waitForTimeout(1500);
   await page.evaluate(() => {
