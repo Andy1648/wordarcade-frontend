@@ -46,7 +46,13 @@ function pressKey(el) {
   el.animate(KEY_PRESS, { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
 }
 
+// POP STYLE RARITY (nov2 design audit #15: "no rarity frames, even though prices run 75 → 154K"): each style's tier by its
+// place on the price ladder — the shop's own rarity colours, the painted RARE / EPIC backplates and the EPIC gem; GOLD and
+// up wear gold; LEGEND keeps its own. CLASSIC (free) stays plain: the ladder has a bottom.
+const POP_TIER = { chrome: 'rare', inferno: 'rare', void: 'rare', prism: 'epic', toxic: 'epic', ember: 'epic', frost: 'epic', gold: 'legendary', plasma: 'legendary', nova: 'legendary', eclipse: 'legendary', legend: 'legend' };
+
 function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, trying, owner, onWear }) {
+  const tier = type === 'popStyle' ? POP_TIER[it.id] || null : null;
   const price = priceOf(it);
   const isOwned = owned.has(it.id) || price === 0;
   const isOn = equipped[type] === it.id;
@@ -55,7 +61,8 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, tryi
   // TRY-ON (Andy oct26): a tap anywhere on a pop-style card that is not one of its buttons tries it on
   const onCard = onTry ? (e) => { if (!(e.target instanceof Element) || !e.target.closest('button')) onTry(it.id); } : undefined;
   return (
-    <div className={`sp2-look is-${state}${type === 'popStyle' || type === 'soundPack' ? ' has-art' : ''}${it.id === 'legend' ? ' is-legend' : ''}${trying ? ' is-trying' : ''}`} data-look={it.id} onClick={onCard}>
+    <div className={`sp2-look is-${state}${type === 'popStyle' || type === 'soundPack' ? ' has-art' : ''}${it.id === 'legend' ? ' is-legend' : ''}${trying ? ' is-trying' : ''}${tier ? ` is-t-${tier}` : ''}`} data-look={it.id} data-tier={tier || 'common'} onClick={onCard}>
+      {tier === 'epic' || tier === 'legendary' || tier === 'legend' ? <img className="sp2-look-gem" src="/shop/gem-epic-v1.webp" width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
       {/* POP STYLE ART (Andy oct16 "make cosmetics the best they can be" — the pop styles were text-only cards): a painted
           swatch of the burst, one per style (ChatGPT, one consistent letterform across the set; public/shop/pop/). The
           stage is the card's keyboard TRY button (oct26). */}
