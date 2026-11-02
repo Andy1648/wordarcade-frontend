@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
-const VPS = [[1366, 657], [1920, 1080], [390, 844]];
+const VPS = [[1366, 657], [1920, 1080], [1280, 551], [390, 844]];
 
 async function seed(page) {
   await installBackendMock(page);
@@ -37,9 +37,9 @@ for (const [w, h] of VPS) {
     await seed(page);
     await page.goto('/?portal=1&season2=1');
     await menuReady(page);
-    await page.getByTestId('profile-plate').click();
     const pf = page.getByTestId('profile-popup');
-    await expect(pf).toBeVisible();
+    // the menu may still be settling its first-paint moments: a tap it swallows is tapped again
+    await expect(async () => { await page.getByTestId('profile-plate').click(); await expect(pf).toBeVisible({ timeout: 2000 }); }).toPass({ timeout: 20_000 });
     await page.waitForTimeout(500);
     // profile: your name and your title plate never overlap; the plate is a real 44px+ target
     const [name, plate] = await Promise.all([pf.locator('.pf-name').boundingBox(), pf.getByTestId('profile-title').boundingBox()]);
@@ -77,7 +77,13 @@ for (const [w, h] of VPS) {
     if (w > 820) {
       const panel = await rl.locator('.rl-panel').boundingBox();
       expect(panel.y + panel.height).toBeLessThanOrEqual(h + 1);
-      expect(await rl.locator('.rl-shelf').evaluate((e) => e.scrollHeight <= e.clientHeight + 1), 'shelf fits without scrolling').toBe(true);
+      if (h >= 640) expect(await rl.locator('.rl-shelf').evaluate((e) => e.scrollHeight <= e.clientHeight + 1), 'shelf fits without scrolling').toBe(true);
+      // every title is REACHABLE: scroll the shelf (a list) to its end — the last MARQUEE tile lands fully on screen
+      await rl.locator('.rl-shelf').evaluate((e) => { e.scrollTop = e.scrollHeight; });
+      await page.waitForTimeout(100);
+      const last = await rl.locator('.rl-item').last().boundingBox();
+      expect(last.y + last.height, 'the last title is reachable').toBeLessThanOrEqual(Math.min(h, panel.y + panel.height) + 1);
+      expect(last.y).toBeGreaterThanOrEqual(0);
     }
   });
 }

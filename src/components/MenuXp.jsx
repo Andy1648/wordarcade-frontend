@@ -81,7 +81,11 @@ const POP_HIT = 0.12; // where the fade-in lands (the ring / painted burst slam 
 const POP_DRIFT = 18; // px the +N rises over its whole life
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
 // (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
-const KIT_POP_SCALE = 1.35;
+// nov2 (Andy: "the key themes also look very extra rn"): a worn look is ONE idea per key — its colours on the +N and,
+// on every LOOK_BURST_EVERY-th key, a small quick flash of its painted burst. No textured chip, no shards, no ×1.35 on a
+// plain key (those stacked into a wall of art); the CRIT keeps the full kit dress — that one is the moment.
+const KIT_POP_SCALE = 1.18;
+const LOOK_BURST_EVERY = 2;
 // A worn look keeps its pop LENGTH and its burst's spin (popMotion.js) — but its +N moves on the same flat arc as CLASSIC.
 function kitArc(look, rot, s, peak, rise, baseMs) {
   const m = look && look.motion;
@@ -89,7 +93,7 @@ function kitArc(look, rot, s, peak, rise, baseMs) {
   const o = m(CENTER, rot, s, peak, rise);
   return { frames: popArc(CENTER, rot, s * KIT_POP_SCALE), ms: Math.round(baseMs * o.ms), hit: POP_HIT, spin: o.spin }; // a paid look's pop is the bigger one
 }
-const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
+const POP_BURST_MS = 360; // the look's painted burst under a +N — a flash, not a hold (nov2; was 560)
 // The +N's one arc: constant scale `s` (its size — streak × career growth — never animates), opacity in → hold → out,
 // and a small straight rise.
 const popArc = (CENTER, rot, s) => {
@@ -503,6 +507,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
   // coloured outline and hard offset shadow (static styles on the pooled node, set per spawn — no animated property).
   // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
   const lookNextRef = useRef(0);
+  const lookBurstRef = useRef(0);
+  const lookBurstDue = () => lookBurstRef.current++ % LOOK_BURST_EVERY === 0; // every Nth look key flashes its burst
   // the painted burst under the number: shown + slammed in for a look, hidden otherwise (a pooled child, finite WAAPI)
   function dressArt(pop, look, crit = false, delay = 90, spin = 22) {
     const img = pop.children[2];
@@ -511,18 +517,23 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
     if (!src || prefersReducedMotion()) { img.style.display = 'none'; return; }
     if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     img.style.display = 'block'; // the CSS rests it at display:none
-    dressNum(pop.children[1], look);
+    if (crit) dressNum(pop.children[1], look); // the textured chip is the CRIT's (a plain key keeps its look colours)
     const rot = Math.random() * 60 - 30;
     if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
     img.style.willChange = 'transform, opacity'; // only for the burst's life
-    img.__burst = img.animate([
+    img.__burst = img.animate(crit ? [
       // a crisp slam (easing per step — a whole-run ease-out raced it through its hold): pops to 1.18 at full opacity,
-      // settles, HOLDS, then a quick fade — 420 ms, finite
+      // settles, HOLDS, then a quick fade — finite
       { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.35)`, opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
       { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.36}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
       { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.55}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
       { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.73}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
       { transform: `translate(-50%, -50%) rotate(${rot + spin}deg) scale(1.12)`, opacity: 0 },
+    ] : [
+      // a plain key: a small FLASH of the look's burst behind the number — in, out, a little turn (nov2: no hold)
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.4)`, opacity: 0, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.2}deg) scale(.78)`, opacity: 1, offset: 0.3, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.4}deg) scale(.86)`, opacity: 0 },
     ], { duration: crit ? CRIT_BURST_MS : POP_BURST_MS, delay: crit ? 0 : delay, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
@@ -550,8 +561,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
     }
     const fill = look.fill[lookNextRef.current++ % look.fill.length];
     node.style.color = fill;
-    node.style.webkitTextStroke = `3px ${look.stroke}`;
-    node.style.textShadow = `3px 3px 0 ${look.shadow}`;
+    // the house treatment: a heavy black outline so the look's colour reads over any card, and a hard offset in the
+    // look's own darker shade (nov2: a 3px dark-colour stroke vanished over the art)
+    node.style.webkitTextStroke = '5px #000';
+    node.style.textShadow = `3px 3px 0 ${look.stroke === '#000' ? look.shadow : look.stroke}`;
     return fill;
   }
 
@@ -627,15 +640,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       dressPop(el.children[1], lk, tierColour, feelTier >= 3);
       const tf0 = tierRef.current;
       const mo = kitArc(lk, Math.random() * 20 - 10, sz * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
-      dressArt(el, lk, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressArt(el, lk && lookBurstDue() ? lk : null, false, Math.round(mo.hit * mo.ms), mo.spin);
       dressGrowth(i, plusText && !lk ? tierColour : null, Math.round(mo.hit * mo.ms));
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
       // is richer wins, so neither purchase nor progress is ever invisible.
       const tfx = tierRef.current;
-      const shardN = Math.min(6, Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards, lk ? lk.n : 0));
-      if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, lk ? lk.shards : tierColour, shardN, 1 + tfx.tier * 0.12);
+      // a worn LOOK throws none (nov2: its burst flash is its one accent); CLASSIC keeps the tier shards
+      const shardN = lk ? 0 : Math.min(6, Math.max(feelTier >= 2 ? SHARD_PER_POP : 0, tfx.shards));
+      if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, tierColour, shardN, 1 + tfx.tier * 0.12);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
       // per-pop variance (a small rotation + scale, picked in kitArc's call above) so no two pops read identical;
@@ -754,9 +768,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
       const tf0 = tierRef.current;
       const mo = kitArc(look, Math.random() * 20 - 10, grownScale(scale) * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
-      dressArt(el, look, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressArt(el, look && lookBurstDue() ? look : null, false, Math.round(mo.hit * mo.ms), mo.spin);
       dressGrowth(i, look ? null : colour, Math.round(mo.hit * mo.ms));
-      if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       anim.effect.updateTiming({ duration: mo.ms });

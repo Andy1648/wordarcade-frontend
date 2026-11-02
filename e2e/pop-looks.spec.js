@@ -8,15 +8,16 @@ import { menuReady } from './support/menu.js';
 
 const SHOTS = process.env.LOOK_SHOTS; // a folder → one screenshot per look (not part of the gate)
 
-async function menuWith(page, popStyle) {
+async function menuWith(page, popStyle, lv = 0) {
   await installBackendMock(page);
-  await page.addInitScript((popStyle) => {
+  await page.addInitScript(({ popStyle, lv }) => {
     if (sessionStorage.getItem('looks.seeded')) return;
     sessionStorage.setItem('looks.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     if (popStyle) localStorage.setItem('taw.equipped', JSON.stringify({ popStyle, soundPack: 'thock' }));
-  }, popStyle);
+    if (lv) localStorage.setItem('taw.s2.xp', JSON.stringify({ lv, f: 0.05, rc: 0, v: 10 })); // deep in a level: a mash never levels up
+  }, { popStyle, lv });
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
   await page.waitForTimeout(800);
@@ -28,8 +29,9 @@ async function popDress(page, kit = false) {
   await expect.poll(async () => {
     await page.keyboard.type('qwer', { delay: 90 });
     dress = await page.evaluate((kit) => {
-      // kit: only a pop dressed by the worn look (the look's data loads at idle — a pop typed before it is plain)
-      const els = [...document.querySelectorAll('.menu-xp-pop.is-tap .menu-xp-pop-plus')].filter((e) => /XP/.test(e.textContent) && (kit ? e.classList.contains('is-kit') : (e.style.color || e.classList.contains('is-kit'))));
+      // kit: only a pop the worn look flashed its burst under (the look's data loads at idle — a pop typed before it is plain)
+      const flashed = (e) => { const a = e.parentElement.querySelector('.menu-xp-pop-art'); return !!a && a.style.display === 'block'; };
+      const els = [...document.querySelectorAll('.menu-xp-pop.is-tap .menu-xp-pop-plus')].filter((e) => /XP/.test(e.textContent) && (kit ? flashed(e) : !!e.style.color));
       const e = els[els.length - 1];
       if (!e) return null;
       const c = getComputedStyle(e);
@@ -41,16 +43,56 @@ async function popDress(page, kit = false) {
   return dress;
 }
 
-// oct25: a paid look throws its painted BURST behind the pop (the look's colour lives in the art). oct27 (THE KIT): the
-// number sits on a chip of the look's own painted texture, in white with a black outline (it reads on any burst).
-test('INFERNO: the menu +N pops throw the inferno burst, the number white on an inferno-texture chip', async ({ page }) => {
+// oct25: a paid look throws its painted BURST behind the pop. nov2 (Andy: "the key themes also look very extra rn"): ONE
+// idea per key — the +N in the look's own colour (heavy black outline, so it reads on any card) and, every other key, a
+// small flash of its burst. No textured chip on a plain key (that is the CRIT's).
+test('INFERNO: the +N wears the inferno colour and flashes the inferno burst — no chip', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await menuWith(page, 'inferno');
   const d = await popDress(page, true);
   expect(d.art).toContain('burst-inferno');
-  expect(d.color).toBe('rgb(255, 255, 255)');
+  expect(['rgb(255, 107, 61)', 'rgb(255, 178, 61)']).toContain(d.color);
   expect(d.stroke).toBe('rgb(0, 0, 0)');
-  expect(d.chip).toContain('bar-inferno');
+  expect(d.chip).toBeNull();
+});
+
+// nov2 "very extra": a look is a TASTEFUL upgrade — a mash never stacks a wall of art. Over 16 keys: no plain key wears
+// the textured chip, the look throws no shards, its burst flashes on about every other key only, small and quick.
+test('a worn look stays calm under a mash: burst every other key, small, quick; no chip; no shards', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await menuWith(page, 'legend', 40); // LV 40: the mash stays inside one level (a level-up throws its own shards)
+  await popDress(page, true); // the look is loaded
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => {
+    window.__burst = { plays: 0, maxW: 0, maxMs: 0 };
+    const play = Animation.prototype.play;
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (kf, opts) {
+      const a = animate.call(this, kf, opts);
+      if (this.classList && this.classList.contains('menu-xp-pop-art')) {
+        window.__burst.plays++;
+        window.__burst.maxMs = Math.max(window.__burst.maxMs, (opts && opts.duration) || 0);
+        const peak = Math.max(...kf.map((f) => +(/scale\(([\d.]+)\)/.exec(f.transform) || [0, 0])[1]));
+        window.__burst.maxW = Math.max(window.__burst.maxW, this.offsetWidth * peak);
+      }
+      return a;
+    };
+    window.__shards = 0;
+    Animation.prototype.play = function () {
+      const t = this.effect && this.effect.target;
+      if (t && t.classList && t.classList.contains('menu-xp-shard')) window.__shards++;
+      return play.call(this);
+    };
+  });
+  for (let n = 0; n < 16; n++) { await page.keyboard.press('KeyA'); await page.waitForTimeout(90); }
+  await page.waitForTimeout(200);
+  const r = await page.evaluate(() => ({ ...window.__burst, shards: window.__shards, chips: document.querySelectorAll('.menu-xp-pop:not(.is-crit) .menu-xp-pop-plus.is-kit').length }));
+  expect(r.chips, 'no textured chip on a plain key').toBe(0);
+  expect(r.shards, 'a look throws no shards').toBe(0);
+  expect(r.plays, 'the burst flashes on about every other key, not every key').toBeLessThanOrEqual(9);
+  expect(r.plays).toBeGreaterThanOrEqual(4);
+  expect(r.maxW, 'the flash stays small (px)').toBeLessThanOrEqual(120);
+  expect(r.maxMs, 'the flash is quick (ms)').toBeLessThanOrEqual(400);
 });
 
 test('CLASSIC keeps the old dress (black outline, no look shadow)', async ({ page }) => {
