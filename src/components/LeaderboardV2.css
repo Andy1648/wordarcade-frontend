@@ -1239,3 +1239,19 @@
 .lb2--narrow .lb2-col .lb2-place { font-size: var(--fs-k20); }
 .lb2--narrow .lb2-col--1 .lb2-place { font-size: var(--fs-k28); }
 .lb2--narrow .lb2-col--3 .lb2-place { font-size: var(--fs-k18); }
+
+/* ---- CLIMB (Andy nov2 picks) ------------------------------------------------------------------------------------- */
+/* 1 THE GAP BAR: the chase line's underline, filled to how much of the deciding stat you already have. Static width; the
+   arrival FILL one-shot (scaleX, .lb2-fill) grows it once. */
+.lb2-row.is-me .lb2-chase { position: relative; padding-bottom: 4px; }
+.lb2-gap { position: absolute; left: 0; top: auto; bottom: 0; height: 3px; background: #a8164e; transform-origin: 0 50%; pointer-events: none; }
+.lb2-gap::after { content: ''; position: absolute; inset: 0 auto 0 100%; width: 100vw; background: rgba(58, 33, 96, 0.22); }
+.lb2-chase { overflow: hidden; }
+.lb2-gap-n { color: #a8164e; }
+/* 2 STICKY: YOUR row stays on the list's edge when you scroll away from it (the same row, no second element) */
+/* inset by the -1deg tilt's corner lift + the hard shadow, so the stuck row sits wholly inside the list */
+.lb2-scroll .lb2-row.is-me { position: sticky; top: calc(8px * var(--lb2-k)); bottom: calc(8px * var(--lb2-k)); }
+/* = the row's own vertical margin, so at the end of the list (past #100) the row is not lifted onto the ghost above it */
+.lb2--narrow .lb2-scroll .lb2-row.is-me { top: 5px; bottom: 5px; }
+/* 3 THE GHOST: the player right above you, past the board — a real row, a step quieter than the board's own */
+.lb2-row.is-ghost { opacity: 0.78; }

@@ -751,7 +751,7 @@ export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;
   const mine = getMyProfile();
   try {
-    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=rank,id,username,level,rebirths&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
+    const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=rank,id,username,level,rebirths${SEASON2 ? ',stars' : ''}&rank=lt.${Number(rank)}&order=rank.desc&limit=2`, { headers: headers() });
     if (!r.ok) return null;
     const rows = await r.json();
     return (rows || []).find((x) => !mine || x.id !== mine.id) || null;
