@@ -8,7 +8,7 @@ import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 import { PATCH_ID } from '../src/components/patchNotes/patchSeen.js';
 
-const NEW = ['buzz'];
+const NEW = ['buzz', 'zip'];
 const OUT = 'claude/shots/new-heroes';
 const shot = async (page, name) => { if (process.env.SHOTS) { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/${name}.png` }); } };
 const seed = {
