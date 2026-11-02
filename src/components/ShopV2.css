@@ -931,3 +931,12 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    pack's click and the keycap presses down once (one finite WAAPI transform run per tap, ShopV2Looks pressKey). ===== */
 .sp2-hear { position: relative; }
 .sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
+
+/* ===== CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and design)"): what you can buy
+   right now reads lit — the cyan price tag; what you can't goes quiet — the art desaturates (a static filter, never
+   animated), the tag turns to dark ink and says how many gems short you are ("NEED 45"). Same gem balance the menu's
+   dot reads. e2e/shop-can-afford.spec.js. ===== */
+.sp2-card.is-short .sp2-card-in > :is(.sp2-art, .sp2-ico) { filter: saturate(.35) brightness(.7) drop-shadow(3px 3px 0 #000); }
+.sp2-card.is-short .sp2-card-in > .sp2-art.sp2-vessel { filter: saturate(.45) brightness(.75); }
+.sp2-card.is-short .sp2-price { background: #2a1648; color: #c9b8e8; border-color: #000; }
+.sp2-short { font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }

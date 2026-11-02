@@ -24,6 +24,10 @@ export const NEW_CREW = [
   { id: 'jinx', name: 'JINX', tag: 'NINE LIVES. ZERO LUCK.', color: '#A8F03C', dark: '#1E1A2B' },
   // oct24 (Andy: "cooler heroes"): SALTY, the pirate cannonball — eyepatch, gold tooth, hook, spyglass and cutlass
   { id: 'salty', name: 'SALTY', tag: 'SEVEN SEAS. ZERO MANNERS.', color: '#2D6CDF', dark: '#122E66' },
+  // oct26 (Andy: heroes first, new heroes next): BUZZ, the spelling-bee champion — a bumblebee bomb, a giant pencil for a sword
+  { id: 'buzz', name: 'BUZZ', tag: 'SPELLING BEE CHAMPION', color: '#FFC21A', dark: '#8A5A00' },
+  // oct26: ZIP, the ninja bomb — the fastest fingers in the room (a speed hero for a typing game)
+  { id: 'zip', name: 'ZIP', tag: 'FASTEST FINGERS ALIVE', color: '#E0283C', dark: '#6E0A16' },
 ];
 // LEGEND (oct17 night): the rarest tier — a cast member nobody else has, in its own painted LEGEND frame. BOO (the ghost
 // of a bomb that already went off) needs REBIRTH 5 and then gems (oct19, HERO_PRICE / HERO_UNLOCK below).
@@ -90,12 +94,14 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
+export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, buzz: 1800, zip: 2000, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
 export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
   shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
   sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
   quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
   salty: { wins: 160, label: '160 WINS', icon: 'wins' },
+  buzz: { wins: 200, label: '200 WINS', icon: 'wins' },
+  zip: { wins: 250, label: '250 WINS', icon: 'wins' },
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
   nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
@@ -198,7 +204,9 @@ const PAINTED = new Set([
   'shh-hero', 'shh-win', 'shh-ko', 'sizzle-hero', 'sizzle-win', 'sizzle-ko', 'mecha-hero', 'mecha-win', 'mecha-ko',
   'quill-hero', 'quill-win', 'quill-ko', 'jinx-hero', 'jinx-win', 'jinx-ko',
   'hollow-hero', 'hollow-win', 'hollow-ko', // oct21 LIMITED (ChatGPT, RIOT + BOO as the style refs)
-  'salty-hero', 'salty-win', 'salty-ko', // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
+  'salty-hero', 'salty-win', 'salty-ko',
+  'buzz-hero', 'buzz-win', 'buzz-ko',
+  'zip-hero', 'zip-win', 'zip-ko', // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
   'nova-hero', 'nova-win', 'nova-ko', // oct24 LEGEND (ChatGPT, RIOT / JINX / DUD as the style refs)
   // oct28 CHASE (ChatGPT, NOVA / MECHA / JINX as the style refs — one 3-pose sheet each)
   'drake-hero', 'drake-win', 'drake-ko', 'magma-hero', 'magma-win', 'magma-ko', 'facet-hero', 'facet-win', 'facet-ko',
@@ -271,6 +279,8 @@ export const CAST_BEATS = {
   drake: { ms: 1000, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.65, 0.97, 1.04], [1, 1, 1]] }, // a predator's coiled breath
   magma: { ms: 1500, k: [[0, 1, 1], [0.25, 1.06, 0.93], [0.5, 1.06, 0.93], [0.8, 0.99, 1.01], [1, 1, 1]] }, // a heavy rock settle
   facet: { ms: 1800, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // poised, barely moves (it knows)
+  buzz: { ms: 520, k: [[0, 1, 1], [0.5, 1.03, 0.97], [1, 1, 1]] }, // a quick wing-beat hum
+  zip: { ms: 700, k: [[0, 1, 1], [0.3, 1.05, 0.95], [0.6, 0.97, 1.03], [1, 1, 1]] }, // light on its toes, coiled
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
   nova: { ms: 2400, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // a slow orbit's breath (it floats; nothing to bounce on)
 };
@@ -472,12 +482,17 @@ export const CAST_FRAMES = {
   // SALTY: spyglass up → spots something → lowers it, gold tooth glint → whips out the cutlass → points it at you → rests it
   // on the shoulder, wink
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
+  // ZIP (oct26): spins a throwing star on a fingertip → tosses it up → a quick crouch → catches it without looking → 'shh'
+  zip: { n: 12, seq: [[6, 152], [1, 228], [7, 120], [2, 180], [8, 168], [3, 252], [9, 240], [4, 360], [10, 320], [5, 480], [11, 160]], rest: 1500 }, // 12 frames: 6-11 are painted in-betweens
   // CHASE (oct28): DRAKE rolls a flame across its claws → tosses it → catches it in a fist, sparks → opens the glove, grin
   drake: { n: 6, seq: [[1, 260], [2, 340], [3, 420], [4, 380], [5, 300]], rest: 1700 },
   // MAGMA pulls the fist back → SLAMS it into its palm, sparks + lava → rolls its shoulders, cracks blazing → steams, settles
   magma: { n: 6, seq: [[1, 320], [2, 300], [3, 520], [4, 480], [5, 360]], rest: 1900 },
   // FACET turns the floating shard → flicks it spinning up → it hangs at the top → drops back into its hand
   facet: { n: 6, seq: [[1, 380], [2, 340], [3, 520], [4, 380], [5, 340]], rest: 2000 },
+  // BUZZ (oct26): the spelling-bee champion — licks the pencil tip → scribbles in the air, sparkles → a big scribble loop
+  // overhead → polishes its gold medal → pencil over the shoulder, wink
+  buzz: { n: 12, seq: [[6, 168], [1, 252], [7, 144], [2, 216], [8, 280], [3, 420], [9, 260], [4, 390], [10, 360], [5, 540], [11, 180]], rest: 1700 }, // 12 frames: 6-11 are painted in-betweens
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
   // oct26: in-between 9 repainted (the snap hand lowering as the planet forms — the old one drew a prop on the wrong hand)
@@ -544,6 +559,8 @@ registerWinFrames('glitch-elite', WIN_SEQ6); // crouched → fist up under a hol
 registerWinFrames('hype-elite', WIN_SEQ6); // lands → megaphone high → the wings flap, a confetti burst → YELLS into it → points it at you, wink → thumb at the crown
 registerWinFrames('brawl-elite', WIN_SEQ6); // boxing crouch → hoists the belt → camera flashes mid-air → a roaring double fist pump → points at you, belt on the shoulder → gloves crossed
 registerWinFrames('hex-elite', WIN_SEQ6); // lands → staff high, the crystal glows → floats in a swirl of runes → the book flips itself → a star at you, wink → leans on the staff
+registerWinFrames('buzz', WIN_SEQ6); // lands → pencil high like a trophy → buzzing mid-air, sparkles + honey drops → bites its gold medal → points the pencil at you → pencil on the shoulder
+registerWinFrames('zip', WIN_SEQ6); // ninja landing → flying jump kick → a fan of throwing stars mid-air → they thunk into the floor in a row → a quick bow → arms crossed
 /** K.O. flipbooks (oct26, Andy: "use [ChatGPT] on HEROES first … KO flipbooks"): the knocked-out hero on the results
  *  screen acts out a short loop of trying to get back up and failing (frame 0 = the painted K.O. pose, the last frame
  *  lands back on it). Frames are public/cast/anim/<id>-ko-<n>.webp, registered on the lowest point like the WIN frames. */
@@ -574,6 +591,8 @@ registerKoFrames('glitch-elite', KO_SEQ6); // crashed → a loading spinner → 
 registerKoFrames('hype-elite', KO_SEQ6); // an eye opens → grabs the megaphone → a big breath → only a tiny squeak, flops
 registerKoFrames('brawl-elite', KO_SEQ6); // a glove twitches → onto one knee → staggers up, a wobbly guard → the belt slips to its ankles and trips it
 registerKoFrames('hex-elite', KO_SEQ6); // under its hat: peeks out → grabs the staff → a few weak sparkles → the spell backfires in its face
+registerKoFrames('buzz', KO_SEQ6); // a wing twitches → buzzes weakly off the floor → hovers, reaching for its snapped pencil → the wings sputter, it drops
+registerKoFrames('zip', KO_SEQ6); // an eye opens → a ninja kip-up, legs up → springs up halfway, wobbling → steps on its own throwing star, topples
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;
 export const castLayers = (id, pose = 'hero') => (CAST_LAYERS[id] && CAST_LAYERS[id][pose]) || null;
 /** SIGNATURE IDLES (Andy oct17: "not have the same animation EVERYWHERE"): the profile showcase plays each member's own
@@ -602,6 +621,10 @@ export const CAST_IDLE = {
   nova: { ms: 3200, rest: 0, k: [[0, 1, 1, 0, 0], [0.5, 1, 1, 0, -4], [1, 1, 1, 0, 0]] },
   quill: { ms: 2600, rest: 0, k: [[0, 1, 1, 0, 0], [0.3, 0.97, 1.04, 0, -3], [0.6, 1, 1, 0, -3], [0.8, 1.02, 0.98, 0, 0], [1, 1, 1, 0, 0]] },
   salty: { ms: 2200, rest: 0, k: [[0, 1, 1, 0, 0], [0.25, 1.03, 0.97, -2, 0], [0.5, 1, 1, 0, 0], [0.75, 1.03, 0.97, 2, 0], [1, 1, 1, 0, 0]] },
+  // BUZZ hovers on its buzzing wings: a quick bob up off the floor and back, twice
+  // ZIP shifts its stance: a quick sidestep one way, freeze, a sidestep back — never still, never loud
+  zip: { ms: 1800, rest: 0, k: [[0, 1, 1, 0, 0], [0.12, 1.04, 0.96, -4, 0], [0.4, 1.04, 0.96, -4, 0], [0.52, 1.04, 0.96, 4, 0], [0.8, 1.04, 0.96, 4, 0], [1, 1, 1, 0, 0]] },
+  buzz: { ms: 1400, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 0.97, 1.04, 0, -5], [0.4, 1, 1, 0, -2], [0.6, 0.97, 1.04, 0, -5], [0.85, 1.03, 0.97, 0, 0], [1, 1, 1, 0, 0]] },
   jinx: { ms: 2000, rest: 0, k: [[0, 1, 1, 0, 0], [0.2, 1.04, 0.95, 0, 1], [0.35, 0.96, 1.05, 0, -4], [0.5, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
   lexi: { ms: 1900, rest: 0, k: [[0, 1, 1, 0, 0], [0.18, 0.95, 1.07, 0, -4], [0.36, 0.95, 1.07, 0, -4], [0.48, 1.04, 0.96, 0, 0], [0.6, 1, 1, 0, -1.5], [0.72, 1.04, 0.96, 0, 0], [0.86, 1, 1, 0, 0], [1, 1, 1, 0, 0]] },
 };
