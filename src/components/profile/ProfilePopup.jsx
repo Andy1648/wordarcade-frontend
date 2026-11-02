@@ -17,7 +17,6 @@ import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
 import { rarityOf } from '../../cast/CastArt.jsx';
 import FitText from '../kit/FitText.jsx';
-import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
 import { kitPlay } from '../kit/motion.js';
 import { Bio, BadgeRow } from '../ProfileCard.jsx';
@@ -46,14 +45,15 @@ function wornTitle() {
 
 const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transform: 'scale(1.02)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
 
-/** A banner STAT MEDALLION (nov2 design audit #14 / research 5.1 — "a banner with fixed slots: 3 trackers"): the kit icon
- *  over a big Bungee number on a round tier-coloured plate (a circle — the one shape CSS may draw; the painted medallions
- *  hero-art is making replace the plate when they land), the label under it. */
-function Medal({ icon, tone, value, label, id }) {
+/** A banner STAT MEDALLION (nov2 design audit #14 / research 5.1 — "a banner with fixed slots: 3 trackers"): hero-art's
+ *  painted medallion (public/profile/medal-<id>-v1 — the stopwatch, the chevron rim, the phoenix: the art says WHAT it
+ *  counts), the number in Bungee on its glossy centre disc (`cy` = that disc's centre, % of the art), the label under it. */
+const MEDAL_CY = { time: 58, level: 58, rebirths: 54 };
+function Medal({ tone, value, label, id }) {
   return (
-    <div className="pf-medal" style={{ '--pf-t': tone }} data-testid={`profile-medal-${id}`}>
+    <div className="pf-medal" style={{ '--pf-t': tone, '--mcy': `${MEDAL_CY[id] || 50}%` }} data-testid={`profile-medal-${id}`}>
       <span className="pf-medal-disc">
-        <KitIcon name={icon} size={34} shadow={2} extras={false} />
+        <img className="pf-medal-art" src={`/profile/medal-${id === 'rebirths' ? 'rebirth' : id}-v1.webp`} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
         <FitText className="pf-medal-v fit-center">{value}</FitText>
       </span>
       <span className="pf-medal-k">{label}</span>
@@ -152,9 +152,9 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
               {/* THE BANNER (nov2 design audit #14, research 5.1): three trackers, not a six-tile dashboard — the rest lives
                   in STATS — and up to three badges, your best */}
               <div className="pf-medals">
-                <Medal id="time" icon="clock" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
-                <Medal id="level" icon="levels" tone="#B04BFF" value={formatNum(st.level)} label="LEVEL" />
-                <Medal id="rebirths" icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
+                <Medal id="time" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
+                <Medal id="level" tone="#B04BFF" value={formatNum(st.level)} label="LEVEL" />
+                <Medal id="rebirths" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
               </div>
               <BadgeRow badges={top3(show.badges)} />
               {me ? <Bio text={myBio()} mine /> : null}
