@@ -50,7 +50,7 @@
 @media (min-width: 761px) {
   .cz .skp-grid:not(.is-frames) { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; } /* WIN FX: one short block */
 }
-/* the phone: looks two to a row (a 150px floor left POP STYLE at one giant card a row) */
+/* the phone: looks two to a row (a 150px floor left SOUND at one giant card a row) */
 @media (max-width: 760px) {
   .cz .sp2-looks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }

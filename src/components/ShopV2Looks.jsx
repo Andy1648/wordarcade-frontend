@@ -9,7 +9,7 @@ import { TRY_MS, tryStreak, tryGain, padLetter } from '../progress/tryOn';
 import { TIER_SCALES, TIER_COLORS } from '../progress/useXpCapture';
 import { isCreditableKey, getKeyTier } from '../progress/xp';
 import { equippedPopColors } from '../theme/themes';
-import { playClack } from '../progress/clack';
+import { playClack, previewClack } from '../progress/clack';
 import { V3 } from '../progress/season';
 import { KitIcon } from './kit/index.js';
 import { formatNum } from '../format';
@@ -38,6 +38,14 @@ function LookAct({ it, isOn, isOwned, can, price, owner, onBuy, onEquip, onWear 
   );
 }
 
+// the keycap presses down once per tap — one finite WAAPI run (transform only), none under REDUCE MOTION
+const KEY_PRESS = [{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(6px) scale(.92, .86)', offset: 0.35 }, { transform: 'translateY(0) scale(1)' }];
+function pressKey(el) {
+  if (!el || !el.animate) return;
+  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch { /* no matchMedia */ }
+  el.animate(KEY_PRESS, { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
+}
+
 function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, trying, owner, onWear }) {
   const price = priceOf(it);
   const isOwned = owned.has(it.id) || price === 0;
@@ -58,8 +66,15 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, tryi
           <img className="sp2-look-art" src={`/shop/pop/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
         </button>
       ) : null}
-      {/* SOUND PACK ART (oct17 night): one painted keycap per pack, all 12 as one set (Gemini, public/shop/snd/) */}
-      {type === 'soundPack' ? <img className="sp2-look-art" src={`/shop/snd/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" /> : null}
+      {/* SOUND PACK ART (oct17 night): one painted keycap per pack, all 12 as one set (Gemini, public/shop/snd/). HEAR BEFORE
+          YOU BUY (oct29): the keycap is the button — a tap plays the pack's own click (clack.js previewClack), any pack */}
+      {type === 'soundPack' ? (
+        <button type="button" className="sp2-look-stage sp2-hear" aria-label={it.id === 'silent' ? `${it.name} — no click to hear` : `Hear ${it.name}`} data-testid={`hear-${it.id}`}
+          onClick={(e) => { if (previewClack(it.id)) pressKey(e.currentTarget.querySelector('.sp2-look-art')); }}>
+          <img className="sp2-look-art" src={`/shop/snd/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
+          {it.id !== 'silent' ? <KitIcon name="sound-on" size={26} shadow={2} extras={false} className="sp2-hear-ico" /> : null}
+        </button>
+      ) : null}
       <span className="sp2-look-name">{it.name}</span>
       {type === 'popStyle' && it.xpMult > 1 ? <span className="sp2-look-xp" data-testid={`pop-xp-${it.id}`}>{xpTag(it.xpMult)}</span> : null}
       <LookAct it={it} isOn={isOn} isOwned={isOwned} can={can} price={price} owner={owner} onBuy={onBuy} onEquip={onEquip} onWear={type === 'popStyle' ? onWear : null} />
