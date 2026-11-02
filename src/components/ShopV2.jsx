@@ -73,7 +73,7 @@ const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { t
 // (the kit stamp: the card jolts, the ink spatters fly), the tier shine sweeps the face once and the gems pill counts the
 // price off — then the stamp lifts (BOUGHT_MS). Every piece a finite transform/opacity one-shot. The last unit's buy gets
 // the SOLD OUT stamp instead (it stays).
-const BOUGHT_MS = 1300;
+const BOUGHT_MS = 600; // the whole moment ≤ 600 ms, and a tap mid-moment simply buys again (re-slams): nothing waits on it
 const SWEEP = { frames: [{ transform: 'translateX(-110%)' }, { transform: 'translateX(300%)' }], opts: { duration: 620, easing: 'cubic-bezier(.3,.6,.3,1)' } };
 
 function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef }) {

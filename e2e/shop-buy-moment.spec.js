@@ -36,17 +36,34 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     await boot(page, w, h);
     const xp = card(page, 'xp25');
     await xp.scrollIntoViewIfNeeded();
+    // catch the moment IN the page as it mounts (it lives ≤ 600 ms — a poll from outside can miss it on a busy box):
+    // a MutationObserver armed before the click records the stamp's face against its card, and every BOUGHT! on screen
+    await page.evaluate(() => {
+      window.__bought = new Promise((done) => {
+        const mo = new MutationObserver(() => {
+          const face = document.querySelector('.sp2-card:has([data-stock="xp25"]) .kst[aria-label="BOUGHT!"] .kst-cl--main');
+          if (!face) return;
+          mo.disconnect();
+          // measured once the 400 ms slam has landed (it starts at ×2.9), still inside the 600 ms moment
+          setTimeout(() => {
+            const f = face.getBoundingClientRect();
+            const c = face.closest('.sp2-card').getBoundingClientRect();
+            done({ inside: f.left >= c.left - 2 && f.right <= c.right + 2, w: f.width, all: document.querySelectorAll('.sp2-card .kst[aria-label="BOUGHT!"]').length });
+          }, 420);
+        });
+        mo.observe(document.querySelector('.sp2'), { childList: true, subtree: true });
+      });
+    });
     await xp.click();
-    // mid-moment: the stamp is up on THIS card, its face inside the card
+    const mid = await page.evaluate(() => window.__bought);
+    expect(mid.w, 'the BOUGHT! stamp is drawn').toBeGreaterThan(20);
+    expect(mid.inside, 'the BOUGHT! stamp sits on its card').toBe(true);
+    expect(mid.all, 'only the bought card is stamped').toBe(1);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/buy-${w}-mid.png` });
     const stamp = xp.locator('.kst[aria-label="BOUGHT!"]');
-    await expect(stamp).toBeVisible();
-    if (SHOTS) { await page.waitForTimeout(150); await page.screenshot({ path: `${SHOTS}/buy-${w}-mid.png` }); }
-    const inside = await xp.evaluate((c) => { const k = c.querySelector('.kst-center').getBoundingClientRect(); const f = c.getBoundingClientRect(); return k.left >= f.left - 2 && k.right <= f.right + 2; });
-    expect(inside, 'the BOUGHT! stamp sits on its card').toBe(true);
-    await expect(page.locator('.sp2-card .kst[aria-label="BOUGHT!"]')).toHaveCount(1); // only the bought card
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.gems')).bal)).toBe(955);
     // at rest: the stamp has lifted, the card is live again with one fewer left
-    await expect(stamp).toHaveCount(0, { timeout: 3000 });
+    await expect(stamp).toHaveCount(0, { timeout: 1500 }); // the moment is ≤ 600 ms
     await expect(xp.locator('.sp2-left')).toContainText('×4');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/buy-${w}-rest.png` });
   });
@@ -56,10 +73,9 @@ test('the last unit: its SOLD OUT stamp slams and stays (no BOUGHT! over it)', a
   await boot(page, 1366, 768);
   const od = card(page, 'overdrive');
   await od.click();
-  await expect(od.locator('.kst[aria-label="BOUGHT!"]')).toHaveCount(0, { timeout: 3000 });
-  await od.click(); // the 2nd of 2
-  await expect(od.locator('.kst[aria-label="SOLD OUT"]')).toBeVisible();
+  await od.click(); // the 2nd of 2, mid-moment: never blocked
+  await expect(od.locator('.kst[aria-label="SOLD OUT"] .kst-sold-band')).toBeVisible();
   await expect(od.locator('.kst[aria-label="BOUGHT!"]')).toHaveCount(0);
-  await page.waitForTimeout(1600);
-  await expect(od.locator('.kst[aria-label="SOLD OUT"]')).toBeVisible();
+  await page.waitForTimeout(1000);
+  await expect(od.locator('.kst[aria-label="SOLD OUT"] .kst-sold-band')).toBeVisible();
 });
