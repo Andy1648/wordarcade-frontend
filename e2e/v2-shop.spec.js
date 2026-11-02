@@ -13,7 +13,9 @@ import { navControl } from './support/menu.js';
 
 const SECRET = 'f'.repeat(48);
 const WINDOW_MS = 60 * 60 * 1000;
-const T = (Math.floor(Date.now() / WINDOW_MS) + 1) * WINDOW_MS + 60_000;
+// a minute into a fixed hour whose DEAL OF THE HOUR (v3/stock.js dealOf) is WINS — a boost no test here prices, so the
+// 45 / 300 / 120 / 500 under test are shelf prices (oct29)
+const T = Math.floor(1796085000000 / WINDOW_MS) * WINDOW_MS + 60_000;
 
 async function boot(page, { wins = 500, gems = 640, power = 0 } = {}) {
   await page.clock.setFixedTime(T);
@@ -81,7 +83,8 @@ test('a STOCK item costs GEMS: +50% XP · 10 MIN for 45, ×5 → ×4 LEFT, the e
   await page.setViewportSize({ width: 1366, height: 657 });
   const shop = await boot(page);
   await expect(shop.locator('.sp2-card:not(.sp2-chest)')).toHaveCount(6); // 065: + the SEALED EPIC+ ROLL (069: LEGENDARY+ left the shop) // + the +50% WINS BOOST (Andy oct8); gems never scale
-  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['500', '45', '60', '120', '300', '150']); // the SEALED ROLL leads the shelf (first view)
+  // the SEALED ROLL leads the shelf (first view); WINS is this hour's DEAL (−30%: 42, the shelf 60 struck beside it)
+  await expect(shop.locator('.sp2-card:not(.sp2-chest) .sp2-price')).toHaveText(['500', '45', /^42\s*60$/, '120', '300', '150']);
   // "boost what?" (Andy oct8): every card names the item, what it boosts and for how long
   await expect(card(shop, 'xp25').locator('.sp2-name')).toHaveText('XP BOOST');
   await expect(card(shop, 'xp25').locator('.sp2-what')).toHaveText('XP PER KEY');
