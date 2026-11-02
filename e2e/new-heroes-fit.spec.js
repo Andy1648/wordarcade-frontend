@@ -55,7 +55,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       }
       expect(hit(m.top, m.stage), 'top bar overlaps the stage').toBe(false);
       expect(hit(m.stage, m.right), 'the stage overlaps the info column').toBe(false);
-      expect(m.hero.height, 'the hero art is small').toBeGreaterThanOrEqual(Math.min(h, 844) * 0.28);
+      // the art's floor: 28% of a desktop's height; a phone stacks the info column under the stage, so 24% (~200px)
+      expect(m.hero.height, 'the hero art is small').toBeGreaterThanOrEqual(h * (w >= 900 ? 0.28 : 0.24));
       expect(m.small, 'preview controls under 44px').toEqual([]);
     });
   }
