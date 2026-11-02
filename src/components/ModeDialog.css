@@ -518,6 +518,23 @@
 /* the SAT dialog's lower block never squeezes UP over the SOLO chip on a short phone (the shared flex-end layout
    let it overlap the title at 375x667); the content scrolls instead, and the one-liners go first */
 .mode-dialog-lower:has(.has-choices) { flex-shrink: 0; }
+/* OVERLAP AUDIT #2 (#6): the same squeeze hit MINER on a phone — at 390x844 its lower block (title + liner + the tall
+   rarity example + CTAs) was ~30px taller than the 760px shell allowed, so the flex-end block slid UP and the MINER title
+   lay on the SOLO/MULTI chip. Every non-Blitz lower block keeps its height at every width (desktop already did, via the
+   content rule above); if a body is still too tall it scrolls inside the panel rather than stacking text. The Blitz
+   block stays the one deliberate shrinker (its pack picker scrolls). */
+.mode-dialog-lower:not(.mode-dialog-lower--blitz) { flex-shrink: 0; }
+/* the chip's -2deg tilt drops its low corner ~3px under its own box: a fixed 8px floor between it and a non-Blitz
+   lower block, so even a body with no slack never lets the title touch the sticker. On the lower block, NOT the chip:
+   the Blitz dialog's pack picker is sized to the pixel (blitz-pack-picker-fit at 1280x720) and keeps its layout. */
+.mode-dialog-chip { flex-shrink: 0; }
+.mode-dialog-lower:not(.mode-dialog-lower--blitz) { margin-top: 8px; }
+/* ...and the phone panel gives that room back so it does not have to scroll: the shell's clamp(20px, 4vh, 40px) padding
+   was 34px a side at 844px tall — on a 351px-wide panel that is ~20% of the width and 68px of height spent on margin.
+   20px / 18px keeps the ✕ (absolute, top-right) clear of the chip and the body ~30px taller and ~32px wider. */
+@media (max-width: 480px) {
+  .mode-dialog-shell { padding: 20px 18px; }
+}
 @media (max-height: 700px), (max-width: 480px) {
   .mode-dialog-choice-line { display: none; }
 }
