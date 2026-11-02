@@ -208,6 +208,12 @@ const STAMP = [
   { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.82 },
   { transform: 'scale(1) rotate(0)', opacity: 1 },
 ];
+// the top-3 rows' seals sit at the board's left edge (a phone's screen edge): a smaller stamp keeps frame 0 on screen
+const STAMP_T3 = [
+  { transform: 'scale(1.4) rotate(-10deg)', opacity: 0 },
+  { transform: 'scale(.9) rotate(3deg)', opacity: 1, offset: 0.6 },
+  { transform: 'scale(1) rotate(0)', opacity: 1 },
+];
 const SLAM = [
   { transform: 'scale(1)', opacity: 1 },
   { transform: 'scale(3.2) rotate(-18deg)', opacity: 0, offset: 0.01 },
@@ -448,6 +454,9 @@ export default function LeaderboardV2({ onBack }) {
   // THE CLIMB INTO A TIER since your last look on this tab (a first look is not a climb)
   const myMove = meRow ? Number(data.moves[meRow.id] || 0) : 0;
   const newTier = meRow && myMove > 0 ? enteredTier(Number(meRow.rank) + myMove, meRow.rank) : null;
+  // YOUR CLIMB: the player ranked right above you (on the board, or the ghost past it) and the gap to pass them
+  const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || ghost : null;
+  const climbGap = climbTo ? gapTo(meRow, climbTo, tab, gains) : null;
 
 
   // ARRIVAL: the podium rises, the list + panels slide in, the bars fill, the crown wobbles once, ▲ / ▼ bob once and
@@ -477,7 +486,7 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
     root.querySelectorAll('.lb2-col').forEach((col) => {
       const land = (BLOCK_AT[Number(col.dataset.place) || 0] || 0) + 420;
-      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
+      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_T3, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
     });
     if (newTier) {
       const mySeal = root.querySelector('.lb2-row.is-me .lb2-seal, .lb2-col.is-me .lb2-pod-seal');
@@ -491,7 +500,13 @@ export default function LeaderboardV2({ onBack }) {
     // (YOUR row is sticky, so its own offsetTop is where it is STUCK: its place in the list is where the row before it ends)
     const before = meEl && meEl.previousElementSibling;
     const meTop = before ? before.offsetTop + before.offsetHeight : 0;
-    if (sc && meEl) sc.scrollTop = Math.max(0, meTop - (sc.clientHeight - meEl.offsetHeight) / 2);
+    if (sc && meEl) {
+      // ...then back up to the start of the row (or cut line) there, so the list's top edge never shows a sliver of a row
+      const want = Math.max(0, meTop - (sc.clientHeight - meEl.offsetHeight) / 2);
+      let top = 0;
+      for (const el of sc.children) { if (el === meEl || el.offsetTop > want) break; top = el.offsetTop; }
+      sc.scrollTop = top;
+    }
     // THE CLIMB (Andy oct14 "climb animation when passing someone"): you moved up N since your last look → your row
     // starts where you WERE (N rows lower) and slides up past the players you overtook, who each drop one slot. One
     // finite transform one-shot after the list lands; rows measured once here (not per frame). Podium climbs keep
@@ -574,47 +589,74 @@ export default function LeaderboardV2({ onBack }) {
           </div>
         </header>
 
-        <div className="lb2-podium" aria-label="Top three">
-          <div className="lb2-floor" aria-hidden="true" />
-          {[2, 1, 3].map((place) => {
+        {/* THE TOP 3 AS RAISED ROWS (Andy nov2: "for bigger games they dont give so much space to first - third place"; the
+            research table - Clash Royale / Brawl Stars / Duolingo show the top 3 as medal rows, not a trophy wall). Three
+            rows ≈ 11% of the board; the room the podium took goes to YOUR CLIMB below them. */}
+        <div className="lb2-top3" aria-label="Top three">
+          {[1, 2, 3].map((place) => {
             const p = podium[place - 1];
             const mine = !!(p && myId && p.id === myId);
             const n = p ? nums(p, tab, gains) : null;
             const who = podCast[place - 1];
             const name = p ? p.username : 'YOUR NAME HERE?';
             return (
-              <div key={place} className={`lb2-col lb2-col--${place}${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p ? nameTier(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
-                <div className="lb2-who">
-                  {/* SIMPLE (Andy oct16: the emblem + ribbon read as poorly cut AI slop, "quality but with simplicity"): the
-                      cast member alone (no crown — oct17), the name in plain type under it, then the plate + numbers */}
-                  <span className="lb2-stand" aria-hidden="true">
-                    <span className="lb2-buddy-wrap">
-                      <CastArt className="lb2-buddy" id={who.id} live={!!p} />
-                    </span>
-                  </span>
-                  <span className="lb2-pod-name">
-                    {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : null}
+              <div key={place} className={`lb2-col lb2-col--${place} lb2-slide${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p ? nameTier(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
+                {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : <span className="lb2-t3-open">{place}</span>}
+                <span className="lb2-t3-face" aria-hidden="true"><img className="lb2-buddy" src={castSrc(who.id)} alt="" draggable="false" decoding="async" /></span>
+                <span className="lb2-t3-who">
+                  <span className="lb2-t3-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    {/* oct29 audit: FitText shrank a long name to ~9px here. The CSS sizes it to the column with a readable
-                        floor (13px desktop, 16px phone); past that it wraps - never an ellipsis (Andy oct21) */}
-                    <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
+                    {/* one line at the row's width; a name too long for the floor size wraps only at a word edge (softBreak) */}
+                    <span className="lb2-pod-name-t" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
                   </span>
-                  {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : null}
-                  {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
-                  <span className="lb2-pod-stats">
-                    <span className="lb2-pod-r">{n ? n.r : '—'}</span>
-                    {n ? <span className="lb2-pod-lv">{n.lv} <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span></span> : null}
+                  <span className="lb2-t3-sub">
+                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : null}
+                    {wk ? <Prize rank={place} pod /> : null}
                   </span>
-                  {wk ? <Prize rank={place} pod /> : null}
-                </div>
-                <div className="lb2-blockwrap">
-                  <img className="lb2-block" src={`/stage/podium-${place}.webp`} width={[0, 296, 308, 309][place]} height={[0, 431, 349, 278][place]} alt="" aria-hidden="true" draggable="false" />
-                  <span className="lb2-place">{place}</span>
-                </div>
+                </span>
+                <span className="lb2-pod-stats">
+                  <span className="lb2-pod-r">{n ? n.r : '—'}</span>
+                  {n ? <span className="lb2-pod-lv">{n.lv} <span className="lb2-pod-lvk">{wk && !gains ? 'WORDS' : 'LV'}</span></span> : null}
+                </span>
               </div>
             );
           })}
         </div>
+
+        {/* YOUR CLIMB (the room the podium gave back; desktop only - a phone has the sticky YOUR row): your hero, your
+            rank, and the one next step - the player to pass and the gap, or the next cut line. THIS WEEK adds the gem
+            ladder the week pays. */}
+        {!narrow && (
+          <aside className={`lb2-climb lb2-slide${wk ? ' is-week' : ''}`} aria-label="Your climb">
+            <span className="lb2-climb-k">YOUR CLIMB</span>
+            {meRow ? (
+              <div className="lb2-climb-me">
+                <span className="lb2-climb-hero" aria-hidden="true"><CastArt className="lb2-climb-cast" id={heroById(heroes[meRow.id]) ? heroes[meRow.id] : castFor(meRow.id, true).id} live /></span>
+                <span className="lb2-climb-rank">
+                  {nameTier(meRow.rank) ? <RankSeal rank={meRow.rank} className="lb2-climb-seal" /> : <b className="lb2-climb-n">#{fmt(meRow.rank)}</b>}
+                  {myPct ? <span className="lb2-climb-pct">TOP {myPct}%</span> : null}
+                </span>
+              </div>
+            ) : (
+              <p className="lb2-climb-none">{profile ? 'PLAY A GAME TO GET ON THE BOARD' : 'CLAIM A NAME TO GET ON THE BOARD'}</p>
+            )}
+            {meRow && climbTo ? (
+              <p className="lb2-climb-next">
+                <span className="lb2-climb-pass">PASS <b>{softBreak(climbTo.username)}</b></span>
+                {climbGap ? <span className="lb2-climb-gap">{climbGap.text}</span> : null}
+                {climbGap ? <span className="lb2-climb-bar" aria-hidden="true"><i className="lb2-fill" style={{ width: `${Math.round(climbGap.fill * 100)}%` }} /></span> : null}
+              </p>
+            ) : null}
+            {meRow && Number(meRow.rank) > 10 ? <p className="lb2-climb-band"><b>{fmt(meRow.rank - nearestBand(meRow.rank))}</b> TO TOP {nearestBand(meRow.rank)}</p> : null}
+            {wk ? (
+              <ol className="lb2-climb-prizes" aria-label="This week's prizes">
+                {Array.from({ length: 10 }, (_, i) => i + 1).filter((k) => weekPrize(k)).map((k) => (
+                  <li key={k} className={meRow && Number(meRow.rank) === k ? 'is-me' : undefined}><span>#{k}</span><KitIcon name="gems" size={16} shadow={1} extras={false} />+{fmt(weekPrize(k))}</li>
+                ))}
+              </ol>
+            ) : null}
+          </aside>
+        )}
 
         <div className="lb2-cols" aria-hidden="true">
           <span>#</span><span className="lb2-cols-who"><span className={myPct ? 'lb2-cols-pl has-pct' : 'lb2-cols-pl'}>PLAYER</span>{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : myPct ? <span className="lb2-pct" data-testid="lb2-pct">YOU: TOP {myPct}%</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>

@@ -41,6 +41,7 @@ async function boot(page, vp, me) {
     localStorage.setItem('taw.econ', '12');
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: me.level, f: 0.1, rc: me.rebirths, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', String(me.rebirths));
+    if (me.seenAt) localStorage.setItem('taw.s2.lbseen', JSON.stringify({ all: { me: me.seenAt } }));
   }, { secret: SECRET, me: meRow });
   await page.goto('/?portal=1&season2=1');
   await navControl(page, 'leaderboard').waitFor({ state: 'visible' });
@@ -99,15 +100,9 @@ function overlapsIn(page) {
         const px = drawnPx(pn);
         if (px < (narrowStage ? 16 : 13) - 0.5) out.push(`podium ${col.dataset.place}: name at ${px.toFixed(1)}px`);
         const nb = pn.getBoundingClientRect(); const cb = col.getBoundingClientRect();
-        // the #1 name may borrow 6% each side on a desktop (nov2 simplify: its column is narrow now) - but never onto
-        // the #2 / #3 heroes or names (it borrows 6% a side)
-        const slack = col.dataset.place === '1' && !narrowStage ? cb.width * 0.16 : 2;
-        if (nb.left < cb.left - slack || nb.right > cb.right + slack) out.push(`podium ${col.dataset.place}: name runs out of its column`);
-        if (col.dataset.place === '1') {
-          for (const other of document.querySelectorAll('.lb2-col--2, .lb2-col--3')) {
-            for (const part of other.querySelectorAll('.lb2-stand, .lb2-pod-name')) if (hit(nb, box(part))) out.push(`podium 1: name touches ${other.className.match(/lb2-col--\d/)[0]}`);
-          }
-        }
+        // nov2 TOP-3 ROWS: each name stays inside its own medal row, and #1's 16-letter name is ONE line on a desktop
+        if (nb.left < cb.left - 2 || nb.right > cb.right + 2) out.push(`podium ${col.dataset.place}: name runs out of its row`);
+        if (col.dataset.place === '1' && window.innerWidth >= 1280 && lineCount(pn) > 1) out.push(`podium 1: name breaks onto ${lineCount(pn)} lines`);
         // Andy oct21: a name is NEVER cut - no ellipsis, nothing clipped (it wraps instead)
         const pcs = getComputedStyle(pn);
         const plines = lineCount(pn);
@@ -115,7 +110,7 @@ function overlapsIn(page) {
         const clipsP = pcs.overflow !== 'visible' && (pn.scrollWidth > pn.clientWidth + 1 || pn.scrollHeight > pn.clientHeight + 3);
         if (pcs.textOverflow === 'ellipsis' || clipsP) out.push(`podium ${col.dataset.place}: name is cut`);
       }
-      const parts = ['.lb2-pod-name', '.lb2-pod-bio', '.lb2-pod-plate', '.lb2-pod-stats'].map((s) => [s, col.querySelector(s)]).filter(([, e]) => e);
+      const parts = ['.lb2-pod-seal', '.lb2-t3-face', '.lb2-pod-name-t', '.lb2-pod-plate', '.lb2-pod-stats'].map((s) => [s, col.querySelector(s)]).filter(([, e]) => e);
       for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
         if (hit(box(parts[i][1]), box(parts[j][1]))) out.push(`podium ${col.dataset.place}: ${parts[i][0]} x ${parts[j][0]}`);
       }
@@ -182,11 +177,16 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     expect(await overlapsIn(page)).toEqual([]);
     // nov2 SIMPLIFY (Andy: "no need for paragraph descriptions"): a bio lives in the profile card, never on the board
     await expect(lb.locator('.lb2-bio, .lb2-pod-bio')).toHaveCount(0);
-    // ...and the ladder, not the trophy wall, owns the screen: on a desktop the list is far wider than the podium
-    if (vp.width > 1000) {
-      const w = await page.evaluate(() => ({ list: document.querySelector('.lb2-list').getBoundingClientRect().width, pod: document.querySelector('.lb2-podium').getBoundingClientRect().width }));
-      expect(w.list / w.pod, `list ${Math.round(w.list)}px vs podium ${Math.round(w.pod)}px`).toBeGreaterThan(1.6);
-    }
+    // ...and the ladder, not the trophy wall, owns the screen (Andy nov2 "they dont give so much space to first - third
+    // place"): the top 3 are medal ROWS taking at most 15% of the board (16% on a phone: three 44px tap rows), with a real
+    // gap under the header
+    const t3 = await page.evaluate(() => {
+      const st = document.querySelector('.lb2-stage').getBoundingClientRect(); const t = document.querySelector('.lb2-top3').getBoundingClientRect();
+      const head = document.querySelector('.lb2-head').getBoundingClientRect();
+      return { share: (t.width * t.height) / (st.width * st.height), gap: t.top - head.bottom };
+    });
+    expect(t3.share, `the top 3 take ${(t3.share * 100).toFixed(1)}% of the board`).toBeLessThanOrEqual(vp.width > 1000 ? 0.15 : 0.17);
+    expect(t3.gap, 'the top 3 sit clear of the header').toBeGreaterThanOrEqual(8);
     // the header (YOU / CHANGE) is clickable - the #1 podium column never sits over it (oct29 audit, 1024-1366)
     const covered = await page.locator('.lb2-me-btn').evaluate((el) => { const b = el.getBoundingClientRect(); const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !(hit && el.contains(hit)); });
     expect(covered, 'the YOU / CHANGE button is on top').toBe(false);
@@ -204,6 +204,11 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     // CLIMB 1 (nov2): the gap in the stat that decides the order (#60 is one rebirth ahead) + its fill bar
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
     await expect(lb.locator('.lb2-row.is-me .lb2-gap')).toHaveCount(1);
+    // the list opens on whole rows: the first thing under its top edge starts AT the edge (no sliver of a cut row)
+    const sliver = await page.evaluate(() => { const sc = document.querySelector('.lb2-scroll'); const first = [...sc.children].find((el) => el.offsetTop + el.offsetHeight > sc.scrollTop + 1); return first ? Math.round(sc.scrollTop - first.offsetTop) : 0; });
+    expect(sliver, 'px of a cut row above the list top').toBeLessThanOrEqual(1);
+    // YOUR CLIMB (desktop): the player to pass + the gap, beside your hero
+    if (vp.width > 1000) await expect(lb.locator('.lb2-climb')).toContainText('+1 R');
     // CLIMB 2: scrolled to the top of the list, YOUR row is still on screen inside the list (sticky, the same row)
     await lb.locator('.lb2-scroll').evaluate((el) => { el.scrollTop = 0; });
     await page.waitForTimeout(200);
@@ -254,6 +259,20 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-ghost-${vp.width}.png` });
+    expect(await overlapsIn(page)).toEqual([]);
+  });
+}
+
+// POST-ACTION (anti-slop checklist): you just climbed from #5 INTO the top 3 - your own medal row wears YOU + the NEW tier
+// news, the panel follows you, and nothing overlaps mid-climb or after
+for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width} climbing into the top 3: your medal row + the tier news, no overlaps`, async ({ page }) => {
+    const lb = await boot(page, vp, { level: 895, rebirths: 40, stars: 4, seenAt: 5 });
+    const mine = lb.locator('.lb2-top3 .lb2-col.is-me');
+    await expect(mine).toHaveAttribute('data-place', '2');
+    await expect(mine.locator('.lb2-you')).toBeVisible();
+    if (vp.width > 1000) await expect(mine.locator('.lb2-new-tier')).toContainText('NEW');
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-into-top3-${vp.width}.png` });
     expect(await overlapsIn(page)).toEqual([]);
   });
 }
