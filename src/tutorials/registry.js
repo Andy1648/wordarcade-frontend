@@ -21,7 +21,8 @@ export const TUT_INIT_KEY = 'taw.tut.init';
 
 /** Every tutorial: id, when(snapshot) → boolean, target (CSS selector of the ONE thing it lights), line (the
  *  one short line), isNew (still shown to players who passed it before tutorials existed), host (shown by that
- *  panel, not the menu), needsTarget (not due until its target is on screen — no target, no tutorial). */
+ *  panel, not the menu), needsTarget (not due until its target is on screen — no target, no tutorial), clear (content
+ *  above the target the line must never cover: it is fitted into the band between the two). */
 export const TUTORIALS = [
   {
     // GEMS: the roll currency's count on the menu. No-ops until the count is actually on screen (the gems
@@ -62,6 +63,10 @@ export const TUTORIALS = [
     when: (s) => s.marksRevealed && rollsEnabled(),
     target: '.rs-roll',
     pad: 14, // the ROLL button presses / pops: a little room round it
+    // OVERLAP AUDIT #2 (#5): the line sat on the FOUND chips (1366 / 1920) and the EPIC+ read-out (phone). It now lives
+    // in the band between the reel and ROLL (SpotlightTutorial fits it there); the showcase in that band steps out
+    // while the tip is up (RollScreen.css .rs-overlay.is-tut).
+    clear: '.rs-reel',
     line: 'TAP ROLL — YOUR FIRST GEAR IS FREE.', // oct14: they are GEARS everywhere else now
   },
 

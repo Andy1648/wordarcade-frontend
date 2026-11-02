@@ -15,8 +15,12 @@ import { spotlightLayout, findVisibleTarget as findTarget } from './spotlightLay
 import './SpotlightTutorial.css';
 
 
+// A line fitted into a `clear` band never goes under this (Bungee on a plate; the phone 16px floor + a margin)
+const FIT_MIN_PX = 18;
+
 export default function SpotlightTutorial({ tutorial, onDone }) {
   const [layout, setLayout] = useState(null);
+  const [fitPx, setFitPx] = useState(null); // the fitted font size (px) when the line had to shrink into its band
   const rootRef = useRef(null);
   const lineRef = useRef(null);
   const doneRef = useRef(false);
@@ -29,17 +33,49 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
   }, []);
 
   // measure once on show + on resize only
+  // A tutorial with a `clear` selector keeps its line OFF that content (the ROLL screen's reel): the line lives in the
+  // band between it and the hole, and when the band is shorter than the line the font steps down (to FIT_MIN_PX) until
+  // it fits — a handful of synchronous reads, on show and on resize only.
   useLayoutEffect(() => {
     const measure = () => {
+      const vw = window.innerWidth, vh = window.innerHeight;
       const el = findTarget(tutorial.target);
       const r = el ? el.getBoundingClientRect() : null;
-      const capH = lineRef.current ? lineRef.current.offsetHeight : 0;
-      setLayout(spotlightLayout(r, window.innerWidth, window.innerHeight, capH, tutorial.pad));
+      const clearEl = tutorial.clear ? findTarget(tutorial.clear) : null;
+      const clearBottom = clearEl ? clearEl.getBoundingClientRect().bottom : null;
+      const line = lineRef.current;
+      let fit = null;
+      let capH = 0;
+      if (line) {
+        line.style.fontSize = ''; // natural size first (a resize may have room again)
+        line.classList.remove('is-fit');
+        capH = line.offsetHeight;
+        const room = spotlightLayout(r, vw, vh, capH, tutorial.pad, clearBottom).caption.room;
+        if (room != null && capH > room) {
+          line.classList.add('is-fit');
+          let lo = FIT_MIN_PX;
+          let hi = parseFloat(getComputedStyle(line).fontSize) || FIT_MIN_PX;
+          for (let i = 0; i < 8 && hi - lo > 0.5; i += 1) {
+            const mid = (lo + hi) / 2;
+            line.style.fontSize = `${mid}px`;
+            if (line.offsetHeight <= room) lo = mid; else hi = mid;
+          }
+          fit = Math.floor(lo);
+          line.style.fontSize = `${fit}px`;
+          capH = line.offsetHeight;
+        }
+        // leave the DOM exactly as the next render will draw it (React diffs props, not the DOM: an unchanged fitPx
+        // after a resize would never re-apply a size cleared here)
+        line.style.fontSize = fit ? `${fit}px` : '';
+        if (fit == null) line.classList.remove('is-fit');
+      }
+      setFitPx(fit);
+      setLayout(spotlightLayout(r, vw, vh, capH, tutorial.pad, clearBottom));
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [tutorial.target, tutorial.pad]);
+  }, [tutorial.target, tutorial.pad, tutorial.clear]);
 
   // focus in, and back out to whatever had it
   useEffect(() => {
@@ -65,7 +101,7 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
   const hole = layout && layout.hole;
   const cap = layout ? layout.caption : null;
   const holeStyle = hole ? { left: `${hole.left}px`, top: `${hole.top}px`, width: `${hole.width}px`, height: `${hole.height}px` } : null;
-  const lineStyle = cap && cap.top != null ? { top: `${cap.top}px` } : null;
+  const lineStyle = cap && cap.top != null ? { top: `${cap.top}px`, ...(fitPx ? { fontSize: `${fitPx}px` } : null) } : null;
 
   // onClick (not pointerdown): the tap's click lands on this layer, so it can never fall through to the
   // button underneath once the layer is gone
@@ -88,7 +124,7 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
       ) : (
         <div className="ut-dim" aria-hidden="true" />
       )}
-      <div ref={lineRef} className={`ut-line${lineStyle ? '' : ' is-centered'}`} style={lineStyle || undefined} aria-live="polite">
+      <div ref={lineRef} className={`ut-line${lineStyle ? '' : ' is-centered'}${fitPx ? ' is-fit' : ''}`} style={lineStyle || undefined} aria-live="polite">
         {tutorial.line}
       </div>
     </div>,
