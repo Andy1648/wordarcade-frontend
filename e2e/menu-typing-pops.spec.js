@@ -22,7 +22,7 @@ test.use({ reducedMotion: 'no-preference' });
 const POP_POOL = 28; // MenuXp.jsx POP_POOL
 
 for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
-  test(`typing on the menu pops "+N XP" (no letter) and no centre text box @ ${vp.width}x${vp.height}`, async ({ page }) => {
+  test(`typing on the menu pops "[KEY] +N XP" and no centre text box @ ${vp.width}x${vp.height}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
     await page.goto('/?portal=1');
@@ -63,12 +63,12 @@ for (const vp of [{ width: 1366, height: 657 }, { width: 390, height: 844 }]) {
         })
         .filter((p) => p.running > 0)
     );
-    // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", no typed
-    // letter (a CRIT keeps its key: CRIT +N). The last keys are still mid-flight (POP_MS 600).
+    // nov2 (Andy: "we still need the letters"): a key pops the KEY it was — "[KEY] +N XP" (oct10 had dropped the letter;
+    // the +N still says what it paid). The last keys are still mid-flight.
     expect(pops.length).toBeGreaterThan(0);
     for (const p of pops) {
       expect(p.plus).toMatch(/^(CRIT \+\d.*|\+[\d,.]+[A-Z]* XP)$/);
-      if (!/^CRIT/.test(p.plus)) expect(p.letter, 'no typed letter on a plain pop').toBe('');
+      if (!/^CRIT/.test(p.plus)) expect(p.letter.toLowerCase(), 'a plain pop shows its typed key').toMatch(/^[word]$/);
       expect(p.finite).toBe(true);
       expect(p.props.every((x) => x === 'transform' || x === 'opacity')).toBe(true);
     }
@@ -159,4 +159,41 @@ test('a 10s mash recycles the oldest pop with a fade — never a mass clear', as
   let worst = 0;
   for (let n = 1; n < busy.length; n++) worst = Math.max(worst, busy[n - 1] - busy[n]);
   expect(worst, 'pops vanished at once').toBeLessThanOrEqual(4);
+});
+
+// nov2 (Andy: "we still need the letters"): the KEY slams in from small on its own finite WAAPI (transform / opacity on
+// the letter span alone), while the +N beside it keeps ONE size; the CRIT's key is a step bigger than a plain key's.
+test('a plain key pop: the typed letter slams in from small; its +N never scales; a crit key is bigger', async ({ page }) => {
+  await installBackendMock(page);
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.menu-xp-fx').waitFor({ state: 'attached' });
+  await page.keyboard.press('k');
+  await page.waitForTimeout(40);
+  const r = await page.evaluate(() => {
+    const pop = [...document.querySelectorAll('.menu-xp-pop.is-key')].find((e) => e.getAnimations().some((a) => a.playState === 'running'));
+    if (!pop) return null;
+    const key = pop.querySelector('.menu-xp-pop-letter');
+    const ka = key.getAnimations()[0];
+    const kf = ka ? ka.effect.getKeyframes() : [];
+    const scales = (el) => el.getAnimations().flatMap((a) => a.effect.getKeyframes().map((f) => (/scale\(([^)]*)\)/.exec(f.transform) || [])[1]));
+    return {
+      key: key.textContent,
+      first: kf.length ? +/scale\(([\d.]+)\)/.exec(kf[0].transform)[1] : null,
+      finite: !!ka && Number.isFinite(ka.effect.getComputedTiming().endTime),
+      ms: ka ? ka.effect.getTiming().duration : 0,
+      props: [...new Set(kf.flatMap((f) => Object.keys(f).filter((p) => !['offset', 'easing', 'composite', 'computedOffset'].includes(p))))],
+      plusScales: [...new Set(scales(pop))].length,
+      keyPx: parseFloat(getComputedStyle(key).fontSize),
+      critPx: (() => { pop.classList.add('is-crit'); const v = parseFloat(getComputedStyle(key).fontSize); pop.classList.remove('is-crit'); return v; })(),
+    };
+  });
+  expect(r).not.toBeNull();
+  expect(r.key.toLowerCase()).toBe('k');
+  expect(r.first, 'the key starts small').toBeLessThanOrEqual(0.4);
+  expect(r.finite).toBe(true);
+  expect(r.ms).toBeLessThanOrEqual(400); // snappy
+  expect(r.props.every((p) => p === 'transform' || p === 'opacity')).toBe(true);
+  expect(r.plusScales, 'the pop (and its +N) keeps one size').toBe(1);
+  expect(r.critPx, 'a crit key reads bigger than a plain one').toBeGreaterThan(r.keyPx);
 });

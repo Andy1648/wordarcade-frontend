@@ -102,7 +102,7 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
         </div>
         <div className="skp-info">
           <FitText className="skp-name">{s.name}</FitText>
-          <span className="skp-tag">{s.rare ? `RARE · ${s.tag}` : s.tag}</span>
+          {s.rare ? <span className="skp-tag">RARE</span> : null}{/* nov2: no tagline — a label, only when there is one */}
           {prog ? (
             <span className="skp-prog" aria-label={`${prog.have} of ${prog.need} ${prog.label.toLowerCase()}`}>
               <span className="skp-prog-bar"><span className="skp-prog-fill" style={{ transform: `scaleX(${Math.min(1, prog.have / prog.need)})` }} /></span>
