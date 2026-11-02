@@ -52,8 +52,8 @@ function printed(text) {
   return n;
 }
 
-test('the pool: 48 gears (JACKPOT joined; oct18 +5; oct21 +15), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 48);
+test('the pool: 60 gears (JACKPOT joined; oct18 +5; oct21 +15; nov2 +12), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 60);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);

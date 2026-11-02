@@ -75,6 +75,17 @@ export const MARK_PERKS = {
   'mk-firebird': ['afterparty', 'freeOd'],
   'mk-trident': ['tripleThreat', 'freeOd'],
   'mk-paradox': ['twinSouls', 'freeOd'],
+  // NEW GEARS nov2 — existing perks only (no new perk code)
+  'mk-snowball': ['combo'],
+  'mk-telescope': ['bigWords'],
+  'mk-drumsticks': ['critKey10'],
+  'mk-anchor': ['combo', 'freeOd'],
+  'mk-comet': ['winner2', 'freeOd'],
+  'mk-meltdown': ['bigWords', 'freeOd'],
+  'mk-genie': ['dropTwice', 'freeOd'],
+  'mk-gauntlet': ['critKey10', 'freeOd'],
+  'mk-grimoire': ['fortune', 'freeOd'],
+  'mk-supernova': ['overdrive15', 'freeOd'],
 };
 
 export const LETTERS_PERK_MULT = 2;

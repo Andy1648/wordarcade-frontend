@@ -49,7 +49,7 @@ test('tiers: Andy\'s five tiers (no COMMON), odds and MAINs — and MARK_TIERS s
 test('pool: every tier has a mark, no COMMON; LEGENDARY+ carry a perk, below that only the oct21 EPICS; MYTHIC+ get FREE OVERDRIVE', () => {
   for (const t of TIERS) assert.ok(ROLL_MARKS.some((m) => m.tier === t), t);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
-  assert.equal(ROLL_MARKS.length, 48, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION');
+  assert.equal(ROLL_MARKS.length, 60, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION + 12 nov2 NEW GEARS');
   const EPIC_PERKS = ['mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino'];
   for (const m of ROLL_MARKS) {
     const top = ['legendary', 'mythic', 'secret'].includes(m.tier) || EPIC_PERKS.includes(m.id);

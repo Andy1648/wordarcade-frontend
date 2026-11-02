@@ -49,6 +49,8 @@ export const KIT_DRAWN = new Set([
   'mk-monsoon', 'mk-inferno', 'mk-mainframe', 'mk-shamrock', 'mk-chronos',
   // GEAR EXPANSION (oct21)
   'mk-highlighter', 'mk-flashcards', 'mk-firecracker', 'mk-gumball', 'mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino', 'mk-longshot', 'mk-hothand', 'mk-arcadestick', 'mk-firebird', 'mk-trident', 'mk-paradox',
+  // NEW GEARS nov2
+  'mk-bullseye', 'mk-rocketskates', 'mk-snowball', 'mk-telescope', 'mk-drumsticks', 'mk-anchor', 'mk-comet', 'mk-meltdown', 'mk-genie', 'mk-gauntlet', 'mk-grimoire', 'mk-supernova',
   // THE UNLISTED: painted art carries its own ink + highlights (no extra finish)
   'mk-ul-og', 'mk-ul-wishbone', 'mk-ul-typewriter', 'mk-ul-mirror', 'mk-ul-midas', 'mk-ul-tripledouble',
 ]);
