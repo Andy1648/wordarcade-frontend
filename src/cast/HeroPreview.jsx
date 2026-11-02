@@ -131,9 +131,8 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
         <div className="hpv-right">
           {r.tier ? <span className={`hpv-tier is-${tier}${h.chase ? ` is-${h.chase}` : ''}`}>{TIER_NAME[h.chase || r.tier]}</span> : null}
           <FitText className="hpv-name">{h.name}</FitText>
-          <span className="hpv-tag">{h.tag}</span>
-          {/* honest (Andy's bar): a hero is a look — it never changes how a game plays or what it pays */}
-          <span className="hpv-note">LOOKS ONLY · NO GAMEPLAY EDGE</span>
+          {/* nov2 (Andy: "'looks only - no game play edge' is the dumbest line ever … its so extra"): the hero's NAME and
+              tier, no tagline and no disclaimer — labels and names only */}
           <div className="hpv-get">
             {owned ? (
               h.id === current

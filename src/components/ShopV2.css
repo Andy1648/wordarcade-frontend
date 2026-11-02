@@ -953,9 +953,8 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); line-height: 1; color: #fff;
   -webkit-text-stroke: 3px #000; paint-order: stroke fill; white-space: nowrap;
 }
-/* the ×N LEFT sticker steps down a little on the deal card, out from under the sash, and the name centres in the band's
-   room left of it (names never ellipsize — the room is sized for EVERYTHING BOOST) */
-.sp2-card.is-deal .sp2-left { top: 58px; }
+/* the name centres in the band's room left of the sash (names never ellipsize — the room is sized for EVERYTHING BOOST);
+   the ×N LEFT sticker crosses to the card's LEFT on the deal card (BADGES, below) */
 .sp2-card.is-deal .sp2-band { padding-right: 46px; }
 .sp2-was { font-family: var(--k-display); font-size: var(--fs-k14); color: #3a2160; text-decoration-thickness: 3px; margin-left: 2px; }
 @media (max-width: 999px) {
@@ -964,11 +963,57 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   /* the phone band is narrow: the deal card's name wraps to two lines rather than run under the sash (never ellipsized) */
   .sp2-card.is-deal .sp2-name { white-space: normal; text-align: center; line-height: 1; overflow: visible; }
   .sp2-deal-t { font-size: var(--fs-k13); }
-  .sp2-card.is-deal .sp2-left { top: 54px; }
 }
 @media (min-width: 1000px) and (max-height: 580px) {
   .sp2-deal { right: -6px; top: -6px; width: 62px; height: 62px; }
   .sp2-card.is-deal .sp2-band { padding-right: 40px; }
   .sp2-deal-t { font-size: var(--fs-k13); }
-  .sp2-card.is-deal .sp2-left { top: 50px; }
+}
+
+
+/* ===== BADGES OFF THE WORDS (nov2 overlap audit #2, items 4 + 9) — e2e/shop-badges.spec.js measures every badge against
+   every card's words (glyphs, not boxes) at 1024 / 1280×551 / 1366 / 1920 / 390 / 360.
+   1. The ×N LEFT sticker sits at the height of the art + the big number, and those were centred across the whole card —
+      on any card under ~200px the sticker met the number ("+50%", "ALL 3", "×5"). The art row and the big number now
+      centre in the room LEFT of the sticker (a right margin the sticker's width); the full-width lines below it are clear.
+      On the DEAL card the sash owns the top-right corner: the sticker steps down below it, same side.
+   2. The EPIC gem hangs off the top-left corner: the band's name keeps clear of it.
+   3. 1000–1199px (a 1024 laptop): four columns made 140px cards — three columns there (the tall SEALED ROLL + seven
+      cards fill 3 × 3 exactly), and the shelf header wraps RESTOCK under the tabs instead of running off the edge.
+   4. The POWER plate's next-form badge rides the plate's right side on a desktop — clear of the FORM heading above and
+      the POWER line below. ===== */
+.sp2-card-in { --sp2-stk: 58px; } /* the sticker's 50px + its 8px inset */
+.sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card-in > :is(.sp2-art, .sp2-ico, .sp2-big) { margin-right: var(--sp2-stk); }
+/* a boost with short wide art (OVERDRIVE's rocket, EVERYTHING's potion) lifts its two-line WHAT into the sticker's row */
+.sp2-card-in:is([data-stock="overdrive"], [data-stock="extend"]) > .sp2-what { padding-right: var(--sp2-stk); }
+.sp2-card.is-deal .sp2-left { top: 58px; } /* below the sash, still on the right: the content keeps its room left of it */
+.sp2-card.is-epic .sp2-band { padding-left: 30px; }
+/* OVERDRIVE's deal hour — the one card with the gem AND the sash on its top corners: the gem drops to the bottom-left
+   corner for the hour, and the name takes the band's whole left side */
+.sp2-card.is-epic.is-deal .sp2-gem { top: auto; bottom: -12px; }
+.sp2-card.is-epic.is-deal .sp2-band { padding-left: 6px; }
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .sp2-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sp2-stock-head { flex-wrap: wrap; row-gap: 8px; }
+  .sp2-stock-head .sp2-tab { font-size: var(--fs-k18); }
+}
+@media (min-width: 1000px) {
+  .sp2-next { top: 50%; bottom: auto; right: -40px; translate: 0 -50%; }
+}
+/* a very short desktop (≤ 580 tall): the sticker says just "×5" (as it already does 1000–1279 wide) in a 40px disc, so
+   it clears the "what" lines that rise beside it; the oct29 48px floor was only for the word LEFT (a 36px disc */
+/* holds "×5" in 14px) */
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-left { width: 36px; height: 36px; top: 30px; }
+  .sp2-left-w { display: none; }
+  .sp2-card-in { --sp2-stk: 44px; }
+  .sp2-card.is-deal .sp2-left { top: 46px; }
+  .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card-in > .sp2-what { padding-right: 6px; }
+}
+@media (max-width: 999px) {
+  .sp2-card-in { --sp2-stk: 42px; } /* the phone sticker's 38px + 4px */
+  .sp2-card.is-deal .sp2-left { top: 52px; }
+  .sp2-card.is-epic .sp2-band { padding-left: 36px; }
+  .sp2-card.is-epic.is-deal .sp2-band { padding-left: 4px; }
+  .sp2-card.is-epic.is-deal .sp2-gem { top: auto; bottom: -10px; }
 }
