@@ -31,8 +31,8 @@ const ART = {
   blitz: '/cards/cb-hero.webp',
   sat: '/cast/props/spellbook.webp',
   chain: '/ach/chain.svg',
-  fuse: '/cast/props/bolt.webp',
-  race: '/cast/props/spark-big.webp',
+  fuse: '/cast/props/bolt-v2.webp',
+  race: '/cast/props/spark-big-v2.webp',
   any: '/ach/key.svg',
 };
 const TONE = { wb: 'cyan', blitz: 'hot', sat: 'yellow', chain: 'purple', fuse: 'purple', race: 'pink', any: 'lilac' };

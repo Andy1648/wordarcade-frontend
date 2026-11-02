@@ -305,43 +305,43 @@ export const CAST_LAYERS = {
       slots: [{ slot: 'hand', src: '/cast/props/spellbook.webp', x: 63.67, y: 41.02, w: 29.88 }],
       act: 'magic',
       sprites: [
-        { src: '/cast/props/spark-big.webp', x: 80, y: 26, w: 12 },
-        { src: '/cast/props/spark-sm.webp', x: 70.5, y: 33.5, w: 7 },
-        { src: '/cast/props/rune-zig.webp', x: 77, y: 38.5, w: 8 },
-        { src: '/cast/props/rune-moon.webp', x: 72.7, y: 37.5, w: 9 },
-        { src: '/cast/props/magic-puff.webp', x: 73, y: 37.5, w: 16 },
+        { src: '/cast/props/spark-big-v2.webp', x: 80, y: 26, w: 12 },
+        { src: '/cast/props/spark-sm-v2.webp', x: 70.5, y: 33.5, w: 7 },
+        { src: '/cast/props/rune-zig-v2.webp', x: 77, y: 38.5, w: 8 },
+        { src: '/cast/props/rune-moon-v2.webp', x: 72.7, y: 37.5, w: 9 },
+        { src: '/cast/props/magic-puff-v2.webp', x: 73, y: 37.5, w: 16 },
       ],
     },
   },
   hype: { hero: { base: '/cast/hype-hero-base.webp', slots: [{ slot: 'hand', src: '/cast/props/foam-finger.webp', x: 11.33, y: 3.12, w: 28.52 }], act: 'shout', sprites: [
-    { src: '/cast/props/shout-arcs.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
-    { src: '/cast/props/confetti.webp', x: 19, y: -2, w: 20 },
+    { src: '/cast/props/shout-arcs-v2.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
+    { src: '/cast/props/confetti-v2.webp', x: 19, y: -2, w: 20 },
   ] } },
   brawl: { hero: { base: '/cast/brawl-hero-base.webp', slots: [{ slot: 'hands', src: '/cast/props/gloves.webp', x: 12.3, y: 28.91, w: 75.39 }], act: 'jab', sprites: [
-    { src: '/cast/props/impact.webp', x: 70, y: 25.5, w: 20 },
-    { src: '/cast/props/sweat.webp', x: 31, y: 20, w: 4.5 },
+    { src: '/cast/props/impact-v2.webp', x: 70, y: 25.5, w: 20 },
+    { src: '/cast/props/sweat-v2.webp', x: 31, y: 20, w: 4.5 },
   ] } },
   'riot-elite': { hero: { act: 'rock', sprites: [
-    { src: '/cast/props/note-double.webp', x: 20, y: 48, w: 15 },
-    { src: '/cast/props/note.webp', x: 38, y: 44, w: 11 },
-    { src: '/cast/props/bolt.webp', x: 83, y: 24, w: 9 },
+    { src: '/cast/props/note-double-v2.webp', x: 20, y: 48, w: 15 },
+    { src: '/cast/props/note-v2.webp', x: 38, y: 44, w: 11 },
+    { src: '/cast/props/bolt-v2.webp', x: 83, y: 24, w: 9 },
   ] } },
   'hype-elite': { hero: { act: 'mvp', sprites: [
-    { src: '/cast/props/shout-arcs.webp', x: 1, y: 0, w: 13, o: '100% 50%' },
-    { src: '/cast/props/confetti.webp', x: 52, y: -3, w: 22 },
-    { src: '/cast/props/confetti.webp', x: 30, y: 2, w: 18 },
+    { src: '/cast/props/shout-arcs-v2.webp', x: 1, y: 0, w: 13, o: '100% 50%' },
+    { src: '/cast/props/confetti-v2.webp', x: 52, y: -3, w: 22 },
+    { src: '/cast/props/confetti-v2.webp', x: 30, y: 2, w: 18 },
   ] } },
   'brawl-elite': { hero: { act: 'champ', sprites: [
-    { src: '/cast/props/flash.webp', x: 5, y: 13, w: 19 },
-    { src: '/cast/props/flash.webp', x: 74, y: 9, w: 18 },
-    { src: '/cast/props/flash.webp', x: 78, y: 55, w: 17 },
+    { src: '/cast/props/flash-v2.webp', x: 5, y: 13, w: 19 },
+    { src: '/cast/props/flash-v2.webp', x: 74, y: 9, w: 18 },
+    { src: '/cast/props/flash-v2.webp', x: 78, y: 55, w: 17 },
   ] } },
   'hex-elite': { hero: { act: 'arcane', sprites: [
-    { src: '/cast/props/spark-big.webp', x: 6.8, y: 8.2, w: 10 },
-    { src: '/cast/props/spark-sm.webp', x: 1, y: 20, w: 6 },
-    { src: '/cast/props/rune-zig.webp', x: 82, y: 36, w: 8 },
-    { src: '/cast/props/rune-moon.webp', x: 76, y: 34, w: 9 },
-    { src: '/cast/props/magic-puff.webp', x: 75, y: 37, w: 15 },
+    { src: '/cast/props/spark-big-v2.webp', x: 6.8, y: 8.2, w: 10 },
+    { src: '/cast/props/spark-sm-v2.webp', x: 1, y: 20, w: 6 },
+    { src: '/cast/props/rune-zig-v2.webp', x: 82, y: 36, w: 8 },
+    { src: '/cast/props/rune-moon-v2.webp', x: 76, y: 34, w: 9 },
+    { src: '/cast/props/magic-puff-v2.webp', x: 75, y: 37, w: 15 },
   ] } },
   // GLITCH.EXE: three bands of its own art (a static clip-path) tear sideways
   'glitch-elite': { hero: { act: 'glitch', sprites: [
@@ -356,9 +356,9 @@ export const CAST_LAYERS = {
       slots: [{ slot: 'hand', src: '/cast/props/spray-can.webp', x: 3, y: 28, w: 36, under: true }],
       act: 'spray',
       sprites: [
-        { src: '/cast/props/spray-puff.webp', x: -8.9, y: 15.1, w: 30, o: '100% 54.5%' },
-        { src: '/cast/props/spray-puff-sm.webp', x: -16.6, y: 9.6, w: 14, o: '100% 60%' },
-        { src: '/cast/props/spray-drop.webp', x: 17.4, y: 28.1, w: 3.6 },
+        { src: '/cast/props/spray-puff-v2.webp', x: -8.9, y: 15.1, w: 30, o: '100% 54.5%' },
+        { src: '/cast/props/spray-puff-sm-v2.webp', x: -16.6, y: 9.6, w: 14, o: '100% 60%' },
+        { src: '/cast/props/spray-drop-v2.webp', x: 17.4, y: 28.1, w: 3.6 },
       ],
     },
   },
@@ -401,9 +401,9 @@ export const CAST_LAYERS = {
     { src: '/cast/props/flame.webp', x: 74.5, y: 70, w: 11, o: '50% 94%' },
     { src: '/cast/props/steam.webp', x: 12.1, y: 74.6, w: 7 },
     { src: '/cast/props/steam.webp', x: 86.7, y: 75.6, w: 7 },
-    { src: '/cast/props/spark-sm.webp', x: 64.9, y: 9.5, w: 6 },
-    { src: '/cast/props/spark-sm.webp', x: 46.5, y: 31.5, w: 5 },
-    { src: '/cast/props/spark-sm.webp', x: 62.9, y: 32.2, w: 5 },
+    { src: '/cast/props/spark-sm-v2.webp', x: 64.9, y: 9.5, w: 6 },
+    { src: '/cast/props/spark-sm-v2.webp', x: 46.5, y: 31.5, w: 5 },
+    { src: '/cast/props/spark-sm-v2.webp', x: 62.9, y: 32.2, w: 5 },
   ] } },
   glitch: {
     hero: {
@@ -417,9 +417,9 @@ export const CAST_LAYERS = {
 // is part of the gold paint, so GOLD GLITCH stays flat.
 const goldAct = (base, sprites) => ({ hero: { act: CAST_LAYERS[base].hero.act, sprites: sprites || CAST_LAYERS[base].hero.sprites } });
 CAST_LAYERS['riot-gold'] = goldAct('riot', [
-  { src: '/cast/props/spray-puff.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
-  { src: '/cast/props/spray-puff-sm.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
-  { src: '/cast/props/spray-drop.webp', x: 19, y: 24.5, w: 3.6 },
+  { src: '/cast/props/spray-puff-v2.webp', x: -7.3, y: 11.5, w: 30, o: '100% 54.5%' },
+  { src: '/cast/props/spray-puff-sm-v2.webp', x: -15, y: 6, w: 14, o: '100% 60%' },
+  { src: '/cast/props/spray-drop-v2.webp', x: 19, y: 24.5, w: 3.6 },
 ]);
 for (const b of ['hype', 'brawl', 'hex']) CAST_LAYERS[`${b}-gold`] = goldAct(b);
 /** PAINTED FRAME ANIMATION (oct19, Andy: "more quality and diverse animations (that prob also arent css generated so you
