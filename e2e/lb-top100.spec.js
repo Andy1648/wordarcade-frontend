@@ -110,7 +110,7 @@ function overlapsIn(page) {
         const clipsP = pcs.overflow !== 'visible' && (pn.scrollWidth > pn.clientWidth + 1 || pn.scrollHeight > pn.clientHeight + 3);
         if (pcs.textOverflow === 'ellipsis' || clipsP) out.push(`podium ${col.dataset.place}: name is cut`);
       }
-      const parts = ['.lb2-pod-seal', '.lb2-t3-face', '.lb2-pod-name-t', '.lb2-pod-plate', '.lb2-pod-stats'].map((s) => [s, col.querySelector(s)]).filter(([, e]) => e);
+      const parts = ['.lb2-pod-seal', '.lb2-t3-face', '.lb2-pod-name-t', '.lb2-pod-plate', '.lb2-prize', '.lb2-pod-stats'].map((s) => [s, col.querySelector(s)]).filter(([, e]) => e);
       for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
         if (hit(box(parts[i][1]), box(parts[j][1]))) out.push(`podium ${col.dataset.place}: ${parts[i][0]} x ${parts[j][0]}`);
       }
@@ -208,7 +208,20 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     const sliver = await page.evaluate(() => { const sc = document.querySelector('.lb2-scroll'); const first = [...sc.children].find((el) => el.offsetTop + el.offsetHeight > sc.scrollTop + 1); return first ? Math.round(sc.scrollTop - first.offsetTop) : 0; });
     expect(sliver, 'px of a cut row above the list top').toBeLessThanOrEqual(1);
     // YOUR CLIMB (desktop): the player to pass + the gap, beside your hero
-    if (vp.width > 1000) await expect(lb.locator('.lb2-climb')).toContainText('+1 R');
+    if (vp.width > 1000) {
+      await expect(lb.locator('.lb2-climb')).toContainText('+1 R');
+      // YOUR CLIMB fills its panel (nov2: "bottom half is empty, text small"): every line 16px+, and the content reaches
+      // the panel's lower third
+      const fill = await page.evaluate(() => {
+        const p = document.querySelector('.lb2-climb'); const pb = p.getBoundingClientRect();
+        const kids = [...p.querySelectorAll('p, .lb2-climb-k, .lb2-climb-pct, .lb2-climb-gap')];
+        const small = kids.filter((e) => e.textContent.trim() && parseFloat(getComputedStyle(e).fontSize) < 15.99).map((e) => `${e.className}:${getComputedStyle(e).fontSize}`);
+        const low = Math.max(...[...p.children].map((e) => e.getBoundingClientRect().bottom));
+        return { small, reach: (low - pb.top) / pb.height };
+      });
+      expect(fill.small, 'YOUR CLIMB text under 16px').toEqual([]);
+      expect(fill.reach, 'YOUR CLIMB content reaches the panel bottom third').toBeGreaterThan(0.66);
+    }
     // CLIMB 2: scrolled to the top of the list, YOUR row is still on screen inside the list (sticky, the same row)
     await lb.locator('.lb2-scroll').evaluate((el) => { el.scrollTop = 0; });
     await page.waitForTimeout(200);
@@ -235,6 +248,11 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 768 }, { 
     await expect(lb.locator('.lb2-row').first()).toBeVisible({ timeout: 10_000 });
     await page.waitForTimeout(2500);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-week-${vp.width}.png` });
+    // YOUR CLIMB's THIS WEEK gem ladder stays inside its panel
+    if (vp.width > 1000) {
+      const spill = await page.evaluate(() => { const p = document.querySelector('.lb2-climb'); const b = p.getBoundingClientRect(); return Math.max(...[...p.querySelectorAll('*')].map((e) => e.getBoundingClientRect().bottom)) - (b.bottom - 4); });
+      expect(spill, 'px the YOUR CLIMB content runs past its panel').toBeLessThanOrEqual(0);
+    }
     if (process.env.LB_MEASURE) console.log(JSON.stringify(await page.evaluate(() => { const r = document.querySelector('.lb2-row.is-rival'); const q = (s) => { const e = r.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); const cs = getComputedStyle(e); return [s, Math.round(b.width), cs.display, cs.flex, cs.minWidth, cs.fontSize, cs.containerType]; }; return ['.lb2-who-cell', '.lb2-name-line', '.lb2-name', '.lb2-rival'].map(q); })));
     expect(await overlapsIn(page)).toEqual([]);
   });
