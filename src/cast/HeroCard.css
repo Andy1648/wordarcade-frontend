@@ -53,3 +53,8 @@
 .hc.is-dim .hc-hero { filter: grayscale(.75) brightness(.6) drop-shadow(3px 3px 0 #000); }
 /* a LIVE card (oct19): the flipbook box sits exactly where the still did */
 .hc-hero.cast-flip { display: block; aspect-ratio: 1; }
+
+/* CHASE heroes (oct28): the painted LEGEND frame re-coloured to the gear ladder's rarer tiers — MYTHIC pink, SECRET violet
+   (a static hue turn on the painted art, never animated; the frame's windows are the LEGEND frame's own) */
+.hc.is-mythic .hc-frame { filter: hue-rotate(160deg) saturate(1.25); }
+.hc.is-secret .hc-frame { filter: hue-rotate(100deg) saturate(1.3); }

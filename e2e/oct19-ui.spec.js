@@ -102,9 +102,10 @@ for (const [w, h] of SIZES) {
     await navControl(page, 'shop').click();
     await page.getByTestId('daily-chest-card').waitFor({ state: 'visible' });
     let shop = [];
-    await expect.poll(async () => { shop = await dotsOnTop(page, '.sp2-dot'); return shop.length === 1 && shop[0].onTop; }, { timeout: 5000 }).toBe(true);
-    expect(shop.length).toBe(1);
-    expect(shop[0].onTop, `the daily chest dot is not clipped under its card ${JSON.stringify(shop)}`).toBe(true);
+    // the daily chest's dot + (oct28) the LOOKS tab's NEW dot — 5000 gems make a look affordable
+    await expect.poll(async () => { shop = await dotsOnTop(page, '.sp2-dot'); return shop.length === 2 && shop.every((d) => d.onTop); }, { timeout: 5000 }).toBe(true);
+    expect(shop.length).toBe(2);
+    expect(shop.every((d) => d.onTop), `the chest / LOOKS dots are not clipped under their card ${JSON.stringify(shop)}`).toBe(true);
   });
 }
 

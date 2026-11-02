@@ -13,7 +13,9 @@ test('ranks map to the hard-cutoff tiers', () => {
   assert.equal(k(25), 'star');
   assert.equal(k(26), 'splat');
   assert.equal(k(50), 'splat');
-  assert.equal(k(51), null);
+  assert.equal(k(51), 'stone');
+  assert.equal(k(100), 'stone');
+  assert.equal(k(101), null);
   assert.equal(k(0), null);
   assert.equal(k(null), null);
   assert.equal(k('7'), 'flame');
@@ -33,5 +35,7 @@ test('enteredTier: only a climb INTO a better tier is a ceremony', () => {
   assert.equal(enteredTier(4, 9), null); // a drop
   assert.equal(enteredTier(null, 1), null); // no last look
   assert.equal(enteredTier(0, 5), null);
-  assert.equal(enteredTier(70, 55), null); // still off the seals
+  assert.equal(enteredTier(70, 55), null); // same tier (TOP 100)
+  assert.equal(enteredTier(140, 99).key, 'stone'); // into the TOP 100
+  assert.equal(enteredTier(150, 120), null); // still off the seals
 });

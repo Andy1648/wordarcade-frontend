@@ -150,6 +150,24 @@ export function wipeProgressKeys(storage, keep = []) {
 }
 export const DEV_RESET_NOTICE_KEY = 'taw.devResetNotice';
 
+/** The RPC is not on the server (PostgREST PGRST202 / a 404) — the only error that means "this feature isn't there". */
+export function isMissingRpc(err) {
+  const m = String((err && (err.code || err.message)) || '');
+  return /PGRST202|http_404|Could not find the function/i.test(m) || !!(err && err.status === 404);
+}
+/**
+ * RESET ACCOUNT's decision (client.selfReset), pure. 'server' = the server reset the row + cloud save → wipe here,
+ * keep the name; 'local' = no name, or 014 isn't deployed → the old local-only reset (drops the name); 'abort' = a name
+ * and the server didn't reset (offline, an error, a refusal) → wipe NOTHING (daan oct27: the old fallback dropped the
+ * name + secret and the account was lost for good).
+ */
+export function resetOutcome({ named, answer, error }) {
+  if (!named) return 'local';
+  if (answer && answer.reset === true) return 'server';
+  if (!answer && isMissingRpc(error)) return 'local';
+  return 'abort';
+}
+
 // ---- network (injected so this file stays testable and client.js owns the transport) -------------
 /**
  * Back up now if due. `rpc` = client.js rpc; `secret` = the device secret. Never throws.

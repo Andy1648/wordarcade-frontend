@@ -14,6 +14,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
 import { navControl } from './support/menu.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const SECRET = 'c7'.repeat(24);
 
@@ -233,5 +234,24 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
     }
     await st.locator('.st2-back').click();
     await expect(st).toHaveCount(0);
+  });
+}
+
+// OVERLAP AUDIT (oct29): at 1024 the scaled mockup stage kept its 20px label floors — the tabs ran over the title
+// ("STA"), "BASE + GEAR XP" wrapped over its icon and REBIRTH spilled 17px out of its chip (1024 now takes the stacked
+// layout); at 360 the tab row ran BOOSTS off the screen (a phone stacks each tab's name over its total). Every board, at
+// each failing size: nothing overlaps, spills or leaves the screen, and the STATS title is whole.
+for (const vp of [{ width: 1024, height: 768 }, { width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }, { width: 1280, height: 551 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: title, tabs and chips fit on every board`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const st = await boot(page, { reduce: true });
+    await page.evaluate(() => document.fonts.ready);
+    for (const tab of ['xp', 'wins', 'boosts']) {
+      await st.locator(`.st2-tab[data-tab="${tab}"]`).click();
+      await page.waitForTimeout(250);
+      const title = await st.locator('.st2-title').evaluate((e) => { const rg = document.createRange(); rg.selectNodeContents(e); const r = rg.getBoundingClientRect(); return [...document.querySelectorAll('.st2-tab, .st2-back')].every((c) => { const q = c.getBoundingClientRect(); return q.right <= r.left + 1 || q.left >= r.right - 1 || q.bottom <= r.top + 1 || q.top >= r.bottom - 1; }); });
+      expect(title, `${tab}: the STATS title is not covered`).toBe(true);
+      await expectNoLayoutDefects(expect, page, `stats ${tab} ${vp.width}x${vp.height}`, { scope: '.st2' });
+    }
   });
 }

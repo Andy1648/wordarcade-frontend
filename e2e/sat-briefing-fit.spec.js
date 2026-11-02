@@ -8,7 +8,7 @@
 // per-viewport report the task asked for.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { modeEntry, satSetupGo } from './support/menu.js';
+import { modeEntry, revealMode, satSetupGo } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -23,7 +23,7 @@ const VIEWPORTS = [
 async function toBriefing(page) {
   await installBackendMock(page);
   await page.goto('/?satRush=1&portal=1');
-  await modeEntry(page, 'sat-rush').click();
+  await (await revealMode(page, 'sat-rush')).click();
   await page.getByRole('button', { name: /BRIEFING/ }).click(); await satSetupGo(page);
   await expect(page.locator('.sr-brief-page')).toBeVisible();
 }

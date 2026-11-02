@@ -39,6 +39,8 @@
   background: var(--hpv-t); border: 3px solid #000; border-radius: 6px; box-shadow: 3px 3px 0 #000; rotate: -2deg;
 }
 .hpv-tier.is-crew { color: #fff; background: #3a2160; }
+.hpv-tier.is-mythic { background: #FF4FA3; }
+.hpv-tier.is-secret { background: #2EFFE0; }
 .hpv-name {
   width: 100%; font: 400 var(--fs-k60, 60px) 'Bungee', sans-serif; line-height: 1; color: var(--hpv-c);
   -webkit-text-stroke: 7px #000; paint-order: stroke fill; text-shadow: 5px 5px 0 #000;

@@ -80,6 +80,8 @@
 .pn-gift-num { font-size: var(--fs-k28); -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .pn-rolls { font-size: var(--fs-k18); color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .pn-foot { display: flex; justify-content: center; width: 100%; }
+/* the scroll region (see PatchNotes.jsx): layout-only on a laptop */
+.pn-scroll { display: contents; }
 
 /* one-shots */
 .pn-slam { animation: pn-slam 360ms cubic-bezier(0.2, 1.5, 0.4, 1) 80ms 1 both; }
@@ -93,7 +95,7 @@
 /* desktop / tablet: two columns — the cards on the left, the notes on the right (fits a 1280×600 screen) */
 @media (min-width: 760px) {
   .pn-panel {
-    max-width: 960px; display: grid; grid-template-columns: 300px 1fr; grid-template-areas: 'head head' 'cards body';
+    max-width: 960px; display: grid; grid-template-columns: 300px 1fr; grid-template-areas: 'head head' 'cards body' 'cards foot';
     column-gap: 18px; row-gap: 6px; align-items: center; padding: 12px 22px 16px;
   }
   .pn-head { grid-area: head; }
@@ -101,6 +103,7 @@
   .pn-cards { height: 250px; }
   .pn { padding: 12px; }
   .pn-body { grid-area: body; }
+  .pn-foot { grid-area: foot; }
 }
 /* short desktop (1280×600): the bigger notes text still leaves COLLECT on screen */
 @media (min-width: 760px) and (max-height: 680px) {
@@ -137,11 +140,16 @@
 }
 @media (max-width: 759px) {
   .pn { padding-top: 112px; }
-  /* the button never falls below the fold: it sticks to the bottom of the scrolling sheet */
-  .pn-foot { position: sticky; bottom: 0; padding: 8px 0 2px; background: #1a0b2e; z-index: 2; }
+  /* the button never falls below the fold — and never OVER the notes: the sheet is at most one screen tall, the
+     showcase + notes scroll INSIDE it (.pn-scroll, a real list) and COLLECT sits under that region, outside the scroll
+     (overlap audit oct29: it used to stick over the scrolling list, rows cut in half under it at 390 and 360) */
+  .pn-panel { max-height: calc(100dvh - 128px); }
+  .pn-scroll { display: flex; flex-direction: column; align-items: center; gap: inherit; width: 100%; box-sizing: border-box; margin-top: -10px; padding: 10px 4px 4px 0; flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+  .pn-foot { flex: none; padding-top: 2px; }
 }
 @media (max-width: 420px) {
   .pn { padding: 112px 10px 10px; align-items: flex-start; }
+  .pn-panel { max-height: calc(100dvh - 122px); }
   .pn-cards { height: 190px; }
   .pn-card { transform-origin: 50% 0; }
   .pn-cards > .pn-card-0 { translate: -4px 0; scale: 0.84; }

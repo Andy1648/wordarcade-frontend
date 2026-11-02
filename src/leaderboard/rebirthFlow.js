@@ -60,10 +60,21 @@ export function isNotDeployed(err) {
   const m = String((err && (err.code || err.message)) || '');
   return /PGRST202|http_404|Could not find the function/i.test(m);
 }
+/** daan (oct27): the server ANSWERED with an error (a 4xx: no_profile, a bad argument …) — retrying the same id can never
+ *  succeed, so it is not "offline". Kept as offline before, the unanswered id blocked EVERY board push for good (settle
+ *  said "still unanswered" forever) and the row froze. 408 / 429 are transient (the request may still land). */
+export function isServerRefusal(err) {
+  const st = Number(err && err.status);
+  return st >= 400 && st < 500 && st !== 408 && st !== 429 && !isNotDeployed(err);
+}
+/** serverEnabled()'s answer when a NAMED player's caps probe failed: refuse as offline, never rebirth locally (a local
+ *  rebirth the server never sees left the board row behind the save for good — daan oct27). */
+export const SERVER_UNREACHABLE = 'offline';
 
 /**
  * @param {object} d
- * @param {() => Promise<boolean>} d.serverEnabled   profile + board on + lb_caps.rebirth_rpc (fresh probe)
+ * @param {() => Promise<boolean|'offline'>} d.serverEnabled   profile + board on + lb_caps.rebirth_rpc (fresh probe);
+ *   'offline' = a named player whose probe failed (refused, never a local rebirth)
  * @param {() => Promise<boolean>} d.pushStats       push current stats (waits out the 5 s board throttle if needed)
  * @param {(fn:string, body:object) => Promise<any>} d.call  the RPC (throws on HTTP error, err.code = message)
  * @param {() => string|null} d.secret
@@ -116,6 +127,10 @@ export function makeRebirthFlow(d) {
         clearPending(key);
         return { ok: false, reason: 'not_ready' };
       }
+      if (isServerRefusal(e)) {
+        clearPending(key);
+        return { ok: false, reason: 'error' };
+      }
       return { ok: false, reason: 'offline', pending: p }; // keep the id: the retry re-sends the SAME one
     }
     if (!res || typeof res !== 'object') return { ok: false, reason: 'offline', pending: p };
@@ -154,7 +169,8 @@ export function makeRebirthFlow(d) {
     busy = true;
     try {
       let server = false;
-      try { server = await d.serverEnabled(); } catch { server = false; }
+      try { server = await d.serverEnabled(); } catch { server = SERVER_UNREACHABLE; }
+      if (server === SERVER_UNREACHABLE) return { ok: false, reason: 'offline', mode: 'server' };
       if (!server) return localRebirth();
       try { await d.pushStats(); } catch { /* the server checks whatever it has */ }
       const res = await request('lb_rebirth', PENDING_REBIRTH_KEY);
@@ -188,7 +204,8 @@ export function makeRebirthFlow(d) {
     busy = true;
     try {
       let server = false;
-      try { server = await d.serverEnabled(); } catch { server = false; }
+      try { server = await d.serverEnabled(); } catch { server = SERVER_UNREACHABLE; }
+      if (server === SERVER_UNREACHABLE) return { ok: false, reason: 'offline', mode: 'server' };
       if (!server) return localAscend();
       try { await d.pushStats(); } catch { /* the server checks whatever it has */ }
       const res = await request('lb_ascend', PENDING_ASCEND_KEY);

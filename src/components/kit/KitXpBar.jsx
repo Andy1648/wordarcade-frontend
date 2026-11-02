@@ -53,11 +53,24 @@ export const NEAR_FRAC = 0.9;
 
 // NEAR MISS (Andy oct22, the goal-gradient pull): `nearText` = { k: '38 KEYS', to: 'TO LV 8' } replaces the readout in the last NEAR_FRAC of
 // a level — an honest countdown in keys, the unit the menu actually pays in. Static swap + one finite pop-in, nothing loops.
-export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null }) {
+// THE KIT's BAR (oct27, Andy: "the progress bar still doesnt fit with the theme … i want the keys to be more special"):
+// `kit` = a worn POP STYLE's whole bar (progress/kitArt.js kitOf) — the bar reads as THAT style end to end:
+//  · FILL — its painted texture, on a child that counter-scales by 1/f so the art is revealed, never stretched;
+//  · FRAME + CHANNEL + PLATES — its coloured outline, dark well and numeral colour (CSS vars on the root, static);
+//  · LEADING EDGE — its painted cap rides the fill's edge (a translateX write on the same climb frame; the track's
+//    offset + width are measured on mount / resize only) and bumps once per gain;
+//  · THE MOMENT IT FILLS — a level wrap slams the look's crit art on the goal plate and flares the cap.
+// Every motion is a finite WAAPI transform / opacity one-shot; nothing moves at rest.
+// (the cap / slam keyframes + the cap's track measure ride the lazy kit as kit.fx — progress/kitArt.js)
+export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', className, onClimbDone, lvInside = false, lead = null, goal = null, nearText = null, kit = null }) {
   const rootRef = useRef(null);
   const lvRef = useRef(null);
   const gainRef = useRef(null);
   const fillRef = useRef(null);
+  const wrapRef = useRef(null);
+  const barRef = useRef(null);
+  const trackRef = useRef(null);
+  const kitFx = useRef(null); // the worn kit's live layer (kit.fx.mount): cap, slam, painted fill
   const sweepRef = useRef(null);
   const curRef = useRef(null);
   const ghostRef = useRef(null);
@@ -76,6 +89,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   // the fill is promoted for the life of a glide only (never at rest); the sweep promotes itself per play
   const promote = (on) => {
     if (fillRef.current) fillRef.current.style.willChange = on ? 'transform' : '';
+    if (kitFx.current) kitFx.current.hold(on);
     kitHold([lvRef.current, gainRef.current], on);
   };
   // one pooled sweep: a wrap that lands while the last sweep is still crossing rides on it (a 30-level
@@ -92,6 +106,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       frac,
       onFrame: (l, f) => {
         if (fillRef.current) fillRef.current.style.transform = `scaleX(${f})`;
+        if (kitFx.current) kitFx.current.frame(f);
         const cur = curRef.current;
         if (cur) {
           const t = formatNum(f * needRef.current);
@@ -107,6 +122,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
         }
         if (l > prev) {
           sweep();
+          if (kitFx.current) kitFx.current.wrap();
           if (goalRef.current) fx(goalRef.current, FX.slamSmall);
           const g = gain.current;
           clearTimeout(g.t);
@@ -186,6 +202,7 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
       return;
     }
     const climbing = tl > p.level || (tl === p.level && tf > p.frac);
+    if (climbing && kitFx.current) kitFx.current.bump();
     climbN.current = tl > p.level ? tl - p.level + gain.current.n : 0;
     if (root && climbing) root.dataset.state = 'climb';
     if (climbing) promote(true);
@@ -193,6 +210,14 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
     if (climbing && tl === p.level && tf >= NEAR_FRAC && goalRef.current) fx(goalRef.current, FX.barBump);
     p.to(level, frac);
   }, [level, frac, lvInside]);
+
+  // the worn kit's layer (lazy, progress/kitArt.js): mounted while a kit is worn, gone with it
+  useEffect(() => {
+    if (!kit) return undefined;
+    const k = kit.fx.mount(kit, rootRef.current, wrapRef.current, barRef.current, trackRef.current, fillRef.current, player.current.frac);
+    kitFx.current = k;
+    return () => { k.destroy(); kitFx.current = null; };
+  }, [kit]);
 
   useEffect(() => {
     const p = player.current;
@@ -238,15 +263,15 @@ export function KitXpBar({ level = 1, frac = 0, need = 1000, unit = 'XP', classN
   return (
     <div ref={rootRef} className={`kx${lvInside ? ' is-lvin' : ''}${goal ? ' is-goal' : ''}${near ? ' is-near' : ''}${near && nearText ? ' has-near' : ''}${className ? ` ${className}` : ''}`} data-state="rest" data-level={initial.lvRaw}>
       {lvInside ? lead : <>{lead}{lvNode}</>}
-      <div className="kx-barwrap">
+      <div ref={wrapRef} className="kx-barwrap">
         {/* LEVEL CHEST (oct22): the painted gem + what the next level pays, pinned over the goal plate's corner (outside the
             bar, which clips) — the LV number stays centred */}
         {goal && goal.chest > 0 ? (<span className="kx-goal-chest" data-testid="xp-goal-chest"><img src="/icons/gems.webp" width="64" height="64" alt="" draggable="false" />+{formatNum(goal.chest)}</span>) : null}
         <span ref={gainRef} className="kx-gain" aria-hidden="true">
           <span className="kx-gain-t" />
         </span>
-        <div className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
-          <div className="kx-track" aria-hidden="true">
+        <div ref={barRef} className="kx-bar" role="progressbar" aria-label={`Level ${formatNum(level)} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((frac > 0 ? Math.min(1, frac) : 0) * 100)}>
+          <div ref={trackRef} className="kx-track" aria-hidden="true">
             {lvInside && <div ref={ghostRef} className="kx-ghost" />}
             <div ref={fillRef} className="kx-fill">
               <div className="kx-fill-hi" />

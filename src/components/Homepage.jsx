@@ -15,14 +15,17 @@ import { letterXpNow } from '../progress/letterXp';
 import { nextLevelChest, climbPeak } from '../progress/v3/levelChest.js';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { consumePendingWinsStamp, hasSeenWinsHint, markWinsHintSeen } from '../progress/wins';
-import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier } from '../progress/xp';
+import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgress, getKeyTier, tableRebirthThreshold } from '../progress/xp';
+import { careerLevel } from '../progress/popGrowth';
 import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
 import { rebirthWordsShort } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
-import { canAffordAny, buyKeyPower } from '../progress/shop';
+import { canAffordAny, buyKeyPower, wornPopStyle, EQUIP_CHANGE } from '../progress/shop';
+// THE KIT's BAR (oct27): a worn POP STYLE dresses the whole XP bar. kitArt.js (+ its kitBar.css) is a LAZY chunk,
+// imported only while a paid look is worn — CLASSIC never fetches it, so it never weighs on the first paint.
 import { runAutomation } from '../progress/stars';
 import { isModeLocked } from '../progress/modeAccess';
 import { peakLevel } from '../progress/peakLevel';
@@ -120,7 +123,6 @@ import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
-import DailyBlitzTile from '../dailyBlitz/DailyBlitzTile.jsx'; // DAILY BLITZ — joins the same daily cluster
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -176,7 +178,7 @@ let cloudBootChecked = false;
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, onDailyBlitz, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -552,9 +554,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const count = grid.querySelectorAll('.game-card-magnet').length || 5;
         // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
         // PAGED: one row of CARDS_PER_PAGE, the other cards are a flip away.
+        // rows = ceil(count / cols): seven cards (MINER oct26) are 4+3 / 3+3+1 / 2+2+2+1.
         const LAYOUTS = isPagedMenu
           ? [[Math.min(CARDS_PER_PAGE, count), 1]]
-          : narrow ? [[2, 3]] : [[count, 1], [3, 2], [2, 3], [1, count]];
+          : (narrow ? [2] : [count, 4, 3, 2, 1]).map((c) => [c, Math.ceil(count / c)]);
         let best = null;
         let owed = 0;
         for (const [cols, rows] of LAYOUTS) {
@@ -713,6 +716,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       document.removeEventListener('visibilitychange', re);
     };
   }, []);
+  // THE SHOP's NEW-THING DOTS (oct28, v3/shopDots.js): a newly affordable look also lights UPGRADES (the shelf tabs read the same)
+  const [shopNew, setShopNew] = useState(false);
+  useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
   const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
@@ -1329,6 +1335,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the corners are exactly as they were.
   const wheel = SEASON2 && reveal.core ? { dot: wheelDot, onClick: () => { sound.click(); setShowWheel(true); } } : null;
   const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? handleCredits : null} />;
+  // oct28 (Andy "tf why is it at the corner"): once the rail is up, the desktop's SETTINGS is a NAMED button in it, not a cog
+  // in the bottom-right corner; NEWS keeps that corner
+  const settingsRail = wheel ? <AudioControls variant="rail" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={handleCredits} /> : null;
   const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
@@ -1353,7 +1362,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
     // THE POWER FORM (Andy oct26): the tile wears the painted form your POWER has reached (powerArt.js), not a stock bolt
-    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady || shopNew, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden
@@ -1363,6 +1372,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // STATS (moved down from the top-right): its number is the TOTAL multiplier on a key (v4: BASE 1 XP, so the rate IS it)
     stats: !reveal.core ? null : { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
+  // the first-run tour never draws over a screen that covers the menu (overlap audit oct29 — see its render below)
+  const tourCovered = !!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showWheel || showPatch);
   const trophy = V3.Trophy && reveal.core && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const board = reveal.core && LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = reveal.core ? { count: claims.length, onClick: handleAchievements } : null;
@@ -1424,26 +1435,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // YOUR GEAR is the 2-column (paged) rail's foot; the narrower desktop rail keeps the chip in the row
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
-  // DAILY BLITZ (dailyBlitz/, the once-a-day rare-answer game) joins the same DAILY cluster in the same faces: the
-  // right-column chip under CONTRACTS, the icon beside the flame, the phone's first mode row.
-  const openDailyBlitz = () => {
-    if (navigating || !onDailyBlitz) return;
-    sound.click();
-    setNavigating(true);
-    onDailyBlitz();
-  };
-  const dailyTile = reveal.core ? (
-    <>
-      <DailyTile onPlay={handleOpenDialog} navigating={navigating} />
-      {onDailyBlitz ? <DailyBlitzTile variant="chip" onPlay={openDailyBlitz} navigating={navigating} /> : null}
-    </>
-  ) : null;
-  const dailyIcon = reveal.core ? (
-    <>
-      <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} />
-      {onDailyBlitz ? <DailyBlitzTile variant="icon" onPlay={openDailyBlitz} navigating={navigating} /> : null}
-    </>
-  ) : null;
+  // (DAILY BLITZ was retired for MINER, Andy oct26 — its chip/icon/row left this cluster; MINER is a game card.)
+  const dailyTile = reveal.core ? <DailyTile onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
       <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
@@ -1497,6 +1491,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
+  const [barSkin, setBarSkin] = useState(null);
+  useEffect(() => {
+    let live = true;
+    const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
+    on();
+    window.addEventListener(EQUIP_CHANGE, on);
+    return () => { live = false; window.removeEventListener(EQUIP_CHANGE, on); };
+  }, []);
   // NO KEYS-LEFT LINE (Andy oct24 "remove how many keys to next lvl… bc there's crit and stuff"): crits, boosts and gear
   // make a key's pay vary, so any countdown lies. The bar's fill and the next level's plate carry the pull.
   const xpBar = (
@@ -1508,6 +1510,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       lvInside={SEASON2}
       lead={rankPlate}
       goal={xpGoal}
+      kit={barSkin}
     />
   );
 
@@ -1553,7 +1556,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             news={reveal.gears ? news : null}
             wheel={wheel}
             daily={reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null}
-            dailyBlitz={reveal.core && onDailyBlitz ? <DailyBlitzTile variant="row" onPlay={openDailyBlitz} navigating={navigating} /> : null}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
               ? <ClaimPopup inline onOpenPanel={() => setShowClaims(true)} onReveal={setClaimReveal} />
@@ -1566,7 +1568,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} foot={gearSlot} />}
+        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1583,7 +1585,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
         <div className="homepage-footer-links hp-extras">
-          {wheel ? <MenuUtility news={reveal.gears ? news : null} settingsSlot={settingsSlot} navigating={navigating} /> : (
+          {wheel ? <MenuUtility news={reveal.gears ? news : null} navigating={navigating} /> : (
             <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
               CREDITS
             </button>
@@ -1659,7 +1661,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* XP feedback layer — a SIBLING of the panel, filling the outer backdrop margin so
           the "+N" popups spawn outside the panel border and never overlap its content. */}
-      <MenuXpFx ref={xpFxRef} menuTier={tier} />
+      <MenuXpFx ref={xpFxRef} menuTier={tier} career={careerLevel(xpProgress.level, rebirths, tableRebirthThreshold)} />
 
       {/* The card->dialog expand. Portals to <body> so the stage's overflow:hidden
           and the app zoom never clip it; closes back into the source card. */}
@@ -1677,7 +1679,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             onPlay={dialog.game.id === 'chain' || dialog.game.id === 'fuse' || dialog.game.id === 'sat-rush' ? handleDialogPlay : undefined}
             // Andy oct10: "for all game modes besides sat rush, just 2 buttons - create room and join" — no SOLO /
             // QUICK MATCH lead (a room adds bots on the room screen).
-            onPlaySolo={undefined}
             connecting={connecting}
             coldStart={coldStart}
             blitzPacks={blitzPacks}
@@ -1794,7 +1795,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
       {/* FIRST-RUN spotlight (once ever): dim the menu, ring the XP bar, tell the player it
           responds to typing/clicks. pointer-events:none — the dismissing key/click still counts. */}
-      {tourStep === 2 && tourReady && (
+      {/* OVERLAP AUDIT (oct29): the tour waits while a screen covers the menu. It used to stay drawn UNDER the ROLL screen
+          (a fresh visitor's first roll): its ring framed a menu card through the roll screen and "PLAY GAMES = WINS" bled
+          over the ROLL highlight, stacked with the roll screen's own TAP ROLL spotlight. It comes back on close. */}
+      {tourStep === 2 && tourReady && !tourCovered && (
         <Spotlight
           key="tour-games"
           targetSelector={reveal.title ? '.tp-play' : isPhoneMenu ? '.hp-m-row--word-bomb' : '.game-card-magnet[data-game="word-bomb"]'}
@@ -1811,7 +1815,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           onDismiss={dismissMenuSpot}
         />
       )}
-      {tourStep === 1 && tourReady && (
+      {tourStep === 1 && tourReady && !tourCovered && (
         <Spotlight
           key="tour-type"
           targetSelector=".menu-xp-bar"

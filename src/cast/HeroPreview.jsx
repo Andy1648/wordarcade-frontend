@@ -17,7 +17,7 @@ import { getRebirths, storedLevel } from '../progress/xp.js';
 import { formatNum } from '../format';
 import './HeroPreview.css';
 
-const TIER_NAME = { gold: 'GOLD', elite: 'ELITE', legend: 'LEGEND' };
+const TIER_NAME = { gold: 'GOLD', elite: 'ELITE', legend: 'LEGEND', mythic: 'MYTHIC', secret: 'SECRET' };
 const POSES = [['hero', 'HERO', 4200], ['win', 'WIN', 2400], ['ko', 'K.O.', 2400]];
 const SWAP = [{ opacity: 0 }, { opacity: 1 }]; // oct18: pose swaps fade (no squash bounce)
 
@@ -129,7 +129,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
           </div>
         </div>
         <div className="hpv-right">
-          {r.tier ? <span className={`hpv-tier is-${tier}`}>{TIER_NAME[r.tier]}</span> : null}
+          {r.tier ? <span className={`hpv-tier is-${tier}${h.chase ? ` is-${h.chase}` : ''}`}>{TIER_NAME[h.chase || r.tier]}</span> : null}
           <FitText className="hpv-name">{h.name}</FitText>
           <span className="hpv-tag">{h.tag}</span>
           {/* honest (Andy's bar): a hero is a look — it never changes how a game plays or what it pays */}
@@ -149,7 +149,12 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                   </div>
                 ) : null}
                 {prog && !prog.gate ? <span className="hpv-or">OR SKIP THE WAIT</span> : null}
-                {h.price && !h.gold && !heroGateMet(h.id) ? (
+                {h.chase ? (
+                  // CHASE: never sold, never earned on a counter — only a gear roll can drop it
+                  <div className="hpv-buy">
+                    <span className="hpv-locked" data-testid="hero-drop-odds"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].label} GEAR ROLLS</span>
+                  </div>
+                ) : h.price && !h.gold && !heroGateMet(h.id) ? (
                   <div className="hpv-buy">
                     <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].until != null ? 'GONE FOREVER · OCTOBER 2026 ONLY' : `${HERO_UNLOCK[h.id].label}, THEN ${formatNum(h.price)} GEMS`}</span>
                     <span className="hpv-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span>

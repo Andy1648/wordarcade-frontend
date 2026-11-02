@@ -33,8 +33,8 @@ function FxStage({ hero, fx }) {
 }
 
 /** @param hero your MAIN's id · @param kit { frame, fx } worn · @param onKit(slot, id|null) a slot changed
- *  @param slot0 the tab to open on */
-export default function KitPicker({ hero, kit, onKit, slot0 = 'frame' }) {
+ *  @param slot0 the tab to open on · @param bare no tab strip of its own (CUSTOMIZE's strip picks the slot) */
+export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = false }) {
   const [slot, setSlot] = useState(TABS.some((t) => t[0] === slot0) ? slot0 : 'frame');
   const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
   const [look, setLook] = useState({ frame: kit.frame || FRAMES[0].id, fx: kit.fx || WIN_FX[0].id });
@@ -81,11 +81,11 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame' }) {
         {slot === 'frame' ? <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-avatar" /> : null}
       </div>
       <div className="skp-side">
-        <div className="skp-tabs" role="tablist" aria-label="Customize">
+        {bare ? null : <div className="skp-tabs" role="tablist" aria-label="Customize">
           {TABS.map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={k === slot} className={`skp-tab${k === slot ? ' is-on' : ''}`} onClick={() => setSlot(k)}>{label}</button>
           ))}
-        </div>
+        </div>}
         <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={slot === 'frame' ? 'Frames' : 'Win effects'}>
           {list.map((k) => {
             const mine = ownsKit(k.id);

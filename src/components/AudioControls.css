@@ -126,3 +126,50 @@ html[data-view='shop'] .audio-ctrl:not(.audio-ctrl--inline),
 html[data-view='stats'] .audio-ctrl:not(.audio-ctrl--inline),
 html[data-view='leaderboard'] .audio-ctrl:not(.audio-ctrl--inline),
 html[data-view='credits'] .audio-ctrl:not(.audio-ctrl--inline) { display: none; }
+
+/* RAIL variant (Andy oct28 "make settings a bit more user friendly (tf why is it at the corner....)"): the desktop menu's
+   SETTINGS is a NAMED button spanning the left rail under the four nav tiles — the menu's doors live in that column.
+   Flat purple fill, darker purple outline, hard black offset shadow; only the press moves (transform). */
+.audio-ctrl--rail { position: relative; display: block; width: 100%; z-index: 2; }
+.homepage-stage[data-paged] .hp-rail .audio-ctrl--rail { grid-column: 1 / -1; }
+.hp-settings-btn {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: #9A1AFF;
+  border: 4px solid #5e0fa0;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+  color: #fff;
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-k20);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: transform 120ms ease-out;
+}
+.hp-settings-label { -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; line-height: 1; }
+.hp-settings-ico { flex: none; width: 30px; height: 30px; }
+.hp-settings-muted {
+  padding: 2px 8px;
+  background: #FF4FA3;
+  border: 3px solid #b0206a;
+  border-radius: 6px;
+  color: #0d0618;
+  font-size: var(--fs-k13);
+  -webkit-text-stroke: 0;
+}
+.hp-settings-btn:hover { transform: translate(-2px, -2px); }
+.hp-settings-btn:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 #000; }
+.hp-settings-btn:focus-visible { outline: 4px solid #FFE94A; outline-offset: 3px; }
+/* SHORT desktops (≤ 800 px tall — 1366x657, a 1280x551 Chromebook): the SETTINGS row costs the rail ~56 px, so the four
+   door tiles give it back (28 px each) and both gear slots still clear the frame (e2e/gear2-fit.spec.js) */
+@media (max-height: 800px) {
+  .homepage-stage[data-paged] .hp-rail:has(.audio-ctrl--rail) { --hp-tile-h: max(76px, calc(clamp(104px, calc(124 * var(--u)), calc(38vh - 100px)) - 28px)); }
+  .hp-rail .hp-settings-btn { min-height: 44px; }
+}

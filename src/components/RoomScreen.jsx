@@ -258,6 +258,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   return (
     <div className="room-wrap" data-skin={SEASON2 ? 'v2' : undefined}>
       <div className="room-box" ref={boxRef}>
+        {/* OVERLAP AUDIT (oct29): everything but START lives in .room-main, START in .room-foot. On a landscape desktop
+            .room-main is display:contents (the SHARE | SETUP grid is unchanged); on a phone it is the box's scroll
+            region and the foot sits UNDER it — START used to be position:sticky over the scrolling card, so it covered
+            GAME MODE at 390x844 and the bot's ✕ at 360x640. */}
+        <div className="room-main">
         {/* THE WAY OUT, IN THE CORNER CLUSTER. It was a full-width LEAVE ROOM button at the
             very bottom of the box, below the start button — the last thing on a screen whose
             job is the code at the top. Same control, same class, same handler; it now sits
@@ -486,6 +491,10 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           </>
         )}
 
+        </div>
+        </div>
+
+        <div className="room-foot">
         {/* A bounced start (server rejection: room full, game already going, etc.)
             re-enables the button via the effect above - surface WHY right next to
             START so the host isn't left guessing. Host-only (only they see START);

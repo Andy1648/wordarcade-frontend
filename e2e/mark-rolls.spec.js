@@ -13,6 +13,7 @@ import { test, expect } from '@playwright/test';
 import { holdRoll } from './support/roll.js'; // oct13 TAP TO ROLL: a press + release (any length) is a roll
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const SEED = {
   'taw.rollsOn': '1',
@@ -439,3 +440,34 @@ test('RATES opens your next roll\'s odds per tier; Esc closes it and leaves the 
   await expect(pop).toHaveCount(0);
   await expect(page.locator('.rs-overlay')).toBeVisible();
 });
+
+// OVERLAP AUDIT (oct29): RATES sat in the top row beside INDEX — at 1024 the EQUIPPED pill lay over it (a click timed
+// out: the pill took it), at 360 it was pushed off-canvas behind the gems pill and focusing it scrolled the ROLL screen
+// sideways. RATES now lives in the options cluster with AUTO. At each size: it is on screen, nothing covers it, a real
+// click opens the odds, the screen never scrolls sideways, and the top row + controls are overlap-free.
+for (const vp of [{ width: 1024, height: 768 }, { width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }, { width: 1280, height: 551 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: RATES is on screen, uncovered, and opens with a real click`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await seed(page, {
+      'taw.tut.markRolls': '1',
+      'taw.markRolls': JSON.stringify({ v: 4, rolls: 48, sinceEpic: 2, sinceLegendary: 9, everEpic: true, starter: true, marks: { 'mk-thunderclap': { n: 1, first: 1 }, 'mk-brainstorm': { n: 2, first: 2 } }, milestones: [] }),
+      'taw.mark': 'mk-thunderclap',
+    });
+    await openRoll(page);
+    await page.waitForTimeout(400);
+    const rates = page.getByTestId('roll-rates');
+    const box = await rates.boundingBox();
+    expect(box.x, 'RATES inside the screen (left)').toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width, 'RATES inside the screen (right)').toBeLessThanOrEqual(vp.width);
+    expect(box.y + box.height, 'RATES inside the screen (bottom)').toBeLessThanOrEqual(vp.height);
+    expect(Math.min(box.width, box.height), 'RATES is a 44px target').toBeGreaterThanOrEqual(44);
+    const onTop = await rates.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === e || e.contains(t)); });
+    expect(onTop, 'nothing covers RATES').toBe(true);
+    await expectNoLayoutDefects(expect, page, `roll ${vp.width}x${vp.height} top row`, { scope: '.rs-top' });
+    await expectNoLayoutDefects(expect, page, `roll ${vp.width}x${vp.height} controls`, { scope: '.rs-controls' });
+    await rates.focus();
+    expect(await page.evaluate(() => [document.scrollingElement.scrollLeft, document.querySelector('.rs-overlay').scrollLeft]), 'focusing RATES scrolls nothing sideways').toEqual([0, 0]);
+    await rates.click({ timeout: 5000 });
+    await expect(page.getByTestId('roll-rates-pop')).toBeVisible();
+  });
+}

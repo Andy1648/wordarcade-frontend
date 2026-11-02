@@ -4,6 +4,7 @@
 import { activeBoosts, anyBoostRemaining } from '../progress/liveBoost.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { useTimerClock } from '../frenzy/useTimerClock.js';
+import { boostArt } from '../progress/boostArt.js';
 
 const WHERE = [
   ['OVERDRIVE ×5', 'XP + WINS', 'UPGRADES → BOOSTS (BUY AGAIN = +5 MIN)'],
@@ -20,7 +21,8 @@ export default function StatsBoosts() {
       {list.length ? (
         <ul className="st2-bl" aria-label="Running boosts">
           {list.map((b) => (
-            <li key={b.id} className={`st2-bt bd-${b.id}`}>
+            <li key={b.id} className={`st2-bt bd-${b.id}${boostArt(b.icon) ? ' has-art' : ''}`}>
+              {boostArt(b.icon) ? <img className="st2-bt-art" src={boostArt(b.icon)} width="256" height="256" alt="" aria-hidden="true" draggable="false" /> : null}
               <span className="st2-bt-mult">{b.mult}</span>
               <span className="st2-bt-name">{b.name}</span>
               <span className="st2-bt-what">ON {b.what}</span>

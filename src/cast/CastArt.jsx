@@ -227,6 +227,13 @@ const CRACKLE = [
   { transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: 0.04 }, { transform: 'scale(.9)', opacity: 0.2, offset: 0.08 },
   { transform: 'scale(1.05)', opacity: 1, offset: 0.12 }, { transform: 'scale(1)', opacity: 0, offset: 0.2 }, { transform: 'scale(1)', opacity: 0 },
 ];
+// an ember / wisp rising off the body and fading (the CHASE auras)
+const RISE = [
+  { transform: 'translate(0, 0) scale(.5)', opacity: 0 },
+  { transform: 'translate(-6%, -30%) scale(1)', opacity: 1, offset: 0.25 },
+  { transform: 'translate(8%, -110%) scale(.8)', opacity: 0.6, offset: 0.7 },
+  { transform: 'translate(0, -160%) scale(.5)', opacity: 0 },
+];
 const AURAS = {
   gold: { ms: 1600, f: TWINKLE, e: 'ease-in-out', at: [
     ['/cast/props/glint-gold.webp', 12, 28, 9], ['/cast/props/glint-gold-cluster.webp', 72, 16, 12], ['/cast/props/glint-gold.webp', 72, 60, 8],
@@ -245,6 +252,17 @@ const AURAS = {
   nova: { ms: 1800, f: TWINKLE, e: 'ease-in-out', at: [
     ['/cast/props/spark-big.webp', 6, 22, 10], ['/cast/props/spark-sm.webp', 84, 14, 7], ['/cast/props/spark-big.webp', 80, 56, 9],
     ['/cast/props/spark-sm.webp', 10, 62, 6], ['/cast/props/spark-sm.webp', 46, 2, 6],
+  ] },
+  // the CHASE heroes' own auras (oct28): DRAKE sheds embers, MAGMA steams + spits flame, FACET throws sparkles
+  drake: { ms: 1900, f: RISE, e: 'ease-out', at: [
+    ['/cast/props/flame.webp', 10, 48, 9], ['/cast/props/flame.webp', 80, 40, 8], ['/cast/props/flame.webp', 24, 22, 7], ['/cast/props/flame.webp', 70, 66, 7],
+  ] },
+  magma: { ms: 2300, f: RISE, e: 'ease-out', at: [
+    ['/cast/props/steam.webp', 14, 30, 12], ['/cast/props/flame.webp', 82, 52, 8], ['/cast/props/steam.webp', 74, 18, 11], ['/cast/props/flame.webp', 8, 62, 7],
+  ] },
+  facet: { ms: 1500, f: TWINKLE, e: 'ease-in-out', at: [
+    ['/cast/props/spark-big.webp', 8, 18, 10], ['/cast/props/spark-sm.webp', 86, 12, 7], ['/cast/props/spark-big.webp', 84, 52, 9],
+    ['/cast/props/spark-sm.webp', 6, 58, 7], ['/cast/props/spark-big.webp', 50, 0, 8], ['/cast/props/spark-sm.webp', 30, 70, 6],
   ] },
   legend: { ms: 2600, f: TRAIL, e: 'cubic-bezier(.3,.5,.5,1)', at: [
     ['/cast/props/ghost-trail.webp', 4, 58, 16], ['/cast/props/ghost-trail.webp', 70, 64, 14], ['/cast/props/ghost-trail.webp', 10, 30, 12],

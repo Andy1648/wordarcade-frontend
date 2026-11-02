@@ -6,6 +6,7 @@ import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
 import { isPhoneMenu, navControl, revealMode } from './support/menu.js';
+import { expectNoLayoutDefects } from './support/overlap.js';
 
 const SHOTS = 'claude/mastery-road/shots';
 const SECRET = 'b2'.repeat(24);
@@ -95,3 +96,30 @@ test('the road is nowhere on the menu: the mode dialog has no mastery strip', as
   await expect(page.locator('.mode-dialog-shell')).not.toContainText('MASTERY');
   await expect(page.getByTestId('mastery-panel')).toHaveCount(0);
 });
+
+// OVERLAP AUDIT (oct29): the road's stops sit at percent coordinates but were sized in fixed px, so a narrower road
+// (1024) or a shorter one (360x640) pulled them into each other — M7 over M8, M14 over M15, tags under the next stop.
+// The stops now scale with the road: at each size no stop (its art or its tag) touches another, and a claimable stop
+// stays a 44px target.
+for (const vp of [{ width: 1024, height: 768 }, { width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`@${vp.width}x${vp.height} overlap audit: no two road stops collide`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    await boot(page, SEED);
+    const ach = await openAch(page);
+    await expect(ach.getByTestId('mastery-panel')).toBeVisible();
+    await expect(ach.locator('.mp-node')).toHaveCount(12);
+    await page.waitForTimeout(600); // the stops' one-shot drop
+    const hits = await page.evaluate(() => {
+      const boxes = [...document.querySelectorAll('.mp-node')].map((n) => [n.querySelector('.mp-node-in'), n.querySelector('.mp-tag')].filter(Boolean).map((e) => e.getBoundingClientRect()));
+      const inter = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+      const out = [];
+      for (let a = 0; a < boxes.length; a++) for (let b = a + 1; b < boxes.length; b++) if (boxes[a].some((p) => boxes[b].some((q) => inter(p, q)))) out.push(`stop ${a} × stop ${b}`);
+      return out;
+    });
+    expect(hits, 'road stops never touch').toEqual([]);
+    for (const b of await ach.locator('.mp-claim').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height }; }))) {
+      expect(Math.min(b.w, b.h), 'a claimable stop is a 44px target').toBeGreaterThanOrEqual(44);
+    }
+    await expectNoLayoutDefects(expect, page, `mastery ${vp.width}x${vp.height}`, { scope: '[data-testid="mastery-panel"]' });
+  });
+}

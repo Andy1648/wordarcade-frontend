@@ -19,9 +19,25 @@
 @media (prefers-reduced-motion: reduce) { .rh-btn { transition: none; } }
 
 /* HEROES ARE THE FEATURE (Andy oct21: "i want the hero sizes to be bigger (they need to be more of a feature)"): in the
-   season-2 lobby your hero stands FULL-BODY at the right of your seat, taller than the chip so it steps out over the
-   top edge — not a face in a 48px coin. Static pose (a hard offset shadow, no blur); hover / press feedback only. */
-.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 96px; padding-right: 104px; }
+   season-2 lobby every seat's hero stands FULL-BODY in the seat, stepping out over the top edge — not a face in a 48px
+   coin. Static pose (a hard offset shadow, no blur); hover / press feedback only.
+   OVERLAP AUDIT (oct29): the seat sizes ITSELF off its own width (a container query on the slot), not the viewport. At
+   1024 the two-up seats were ~165px and the fixed 104px hero lane left the name ~40px ("K…"); "BOT · BOT" wrapped
+   into a three-line pillar; YOU sat on the hero and the name. Now: the seat's text is a WRAPPING row (name on its own
+   line, then the tags / YOU / BOT badge / ✕ side by side while they fit), names wrap instead of ellipsising, and the
+   hero takes a lane only when the seat is wide enough to keep a real name column beside it. */
+.room-wrap[data-skin="v2"] .room-player-slot { container: seat / inline-size; }
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) {
+  display: flex; flex-flow: row wrap; align-items: center; align-content: center; justify-content: flex-start; gap: 6px;
+  min-height: 96px; padding-right: 104px;
+}
+.room-wrap[data-skin="v2"] .room-players-list .room-player-chip:has(> .rh-btn) > .room-player-name {
+  flex: 1 0 100%; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.2;
+}
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) > .room-you-badge { position: static; flex: none; }
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) > .room-host-badge,
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) > .room-bot-badge { margin-left: 0; white-space: nowrap; }
+.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) > .room-bot-remove { margin-left: 0; }
 .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn {
   position: absolute; right: 4px; bottom: 2px; width: 96px; height: 124px;
   background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; z-index: 1;
@@ -30,19 +46,33 @@
   transform: none; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(3px 3px 0 #000);
 }
 .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn:active { transform: translate(2px, 2px); }
-.room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: 104px; }
-/* a narrow seat (phones): the hero stands ON TOP of the name, stepping up over the chip's top edge, never over the text */
-@media (max-width: 600px) {
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-right: 12px; padding-top: 0; justify-content: flex-start; }
-  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { position: relative; right: auto; bottom: auto; align-self: center; width: 84px; height: 92px; margin-top: -22px; margin-bottom: 8px; }
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: -6px; }
+/* a MID seat (a laptop's two-up roster, ~200-300px): a slimmer hero lane, so a 9-letter name still fits beside it */
+@container seat (max-width: 299px) {
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 88px; padding-right: 78px; }
+  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { width: 72px; height: 100px; right: 2px; }
+}
+/* a NARROW seat (phones, a 1024 laptop — under ~200px): the hero stands ON TOP of the text, stepping up over the seat's
+   top edge, never beside or over it; the name gets the seat's whole width */
+@container seat (max-width: 199px) {
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-top: 0; padding-right: 10px; align-content: flex-start; }
+  /* "BOT · MEDIUM" is ~140px of Space Mono in a ~130px column (CI's metrics ran it 13px out of a 1024 seat): the badge
+     keeps to the seat's width — tighter tracking, and if it still can't fit it breaks once at a space ("BOT ·" /
+     "MEDIUM"), never letter by letter into the old three-line pillar */
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) > .room-bot-badge { white-space: normal; overflow-wrap: normal; word-break: keep-all; max-width: 100%; box-sizing: border-box; letter-spacing: 0.02em; }
+  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn {
+    position: relative; right: auto; bottom: auto; flex: none; width: 76px; height: 84px; margin: -14px auto 6px;
+  }
 }
 /* another player's hero (SeatHero): the same full-body stand, not a button */
 .rh-btn.is-static { cursor: default; pointer-events: none; }
-/* a SHORT desktop (Chromebook-height): every seat now carries a hero, so the stands shrink a size to keep the lobby's
+/* a SHORT desktop (Chromebook-height): every seat carries a hero, so the stands shrink a size to keep the lobby's
    fit-zoom at 1 (no text under the 13px floor at 1280x551) */
 @media (min-width: 601px) and (max-height: 700px) {
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 70px; padding-right: 82px; }
-  .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { width: 76px; height: 96px; }
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) .room-you-badge { right: 82px; }
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { min-height: 70px; }
+}
+@container seat (min-width: 300px) {
+  @media (min-width: 601px) and (max-height: 700px) {
+    .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-right: 82px; }
+    .room-wrap[data-skin="v2"] .room-player-chip > .rh-btn { width: 76px; height: 96px; }
+  }
 }

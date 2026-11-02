@@ -14,7 +14,7 @@ function withStorage(seed, fn) {
 
 test('WORDS_PER_REBIRTH matches the server rule (037 / rebirthRules.js)', () => {
   assert.equal(WORDS_PER_REBIRTH, WORDS_PER_RB);
-  assert.equal(WORDS_PER_REBIRTH, 10); // 037
+  assert.equal(WORDS_PER_REBIRTH, 0); // 074: no words gate
 });
 
 test('words since the last rebirth: marked at a rebirth; a reset counts every word since; never negative', () => {

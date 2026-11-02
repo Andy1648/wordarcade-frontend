@@ -3,6 +3,7 @@
 // the v3 shop.buy swap charges gems and equips), and CODES (the redeem box). Same logic as the live shop — shop.js
 // buy / equip / getOwned / getEquipped, RedeemCodes — re-laid on the v2 kit so they sit on the UPGRADES screen.
 import { useEffect, useRef, useState } from 'react';
+import { kitBarOf } from '../progress/kitArt.js';
 import { POP_STYLES, SOUND_PACKS, getOwned, getEquipped, buy, equip, tryLooksOn, wearForSession, wornPopStyle } from '../progress/shop';
 import { TRY_MS, tryStreak, tryGain, padLetter } from '../progress/tryOn';
 import { TIER_SCALES, TIER_COLORS } from '../progress/useXpCapture';
@@ -70,7 +71,8 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, tryi
 const loadout = (owner) => (owner ? { ...getEquipped(), popStyle: wornPopStyle() } : getEquipped());
 
 /** tab = 'looks' | 'codes'. tryFxRef = the MenuXpFx layer ShopV2 mounts over the shelf for the TRY-ON. */
-export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
+/** `only` ('pop' | 'sound'): one shelf section — the profile's CUSTOMIZE menu shows each under its own tab. */
+export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }) {
   const [owner] = useState(() => tryLooksOn());
   const [owned, setOwned] = useState(() => new Set(getOwned()));
   const [equipped, setEquipped] = useState(() => loadout(owner));
@@ -103,7 +105,9 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
     if (!t.id || !fx) return;
     const tier = tryStreak(t.st, performance.now());
     playClack(t.st.count - 1);
-    fx.letterPop(letter, `+${formatNum(t.gain)}`, TIER_SCALES[tier], t.colors[tier], t.feel, t.look);
+    // THE KIT (oct27): every 5th try key is a CRIT, so the try shows the look's crit too (the menu crits on gear / luck)
+    if (t.look && t.st.count % 5 === 0 && fx.critPop) fx.critPop(letter, `CRIT +${formatNum(t.gain * 2)}`, TIER_SCALES[tier], t.look);
+    else fx.letterPop(letter, `+${formatNum(t.gain)}`, TIER_SCALES[tier], t.colors[tier], t.feel, t.look);
   };
   const fireRef = useRef(fire);
   fireRef.current = fire;
@@ -159,18 +163,28 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef }) {
   const triedPrice = tried ? priceOf(tried) : 0;
   return (
     <div className="sp2-looks">
-      <h3 className="sp2-looks-h">POP STYLES <span>— YOUR +XP POPS ON THE MENU · EACH ONE MULTIPLIES YOUR XP</span></h3>
-      <div className="sp2-looks-grid">
-        {POP_STYLES.map((it) => <LookCard key={it.id} it={it} type="popStyle" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} onTry={onTry} trying={!!live && live.id === it.id} owner={owner} onWear={onWear} />)}
-      </div>
-      <h3 className="sp2-looks-h">SOUND PACKS <span>— THE CLICK EVERY KEY MAKES</span></h3>
-      <div className="sp2-looks-grid">
-        {SOUND_PACKS.map((it) => <LookCard key={it.id} it={it} type="soundPack" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} />)}
-      </div>
+      {only !== 'sound' ? (
+        <>
+          <h3 className="sp2-looks-h">POP STYLES <span>— YOUR +XP POPS ON THE MENU · EACH ONE MULTIPLIES YOUR XP</span></h3>
+          <div className="sp2-looks-grid">
+            {POP_STYLES.map((it) => <LookCard key={it.id} it={it} type="popStyle" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} onTry={onTry} trying={!!live && live.id === it.id} owner={owner} onWear={onWear} />)}
+          </div>
+        </>
+      ) : null}
+      {only !== 'pop' ? (
+        <>
+          <h3 className="sp2-looks-h">SOUND PACKS <span>— THE CLICK EVERY KEY MAKES</span></h3>
+          <div className="sp2-looks-grid">
+            {SOUND_PACKS.map((it) => <LookCard key={it.id} it={it} type="soundPack" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} />)}
+          </div>
+        </>
+      ) : null}
       {tried ? (
         // the TRYING bar sticks to the foot of the shelf's view, so the chip, the BUY and (phone) the TYPE pad stay in sight
         <div className="sp2-try" data-testid="sp2-try" data-try={tried.id} key={live.n}>
           <span className="sp2-try-chip">TRYING · {tried.name}</span>
+          {/* THE KIT's BAR (oct27): the menu XP bar's fill while this look is worn */}
+          {kitBarOf(tried.id) ? <span className="sp2-try-bar" data-testid="sp2-try-bar" aria-hidden="true" style={{ backgroundImage: `url(${kitBarOf(tried.id)})` }} /> : null}
           <LookAct it={tried} isOn={equipped.popStyle === tried.id} isOwned={owned.has(tried.id) || triedPrice === 0} can={gems >= triedPrice} price={triedPrice}
             owner={owner} onBuy={onBuy} onEquip={onEquip} onWear={onWear} />
           <button type="button" className="sp2-try-pad" data-testid="sp2-try-pad" onPointerDown={onPad}>TYPE</button>

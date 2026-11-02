@@ -43,7 +43,7 @@ export const RETIRED_COSMETICS = ['lucky'];
 export const RETIRED_COSMETIC_GEMS = 120;
 // the FACE is face.svg: 8 exact 45° flat wedges in code-true geometry (the hero-art session: wedges can't be painted to
 // register); rim / hub / pointer / prize icons are painted webps on top
-export const artSrc = (name) => `/wheel/${name}.${name === 'face' ? 'svg' : 'webp'}`;
+export const artSrc = (name) => `/wheel/${name}.${name === 'face' || name === 'wedge-hi' ? 'svg' : 'webp'}`;
 
 /** The odds sheet rows: what each slot pays and its chance, best first. */
 export function oddsRows() {

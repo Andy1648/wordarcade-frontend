@@ -33,12 +33,20 @@ export const MODES = {
   // a private room to share, and JOIN WITH CODE.
   race: {
     accent: '#FF4FA3', bg: ['#3a0620', '#16030c'], anim: 'streaks',
-    chip: 'MULTI', t1: 'WORD', t2: 'RACE',
+    chip: 'SOLO/MULTI', t1: 'WORD', t2: 'RACE',
     // H6: race/config.js RACE_WORDS = 25 whole words, the same for everyone. (It said "SAME LETTERS.
     // FIRST TO 12 WINS." — wrong number, wrong unit, and "WINS" read as the currency.)
     liner: 'SAME WORDS. FIRST TO 25.',
     create: 'CREATE ROOM',
     lead: 'QUICK MATCH',
+  },
+  // MINER (Andy oct26, replaced DAILY BLITZ): CREATE ROOM + JOIN like every room mode (Andy oct28: no QUICK MATCH;
+  // a room with < 2 humans gets bots when the host starts).
+  miner: {
+    accent: '#FFD23F', bg: ['#3a2406', '#140c02'], anim: 'streaks',
+    chip: 'SOLO/MULTI', t1: '', t2: 'MINER',
+    liner: 'RARER ANSWERS DIG DEEPER.',
+    create: 'CREATE ROOM',
   },
   // SAT RUSH (Andy oct8: "should be a popup as well"): the same dialog as CHAIN / FUSE, but its PLAY is the
   // mode pick — BRIEFING or LINEUP — so the old cover + PICK YOUR BEAT pages are skipped from the menu.

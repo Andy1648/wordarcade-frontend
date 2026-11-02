@@ -43,7 +43,7 @@ import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
-import { CAST, castFor, heroById } from '../cast/cast.js';
+import { CAST, castFor, castSrc, heroById } from '../cast/cast.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
@@ -298,8 +298,8 @@ function RenameBox({ current, cjk, onDone, claim = false }) {
   );
 }
 
-/** The closest board band above a rank: past #50 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
-const nearestBand = (rank) => (rank > 50 ? 50 : rank > 25 ? 25 : 10);
+/** The closest board band above a rank: past #100 → TOP 100, #51–100 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
+const nearestBand = (rank) => (rank > 100 ? 100 : rank > 50 ? 50 : rank > 25 ? 25 : 10);
 
 export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
@@ -318,6 +318,7 @@ export default function LeaderboardV2({ onBack }) {
   const [tab, setTab] = useState('all');
   const [peek, setPeek] = useState(null); // the row whose profile card is open
   const [heroes, setHeroes] = useState({}); // 053: { profile_id: equipped hero id } for the podium
+  const [bios, setBios] = useState({}); // 051 descriptions of the TOP 10 (Andy oct28: "descriptions for top accounts")
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -380,7 +381,8 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  const podIds = podium.map((p) => (p ? p.id : '')).join(',');
+  // the heroes of the whole board (podium + every row's head) + the TOP 10's bios ride one showcase read
+  const podIds = rows.slice(0, BOARD_SIZE).map((p) => (p ? p.id : '')).join(',');
   // HEROES (053, Andy oct17 "make sure the heros shown on the leaderboard correspond to what the user actually equips"):
   // a podium player who has sent their equipped hero shows THAT hero (duplicates allowed — it's their pick). Only a player
   // with no hero on file (053 not run / an old client) falls back to three DIFFERENT id-hashed members.
@@ -406,10 +408,10 @@ export default function LeaderboardV2({ onBack }) {
     const ids = podIds.split(',').filter(Boolean);
     if (!ids.length) return undefined;
     let live = true;
-    import('../leaderboard/showcase.js').then((m) => m.fetchPodium(ids)).then((h) => { if (live && h) { setHeroes(h.heroes); } }).catch(() => {});
+    import('../leaderboard/showcase.js').then((m) => m.fetchPodium(ids)).then((h) => { if (live && h) { setHeroes(h.heroes); setBios(h.bios || {}); } }).catch(() => {});
     return () => { live = false; };
   }, [podIds]);
-  // ranks 4 … 50 (Andy oct14 "make the leaderboard top 50"; was 20 oct13); past #50 your own row takes the last place, with your
+  // ranks 4 … 100 (Andy oct28 "extend to top 100"; 50 oct14, 20 oct13); past #100 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
@@ -566,8 +568,11 @@ export default function LeaderboardV2({ onBack }) {
                   <span className="lb2-pod-name">
                     {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : null}
                     {mine && <span className="lb2-you">YOU</span>}
-                    <FitText className="lb2-pod-name-t" min={0.5} style={{ '--nl': nameEms(name) }}>{name}</FitText>
+                    {/* oct29 audit: FitText shrank a long name to ~9px here. The CSS sizes it to the column with a readable
+                        floor (13px desktop, 16px phone); past that it wraps - never an ellipsis (Andy oct21) */}
+                    <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{name}</span>
                   </span>
+                  {p && bios[p.id] ? <span className="lb2-pod-bio" data-testid="lb2-pod-bio">{bios[p.id]}</span> : null}
                   {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : null}
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
@@ -600,6 +605,8 @@ export default function LeaderboardV2({ onBack }) {
             // player right above you is the strongest pull a board has — a near, beatable target beats a distant top 10)
             const meK = myId ? list.findIndex((x) => x.id === myId) : -1;
             const rival = meK > 0 && list[meK - 1].rank === list[meK].rank - 1 ? list[meK - 1] : null;
+            // the TOP 10's descriptions (yours steps aside for the chase / tier news on your own row)
+            const showBio = (row, isMine) => row.rank <= 10 && !!bios[row.id] && !(isMine && (newTier || rival || row.rank > 10));
             const isRival = !!(rival && r.id === rival.id);
             const n = nums(r, tab, gains);
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
@@ -610,16 +617,25 @@ export default function LeaderboardV2({ onBack }) {
             const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
               <Fragment key={r.id}>
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span>{sep}</span></div>}
+              {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
+              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
+                  {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
+                      member their seat colour gives them (the podium's rule) */}
+                  <span className="lb2-face" aria-hidden="true"><img src={castSrc(heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
+                  <span className={`lb2-who-text${showBio(r, mine) ? ' has-bio' : ''}`}>
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
-                    <FitText className="lb2-name" min={0.5} style={{ '--nl': nameEms(r.username) }}>{r.username}</FitText>
+                    {/* oct29 audit: FitText shrank long names to 6.5px. A row name keeps a readable size (13px floor desktop,
+                        16px phone) and takes a SECOND LINE instead; the row grows to hold it */}
+                    <span className="lb2-name lb2-name--wrap" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
+                  {/* a TOP 10 player's description owns the second line (yours steps aside for the chase / tier news) */}
+                  {showBio(r, mine) ? <span className="lb2-bio">{bios[r.id]}</span> : null}
                   {/* the visit you climbed INTO a tier, that news owns the second line (the chase is back next look) */}
                   {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
                   {mine && !newTier && (rival || r.rank > 10) ? (
@@ -634,6 +650,7 @@ export default function LeaderboardV2({ onBack }) {
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
+                  </span>
                 </span>
                 <Move n={data.moves[r.id] || 0} />
                 <span className="lb2-r">{n.r}</span>

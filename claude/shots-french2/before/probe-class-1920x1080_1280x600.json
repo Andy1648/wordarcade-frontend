@@ -1,0 +1,201 @@
+{
+ "c10-done-teacher-1920x1080": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 40
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 14
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 22
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 27
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"la retraite\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"voter\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"chanter\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"justifier\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"le bâtiment\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"humanitaire\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"l'amitié\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"la mairie\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"la réponse\"",
+    "px": 3
+   },
+   {
+    "k": "textoverflow",
+    "a": "b \"réduire\"",
+    "px": 3
+   }
+  ],
+  "bws": {
+   "4px": 3,
+   "3px": 3,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 140,
+   "t": 50,
+   "r": 140,
+   "b": 50,
+   "w": 1640,
+   "h": 980
+  }
+ },
+ "c10-done-student-1920x1080": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 27
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 400,
+   "t": 150,
+   "r": 400,
+   "b": 150,
+   "w": 1120,
+   "h": 780
+  }
+ },
+ "c10-done-teacher-1280x600": {
+  "issues": [
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 16
+   },
+   {
+    "k": "overlap",
+    "a": "span.seg.clean",
+    "b": "span.seg.miss",
+    "ix": 0,
+    "iy": 8
+   },
+   {
+    "k": "edge",
+    "a": "div.sr-modeselect.sr-setup \"CLASS DONE 10 WORD\"",
+    "gap": 2
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.sr-modeselect-head.sr-print \"CLASS DONE\"",
+    "px": 5
+   },
+   {
+    "k": "textoverflow",
+    "a": "div.fr-class-score-n.sr-print \"95%\"",
+    "px": 15
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 4,
+   "2px": 12
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 50,
+   "t": 12,
+   "r": 50,
+   "b": 12,
+   "w": 1180,
+   "h": 576
+  }
+ },
+ "c10-done-student-1280x600": {
+  "issues": [
+   {
+    "k": "textoverflow",
+    "a": "div.sr-capt-value.sr-print \"10\"",
+    "px": 17
+   },
+   {
+    "k": "el-scroll",
+    "a": "div.sr-panel.sr-casefile \"YOUR WORDS le rése\"",
+    "h": 678,
+    "ch": 458
+   }
+  ],
+  "bws": {
+   "4px": 2,
+   "3px": 5,
+   "2px": 20
+  },
+  "rads": {
+   "16px": 2
+  },
+  "frame": {
+   "l": 80,
+   "t": 44,
+   "r": 80,
+   "b": 44,
+   "w": 1120,
+   "h": 512
+  }
+ }
+}
