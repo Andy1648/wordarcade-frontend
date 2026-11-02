@@ -1,4 +1,4 @@
--- 075_new_gears.sql - NEW GEARS (Andy nov2 "make hella sick gears"): 12 new gears re-seed the server pool.
+-- 079_new_gears.sql - NEW GEARS (Andy nov2 "make hella sick gears"): 12 new gears re-seed the server pool.
 --   * 5 EPIC (BULLSEYE, ROCKET SKATES, SNOWBALL, TELESCOPE, DRUMSTICKS) + 7 MYTHIC chase pieces (ANCHOR, COMET,
 --     MELTDOWN, GENIE, GAUNTLET, GRIMOIRE, SUPERNOVA). Every LEGENDARY main slot is taken, so none are LEGENDARY.
 --   * TIER ODDS UNCHANGED (EPIC 1 in 60, LEGENDARY 1 in 130, MYTHIC 1 in 2000, SECRET 1 in 15000): each tier's odds
