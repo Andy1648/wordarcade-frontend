@@ -111,6 +111,23 @@
   paint-order: stroke fill;
 }
 
+/* KEY pop (nov2, Andy "we still need the letters"): the typed key BIG in the tier / look colour, "+N XP" beside it in
+   Bungee at the panel size — the key slams in on its own WAAPI (inline-block so it can scale), the +N only fades. */
+.menu-xp-pop-letter { display: inline-block; }
+.menu-xp-pop.is-key { gap: 8px; align-items: center; }
+.menu-xp-pop.is-key .menu-xp-pop-letter {
+  font-size: var(--fs-h1); /* the CRIT's key is the bigger --fs-hero */
+  -webkit-text-stroke: 5px #000;
+}
+.menu-xp-pop.is-key .menu-xp-pop-plus {
+  font-family: 'Bungee', cursive;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: var(--fs-panel);
+  -webkit-text-stroke: 3px #000;
+}
+
 /* Tap pop (touch): no letter, so the "+N" stands alone at the LETTER's size, tier-coloured
    (colour set inline). */
 .menu-xp-pop.is-tap .menu-xp-pop-letter {
@@ -136,7 +153,7 @@
 /* Andy oct9 "C · RGB IMPACT": no background behind the key — the key itself is the hit: big CRIT YELLOW, thick black
    stroke, the house hard offset shadow. */
 .menu-xp-pop.is-crit .menu-xp-pop-letter {
-  font-size: var(--fs-h1);
+  font-size: var(--fs-hero); /* nov2: a step above the default key pop (--fs-h1), so a crit always reads bigger */
   color: #FF6B3D; /* Andy oct17: the crit KEY wears CRIT ORANGE (the bar's crit gain matches), not just a bigger yellow */
   -webkit-text-stroke: 5px #000;
   text-shadow: 5px 5px 0 #000;
