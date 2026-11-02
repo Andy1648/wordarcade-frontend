@@ -45,7 +45,7 @@ const boxOf = (page, sel) => page.evaluate((s) => {
 }, sel);
 const meets = (a, b) => a.l < b.r - 0.5 && b.l < a.r - 0.5 && a.t < b.b - 0.5 && b.t < a.b - 0.5;
 
-for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 1280, height: 720 }]) {
+for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 1280, height: 720 }, { width: 1536, height: 864 }, { width: 1440, height: 900 }]) {
   test(`@${vp.width}x${vp.height}: OPEN ROOMS panel — list, rows cap, no overlaps, sizes, JOIN frame`, async ({ page }) => {
     await page.setViewportSize(vp);
     const mock = await installBackendMock(page);
@@ -62,7 +62,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
 
     mock.pushToClient({ type: 'public_rooms', payload: { rooms: ROOMS7 } });
     const rows = page.getByTestId('menu-room-row');
-    const cap = vp.height >= 900 ? 5 : 4;
+    const cap = vp.height >= 880 ? 4 : 3; // Homepage.jsx roomsRows (two-line rows)
     await expect(rows).toHaveCount(cap);
     await expect(page.getByTestId('menu-rooms-more')).toHaveText(`+${ROOMS7.length - cap} MORE →`);
     // fullest first; host name, hero face, mode-icon fallback for a host-less (old backend) row
@@ -90,8 +90,21 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     }
     // SIZE: every control ≥ 44px tall, text not tiny
     for (const b of await boxOf(page, '.mr-join, .mr-more')) expect(b.b - b.t).toBeGreaterThanOrEqual(44);
-    const fs = await page.locator('.mr-host').first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(fs).toBeGreaterThanOrEqual(13);
+    // readable mode + count (coordinator nov2: the mode line had shrunk to ~9px): the RENDERED size — font-size × any
+    // FitText scale on the way up — is ≥ 13px for the host, the mode name and the x/max, on every row shown
+    const rendered = await page.evaluate(() => [...document.querySelectorAll('.mr-host, .mr-mode, .mr-count')].map((el) => {
+      let k = 1;
+      for (let n = el; n && n !== document.body; n = n.parentElement) {
+        const t = getComputedStyle(n).transform;
+        if (t && t !== 'none') k *= new DOMMatrixReadOnly(t).a;
+        const inner = n.firstElementChild;
+        if (n === el && inner && getComputedStyle(inner).transform !== 'none') k *= new DOMMatrixReadOnly(getComputedStyle(inner).transform).a;
+      }
+      return { cls: el.className, text: el.textContent, px: parseFloat(getComputedStyle(el).fontSize) * k };
+    }));
+    for (const r of rendered) expect(r.px, `${r.cls} "${r.text}"`).toBeGreaterThanOrEqual(13);
+    // the mode name is never clipped: its box holds its text
+    for (const o of await page.$$eval('.mr-mode, .mr-host, .mr-count', (els) => els.map((e) => e.scrollWidth - e.clientWidth))) expect(o).toBeLessThanOrEqual(1);
 
     // JOIN → the existing join_room frame with the room code + the player's name; rows lock while it is in flight
     await page.locator('.mr-row[data-code="AAAA1"] .mr-join').click();

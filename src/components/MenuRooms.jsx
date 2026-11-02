@@ -17,7 +17,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { isHeroId } from '../cast/mainFace.js';
-import FitText from './kit/FitText.jsx';
 import './MenuRooms.css';
 
 export const MENU_ROOMS_POLL_MS = 8000;
@@ -84,13 +83,16 @@ function RoomRow({ room, joining, onJoin, delay }) {
             ? <img src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" />
             : <span className="mr-face-tag">{mode.label.slice(0, 2)}</span>}
       </span>
-      <span className="mr-text">
-        <FitText className="mr-host">{who}</FitText>
-        <span className="mr-meta">
+      <span className="mr-host">{who}</span>
+      {/* line 2 (the narrow column had left the mode ~9px — coordinator nov2): the face, then a mode chip (the mode's
+          art when the face is a hero — the face already IS the mode art otherwise — + its name, ≥13px, never shrunk;
+          a long name wraps) and a big x/max */}
+      <span className="mr-meta">
+        <span className="mr-modechip">
           {hero && mode.art ? <img className="mr-modeico" src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" /> : null}
-          <FitText className="mr-mode">{mode.label}</FitText>
-          <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
+          <span className="mr-mode">{mode.label}</span>
         </span>
+        <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
       </span>
       <button
         type="button"

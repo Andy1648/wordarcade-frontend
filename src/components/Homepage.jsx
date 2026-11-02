@@ -1529,9 +1529,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (roomsFirstRef.current) { roomsFirstRef.current = false; return; }
     setRoomsHeard(true);
   }, [rooms]);
-  const roomsTall = useMediaQuery('(min-height: 900px)');
+  // rows by screen height (a row is two readable lines — name + JOIN over the mode chip + x/max): 3, or 4 from 880px
+  // tall. The right column's free cell is ~420px at 720 tall (e2e/menu-rooms.spec.js asserts no overlap at 5 sizes).
+  // Media queries, not measurement: nothing here reads layout.
+  const roomsH4 = useMediaQuery('(min-height: 880px)');
   // the boost dock shares the right column (bottom-aligned): one row fewer per running boost tile so they never meet
-  const roomsRows = Math.max(0, (roomsTall ? 5 : 4) - (roomsPanel ? activeBoosts().length : 0));
+  const roomsRows = Math.max(0, (roomsH4 ? 4 : 3) - (roomsPanel ? activeBoosts().length : 0));
   // the panel only ever calls App's EXISTING handlers (the same ones JOIN ROOM uses); App owns every view change
   const roomsJoin = (code, name) => {
     if (navigating || !onJoinPublicRoom) return;
