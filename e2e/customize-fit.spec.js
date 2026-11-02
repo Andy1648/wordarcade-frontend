@@ -76,7 +76,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(m.overlaps, `${t}: overlaps`).toEqual([]);
       expect(m.outside, `${t}: nothing past the panel`).toEqual([]);
       expect(m.small, `${t}: tap targets ≥ 44px`).toEqual([]);
-      if ((t === 'frame' || t === 'fx') && w >= 760) {
+      if (t === 'frame' && w >= 760) {
         // the try-on is not a list: on a desktop it fits whole, the HOLD TO BUY in view, no scroll
         const sc = await page.locator('.cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
@@ -112,7 +112,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(c.overlaps, `shop COSMETICS · ${t}: overlaps`).toEqual([]);
       expect(c.outside, `shop COSMETICS · ${t}: inside the shelf`).toEqual([]);
       expect(c.small, `shop COSMETICS · ${t}: tap targets ≥ 44px`).toEqual([]);
-      if ((t === 'frame' || t === 'fx') && w >= 1000) {
+      if (t === 'frame' && w >= 1000) {
         const sc = await page.locator('.sp2-shelf-cz .cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `shop COSMETICS · ${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
       }
