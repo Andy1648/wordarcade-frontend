@@ -11,7 +11,7 @@
 }
 .rl-panel {
   position: relative; width: 100%; max-width: 1180px; max-height: 100%; box-sizing: border-box;
-  display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 22px;
+  display: grid; grid-template-columns: minmax(300px, 380px) 1fr; grid-template-rows: minmax(0, 1fr); gap: 22px;
   padding: 20px 22px 22px;
   background: #1a0b2e; border: 6px solid #9A1AFF; border-radius: 8px; box-shadow: 8px 8px 0 #000;
   animation: rl-in 280ms cubic-bezier(0.2, 1.4, 0.4, 1) 1 both;
@@ -122,6 +122,14 @@
   .rl-title { font-size: var(--fs-k38); }
   .rl-shelf { gap: 7px; }
   .rl-item { padding: 6px 6px 4px; }
+}
+/* a very short laptop (1280×551): the panel is pinned to the window and the SHELF — a list — scrolls inside it, so the
+   MARQUEE row is always reachable; the tiles tighten a step */
+@media (max-height: 620px) and (min-width: 821px) {
+  .rl-shelf { margin-top: 40px; gap: 6px; }
+  .rl-plate .krp { --krp-h: min(36px, calc(90cqw / var(--krp-aspect, 4))); }
+  .rl-item { gap: 2px; }
+  .rl-next { padding: 8px 10px 10px; gap: 4px; }
 }
 /* phone / narrow: the stage stacks over the shelf; the panel is the one scroller (the shelf is a list) */
 @media (max-width: 820px) {
