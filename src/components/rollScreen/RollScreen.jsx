@@ -490,7 +490,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   // the label says what the hand must do: ROLL (NO GEMS when short; '...' mid-spin)
   const rollLabel = cost.free ? 'ROLL' : rolling ? '...' : canAfford ? 'ROLL' : 'NO GEMS';
   return (
-    <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
+    <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}${tut && tutDef ? ' is-tut' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
         {/* NIGHT oct8 #4 (RollV3 mockup): ← MENU · INDEX n/N · EQUIPPED <stat> … the GEMS pill */}
         <button type="button" className="rs-close marks-close" onClick={onClose} aria-label="Close" ref={closeRef}>

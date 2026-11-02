@@ -2870,6 +2870,15 @@ body:has(.sr-app) .wpm-hud {
 .sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 4px 6px 4px; }
 .sr-brief-head, .sr-brief-actions { flex: none; }
 .sr-brief-page > .sr-brief-exit { position: absolute; width: auto; }
+/* OVERLAP AUDIT #2 (#7): the app's corner settings cog (AudioControls.css .audio-ctrl — fixed, 44px, 16px in from the
+   bottom-right) sat on START THE RUN's corner at 360x640, so a tap on the button's right edge opened settings. Below
+   760px wide the page reaches the cog's column (a 620px page's right edge + its 10px shadow pass the cog's left edge),
+   so there the page stops above the cog's row: the screen keeps 16 + 44 + 16px at the bottom, and the page's height
+   cap counts it. The head and START stay put; only the card list (the one scroller) gives up the height. */
+@media (max-width: 760px) {
+  .sr-brief-screen { --sr-cog-room: 76px; padding-bottom: var(--sr-cog-room); }
+  .sr-brief-page { max-height: calc(100dvh - clamp(12px, 2.5vh, 32px) - var(--sr-cog-room)); }
+}
 
 /* =====================================================================================================
    DENSER POSTER (oct17, Andy: "for sat rush you spend so much space on 'WANTED' and part of speech that

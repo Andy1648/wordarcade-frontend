@@ -620,7 +620,9 @@ export default function LeaderboardV2({ onBack }) {
               {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
               {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
-                <span className={`lb2-rk${tier ? ' has-seal' : ''}`}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
+                {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
+                    digit and widens only its own row's rank column, never running into the face */}
+                <span className={`lb2-rk${tier ? ' has-seal' : ''}`} data-len={tier ? undefined : String(fmt(r.rank)).length}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
                 <span className="lb2-who-cell">
                   {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
                       member their seat colour gives them (the podium's rule) */}
