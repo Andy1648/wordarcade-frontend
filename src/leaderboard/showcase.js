@@ -56,7 +56,7 @@ export function myShowcase() {
  *  removed (oct26), and sending null clears any sidekick a row still stores. */
 function kit() {
   const k = readKit();
-  return { pet: null, frame: k.frame, fx: k.fx };
+  return { pet: null, frame: k.frame, fx: null }; // WIN FX retired nov2: null clears any a row still stores
 }
 
 /** 046: the badges (top claimed tier per achievement), the SIGNATURE WORD (rarest ever accepted), the best CHAIN. */

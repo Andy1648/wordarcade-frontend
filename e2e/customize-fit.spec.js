@@ -64,13 +64,11 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     expect(hero.w / m.panel.w, 'the hero dominates the profile').toBeGreaterThan(w < 760 ? 0.55 : 0.3);
     // CUSTOMIZE: five tabs in one strip, each view's controls apart
     await pf.getByTestId('profile-kit').click();
-    await expect(pf.getByTestId('customize').getByRole('tab')).toHaveCount(5);
+    await expect(pf.getByTestId('customize').getByRole('tab')).toHaveCount(3);
     for (const [t, sel, main] of [
       ['hero', '.hc', '.hc'],
       ['frame', '.skp-tile, .skp-stage, .skp-cta, .skp-act > *', '.skp-stage'],
-      ['fx', '.skp-tile, .skp-stage, .skp-act > *', '.skp-stage'],
       ['pop', '.sp2-look', '.sp2-look'],
-      ['sound', '.sp2-look', '.sp2-look'],
     ]) {
       await pf.locator(`.cz-tab[data-cz="${t}"]`).click();
       await page.waitForTimeout(400);

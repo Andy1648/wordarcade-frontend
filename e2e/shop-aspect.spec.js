@@ -99,7 +99,7 @@ for (const vp of [{ w: 1366, h: 768 }, { w: 1280, h: 600 }, { w: 1920, h: 1080 }
     // COSMETICS (oct28): the profile's CUSTOMIZE menu over the shop — its pop styles, then every other tab
     await shop.locator('.sp2-tab[data-shelf="cosmetics"]').click();
     await page.getByTestId('customize').waitFor({ state: 'visible' });
-    for (const t of ['pop', 'sound', 'hero', 'frame', 'fx']) {
+    for (const t of ['pop', 'hero', 'frame']) {
       await page.locator(`.cz-tab[data-cz="${t}"]`).click();
       await page.waitForTimeout(400);
       await check(`cosmetics-${t}`); await shot(page, `${tag}-cosmetics-${t}`);

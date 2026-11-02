@@ -4,7 +4,7 @@
 // button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
 // TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
 import { useEffect, useRef, useState } from 'react';
-import { FRAMES, WIN_FX, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+import { FRAMES, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
 import HeroShowcase from './HeroShowcase.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -18,26 +18,14 @@ import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './KitPicker.css';
 
-const TABS = [['frame', 'FRAME', FRAMES], ['fx', 'WIN FX', WIN_FX]];
-// the WIN FX try-on: the burst slams out behind your WIN pose each time you pick one (the results card's KIT_BURST)
-const FX_BURST = [{ transform: 'scale(.2) rotate(-30deg)', opacity: 1 }, { transform: 'scale(1.12) rotate(4deg)', opacity: 1, offset: 0.16 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: 0.26 }, { transform: 'scale(1.04) rotate(8deg)', opacity: 1, offset: 0.8 }, { transform: 'scale(1) rotate(0deg)', opacity: 1 }];
-function FxStage({ hero, fx }) {
-  const ref = useRef(null);
-  useEffect(() => { kitPlay(ref.current, FX_BURST, { duration: 1500, easing: 'cubic-bezier(.2,.9,.3,1)' }); }, [fx]);
-  return (
-    <div className="skp-fx" data-fx={fx}>
-      <img ref={ref} className="skp-fx-burst" src={`/fx/win/${fx}.webp`} alt="" aria-hidden="true" draggable="false" />
-      <CastArt className="skp-fx-hero" id={hero} pose="win" />
-    </div>
-  );
-}
+const TABS = [['frame', 'FRAME', FRAMES]]; // WIN FX retired nov2 (cosmeticsRetire.js)
 
 /** @param hero your MAIN's id · @param kit { frame, fx } worn · @param onKit(slot, id|null) a slot changed
  *  @param slot0 the tab to open on · @param bare no tab strip of its own (CUSTOMIZE's strip picks the slot) */
 export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = false }) {
   const [slot, setSlot] = useState(TABS.some((t) => t[0] === slot0) ? slot0 : 'frame');
   const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
-  const [look, setLook] = useState({ frame: kit.frame || FRAMES[0].id, fx: kit.fx || WIN_FX[0].id });
+  const [look, setLook] = useState({ frame: kit.frame || FRAMES[0].id });
   const [gems, setGems] = useState(getGems);
   const [, bump] = useState(0);
   useEffect(() => subscribeGems(setGems), []);
@@ -75,8 +63,7 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
   return (
     <div className={`skp is-${slot}`} style={{ '--sk-c': s.color }} data-testid="kit-picker">
       <div className="skp-stage">
-        {slot === 'fx' ? <FxStage hero={hero} fx={s.id} />
-          : frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
+        {frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
         {/* oct26: the same frame as your round PORTRAIT (menu profile plate, your results row) */}
         {slot === 'frame' ? <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-avatar" /> : null}
       </div>
