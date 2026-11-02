@@ -1,4 +1,4 @@
--- 075_wheel_no_winfx.sql - THE DAILY WHEEL drops CONFETTI (PRIZE SHOWER, a WIN FX). Andy nov2: "dont want win fx or
+-- 078_wheel_no_winfx.sql - THE DAILY WHEEL drops CONFETTI (PRIZE SHOWER, a WIN FX). Andy nov2: "dont want win fx or
 -- sound" - WIN FX are retired from the game, so the wheel can no longer hand one out.
 --
 --   * lb_wheel_spin is recreated with ONE change from 068: the cosmetic pool is now ['jackpot'] (was
@@ -10,7 +10,7 @@
 --   * Ownership of WIN FX / sound packs is client-side (taw.s2.kit / taw.owned) - the one-time gem refund runs in the
 --     browser (src/progress/cosmeticsRetire.js); no ownership table changes here.
 --
--- ORDER: after 068 (and 069-074). WRITE-ONLY: Claude never runs migrations. Run once in the Supabase SQL editor. Safe to
+-- ORDER: after 068 (and 069-077). WRITE-ONLY: Claude never runs migrations. Run once in the Supabase SQL editor. Safe to
 -- re-run (create or replace + the same grants). ASCII only.
 
 -- ---- lb_wheel_spin: roll today's spin (or hand back the one already rolled) -------------------------------------------

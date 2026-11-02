@@ -13,7 +13,7 @@ import { kitById } from '../cast/kit.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SQL = readFileSync(join(ROOT, 'supabase', 'migrations', '067_daily_wheel.sql'), 'utf8');
 const SQL68 = readFileSync(join(ROOT, 'supabase', 'migrations', '068_wheel_no_sidekick.sql'), 'utf8');
-const SQL75 = readFileSync(join(ROOT, 'supabase', 'migrations', '075_wheel_no_winfx.sql'), 'utf8'); // the live cosmetic pool
+const SQL78 = readFileSync(join(ROOT, 'supabase', 'migrations', '078_wheel_no_winfx.sql'), 'utf8'); // the live cosmetic pool
 const UID = '11111111-2222-4333-8444-555555555555';
 
 test('the published table: 8 equal slices, weights sum to 100, and EXACTLY the migration\'s private.wheel_pick table', () => {
@@ -80,12 +80,12 @@ test('the wheel cosmetics exist in the kit, are never sold, and the migration ha
     const k = kitById(id);
     assert.ok(k && k.wheel && !k.price, id);
   }
-  assert.match(SQL75, /unnest\(array\['jackpot'\]\)/);
-  assert.doesNotMatch(SQL75, /array\[[^\]]*'(lucky|confetti)'/);
+  assert.match(SQL78, /unnest\(array\['jackpot'\]\)/);
+  assert.doesNotMatch(SQL78, /array\[[^\]]*'(lucky|confetti)'/);
   assert.ok(SQL68.length > 0);
 });
 
-test('a retired cosmetic (LUCKY before 068, CONFETTI before 075) is paid as gems — never a sidekick, never a broken image', () => {
+test('a retired cosmetic (LUCKY before 068, CONFETTI before 078) is paid as gems — never a sidekick, never a broken image', () => {
   const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'lucky' });
   assert.equal(s.prize, 'gems');
   assert.equal(s.amount, 120);
@@ -179,7 +179,7 @@ test('flapperTrack: one baked keyframe list (offsets 0..1, ends at rest) + one t
   assert.ok(f.ticks.at(-1) - f.ticks.at(-2) > 6 * (f.ticks[1] - f.ticks[0]));
 });
 
-test('CONFETTI (the PRIZE SHOWER WIN FX, retired nov2) from a server before 075 is paid as 120 gems', () => {
+test('CONFETTI (the PRIZE SHOWER WIN FX, retired nov2) from a server before 078 is paid as 120 gems', () => {
   const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'confetti' });
   assert.equal(s.prize, 'gems');
   assert.equal(s.amount, 120);
