@@ -77,7 +77,8 @@ function MarkCard({
   const entry = markEntry(id) || (id ? { id, tier: c.tier } : null);
   const nameLen = String(c.name || '').length;
   const nameFit = nameLen >= 13 ? ' is-xxl' : nameLen >= 10 ? ' is-xl' : nameLen >= 8 ? ' is-l' : '';
-  const numFit = c.statNum.length >= 5 ? ' is-l' : '';
+  // is-xl (≥7 chars, "+2,400%") only matters where a host draws the hero bigger (the roll reveal, RollScreen.css)
+  const numFit = c.statNum.length >= 7 ? ' is-l is-xl' : c.statNum.length >= 5 ? ' is-l' : '';
   let hero;
   if (!locked) {
     hero = (

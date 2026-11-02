@@ -134,6 +134,7 @@ for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 551], [1024, 768], [390,
     await expect(page.locator('.rs-cut-keep')).toHaveCSS('opacity', '1', { timeout: 10000 }); // card + stats are in
     // the card + its stats sit above every dim layer
     expect(await covered(page, '.rs-cut.is-on .rs-cut-mark')).toEqual([]);
+    expect(await covered(page, '[data-testid="roll-cutscene-odds"]')).toEqual([]); // the big card's aura never over "1 IN X"
     // SOLID backdrop: no ghost of the reel card, no ROLL slab peeking out beside the stats
     expect(await cut.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/^rgb\(/);
     const rollHit = await page.evaluate(() => {
@@ -155,6 +156,29 @@ for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 551], [1024, 768], [390,
     const card = await box(page, '.rs-cut.is-on .rv-card');
     expect(card.y).toBeGreaterThanOrEqual(-1);
     expect(card.b).toBeLessThanOrEqual(h + 1);
+    // THE CARD DOMINATES (no small card in a void): ~60–65% of the height on desktop, ~75% of the width on a phone
+    if (w >= 720 && h >= 700) expect(card.b - card.y, 'card height').toBeGreaterThanOrEqual(h * 0.6);
+    // (a phone with a perk / dupe plate stacked under the card gives the card a little less, so both fit the screen)
+    const plate = (await page.getByTestId('roll-reveal-stats').count()) > 0;
+    if (w < 720) expect(card.r - card.x, 'card width').toBeGreaterThanOrEqual(w * (plate ? 0.58 : 0.7));
+    // the BIG stat hit (Andy oct14 "larger stat reveals") is on the card: display-size MAIN, readable substats
+    const type = await page.evaluate(() => {
+      const c = document.querySelector('.rs-cut.is-on .rs-cut-card');
+      const num = c.querySelector('.mc-num');
+      const subs = [...c.querySelectorAll('.mc-sub:not(.is-none)')];
+      // the face is scaled by transform: the RENDERED size is the font size × the card's --mc-s
+      const s = Number(getComputedStyle(c).getPropertyValue('--mc-s')) || 1;
+      return {
+        xl: !!c.querySelector('.mc-hero.is-xl'),
+        num: parseFloat(getComputedStyle(num).fontSize) * s,
+        sub: subs.length ? Math.min(...subs.map((e) => parseFloat(getComputedStyle(e).fontSize) * s)) : 99,
+      };
+    });
+    if (w === 1366 && !type.xl) expect(type.num, 'MAIN stat px at 1366').toBeGreaterThanOrEqual(56);
+    expect(type.sub, 'substat px').toBeGreaterThanOrEqual(16);
+    // solid, but not a dead black void: the tier-tinted panel colour wears the stripe texture
+    expect(await cut.evaluate((el) => getComputedStyle(el).backgroundImage)).not.toBe('none');
+    expect(await cut.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgb(0, 0, 0)');
     // TAP TO CONTINUE: on screen, clear of the card and of any side plate
     const keep = await box(page, '.rs-cut-keep');
     expect(keep.x).toBeGreaterThanOrEqual(-1);

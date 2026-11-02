@@ -43,7 +43,7 @@ import {
   DIM_LIGHTS, FLASH_PEAK,
 } from './revealPlan.js';
 import {
-  REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
+  revealCardW, REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
   tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors, NEAR_MISS_TICKS, FLASH_TIERS, WASH_TIERS,
   KEEP_HOLD_MS, CHARGE_MS, CHARGE_SHAKE_AT, OVERHOLD_MS, CHARGE_RATTLE, tellFor, tellFrames,
 } from './reelPlan.js';
@@ -348,7 +348,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   const cutStats = cutRes ? revealStatsOf(cutRes, view) : null;
   const statsRef = useRef(null);
   statsRef.current = cutStats;
+  const sizeOff = useRef(null); // the reveal's resize listener, dropped when the reveal closes / the reel unmounts
   useLayoutEffect(() => {
+    if (sizeOff.current) { sizeOff.current(); sizeOff.current = null; }
     if (!cutRes) return;
     const n = nodes.current;
     const tier = cutRes.tier;
@@ -358,6 +360,15 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     const st = statsRef.current;
     const ext = extensionPlan({ extras: st ? st.crit.length : 0, perk: !!(st && st.perks.length), dupe: !!(st && st.dupe), stars: st ? st.pips : 0 });
     const xAt = extensionAt(tier);
+    // THE CARD DOMINATES (design audit nov2): the reveal card is sized from the viewport — ~65% of the height on
+    // desktop, ~75% of the width on a phone — measured once as the reveal opens (no per-frame read; revealCardW is pure)
+    const size = () => {
+      const w = revealCardW({ vw: window.innerWidth, vh: window.innerHeight, kind, plate: !!(st && (st.perks.length || st.dupe)) });
+      if (n.cut) { n.cut.style.setProperty('--mc-w', `${w}px`); n.cut.style.setProperty('--mc-s', String(w / 180)); }
+    };
+    size();
+    window.addEventListener('resize', size);
+    sizeOff.current = () => window.removeEventListener('resize', size);
     const ease = { in: 'cubic-bezier(.5,0,.9,.5)', out: 'cubic-bezier(.1,.6,.3,1)', pop: 'cubic-bezier(.2,1.4,.4,1)' };
     anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
@@ -521,7 +532,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   const busy = () => phase.current === 'spin' || phase.current === 'landed' || phase.current === 'cut';
   if (ctl) ctl.current = { finish, busy, charge };
 
-  useEffect(() => () => { stopAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { stopAll(); if (sizeOff.current) sizeOff.current(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const strip = spin ? spin.strip : idle;
   const tier = spin ? spin.result.tier : 'rare';

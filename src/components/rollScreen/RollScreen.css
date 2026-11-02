@@ -558,12 +558,32 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    backdrop that closes by itself. */
 /* design audit nov2: the reveal backdrop is SOLID on every kind — a 90% plate let a ghost of the landed reel card (and
    the ROLL slab) read through, so the stats showed THREE times and ROLL's halves stuck out beside the stats plate */
-.rs-cut, .rs-cut.is-lite, .rs-cut.is-dim { background: #05020a; }
+/* …but never a dead black void: an OPAQUE tier-tinted panel colour (the SealedRollReveal scrims) wearing the overlay's
+   own hard-stop stripe texture in the tier colour. Flat colours + hard stops — no soft gradient, nothing shows through. */
+.rs-cut, .rs-cut.is-lite, .rs-cut.is-dim, .rs-cut.is-full {
+  background-color: #12082a;
+  background-image: repeating-linear-gradient(-28deg, transparent 0 46px, color-mix(in srgb, var(--rs-tier, #9A1AFF) 16%, transparent) 46px 50px);
+}
+.rs-cut.is-rare { background-color: #08122e; }
+.rs-cut.is-epic { background-color: #16062c; }
+.rs-cut.is-legendary { background-color: #261604; }
+.rs-cut.is-mythic { background-color: #2e061e; }
+.rs-cut.is-secret { background-color: #04080c; }
 /* ONE stat block: the reveal CARD carries the MAIN stat + substats (hiding them left blank plates on the art), so the
    side plate (RevealStats) now only says what the card can't — perks, a duplicate's gems — and is gone when there is
-   neither. The card stands alone, so it is drawn a step bigger (the "larger stat reveals" Andy asked for oct14). */
+   neither. THE CARD DOMINATES: Reel.jsx sizes it from the viewport (reelPlan.revealCardW — ~65% of the height on
+   desktop, ~75% of the width on a phone) by inline --mc-w / --mc-s; these are the fallbacks before that runs. */
 .rs-cut { --mc-w: 252px; --mc-s: 1.4; }
 .rs-cut.is-full { --mc-w: 288px; --mc-s: 1.6; }
+/* the oct14 "larger stat reveals" HIT lives on the card now: on the reveal card the MAIN stat is drawn at display size
+   (36 card-px — 60px rendered at 1366×768), its label a touch smaller so both still fit the 44-px hero plate */
+/* the big card's EPIC+ aura reaches the stamp + TAP on a phone (they stack tight): the words stay ON TOP of it */
+.rs-cut-double, .rs-cut-tier, .rs-cut-stamp, .rs-cut-keep { position: relative; z-index: 2; }
+.rs-cut-card .mc-hero { gap: 0; padding-top: 0; }
+.rs-cut-card .mc-num { font-size: calc(var(--mc-u) * 36); line-height: 0.9; }
+.rs-cut-card .mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 34); }
+.rs-cut-card .mc-hero.is-xl .mc-num { font-size: calc(var(--mc-u) * 26); }
+.rs-cut-card .mc-kind { font-size: calc(var(--mc-u) * 9.8); -webkit-text-stroke: 2.5px #000; }
 .rs-cut.is-lite .rs-cut-rays,
 .rs-cut.is-lite .rs-cut-tier { display: none; }
 .rs-cut.is-lite .rs-cut-stamp { font-size: min(7cqw, 40px); -webkit-text-stroke: 5px #000; }
