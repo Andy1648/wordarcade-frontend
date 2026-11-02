@@ -1237,7 +1237,7 @@
 /* the phone row hands the NAME more width (audit 2: at the 16px floor a 9-letter name needed ~100px and the column was 92):
    tighter gaps and slimmer number columns - the numbers still fit (R40 / 9999) */
 .lb2--narrow .lb2-cols,
-.lb2--narrow .lb2-row { grid-template-columns: 30px minmax(0, 1fr) 34px 62px 48px; gap: 4px; padding: 0 6px; }
+.lb2--narrow .lb2-row { grid-template-columns: var(--rk-col, 30px) minmax(0, 1fr) 34px 62px 48px; gap: 4px; padding: 0 6px; }
 .lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 38px); } /* the ▲▼ column + its 4px gap, never REBIRTHS */
 /* the podium's seals keep their size when the podium shrinks (they are the tier's flavor - nov2 repaint) */
 /* on the narrow podium the seal sits ABOVE the name, so the name keeps the column's whole width */
