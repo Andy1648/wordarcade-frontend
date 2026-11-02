@@ -298,6 +298,20 @@ function RenameBox({ current, cjk, onDone, claim = false }) {
   );
 }
 
+/** A name's break points (audit 2): a zero-width space after _ and -, and in the middle of any run longer than 8 letters, so a
+ *  name that must wrap splits as YIPINGJT_ / 唐一平 or POCKET / PUHHH - never between two arbitrary letters, never a 1-2 letter
+ *  orphan. CSS keeps every piece whole (keep-all) and only wraps when the name overflows its column. */
+const ZW = String.fromCharCode(0x200b); // a zero-width space: a wrap opportunity that draws nothing
+const splitRun = (run) => {
+  if (run.length <= 8) return run;
+  const parts = Math.ceil(run.length / 8);
+  const size = Math.ceil(run.length / parts);
+  const out = [];
+  for (let i = 0; i < run.length; i += size) out.push(run.slice(i, i + size));
+  return out.join(ZW);
+};
+const softBreak = (name) => String(name == null ? '' : name).split(/(?<=[_-])/).map(splitRun).join(ZW);
+
 /** The closest board band above a rank: past #100 → TOP 100, #51–100 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
 const nearestBand = (rank) => (rank > 100 ? 100 : rank > 50 ? 50 : rank > 25 ? 25 : 10);
 
@@ -318,7 +332,6 @@ export default function LeaderboardV2({ onBack }) {
   const [tab, setTab] = useState('all');
   const [peek, setPeek] = useState(null); // the row whose profile card is open
   const [heroes, setHeroes] = useState({}); // 053: { profile_id: equipped hero id } for the podium
-  const [bios, setBios] = useState({}); // 051 descriptions of the TOP 10 (Andy oct28: "descriptions for top accounts")
   const peekRef = useRef(null);
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
@@ -381,7 +394,8 @@ export default function LeaderboardV2({ onBack }) {
   const meRow = myId ? rows.find((r) => r.id === myId) || data.me : null;
   const meOnBoard = !!(meRow && rows.some((r) => r.id === myId));
   const podium = [rows[0], rows[1], rows[2]];
-  // the heroes of the whole board (podium + every row's head) + the TOP 10's bios ride one showcase read
+  // the heroes of the whole board (podium + every row's head) ride one showcase read (bios live in the profile card only -
+  // Andy nov2: "no need for paragraph descriptions" on the board)
   const podIds = rows.slice(0, BOARD_SIZE).map((p) => (p ? p.id : '')).join(',');
   // HEROES (053, Andy oct17 "make sure the heros shown on the leaderboard correspond to what the user actually equips"):
   // a podium player who has sent their equipped hero shows THAT hero (duplicates allowed — it's their pick). Only a player
@@ -408,7 +422,7 @@ export default function LeaderboardV2({ onBack }) {
     const ids = podIds.split(',').filter(Boolean);
     if (!ids.length) return undefined;
     let live = true;
-    import('../leaderboard/showcase.js').then((m) => m.fetchPodium(ids)).then((h) => { if (live && h) { setHeroes(h.heroes); setBios(h.bios || {}); } }).catch(() => {});
+    import('../leaderboard/showcase.js').then((m) => m.fetchPodium(ids)).then((h) => { if (live && h) { setHeroes(h.heroes); } }).catch(() => {});
     return () => { live = false; };
   }, [podIds]);
   // ranks 4 … 100 (Andy oct28 "extend to top 100"; 50 oct14, 20 oct13); past #100 your own row takes the last place, with your
@@ -416,8 +430,11 @@ export default function LeaderboardV2({ onBack }) {
   let list = rows.slice(3, BOARD_SIZE);
   if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
   const wk = tab === 'week';
-  const hR = wk ? (gains ? '+REBIRTHS' : 'REBIRTHS') : 'REBIRTHS';
-  const hL = wk ? (gains ? '+LEVELS' : 'WORDS') : 'LEVELS';
+  // a phone's header columns are 70px / 52px: the '+' ran REBIRTHS into LEVELS ("+REBIRTHS+LEVELS", audit 2); the row numbers
+  // already read +R / +12
+  const plus = gains && !narrow ? '+' : '';
+  const hR = wk ? `${plus}REBIRTHS` : 'REBIRTHS';
+  const hL = wk ? (gains ? `${plus}LEVELS` : 'WORDS') : 'LEVELS';
   // TOP n% (Andy oct17) rides the PLAYER column head, not YOUR row (Andy oct19: in the row it sat on your REBIRTHS — the
   // name line has no width to spare at any size, and on a phone the chase line is already cut)
   const myPct = !wk && meRow ? topPercent(meRow.rank, data.total) : null;
@@ -570,9 +587,8 @@ export default function LeaderboardV2({ onBack }) {
                     {mine && <span className="lb2-you">YOU</span>}
                     {/* oct29 audit: FitText shrank a long name to ~9px here. The CSS sizes it to the column with a readable
                         floor (13px desktop, 16px phone); past that it wraps - never an ellipsis (Andy oct21) */}
-                    <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{name}</span>
+                    <span className="lb2-pod-name-t lb2-pod-name-t--cut" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
                   </span>
-                  {p && bios[p.id] ? <span className="lb2-pod-bio" data-testid="lb2-pod-bio">{bios[p.id]}</span> : null}
                   {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : null}
                   {p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : <span className="lb2-plate lb2-pod-plate is-empty"><span>OPEN</span></span>}
                   <span className="lb2-pod-stats">
@@ -605,8 +621,6 @@ export default function LeaderboardV2({ onBack }) {
             // player right above you is the strongest pull a board has — a near, beatable target beats a distant top 10)
             const meK = myId ? list.findIndex((x) => x.id === myId) : -1;
             const rival = meK > 0 && list[meK - 1].rank === list[meK].rank - 1 ? list[meK - 1] : null;
-            // the TOP 10's descriptions (yours steps aside for the chase / tier news on your own row)
-            const showBio = (row, isMine) => row.rank <= 10 && !!bios[row.id] && !(isMine && (newTier || rival || row.rank > 10));
             const isRival = !!(rival && r.id === rival.id);
             const n = nums(r, tab, gains);
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
@@ -627,17 +641,16 @@ export default function LeaderboardV2({ onBack }) {
                   {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
                       member their seat colour gives them (the podium's rule) */}
                   <span className="lb2-face" aria-hidden="true"><img src={castSrc(heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
-                  <span className={`lb2-who-text${showBio(r, mine) ? ' has-bio' : ''}`}>
+                  <span className="lb2-who-text">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
                     {/* oct29 audit: FitText shrank long names to 6.5px. A row name keeps a readable size (13px floor desktop,
                         16px phone) and takes a SECOND LINE instead; the row grows to hold it */}
-                    <span className="lb2-name lb2-name--wrap" style={{ '--nl': nameEms(r.username) }}>{r.username}</span>
+                    <span className="lb2-name lb2-name--wrap" style={{ '--nl': nameEms(r.username) }}>{softBreak(r.username)}</span>
                     {isRival && <span className="lb2-rival">RIVAL</span>}
                     {wk ? <Prize rank={r.rank} /> : null}
                   </span>
                   {/* a TOP 10 player's description owns the second line (yours steps aside for the chase / tier news) */}
-                  {showBio(r, mine) ? <span className="lb2-bio">{bios[r.id]}</span> : null}
                   {/* the visit you climbed INTO a tier, that news owns the second line (the chase is back next look) */}
                   {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
                   {mine && !newTier && (rival || r.rank > 10) ? (
