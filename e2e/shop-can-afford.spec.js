@@ -10,7 +10,12 @@ import { navControl } from './support/menu.js';
 const SECRET = 'c4'.repeat(24);
 const SHOTS = process.env.SHOTS;
 
-async function boot(page, gems) {
+// pinned to known DEAL OF THE HOUR windows (v3/stock.js dealOf) so the deal never moves the numbers under test:
+// WINS's hour (WINS is lit either way), LUCK's hour (the line test buys XP and reads WINS)
+const WINS_DEAL_HOUR = 1796085000000;
+const LUCK_DEAL_HOUR = 1796092200000;
+async function boot(page, gems, at = WINS_DEAL_HOUR) {
+  await page.clock.setFixedTime(at);
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-ca', username: 'Afford', level: 40, rebirths: 1, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 12 };
@@ -65,7 +70,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844]]) {
 
 test('buying moves the line: 100 gems → buy XP (45) → WINS (60) is now NEED 5', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  const shop = await boot(page, 100);
+  const shop = await boot(page, 100, LUCK_DEAL_HOUR);
   await expect(card(shop, 'wins25')).not.toHaveClass(/is-short/);
   await card(shop, 'xp25').click();
   await expect(card(shop, 'wins25')).toHaveClass(/is-short/);

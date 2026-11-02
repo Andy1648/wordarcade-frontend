@@ -80,6 +80,30 @@ function writeJson(k, o) {
 /** The hour window `now` is in (shared by everyone: the restock lands on the wall clock's top of the hour). */
 export const windowOf = (now = Date.now()) => Math.floor(now / RESTOCK_MS);
 /** Seconds until the next restock (1 … 3600). */
+// DEAL OF THE HOUR (oct29 shop functionality, Andy "make shop much better"): each hourly window one boost on the shelf
+// is the featured deal at DEAL_OFF (−30%) — picked from the window index alone, so every device, every reload and the
+// price charged agree for the whole hour, and the next restock picks again. Never the SEALED ROLL (the server prices it)
+// and never a "soon" card. Boosts are bought on the device (buyStock), so this is client-side — no server, no SQL; the
+// econ sims buy no stock ("no gems spent, no boosts"), so their tables don't move.
+export const DEAL_OFF = 0.3;
+const DEAL_POOL = STOCK.filter((it) => !it.ticket && it.buyable !== false);
+/** The id of this window's deal. */
+export function dealOf(now = Date.now()) {
+  const w = windowOf(now);
+  // lowbias32 (an integer hash): neighbouring hours land anywhere on the shelf, not in order
+  let h = w | 0;
+  h = Math.imul(h ^ (h >>> 16), 0x7feb352d);
+  h = Math.imul(h ^ (h >>> 15), 0x846ca68b);
+  h ^= h >>> 16;
+  return DEAL_POOL[(h >>> 0) % DEAL_POOL.length].id;
+}
+/** What `id` costs in gems right now: its shelf price, or 30% off (rounded) while it is the deal. */
+export function stockPrice(id, now = Date.now()) {
+  const it = STOCK.find((x) => x.id === id);
+  if (!it) return 0;
+  return it.id === dealOf(now) ? Math.round(it.price * (1 - DEAL_OFF)) : it.price;
+}
+
 export function restockIn(now = Date.now()) {
   return Math.max(1, Math.ceil((RESTOCK_MS - (now - windowOf(now) * RESTOCK_MS)) / 1000));
 }
@@ -188,12 +212,13 @@ export function buyStock(id, now = Date.now()) {
   if (it.buyable === false) return { ok: false, reason: 'soon', gems: g.bal, left };
   if (it.ticket) return { ok: false, reason: 'ticket', gems: g.bal, left }; // sold by the server (serverTickets.buyTicket)
   if (left[id] <= 0) return { ok: false, reason: 'sold_out', gems: g.bal, left };
-  if (g.bal < it.price) return { ok: false, reason: 'gems', short: it.price - g.bal, gems: g.bal, left };
+  const price = stockPrice(id, now); // the DEAL OF THE HOUR is charged its deal price
+  if (g.bal < price) return { ok: false, reason: 'gems', short: price - g.bal, gems: g.bal, left };
   if (!applyEffect(it, now)) return { ok: false, reason: 'storage', gems: g.bal, left };
-  g.bal -= it.price;
+  g.bal -= price;
   saveGemState(g);
   tellBalance(g.bal);
   left[id] -= 1;
   writeJson(STOCK_KEY, { w: windowOf(now), left });
-  return { ok: true, gems: g.bal, left, spent: it.price };
+  return { ok: true, gems: g.bal, left, spent: price };
 }

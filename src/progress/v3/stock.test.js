@@ -45,10 +45,11 @@ test('the stock: six items (no gem scaling) at the odd gem prices, rarity bands,
 test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks', () => {
   mem.clear();
   setGems(2000);
+  const p = ST.stockPrice('overdrive', T0); // 300, or 210 in an hour OVERDRIVE is the DEAL
   let r = ST.buyStock('overdrive', T0);
   assert.equal(r.ok, true);
-  assert.equal(r.gems, 1700);
-  assert.equal(G.getGems(), 1700);
+  assert.equal(r.gems, 2000 - p);
+  assert.equal(G.getGems(), 2000 - p);
   assert.equal(r.left.overdrive, 1);
   assert.equal(BO.codeBoostMult(T0 + 1000), 5, '×5 OVERDRIVE is a ×5 boost (Andy oct11)');
   assert.ok(BO.boostRemaining(T0) <= 5 * 60000 && BO.boostRemaining(T0) > 4 * 60000);
@@ -56,16 +57,16 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   assert.equal(r.ok, true);
   r = ST.buyStock('overdrive', T0 + 2000);
   assert.deepEqual([r.ok, r.reason], [false, 'sold_out']);
-  assert.equal(G.getGems(), 1400, 'a sold-out try charges nothing');
+  assert.equal(G.getGems(), 2000 - 2 * p, 'a sold-out try charges nothing');
   assert.equal(ST.stockLeft(T0 + ST.RESTOCK_MS).overdrive, 2, 'restocked in the next window');
 });
 
 test('short on gems → refused with the gap; nothing charged, nothing taken', () => {
   mem.clear();
-  setGems(100);
+  setGems(50);
   const r = ST.buyStock('luck2', T0);
-  assert.deepEqual([r.ok, r.reason, r.short], [false, 'gems', 20]);
-  assert.equal(G.getGems(), 100);
+  assert.deepEqual([r.ok, r.reason, r.short], [false, 'gems', ST.stockPrice('luck2', T0) - 50]);
+  assert.equal(G.getGems(), 50);
   assert.equal(ST.stockLeft(T0).luck2, 3);
 });
 
@@ -148,4 +149,28 @@ test('065 SEALED ROLLS are never sold locally (the server sells them) and never 
   assert.equal(ST.STOCK.find((it) => it.id === 'epicroll').price, 500, '069: EPIC+ costs 500');
   assert.ok(!ST.STOCK.some((it) => it.ticket === 'legendary'), '069: the LEGENDARY+ ROLL is not sold (wheel jackpot / grants only)');
   assert.equal(ST.stockLeft(T0 + 3_600_000).epicroll, 2, 'a new hour restocks it');
+});
+
+// DEAL OF THE HOUR (oct29): one boost a window at −30%, the same for the whole hour, re-picked each restock; never the
+// SEALED ROLL; the price charged is the deal price
+test('DEAL OF THE HOUR: one boost per window at 30% off, stable all hour, charged at the deal price', () => {
+  const ids = new Set();
+  for (let k = 0; k < 48; k += 1) {
+    const t = T0 + k * ST.RESTOCK_MS;
+    const d = ST.dealOf(t);
+    ids.add(d);
+    assert.equal(ST.dealOf(t + ST.RESTOCK_MS - 60_000), d, 'the same deal for the whole hour');
+    assert.notEqual(d, 'epicroll', 'never the server-priced SEALED ROLL');
+    const it = ST.STOCK.find((x) => x.id === d);
+    assert.equal(ST.stockPrice(d, t), Math.round(it.price * 0.7));
+    for (const o of ST.STOCK) if (o.id !== d) assert.equal(ST.stockPrice(o.id, t), o.price, 'everything else at its shelf price');
+  }
+  assert.ok(ids.size >= 4, `the deal moves around the shelf over two days (${[...ids]})`);
+  mem.clear();
+  setGems(1000);
+  const d = ST.dealOf(T0);
+  const r = ST.buyStock(d, T0);
+  assert.equal(r.ok, true);
+  assert.equal(r.spent, ST.stockPrice(d, T0));
+  assert.equal(G.getGems(), 1000 - ST.stockPrice(d, T0));
 });

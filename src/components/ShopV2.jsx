@@ -67,22 +67,38 @@ const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { t
 // on its painted crystal backplate (ShopV2.css, RARITY BEYOND COLOUR). COMMON stays plain: the ladder has a bottom.
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
-function StockCard({ it, left, onBuy, floatRef, gems }) {
+function StockCard({ it, left, onBuy, floatRef, gems, now }) {
   const R = V3.stock.RARITY[it.rarity];
   const sold = left <= 0;
   const soon = it.buyable === false;
+  // DEAL OF THE HOUR (oct29, v3/stock.js dealOf / stockPrice): this window's deal wears the painted ribbon and its price
+  // tag shows the deal price with the shelf price struck beside it; the charge is the same number (buyStock)
+  const deal = !it.ticket && V3.stock.dealOf(now) === it.id;
+  const price = it.ticket ? it.price : V3.stock.stockPrice(it.id, now);
   // CAN-AFFORD (oct29 shop functionality): a card you can buy now keeps its lit price; one you can't says how many
   // gems short you are on the price itself (the tap still answers with the deny shake + the gems pill)
-  const short = !sold && !soon ? Math.max(0, it.price - gems) : 0;
+  const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
       stamped={sold}
       kind="soldout"
-      className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}${short ? ' is-short' : ''}`}
+      className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}${short ? ' is-short' : ''}${deal ? ' is-deal' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
-      badge={it.rarity === 'epic' ? <img className="sp2-gem" src="/shop/gem-epic-v1.webp" width="512" height="512" alt="" draggable="false" /> : null}
-      ariaLabel={`${it.name || ''} ${it.big}${it.what ? ` ${it.what}` : ''}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left${short ? `, you need ${short} more` : ''}`}`}
+      badge={(
+        <>
+          {it.rarity === 'epic' ? <img className="sp2-gem" src="/shop/gem-epic-v1.webp" width="512" height="512" alt="" draggable="false" /> : null}
+          {/* the DEAL ribbon hangs off the card's top-right corner, outside the face (like the gem on the other corner):
+              never on the art, never cut by the border */}
+          {deal ? (
+            <span className="sp2-deal" data-testid="deal-ribbon" aria-hidden="true">
+              <img className="sp2-deal-art" src="/shop/deal-ribbon-v1.webp" width="512" height="512" alt="" draggable="false" />
+              <span className="sp2-deal-t">−{Math.round(V3.stock.DEAL_OFF * 100)}%</span>
+            </span>
+          ) : null}
+        </>
+      )}
+      ariaLabel={`${it.name || ''} ${it.big}${it.what ? ` ${it.what}` : ''}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${deal ? `deal of the hour, ${price} gems (was ${it.price})` : `${price} gems`}, ${left} left${short ? `, you need ${short} more` : ''}`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
         <span className="sp2-band" title={R.name}>
@@ -96,7 +112,8 @@ function StockCard({ it, left, onBuy, floatRef, gems }) {
         {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
-          {soon ? 'SOON' : short ? <span className="sp2-short" data-testid={`short-${it.id}`}>NEED {formatNum(short)}</span> : formatNum(it.price)}
+          {soon ? 'SOON' : short ? <span className="sp2-short" data-testid={`short-${it.id}`}>NEED {formatNum(short)}</span> : formatNum(price)}
+          {deal && !short && !soon ? <s className="sp2-was" data-testid="deal-was">{formatNum(it.price)}</s> : null}
         </span>
       </span>
       <span className="sp2-float" ref={floatRef} aria-hidden="true">
@@ -416,7 +433,7 @@ export default function ShopV2({ onBack }) {
             {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
-                <StockCard it={it} left={left[it.id]} gems={gems} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
+                <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
               </div>
             ))}
           </div>
