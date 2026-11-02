@@ -520,3 +520,9 @@
   .game-over-overlay .game-over-card.rs2:not(.rs2--narrow) { --rs2-hero-w: 410px; grid-template-columns: calc(410px * var(--u)) minmax(0, 1fr) calc(320px * var(--u)); }
 }
 
+
+/* ZERO BARS HIDE (design audit nov2): a "+0" GEMS box or a "+0" WINS total is not a result — on a phone the gold +0 bar
+   pushed the stack into the RANK / WORDS header. Hidden while zero; both are live (the ledger / the total re-render). */
+.rs2-gems:has(.gems-earned[data-gems-total='0']) { display: none; }
+.rs2-total:has([data-wins-total='0']) { display: none; }
+.rs2-sum:not(:has(> :not(.rs2-gems:has(.gems-earned[data-gems-total='0'])):not(.rs2-total:has([data-wins-total='0'])))) { display: none; }

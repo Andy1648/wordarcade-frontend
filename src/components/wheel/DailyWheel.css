@@ -374,3 +374,7 @@
 .dw-pop-art { width: 70%; height: 70%; filter: drop-shadow(1cqw 1cqw 0 #000); }
 .dw-pop-burst { width: 150%; height: 150%; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .dw-pop, .dw-lit, .dw-wedge { display: none; } }
+
+/* OFFLINE: the disabled SPIN + RETRY side by side (they stack on a narrow foot) */
+.dw-off { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; }
+.dw-off .kb-lockchip { font-size: var(--fs-body); } /* the reason reads at the 16px floor */

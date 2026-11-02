@@ -79,6 +79,9 @@ test('the TOTAL first: ×1,215 = 12,150 WINS / WORD, then BASE · MODE · REBIRT
   await expect(total).toHaveText('×1,215', { timeout: 8000 });
   await expect(st.locator('[data-testid="st2-result"]')).toHaveText('12.2K');
   await expect(st.locator('.st2-unit')).toHaveText('WINS / WORD');
+  // the formula sits behind the "?" (design audit nov2 #6)
+  await expect(st.locator('.st2-basex')).toHaveCount(0);
+  await st.getByTestId('st2-info').click();
   await expect(st.locator('.st2-basex')).toHaveText('BASE 10 × 1,215');
   // the TOTAL is the first number on the screen (before the chain)
   const order = await st.evaluate((root) => {

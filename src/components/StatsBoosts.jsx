@@ -6,11 +6,12 @@ import { formatFrenzy } from '../progress/frenzy.js';
 import { useTimerClock } from '../frenzy/useTimerClock.js';
 import { boostArt } from '../progress/boostArt.js';
 
+// WHERE each boost comes from — ONE line each (design audit nov2 #6: it was a three-line wall of explanation)
 const WHERE = [
-  ['OVERDRIVE ×5', 'XP + WINS', 'UPGRADES → BOOSTS (BUY AGAIN = +5 MIN)'],
-  ['XP / WINS +50%', 'XP PER KEY / WINS PER WORD', 'UPGRADES → BOOSTS'],
-  ['LUCK ×2', 'ROLL LUCK', 'UPGRADES → BOOSTS'],
-  ['FRENZY ×5', 'XP PER KEY', 'LIGHT ALL 26 LETTERS IN FUSE (FREE)'],
+  ['OVERDRIVE ×5', 'SHOP'],
+  ['XP / WINS +50%', 'SHOP'],
+  ['LUCK ×2', 'SHOP'],
+  ['FRENZY ×5', 'FUSE · ALL 26'],
 ];
 
 export default function StatsBoosts() {
@@ -34,10 +35,10 @@ export default function StatsBoosts() {
         <p className="st2-bl-none">NO BOOSTS RUNNING</p>
       )}
       <div className="st2-where" aria-label="Where boosts come from">
-        <span className="st2-where-h">WHERE BOOSTS COME FROM</span>
-        {WHERE.map(([n, w, from]) => (
+        <span className="st2-where-h">GET BOOSTS</span>
+        {WHERE.map(([n, from]) => (
           <span className="st2-where-row" key={n}>
-            <b>{n}</b> <span>ON {w}</span> <i>{from}</i>
+            <b>{n}</b> <i>{from}</i>
           </span>
         ))}
       </div>

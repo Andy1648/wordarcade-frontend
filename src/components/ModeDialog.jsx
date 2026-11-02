@@ -7,7 +7,6 @@ import { MODES } from './modeDialogConfig';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
-import ModeExample from './ModeExample';
 import { reduceMotion } from '../lib/reduceMotion';
 
 
@@ -138,6 +137,7 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   }, []);
 
   const accent = mode.accent;
+  const art = game.artLayers || null;
   const overlay = (
     <div className="mode-dialog-overlay" role="presentation">
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
@@ -172,13 +172,16 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
           ✕
         </button>
 
-        <div className="mode-dialog-content">
-          <div
-            className="mode-dialog-chip"
-            style={{ color: accent, borderColor: accent }}
-          >
-            {mode.chip}
-          </div>
+        <div className={`mode-dialog-content${art ? ' has-art' : ''}`}>
+          {/* THE HERO (design audit nov2 #4): the mode's own painted card art — its backdrop + hero, the same 2:3 frame
+              the menu card shows (already cached by the menu), still. No tagline chip, no EXAMPLE box, no stats list:
+              the title, one hook line, the art and the choice. SAT RUSH / WORD RACE have no painted card yet, so none. */}
+          {art ? (
+            <div className="mode-dialog-art" aria-hidden="true" style={{ '--md-hy': art.heroY || '-11%', '--md-hs': art.heroScale || 0.76, borderColor: darken(game.baseColor, 0.45) }}>
+              <img className="mode-dialog-art-l" src={art.bg} alt="" draggable="false" decoding="async" />
+              <img className="mode-dialog-art-l mode-dialog-art-hero" src={art.hero} alt="" draggable="false" decoding="async" />
+            </div>
+          ) : null}
 
           <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
             <div className="mode-dialog-title">
@@ -196,10 +199,6 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            {/* No MASTERY line (Andy oct10: "no one has cared abt it"). */}
-            {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
-                rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
-            <ModeExample mode={game.id} accent={accent} />
 
             {modeKey === 'blitz' && (
               <PackPicker
