@@ -32,6 +32,14 @@
 .mx-sheet::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--mx-tier, #5c0fa3); }
 /* the card's own layer: a rare gear's GearFx glow sits behind it (z-index -1 inside this isolated box) */
 .mx-sheet-card { position: relative; isolation: isolate; }
+/* AURA ROOM (Andy nov2 "borders are still cropping the gear auras (such as on leaderboard)"): the sheet scrolls on a
+   short screen (overflow-y:auto), so it clips at its padding box — and a MYTHIC / SECRET glow reaches --gfx-out 42px
+   past the card, where the sheet only had 22–24px of padding. The card's margin tops the padding up to the widest
+   glow (42px) on every side the glow meets the sheet's edge; the right side faces the body column, not an edge. The
+   glow's hover swell (GearFx.css ×1.2) is held still here: the sheet's card is not a button, and the swell would reach
+   past any room the sheet can give. */
+.mx-sheet-card { margin: 20px 0 22px 18px; }
+.mx-sheet-card:hover > .gfx { transform: none; }
 .mx-sheet-close {
   position: absolute;
   top: 14px;
@@ -138,6 +146,7 @@
 @media (max-width: 560px) {
   /* GEAR SHEET v2 on a phone: the card on top, a step smaller (the main stat under it stays the biggest text) */
   .mx-sheet { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; padding: 38px 14px 18px; gap: 12px; --mc-w: 158px; --mc-s: 0.8778; }
+  .mx-sheet-card { margin: 4px 0 0; } /* the card is centred (room each side); the top pad 38 + 4 clears the 42px glow */
   .mx-sheet-body { padding-right: 0; justify-items: center; gap: 10px; }
   .mx-sheet-banner { display: none; } /* the card right above already carries its tier plate — no double MYTHIC on a phone */
   .mx-main, .mx-sheet-perk, .mx-sheet-crit, .mx-fact { justify-items: center; }
