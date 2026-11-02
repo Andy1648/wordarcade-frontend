@@ -38,14 +38,6 @@ function LookAct({ it, isOn, isOwned, can, price, owner, onBuy, onEquip, onWear 
   );
 }
 
-// the keycap presses down once per tap — one finite WAAPI run (transform only), none under REDUCE MOTION
-const KEY_PRESS = [{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(6px) scale(.92, .86)', offset: 0.35 }, { transform: 'translateY(0) scale(1)' }];
-function pressKey(el) {
-  if (!el || !el.animate) return;
-  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch { /* no matchMedia */ }
-  el.animate(KEY_PRESS, { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
-}
-
 function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, trying, owner, onWear }) {
   const price = priceOf(it);
   const isOwned = owned.has(it.id) || price === 0;
