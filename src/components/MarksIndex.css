@@ -175,11 +175,15 @@
   .mx-back { min-height: 48px; }
   .mx-tierchip { height: 48px; }
 }
-/* phones: two cards a row */
+/* phones: ONE card a row, at a size whose stat lines READ (overlap audit oct29). Two-up, a 164px card scaled its face to
+   0.91, so the substats and the stat kind ("+25% CRIT POWER", "WINS IN WORD BOMB") — the card's actual information —
+   rendered at 12.5–12.8px, under the phone's 16px floor. A 216px card (the gear sheet's own ×1.2) puts them at 16.8px.
+   The index is a real list, so it scrolls; nothing on the card is hidden or re-typeset. */
 @media (max-width: 560px) {
   /* two cards a row at 390: 164 + 8 + 164 = 336, which leaves 27px each side for the glow (indexGlow.js scales the
      aura to 0.5 here, so MYTHIC's is 21px — it fits even when a desktop window's 10px scrollbar lane takes 5px a side) */
-  .mx-panel { --mx-pad-x: 12px; padding: 12px var(--mx-pad-x) 0; gap: 12px; --mc-w: 164px; --mc-s: 0.9111; }
+  .mx-panel { --mx-pad-x: 12px; padding: 12px var(--mx-pad-x) 0; gap: 12px; --mc-w: 216px; --mc-s: 1.2; }
+  .mx-panel.eq-panel { --mc-w: 164px; --mc-s: 0.9111; } /* the EQUIP picker keeps its two-up cards (not in this pass) */
   .mx-head { gap: 10px; }
   .mx-back { min-height: 44px; padding: 0 12px; font-size: var(--fs-k20); border-width: 3px; box-shadow: 4px 4px 0 #000; }
   .mx-count { -webkit-text-stroke: 4px #000; }
@@ -189,16 +193,20 @@
   .mx-tierchip-bar { height: 6px; border-bottom-width: 3px; }
   .mx-tierchip-num { font-size: var(--fs-k20); -webkit-text-stroke: 3px #000; text-shadow: 2px 2px 0 #000; }
   /* fixed columns, centred: the slack goes to the two outer edges (where the glow needs it), not inside the cells */
-  .mx-grid { grid-template-columns: repeat(2, var(--mc-w)); justify-content: center; column-gap: 8px; row-gap: 20px; padding: 26px 0 32px; }
+  .mx-grid { grid-template-columns: var(--mc-w); justify-content: center; column-gap: 8px; row-gap: 24px; padding: 26px 0 32px; }
+  .mx-grid.eq-grid { grid-template-columns: repeat(2, var(--mc-w)); row-gap: 20px; }
+  .mx-panel:not(.eq-panel) .mx-tile-main { font-size: var(--fs-body); } /* EQUIPPED is information: the 16px floor */
   /* the room beside two phone-width cards fits the glow at rest, not GearFx's ×1.2 hover swell (a narrow desktop
      window has hover) — so the glow holds still here */
   .mx-panel .mx-grid .mx-tile:hover > .gfx { transform: none; }
 }
+/* (360 / 320 wide keep the one 216px INDEX card: 336 / 296px of row leaves 60 / 40px each side — more room than
+   indexGlow.js's phone aura needs; the EQUIP picker's two-up cards step down as before) */
 @media (max-width: 375px) {
-  .mx-panel { --mc-w: 152px; --mc-s: 0.8444; } /* 360 wide: 152 + 8 + 152 = 312 → 24px each side (19 beside a desktop scrollbar lane) for an 18px glow */
+  .mx-panel.eq-panel { --mc-w: 152px; --mc-s: 0.8444; }
 }
 @media (max-width: 340px) {
-  .mx-panel { --mc-w: 148px; --mc-s: 0.8222; } /* 320 wide: 8px each side — indexGlow.js shrinks the aura to fit */
+  .mx-panel.eq-panel { --mc-w: 148px; --mc-s: 0.8222; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mx-tile, .mx-back { transition: none; }

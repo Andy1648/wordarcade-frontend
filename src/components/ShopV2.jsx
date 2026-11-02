@@ -18,7 +18,7 @@ import PowerLadder from './PowerLadder.jsx';
 import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
-import { getKeyTier, keyTierCost, keyXpMult, loadProgress, getRebirths } from '../progress/xp';
+import { getKeyTier, keyTierCost, keyXpMult } from '../progress/xp';
 import { letterXpNow } from '../progress/letterXp';
 import { buyKeyPower } from '../progress/shop';
 // v3/stock.js rides in the v3 chunk (installed before the first render in season 2) — read through the V3 holder, so
@@ -29,24 +29,26 @@ import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
 import ShopV2Looks from './ShopV2Looks';
-import { MenuXpFx } from './MenuXp';
-import { menuTier } from '../progress/menuTier';
 import DailyDrop from './DailyDrop';
 import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
+import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
+// COSMETICS (Andy oct28 "i want all cosmetics to be from profile"): the shop's COSMETICS tab opens the PROFILE's one
+// CUSTOMIZE menu over the shop (pop styles first) — the shop keeps no cosmetics screen of its own
+const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
+// the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
+const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
 // each cut file lands in public/shop/ (never a path that is not there: no 404s, no broken-image frame).
-const SHOP_ART = {
-  xp25: '/shop/xp.webp', wins25: '/shop/wins.webp', luck2: '/shop/luck.webp',
-  overdrive: '/shop/overdrive.webp', extend: '/shop/everything.webp',
-};
+// oct29: the ChatGPT gear-quality set (progress/boostArt.js — the SAME pictures the dock / STATS / pill show)
+const SHOP_ART = SHOP_ITEM_ART;
 
 const NOTE = {
   nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
@@ -60,6 +62,9 @@ const NOTE = {
 const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
 const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
+// RARITY READS BEYOND COLOUR (Andy oct28 "for rarer items maybe make the design more than just color"): RARE / EPIC cards
+// sweep their tier's shine band on hover, an EPIC card wears a gold-set gem on its corner, and the featured canister stands
+// on its painted crystal backplate (ShopV2.css, RARITY BEYOND COLOUR). COMMON stays plain: the ladder has a bottom.
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
 function StockCard({ it, left, onBuy, floatRef }) {
@@ -73,6 +78,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
+      badge={it.rarity === 'epic' ? <img className="sp2-gem" src="/shop/gem-epic-v1.webp" width="512" height="512" alt="" draggable="false" /> : null}
       ariaLabel={`${it.name || ''} ${it.big}${it.what ? ` ${it.what}` : ''}${it.time ? `, ${it.time}` : ''} — ${sold ? 'sold out' : soon ? 'coming soon' : `${it.price} gems, ${left} left`}`}
     >
       <span className="sp2-card-in" data-stock={it.id}>
@@ -84,6 +90,7 @@ function StockCard({ it, left, onBuy, floatRef }) {
         <span className="sp2-big">{it.big}</span>
         {it.what ? <span className="sp2-what">{it.what}</span> : null}
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
+        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : formatNum(it.price)}
@@ -122,8 +129,7 @@ function DailyChestCard({ now, onOpen }) {
           <span className="sp2-left">{claimed ? '×0' : '×1'}<span className="sp2-left-w"> LEFT</span></span>
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
-          <img className="sp2-chest-base" src="/art/drop/chest-base.svg" alt="" draggable="false" />
-          <img className="sp2-chest-lid" src="/art/drop/chest-lid.svg" alt="" draggable="false" />
+          <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
         </span>
         <span className="sp2-big">CHEST</span>
         <span className="sp2-what">ONCE A DAY</span>
@@ -158,8 +164,7 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
-  const tryFxRef = useRef(null); // the LOOKS try-on's pop layer (MenuXpFx)
-  const [tryTier] = useState(() => menuTier(loadProgress().level, getRebirths())); // the menu tier its pops are sized at
+  const [cosmetics, setCosmetics] = useState(false); // the profile's CUSTOMIZE menu, opened over the shop
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
   const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
   const buying = useRef(false);
@@ -192,6 +197,11 @@ export default function ShopV2({ onBack }) {
   useStageScale(rootRef);
 
   useEffect(() => subscribeGems(setGems), []);
+  // the shelf tabs' NEW dots (oct28, v3/shopDots.js — the menu's UPGRADES dot reads the same): COSMETICS lights for a newly
+  // affordable look, until CUSTOMIZE's POP STYLE / SOUND tab shows it
+  // V3.dots, never a static import: this chunk is idle-prefetched in season 1 too, and v3/hooks.js must only ever run under
+  // the v3 install (a static import here evaluated it in season 1 and doubled the gear stats — e2e/marks.spec.js caught it)
+  const tabDot = V3.dots ? { boosts: V3.dots.boostsNew(now), cosmetics: V3.dots.looksNew(gems), codes: false } : {};
   useEffect(() => {
     evShopOpened();
     rootRef.current?.focus();
@@ -308,6 +318,7 @@ export default function ShopV2({ onBack }) {
           </div>
         </div>
       ) : null}
+      {cosmetics ? <Suspense fallback={null}><ProfilePopup view0="customize" tab0="pop" onClose={() => setCosmetics(false)} /></Suspense> : null}
       {ladder ? <PowerLadder current={form.n} onClose={() => { setLadder(false); plateRef.current?.focus(); }} /> : null}
       <div className="sp2-scale">
       <div className="sp2-stage">
@@ -378,21 +389,21 @@ export default function ShopV2({ onBack }) {
         <section className="sp2-stock" aria-label="Boosts">
           <div className="sp2-stock-head">
             <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
-              {[['boosts', 'BOOSTS'], ['looks', 'LOOKS'], ['codes', 'CODES']].map(([k, label]) => (
-                <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k} onClick={() => setShelf(k)}>
+              {SHELVES.map(([k, label, icon]) => (
+                <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k}
+                  onClick={() => (k === 'cosmetics' ? setCosmetics(true) : setShelf(k))}>
+                  <img className="sp2-tab-ico" src={icon} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
                   {label}
+                  {tabDot[k] && shelf !== k ? <span className="sp2-dot sp2-tab-dot" data-testid={`shop-tab-dot-${k}`} aria-hidden="true" /> : null}
                 </button>
               ))}
             </div>
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
           <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR · SCROLL FOR MORE' : shelf === 'looks' ? 'BOUGHT ONCE, KEPT FOREVER · POP STYLES MULTIPLY YOUR XP' : 'REDEEM A CODE'}
+            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR' : 'REDEEM A CODE'}
           </div>
-          {/* LOOKS TRY-ON (oct26): the menu's own pop layer (MenuXpFx — the pooled pops, shards and painted bursts) over the
-              shelf, so a tried pop style throws exactly what it throws on the menu, at the player's menu tier */}
-          {shelf === 'looks' ? <div className="sp2-tryfx" aria-hidden="true"><MenuXpFx ref={tryFxRef} menuTier={tryTier} /></div> : null}
-          {shelf !== 'boosts' ? <div className="sp2-shelf"><ShopV2Looks tab={shelf} gems={gems} onNote={setNote} tryFxRef={tryFxRef} /></div> : null}
+          {shelf === 'codes' ? <div className="sp2-shelf"><ShopV2Looks tab="codes" gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (
               <div className="sp2-cell is-chest">

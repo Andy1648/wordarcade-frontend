@@ -45,6 +45,7 @@ export default function useFitZoom(ref, active = true) {
         if (z !== 1) {
           z = 1;
           el.style.removeProperty('zoom');
+          el.style.removeProperty('--fit-zoom');
         }
         return;
       }
@@ -58,6 +59,8 @@ export default function useFitZoom(ref, active = true) {
       if (Math.abs(next - z) > 0.01) {
         z = next;
         el.style.zoom = next.toFixed(3);
+        // the zoom as a CSS var too, so a caption can hold the 13px floor under a shrink (RoomScreenV2.css .room-code-copied)
+        el.style.setProperty('--fit-zoom', next.toFixed(3));
       }
     };
     const schedule = () => {

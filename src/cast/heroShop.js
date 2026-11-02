@@ -10,6 +10,7 @@ export function buyHero(id) {
   const e = ALL_HEROES.find((x) => x.id === id);
   if (!e) return { ok: false, reason: 'unknown' };
   if (e.gold) { if (!ownsHero(id)) return { ok: false, reason: 'locked' }; writeMain(id); return { ok: true }; } // GOLD: earned, never sold
+  if (e.chase) { if (!ownsHero(id)) return { ok: false, reason: 'locked' }; writeMain(id); return { ok: true }; } // CHASE: only a drop, never sold
   if (!e.price) { writeMain(id); return { ok: true }; }
   const owned = ownedHeroes();
   if (!owned.includes(id) && !ownsHero(id)) {

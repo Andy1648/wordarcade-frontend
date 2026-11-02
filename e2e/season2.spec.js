@@ -150,9 +150,9 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
   });
 }
 
-// 035 (Andy oct12): menu typing alone never rebirths — at the LV gate with no GAME words the REBIRTH tile opens (never
-// "locked at LV15" while at LV15) and says how many words to play; the REBIRTH screen asks for them instead of a hold.
-test('SEASON2: at the gate with 0 game words the rebirth asks for 10 words played in a game (037)', async ({ page }) => {
+// 074 (Andy oct28 "remove the requirement that you need to type 10 words to rebirth"): at the LV gate with no GAME
+// words the REBIRTH tile is READY and the REBIRTH screen offers the hold — no words quest.
+test('SEASON2: at the gate with 0 game words the rebirth is ready (074: no words gate)', async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.addInitScript(() => { window.__S2_NO_GAME_WORDS = true; });
@@ -164,11 +164,10 @@ test('SEASON2: at the gate with 0 game words the rebirth asks for 10 words playe
   }, { timeout: 30_000 }).toBeGreaterThanOrEqual(15);
   const tile = navControl(page, 'rebirth');
   await expect(tile).not.toHaveAttribute('data-locked', '');
-  await expect(tile).toContainText('10'); // 037: 10 game words a rebirth (was 25)
+  await expect(tile).not.toContainText('WORDS');
   await tile.click();
   const rb = page.locator('.rb2');
   await rb.waitFor({ state: 'visible' });
-  await expect(rb.locator('.rb2-gate-txt')).toHaveText('QUEST: PLAY 10 WORDS IN A GAME'); // the count lives on the button (Andy oct22: one read-out)
-  await expect(rb.locator('.rb2-hold .kb')).toBeDisabled();
+  await expect(rb.locator('.rb2-hold .kb')).toBeEnabled();
 });
 

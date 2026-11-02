@@ -1,6 +1,6 @@
 // e2e/hero-preview.spec.js — THE HERO PREVIEW (oct18, Andy: "card previews … better hero menu presentation … larger
-// proportions"). A card in CHOOSE YOUR MAIN opens the preview (never an instant equip): the hero big, its poses, how
-// you get it, one button. ‹ › flip the roster; a locked ELITE is shown for real (the card keeps its silhouette); HOLD TO
+// proportions"). oct28 (Andy "tap to equip"): in CUSTOMIZE's HERO tab a tap on a hero you OWN wears it at once; the one
+// you wear, or one you don't own, opens the preview: the hero big, its poses, how you get it, one button. ‹ › flip the roster; a locked ELITE is shown for real (the card keeps its silhouette); HOLD TO
 // BUY buys + equips and returns to the profile. Screenshots land in claude/shots/hero-preview when SHOTS=1.
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
@@ -21,7 +21,7 @@ async function openPicker(page, vp, gems) {
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
   await page.locator('[data-nav="profile"]:visible').first().click();
-  await page.locator('.pf-change').click();
+  await page.getByTestId('profile-kit').click(); // CUSTOMIZE opens on its HERO tab
   await expect(page.locator('.hp2-coll')).toBeVisible();
 }
 
@@ -29,13 +29,14 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   test(`hero preview ${vn}: a card opens the preview, ‹ › flip the roster, the poses cycle`, async ({ page }) => {
     await openPicker(page, vp, 400);
     await shot(page, `${vn}-1-grid`);
-    // tapping a card never equips — it previews
+    // oct28 tap to equip: a tap on a hero you own wears it on the spot; a tap on the one you wear previews it
     await page.locator('.hc[data-hero="hype"]').click();
     const pv = page.getByTestId('hero-preview');
+    await expect(pv).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.main'))).toBe('hype');
+    await page.locator('.hc[data-hero="hype"]').click();
     await expect(pv).toHaveAttribute('data-hero', 'hype');
     await expect(pv.locator('.hpv-name')).toHaveText('HYPE');
-    await expect(pv.getByRole('button', { name: 'EQUIP HYPE' })).toBeVisible();
-    expect(await page.evaluate(() => localStorage.getItem('taw.main'))).toBe('riot');
     await page.waitForTimeout(700);
     await shot(page, `${vn}-2-preview-crew`);
     // the WIN / KO tabs show the poses
@@ -48,6 +49,7 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     // one card per member (oct18): HEX's card → its ELITE tab previews ARCHMAGE HEX
     await expect(page.locator('.hc[data-hero="hex-elite"]')).toHaveCount(0);
     await page.locator('.hc[data-hero="hex"]').click();
+    if (!(await pv.isVisible())) await page.locator('.hc[data-hero="hex"]').click(); // owned: the first tap wore it
     await pv.getByRole('tab', { name: /ELITE/ }).click();
     await expect(pv).toHaveAttribute('data-hero', 'hex-elite');
     await expect(pv.locator('.hpv-tier')).toHaveText('ELITE');
@@ -63,13 +65,14 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     // an earnable crew member shows its progress bar to the requirement
     await pv.getByRole('button', { name: '‹ ALL HEROES' }).click();
     await page.locator('.hc[data-hero="mecha"]').click();
+    if (!(await pv.isVisible())) await page.locator('.hc[data-hero="mecha"]').click();
     await expect(pv.locator('.hpv-prog-n')).toHaveText('0 / 10');
     await page.waitForTimeout(700);
     await shot(page, `${vn}-5-preview-legend`);
   });
 }
 
-test('hero preview: HOLD TO BUY buys + equips the hero and returns to the profile', async ({ page }) => {
+test('hero preview: HOLD TO BUY buys + equips the hero; the profile wears it', async ({ page }) => {
   await openPicker(page, { width: 1366, height: 768 }, 3000);
   await page.locator('.hc[data-hero="lexi"]').click();
   const pv = page.getByTestId('hero-preview');
@@ -84,7 +87,7 @@ test('hero preview: HOLD TO BUY buys + equips the hero and returns to the profil
   await shot(page, 'cb-6-unlock-bought');
   await hu.getByRole('button', { name: "LET'S GO" }).click();
   await expect(hu).toHaveCount(0);
-  await expect(page.locator('.pf-change')).toBeVisible();
+  await page.locator('.pf-back').click(); // CUSTOMIZE stays open after a buy (oct28); back to the profile
   await expect(page.locator('.pf-hero')).toHaveText('LEXI');
   expect(await page.evaluate(() => localStorage.getItem('taw.main'))).toBe('lexi');
 });
@@ -117,12 +120,12 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     // once only: reopening the profile shows no reveal
     await page.locator('.pf-x').click();
     await page.locator('[data-nav="profile"]:visible').first().click();
-    await expect(page.locator('.pf-change')).toBeVisible();
+    await expect(page.getByTestId('profile-kit')).toBeVisible();
     await expect(hu).toHaveCount(0);
   });
 }
 
-test('YOUR HEROES (oct19, replaces NEXT HERO): the profile shows the heroes you own; tapping one wears it', async ({ page }) => {
+test('oct28 declutter: the profile is your hero + ONE CUSTOMIZE button; its HERO tab is one grid, tap to wear', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await installBackendMock(page);
   await page.addInitScript((s) => { if (sessionStorage.getItem('hg.seeded')) return; sessionStorage.setItem('hg.seeded', '1'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, seed(0));
@@ -130,12 +133,15 @@ test('YOUR HEROES (oct19, replaces NEXT HERO): the profile shows the heroes you 
   await menuReady(page);
   await page.locator('[data-nav="profile"]:visible').first().click();
   await expect(page.locator('.pf-goal')).toHaveCount(0); // no "next hero" nag
-  const crew = page.getByRole('region', { name: 'Your heroes' });
-  await expect(crew.getByRole('button', { name: 'RIOT, equipped' })).toHaveAttribute('aria-pressed', 'true');
-  await crew.getByRole('button', { name: 'Equip HYPE' }).click();
+  // no hero strip, no CHANGE HERO, no tagline: one CUSTOMIZE
+  await expect(page.locator('.pf-crew, .pf-change, .pf-hero-tag')).toHaveCount(0);
+  await page.getByTestId('profile-kit').click();
+  await expect(page.getByTestId('customize').getByRole('tab', { name: 'HERO' })).toHaveAttribute('aria-selected', 'true');
+  await page.locator('.hc[data-hero="hype"]').click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('taw.main'))).toBe('hype');
+  await page.locator('.pf-back').click();
   await expect(page.locator('.pf-hero')).toHaveText('HYPE');
-  expect(await page.evaluate(() => localStorage.getItem('taw.main'))).toBe('hype');
-  await shot(page, 'cb-9-profile-crew');
+  await shot(page, 'cb-9-profile-declutter');
 });
 
 test('menu chip says NEW HERO! while an earned hero waits to be revealed', async ({ page }) => {

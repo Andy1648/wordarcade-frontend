@@ -12,7 +12,7 @@
 // the intro straight to the menu.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { modeEntry, satSetupGo } from './support/menu.js';
+import { modeEntry, revealMode, satSetupGo } from './support/menu.js';
 
 // The text of an element with its blank / filled word removed, whitespace
 // collapsed — so a briefing card sentence (word filled in) and the in-game
@@ -39,9 +39,9 @@ test.describe('SAT Rush', () => {
     await page.goto('/?satRush=1&portal=1');
 
     // The menu card opens the SAT dialog: BRIEFING / LINEUP (solo — no CREATE/JOIN).
-    const card = page.locator('[data-game="sat-rush"]');
+    const card = await revealMode(page, 'sat-rush');
     await expect(card).toBeVisible();
-    await card.locator('.game-card').click();
+    await card.click();
 
     // The dialog's BRIEFING button.
     await pickMode(page, 'briefing');
@@ -132,7 +132,7 @@ test.describe('SAT Rush', () => {
   test('LINEUP mode: no study screen, a suspect lineup is served with the word', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    await modeEntry(page, 'sat-rush').click();
+    await (await revealMode(page, 'sat-rush')).click();
 
     // Choose LINEUP — it drops straight into the run (no briefing screen).
     await pickMode(page, 'lineup');
@@ -156,7 +156,7 @@ test.describe('SAT Rush', () => {
   test('the briefing studies 5 words and the first served word is one of them', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    await modeEntry(page, 'sat-rush').click();
+    await (await revealMode(page, 'sat-rush')).click();
     await pickMode(page, 'briefing');
 
     // Five cards; capture each word's surrounding sentence context.
@@ -201,9 +201,9 @@ test.describe('SAT Rush', () => {
     // the ordinary menu entry: the house popup with BRIEFING + LINEUP, and BRIEFING lands on the study page.
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    const card = page.locator('[data-game="sat-rush"]');
+    const card = await revealMode(page, 'sat-rush');
     await expect(card).toBeVisible();
-    await card.locator('.game-card').click();
+    await card.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.locator('[data-choice="briefing"]')).toBeVisible();
     await expect(dialog.locator('[data-choice="lineup"]')).toBeVisible();
@@ -218,7 +218,7 @@ test.describe('SAT Rush', () => {
   test('CASE SETUP: the run is finite — difficulty + length are chosen, and the HUD counts the case', async ({ page }) => {
     await installBackendMock(page);
     await page.goto('/?satRush=1&portal=1');
-    await modeEntry(page, 'sat-rush').click();
+    await (await revealMode(page, 'sat-rush')).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: /LINEUP/ }).click();
     await expect(page.locator('.sr-setup')).toBeVisible();

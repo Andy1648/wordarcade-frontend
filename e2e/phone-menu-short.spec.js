@@ -93,7 +93,7 @@ for (const [w, h] of SIZES) {
         return { hits, side, rows, inputs, reach, sy, sx: m.scrollWidth - m.clientWidth };
       });
       expect(r.inputs, 'no text box on the phone menu — it is taps only').toBe(0);
-      expect(r.rows.length, 'the season-2 phone menu has four mode rows').toBe(4);
+      expect(r.rows.length, 'the phone menu has five mode rows (MINER oct26)').toBe(5);
       expect(r.hits, 'no two menu bands overlap').toEqual([]);
       expect(r.side, 'nothing runs off the side').toEqual([]);
       expect(r.sx, 'no sideways scroll').toBeLessThanOrEqual(0);

@@ -7,7 +7,7 @@
 // and, with `check`, reads the v3 news once per menu visit (v3/notify.js checkNews) after the arrival wipe settles.
 // Rendered (as V3.Notify, lazily) by S2Trophy — the menu's ACHIEVEMENTS slab, so the menu needs no new eager code —
 // and by ShopScreen.
-// None of it takes a pointer, none of it is centred, and nothing here claims or pays.
+// None of it is centred and nothing here claims or pays; only the sticky SAVE CODE card takes a pointer (COPY / ✕).
 // ACHIEVEMENT POP-UPS (Andy oct19): with `check`, a tier that just became claimable is toasted once (v3/notify.js
 // checkAchNews) — on arrival (a tier reached in a game is said back on the menu) and live on every counter write
 // (ACH_CHANGE — never per frame). `quiet` (the ACHIEVEMENTS screen is open) notes them without a toast. `news` = the
@@ -37,6 +37,9 @@ export default function S2Notify({ check = false, news = true, quiet = false }) 
     if (!check) return undefined;
     const t = setTimeout(() => {
       sayAch(quietRef.current);
+      // WRITE DOWN YOUR CODE (save-safety oct28): at LV 15 / the first rebirth / LV 50, once each — a sticky card in this
+      // same right-edge stack (lazy chunk; nothing when there is no board name or the code can't be fetched)
+      if (!quietRef.current) import('../save/SaveCodeNudge.jsx').then((m) => m.runCodeNudge(pushToast)).catch(() => {});
       if (!news) return;
       let n = null;
       try {

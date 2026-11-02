@@ -491,10 +491,11 @@
 
 /* ---- THE DAILY CHEST shelf item + its popup (Andy oct10) ---- */
 .sp2-chest-art { position: relative; flex: 0 0 auto; width: 60px; height: 60px; margin-top: 2px; display: block; }
-.sp2-chest-art img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
-.sp2-chest-lid { transform-origin: 8% 46%; transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1); }
-@media (hover: hover) { .sp2-chest.is-ready:hover .sp2-chest-lid { transform: translate(-2%, -8%) rotate(-10deg); } } /* the lid peeks on hover */
-.sp2-chest.is-claimed .sp2-chest-lid { transform: translate(-4%, -10%) rotate(-24deg); }
+.sp2-chest-art img { position: absolute; inset: -12%; width: 124%; height: 124%; display: block; object-fit: contain; pointer-events: none; user-select: none; }
+/* the painted chest (oct29, boostArt CHEST_ART): it hops + tilts on hover, sits back dimmer once claimed */
+.sp2-chest-paint { transform-origin: 50% 85%; transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1); }
+@media (hover: hover) { .sp2-chest.is-ready:hover .sp2-chest-paint { transform: translateY(-6%) rotate(-6deg) scale(1.06); } }
+.sp2-chest.is-claimed .sp2-chest-paint { transform: scale(.9); opacity: .55; }
 .sp2-chest .sp2-price { background: var(--k-yellow, #FFE94A); color: #000; }
 .sp2-dot { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; background: #FF3D7F; border: 3px solid #000; pointer-events: none; z-index: 4; }
 @media (max-width: 999px) { .sp2-chest-art { width: 44px; height: 44px; } }
@@ -686,25 +687,6 @@
   .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k20); white-space: nowrap; }
 }
 
-/* 069 (Andy oct26): the LEGENDARY+ ROLL left the shop — 7 cards, which leaves a lone card on the last row of both the
-   3-column desktop shelf and the 2-column phone shelf. Two WIDE cards rebalance it, so every row is full:
-   desktop  [chest][ EPIC+ ROLL  ] / [xp][wins][luck] / [overdrive][ EVERYTHING ]
-   phone    [EPIC+][chest] / [xp][wins] / [luck][overdrive] / [ EVERYTHING ]
-   The wide cards keep their content column at a card's width (the price bar never stretches across two cells). */
-@media (min-width: 1000px) {
-  .sp2-cell.is-ticket,
-  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
-}
-@media (max-width: 999px) {
-  .sp2-cell[data-cell="extend"] { grid-column: span 2; }
-}
-@media (min-width: 1000px) {
-  .sp2-cell.is-ticket .sp2-price,
-  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 20px), 260px); }
-}
-@media (max-width: 999px) {
-  .sp2-cell[data-cell="extend"] .sp2-price { align-self: center; width: min(calc(100% - 10px), 170px); }
-}
 /* ---- THE POWER LADDER (Andy oct26): the plate is a button — a tap opens every form (PowerLadder.jsx) ---- */
 button.sp2-plate { display: block; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; transition: transform 160ms cubic-bezier(.3, 1.4, .5, 1); }
 @media (hover: hover) { button.sp2-plate:hover { transform: scale(1.05) rotate(-2deg); } }
@@ -803,6 +785,8 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-try .sp2-look-act { flex: 0 0 auto; margin-top: 0; padding: 0 14px; }
 .sp2-try .sp2-look-act + .sp2-look-act { margin-top: 0; }
 .sp2-try-pad { display: none; }
+/* the tried look's painted XP-bar fill, as a strip in the TRYING bar (skewed like the menu's bar) */
+.sp2-try-bar { flex: 1 1 120px; min-width: 90px; max-width: 260px; height: 26px; border: 3px solid #000; border-radius: 6px; box-shadow: 3px 3px 0 #000; background-size: cover; background-position: center; transform: skewX(-12deg); }
 @media (hover: none) and (pointer: coarse) {
   .sp2-try { flex-wrap: wrap; }
   .sp2-try-chip { flex-basis: 100%; }
@@ -839,3 +823,106 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 @media (prefers-reduced-motion: reduce) {
   .sp2-look.is-trying .sp2-look-stage, .sp2-try { animation: none; }
 }
+
+/* the shelf tabs' NEW dot (oct28): the same pink dot as the chest card, on the tab's corner */
+.sp2-tab { position: relative; }
+.sp2-tab-dot { top: -9px; right: -9px; }
+
+/* ===== EVERY CARD THE SAME WIDTH (Andy oct28 "i dont want any horizontally stretched cards on shop"): no card spans two
+   columns any more. The SEALED ROLL is the FEATURED card — TALL, two rows high, the canister standing big — and the other
+   seven are equal cells: 4 × 2 on desktop (the whole shelf in one view, no scroll) and 2 × 4 on the phone. The canister's
+   512 canvas carries transparent air (it sits low, ~64% wide), so its square box (--vs) is sized past the slot and the
+   air trimmed off with negative margins: the painted canister fills the card. The card is a size container so the art
+   sizes to the card it's in. e2e/shop-aspect.spec.js holds every shop image at its native ratio and every card one cell wide. */
+@media (min-width: 1000px) {
+  .sp2-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.sp2-cell.is-ticket { grid-column: 1; grid-row: 1 / span 2; }
+.sp2-cell.is-ticket .sp2-card-in { container-type: size; justify-content: center; }
+.sp2-cell.is-ticket .sp2-card-in > .sp2-band { position: absolute; top: 0; left: 0; }
+.sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
+  /* oct29 (Andy: the sealed card was "flowing off"): the square carries the painted plate, so it stays INSIDE the card —
+     88% of its width at most (it was 130%: the plate's shards ran off both edges) */
+  --vs: min(88cqw, calc((100cqh - 150px) / .79));
+  flex: 0 0 auto; width: var(--vs); height: var(--vs); min-height: 0; aspect-ratio: auto;
+  margin: calc(var(--vs) * -.16) 0 calc(var(--vs) * -.05);
+}
+.sp2-cell.is-ticket .sp2-big { margin-top: 10px; font-size: var(--fs-k44); }
+.sp2-cell.is-ticket .sp2-price { margin: 14px 0 0; align-self: center; width: calc(100% - 24px); }
+@media (max-width: 999px) {
+  .sp2-cell.is-ticket .sp2-big { font-size: var(--fs-k30); }
+  .sp2-cell.is-ticket .sp2-price { width: calc(100% - 12px); }
+}
+/* the narrower desktop cell: the busiest card (EVERYTHING BOOST: a 3-part WHAT + a long TIME) sets its words tighter */
+.sp2-card-in[data-stock="extend"] .sp2-what { text-wrap: balance; line-height: 1.05; }
+.sp2-card-in[data-stock="extend"] .sp2-time { text-wrap: balance; }
+/* a long NAME (EVERYTHING BOOST) is set smaller, never ellipsized (Andy: names never cut) */
+.sp2-card-in[data-stock="extend"] .sp2-name { overflow: visible; text-overflow: clip; font-size: var(--fs-k13); letter-spacing: 0; }
+/* a SHORT desktop row (≤ 680 tall): the narrow cell's two small lines tighten so the price stays on its card */
+@media (min-width: 1000px) and (max-height: 680px) {
+  .sp2-cell:not(.is-ticket) :is(.sp2-what, .sp2-time) { font-size: var(--fs-k13); line-height: 1.05; margin-top: 1px; }
+  .sp2-cell:not(.is-ticket) .sp2-big { font-size: var(--fs-k24); }
+}
+
+/* ===== RARITY BEYOND COLOUR (Andy oct28 "for rarer items maybe make the design more than just color"), three signals:
+   1. the FEATURED canister stands on a painted EPIC crystal-burst backplate (a background on the vessel's own oversized,
+      trimmed square, so it frames the body; the small cards' art is too small to share its box with a plate — tried);
+   2. an EPIC card wears a gold-set gem pinned to its top-left corner (outside the face's overflow, like the dot);
+   3. RARE / EPIC cards sweep their tier's shine band (the gear cards' /fx/shine-<tier>.svg, drawn at its own ratio) across
+      the face ONCE on hover — a transform transition in, none out (it snaps back unseen, off the face). Nothing loops. ===== */
+.sp2-card.is-epic .sp2-card-in > .sp2-art.sp2-vessel { background: url(/shop/backplate-epic-v1.webp) 50% 58% / 100% 100% no-repeat; }
+.sp2-shine {
+  position: absolute; z-index: 2; left: 0; top: 0; height: 100%; width: auto; aspect-ratio: 200 / 320;
+  pointer-events: none; user-select: none; transform: translateX(-110%);
+}
+@media (hover: hover) {
+  .sp2-card.kstc:hover .sp2-shine { transform: translateX(300%); transition: transform 650ms cubic-bezier(.3, .6, .3, 1); }
+}
+@media (prefers-reduced-motion: reduce) { .sp2-shine { display: none; } }
+.sp2-gem {
+  position: absolute; z-index: 3; left: -14px; top: -14px; width: 44px; height: 44px;
+  pointer-events: none; user-select: none; transform: rotate(-10deg);
+  transition: transform 200ms cubic-bezier(.3, 1.6, .5, 1);
+}
+@media (hover: hover) { .sp2-card.kstc:hover .sp2-gem { transform: rotate(-22deg) scale(1.12); } }
+.sp2-card.kstc:active .sp2-gem { transform: rotate(-4deg) scale(.94); transition-duration: 80ms; }
+@media (max-width: 999px) { .sp2-gem { left: -10px; top: -10px; width: 34px; height: 34px; } }
+@media (prefers-reduced-motion: reduce) { .sp2-gem { transition: none; } }
+/* the shelf tabs wear their painted icons (Andy oct28 "give icons for boosts"): BOOSTS the potion, COSMETICS a pop style,
+   CODES a ticket — the art sits on the tab's left, its own ratio, a hard shadow under it */
+.sp2-tab { display: inline-flex; align-items: center; gap: 8px; padding-left: 8px; }
+.sp2-tab-ico { width: 34px; height: 34px; object-fit: contain; flex: none; margin: -6px 0; filter: drop-shadow(2px 2px 0 #000); }
+@media (max-width: 999px) {
+  .sp2-stock-head .sp2-tab { gap: 4px; padding: 0 8px 0 4px; }
+  .sp2-tab-ico { width: 26px; height: 26px; margin: -4px 0; }
+}
+/* the phone: three equal tabs, the icon over its word, so COSMETICS fits a 360px row */
+@media (max-width: 999px) {
+  .sp2-stock-head .sp2-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .sp2-stock-head .sp2-tab { flex-direction: column; justify-content: center; gap: 2px; min-height: 56px; padding: 4px 2px; font-size: var(--fs-k14); }
+  .sp2-stock-head .sp2-tab .sp2-tab-ico { margin: 0; }
+}
+/* oct29: the shelf scrolls, so it CLIPS — the dealt cards' tilt (±1.4°) put their corners past its left edge (padding 0),
+   cut off mid-border. An inset on both sides keeps every tilted card whole inside the clip (e2e/shop-aspect.spec.js). */
+.sp2-grid { padding-left: 8px; padding-right: 12px; }
+@media (max-width: 999px) { .sp2-grid { padding-left: 6px; padding-right: 8px; } }
+/* oct29 overlap audit: the next-form badge hung off the plate's BOTTOM corner, over the "→" of POWER 0 → 1 under it. It
+   rides the TOP corner now — nothing sits above the plate's corner. */
+.sp2-next { bottom: auto; top: -16px; }
+@media (max-width: 999px) { .sp2-next { bottom: auto; top: -10px; } }
+/* oct29: a 1280×551 window left ~163px a row, and the 172px floor pushed the second row 17px under the shelf's bottom
+   (prices cut). On a very short desktop the floor goes and the card's stack tightens one more step, so 4 × 2 fits whole. */
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-grid { --sp2-row-min: 0px; gap: 10px; }
+  .sp2-card-in > .sp2-art { width: 46px; height: 46px; margin: -4px 0 -4px; }
+  .sp2-cell:not(.is-ticket) .sp2-big { font-size: var(--fs-k20); }
+  .sp2-price { height: 28px; margin: auto 8px 6px; }
+}
+/* oct29: the ×N LEFT sticker shrank to 40px on a short window and cut its word to "EFT" — the word is 13px at least, so
+   the sticker keeps the room for it */
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-left { width: 48px; height: 48px; top: 28px; }
+}
+/* oct29 (hero-art): the painted OVERDRIVE rocket is a thin diagonal — at the shared art box it read smaller than the
+   chunky can / coins / clover beside it. It draws a fifth bigger (transform: layout untouched, still its own ratio). */
+.sp2-card-in[data-stock="overdrive"] > .sp2-art { transform: scale(1.2); }

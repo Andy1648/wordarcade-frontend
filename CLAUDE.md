@@ -32,6 +32,7 @@
 - NO ORPHAN FIXED UI. Any new persistent control must JOIN an existing cluster — the corner nav (SHOP/STATS/REBIRTH/audio) or the footer. Never mount a new `position:fixed` element with its own coordinates. Two regressions came from this: the audio controls colliding with CREDITS, and the footer growing to three links that overflowed at 360px. A fixed element with no layout relationship to the page will eventually collide with whatever ends up beneath it.
 - PREVIEW DEPLOYMENTS INJECT VERCEL UI. *.vercel.app previews include `<vercel-live-feedback>` (a right-edge floating pill) and may include the Vercel Toolbar. These are siblings of `#root`, not app markup, and never appear on typeaword.com. When judging chrome-level visuals, verify against production or ignore any element outside `#root`.
 - Categories must be niche and unexpected — no generic "things that are green" style
+- ART IS CACHED FOR A YEAR. vercel.json serves /assets/* and every public/ image, font and mp3 `immutable` (max-age 1 year) to cut CDN requests (the free tier paused at 1M on 2026-10-28). So CHANGED art must ship under a NEW filename (e.g. bar-legend-v2.webp) with its references updated, never overwrite a file in place. After adding art run `node scripts/art-manifest.mjs`; src/perf/artImmutable.test.js fails the build on an in-place change or an unrecorded file. HTML is never long-cached.
 - Always verify build passes after changes: npx vite build --logLevel error
 
 ## ANIMATION BUDGET (updated 2026-08-27 — supersedes the old "20 concurrent finite animations" rule)

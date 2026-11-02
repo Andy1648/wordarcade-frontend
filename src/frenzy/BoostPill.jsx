@@ -12,6 +12,7 @@ import { overdriveRemaining, OVERDRIVE_MULT } from '../progress/overdrive.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { formatNum } from '../format.js';
 import { useTimerClock } from './useTimerClock.js';
+import { BOOST_ART } from '../progress/boostArt.js';
 import './BoostPill.css';
 import './MechanicScale.css';
 
@@ -26,6 +27,7 @@ export function OverdrivePill({ className = '' }) {
       aria-label={`Overdrive times ${OVERDRIVE_MULT} for ${formatFrenzy(ms)}`}
       data-testid="overdrive-pill"
     >
+      <img className="boost-pill-art" src={BOOST_ART.overdrive} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
       <span className="boost-pill-name">OVERDRIVE ×{formatNum(OVERDRIVE_MULT)}</span>
       <span className="boost-pill-clock">{formatFrenzy(ms)}</span>
     </span>

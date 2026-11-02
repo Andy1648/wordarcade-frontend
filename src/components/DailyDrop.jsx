@@ -16,6 +16,7 @@ import { kitPlay } from './kit/motion.js';
 import { KitIcon } from './kit/index.js';
 import { ready as sfxReady } from '../audio/gameSounds';
 import { tone, pentFreq, NOTE } from '../audio/audioCore.js';
+import { BOOST_ART } from '../progress/boostArt.js';
 
 const BASE = '/art/drop/chest-base.svg';
 const LID = '/art/drop/chest-lid.svg';
@@ -55,7 +56,7 @@ function PayLine({ i, full = false, size = 20 }) {
   const o = t.pay.overdrive;
   return (
     <span className="dd-pay is-od">
-      <KitIcon name="overdrive" size={size} shadow={1} extras={false} />
+      <img className="dd-pay-art" src={BOOST_ART.overdrive} width={size} height={size} alt="" aria-hidden="true" draggable="false" />
       {full ? <span className="dd-pay-u">OVERDRIVE</span> : null}
       <span className="dd-pay-n">×{o.mult}</span>
       <span className="dd-pay-u">· {o.min} MIN</span>

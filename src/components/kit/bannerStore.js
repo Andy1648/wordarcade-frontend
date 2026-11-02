@@ -42,9 +42,9 @@ export function createBannerStore({ setTimer = setTimeout, clearTimer = clearTim
       seq += 1;
       const id = seq;
       const live = list.filter((x) => !x.leaving);
-      if (live.length >= max) close(live[0].id);
+      if (live.length >= max) close((live.find((x) => !x.sticky) || live[0]).id); // a sticky one is retired last
       set([...list, { ...payload, id, leaving: false }]);
-      timers.set(id, setTimer(() => close(id), lifeMs));
+      if (!payload.sticky) timers.set(id, setTimer(() => close(id), lifeMs)); // sticky (the SAVE CODE card): stays until closed
       return id;
     },
     close,

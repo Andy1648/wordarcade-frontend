@@ -85,6 +85,15 @@ export const PROGRESS_KEYS = [
   'taw.wordsenseRefunded',
   'taw.ulwish',
   'taw.boost',
+  // SAVE SAFETY (oct28 audit): progress a code still left behind — the CHAIN / FUSE personal bests, the SAT / FRENCH RUSH
+  // word-learning state (Leitner boxes), the daily streak, an unpaid theme refund, and the profile description
+  'wa_solo_chain_best',
+  'wa_solo_fuse_best',
+  'wa_satrush_lexicon',
+  'wa_frenchrush_lexicon',
+  'wa_daily',
+  'taw.themeRefundPending',
+  'taw.bio',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the
@@ -169,14 +178,26 @@ function defaultStorage() {
   };
 }
 
-// Snapshot the present progress keys into one base64 code the player can copy.
-export function exportSave(storage = defaultStorage()) {
+// Snapshot the present progress keys into one base64 code the player can copy. `account` (daan oct27): also carry the
+// board account — the device secret + claimed profile — as `acct`, so a save CODE brings the account back with the
+// progress (saveCode.js validates + adopts it). The cloud copy never carries it.
+export function exportSave(storage = defaultStorage(), { account = false } = {}) {
   const keys = {};
   for (const k of [...PROGRESS_KEYS, ...s2KeysOf(storage)]) {
     const v = storage.getItem(k);
     if (v != null) keys[k] = v; // omit absent keys; a "new player" simply exports fewer
   }
-  return utf8ToB64(JSON.stringify({ format: FORMAT, v: 1, keys }));
+  const out = { format: FORMAT, v: 1, keys };
+  if (account) {
+    try {
+      const secret = storage.getItem('taw.lb.secret');
+      const profile = JSON.parse(storage.getItem('taw.lb.profile') || 'null');
+      if (secret && profile) out.acct = { secret, profile };
+    } catch {
+      /* no account to carry */
+    }
+  }
+  return utf8ToB64(JSON.stringify(out));
 }
 
 const SEASON2_ECON = 13; // leaderboard/season2Rules.js (not imported: this file is on the first-load path)
@@ -229,19 +250,54 @@ export function parseSave(text, opts) {
 // exported (not a progress key).
 export const PRE_RESTORE_KEY = 'taw.preRestore';
 
-/** Write already-validated keys (parseSave / parseSaveObject) — after snapshotting the save they replace.
+/** Write already-validated keys (parseSave / parseSaveObject) — after snapshotting the save they replace (with its
+ *  board account, so UNDO brings the account back too — saveCode.js adoptAccount).
  *  `source`: 'code' (a pasted save code — SETTINGS offers UNDO for it) or 'restore' (the cloud; no UNDO: the cloud
  *  would only bring the higher save back on the next load). */
-export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore' } = {}) {
+export function writeSaveKeys(keys, storage = defaultStorage(), { snapshot = true, source = 'restore', exact = false } = {}) {
   if (snapshot) {
     try {
-      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage) }));
+      storage.setItem(PRE_RESTORE_KEY, JSON.stringify({ at: Date.now(), src: source, code: exportSave(storage, { account: true }), secret: storage.getItem('taw.lb.secret') || null }));
     } catch {
       /* quota: the restore still goes ahead */
     }
   }
+  // UNDO IS EXACT (save-safety oct28): a restore MERGES (a progress key the code does not carry is left alone — a load
+  // never drops anything), so UNDO LAST RESTORE onto a fresh device was a no-op: the fresh save's snapshot has none of
+  // the code's keys, so nothing was put back (seen on prod: PUT BACK "R0 · LV 1" reloaded into the code's LV 7). With
+  // `exact` (the UNDO path) a progress key the snapshot does not hold goes too; it is in the new snapshot above, so the
+  // undo itself can be undone. Only allowlisted progress keys are touched (never a device key, the account, the snapshot).
+  if (exact) {
+    const stale = [];
+    try {
+      const n = Number(storage.length);
+      if (Number.isFinite(n) && typeof storage.key === 'function') {
+        for (let i = 0; i < n; i++) {
+          const k = storage.key(i);
+          if (isProgressKey(k) && !Object.prototype.hasOwnProperty.call(keys, k)) stale.push(k);
+        }
+      }
+    } catch {
+      /* no enumeration: the load merges, as before */
+    }
+    for (const k of stale) {
+      try {
+        if (typeof storage.removeItem === 'function') storage.removeItem(k);
+      } catch {
+        /* never throw */
+      }
+    }
+  }
   for (const [k, v] of Object.entries(keys)) {
     storage.setItem(k, v);
+  }
+  // an unanswered rebirth / ascension id belongs to the save being replaced (daan oct27)
+  for (const k of ['taw.lb.rbreq', 'taw.lb.ascreq']) {
+    try {
+      if (typeof storage.removeItem === 'function') storage.removeItem(k);
+    } catch {
+      /* never throw */
+    }
   }
   // PV10: the blob's econ stamp is written above when it has one; when it has none (a pre-STEP-52 or
   // pre-v10 blob) the LOCAL stamp, shadow and gate are removed so the migration re-runs on reload.

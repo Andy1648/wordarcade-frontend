@@ -22,6 +22,7 @@ export const F_LEVELS_PER_SEC = 1; // or + 1 level a second since the last accep
 export const F_LEVEL_BANK_SECS = 1200; // … banking 20 min
 export const F_WORDS_PER_RB = 100; // a first season-2 write: rebirths ≤ lifetime words / 100
 export const F_LV_MAX = 2147483647; // the int column
+export const F_RB_WORDS = 10; // 070 CONVERGE: rebirths ≤ lifetime words / 10 (first write AND the catch-up raise)
 export const THROTTLE_MS = 5000;
 export const WORDS_PER_SEC = 4; // 039 (was 20 in 029)
 export const LETTERS_PER_SEC = 150;
@@ -47,9 +48,11 @@ export function isLowerWrite(old, sub) {
 /**
  * private.lb_board_write_s2 (029 → 039 → 054), modelled. `old` = the stored row ({ level, rebirths, lifetime_words,
  * lifetime_letters, submitted_at (ms|null), econ }); `sub` = { level, rebirths, words, letters }; `now` ms.
- * Returns { action: 'throttled'|'rejected'|'first'|'refused'|'increase', row?, weekDelta } ('refused' = 054's lower write) (decideSubmitS2's shape).
+ * Returns { action: 'throttled'|'rejected'|'first'|'refused'|'increase', row?, weekDelta, raised? } ('refused' = 054's lower write) (decideSubmitS2's shape).
+ * `converge` = 070_board_converge.sql: the row's rebirths RISE to the sent count (≤ words / 10; raised = flagged
+ * 'catchup'), and the first write's baseline is words / 10. Off = the pre-070 rule (a submit never raises rebirths).
  */
-export function decideSubmitFinal(old, sub, now) {
+export function decideSubmitFinal(old, sub, now, { converge = false } = {}) {
   if (old.submitted_at != null && old.submitted_at >= now - THROTTLE_MS) return { action: 'throttled', weekDelta: 0 };
   let lv = int(sub.level, 1, 1);
   let rb = int(sub.rebirths, 0, 0);
@@ -57,7 +60,7 @@ export function decideSubmitFinal(old, sub, now) {
   let l = int(sub.letters, 0, 0);
   const write = (level, rebirths, words, letters) => ({ level, rebirths, lifetime_words: words, lifetime_letters: letters, submitted_at: now, econ: F_ECON });
   if (old.submitted_at == null || Number(old.econ) !== F_ECON) {
-    rb = Math.min(rb, Math.floor(w / F_WORDS_PER_RB));
+    rb = Math.min(rb, Math.floor(w / (converge ? F_RB_WORDS : F_WORDS_PER_RB)));
     lv = Math.min(lv, finalLevelRoom(rb));
     return { action: 'first', row: write(lv, rb, w, l), weekDelta: 0 };
   }
@@ -75,8 +78,10 @@ export function decideSubmitFinal(old, sub, now) {
   l = Math.max(l, oL);
   if (w - oW > WORDS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
   if (l - oL > LETTERS_PER_SEC * secs) return { action: 'rejected', weekDelta: 0 };
-  rb = Math.min(rb, oRb); // a submit never raises rebirths (lb_rebirth only)
+  // pre-070: a submit never raises rebirths (lb_rebirth only). 070: it converges on the save, ≤ words / 10.
+  rb = converge && rb > oRb ? Math.min(rb, Math.max(oRb, Math.floor(w / F_RB_WORDS))) : Math.min(rb, oRb);
+  const raised = rb > oRb;
   const lvCap = Math.min(F_LV_MAX, Math.max(finalLevelRoom(rb), oLv + maxRise));
   lv = Math.min(lv, lvCap);
-  return { action: 'increase', row: write(lv, rb, w, l), weekDelta: Math.max(0, w - oW) };
+  return { action: 'increase', row: write(lv, rb, w, l), weekDelta: Math.max(0, w - oW), raised };
 }

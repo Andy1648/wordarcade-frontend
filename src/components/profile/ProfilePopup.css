@@ -12,7 +12,7 @@
   background: #3a2160; border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000;
 }
 .pf-x { margin-left: auto; }
-.pf-x:focus-visible, .pf-back:focus-visible, .pf-change:focus-visible, .pf-kit:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.pf-x:focus-visible, .pf-back:focus-visible, .pf-kit:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 .pf-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: start; }
 .pf-left { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .pf-left .hs { max-width: 400px; }
@@ -21,15 +21,13 @@
   width: 100%; text-align: center; font: 400 var(--fs-k30) 'Bungee', sans-serif; line-height: 1; color: var(--pf-c);
   -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
 }
-.pf-hero-tag { font: 700 var(--fs-k16) 'Space Mono', monospace; letter-spacing: .1em; color: #c9b8e8; text-align: center; }
-.pf-change, .pf-kit {
+.pf-kit {
   min-height: 48px; padding: 0 20px; margin-top: 4px; cursor: pointer;
   font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #000; background: var(--pf-c);
   border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; transition: transform 120ms;
 }
-.pf-change-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .pf-kit { background: #2EFFE0; }
-.pf-change:active, .pf-kit:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+.pf-kit:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
 .pf-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .pf-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pf-name { font: 400 var(--fs-k44) 'Bungee', sans-serif; line-height: 1; color: #fff; -webkit-text-stroke: 5px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
@@ -57,41 +55,31 @@
 .pf .pc-bio .pc-bio-k { font-size: var(--fs-k16); }
 .pf .pc-bio .pc-bio-t { font-size: var(--fs-k20); }
 .pf .pc-bio .pc-bio-t.is-empty { font-size: var(--fs-k18); }
-/* YOUR HEROES (oct19, replaces NEXT HERO - Andy: "no need for a 'next hero' bc that just ruins the purpose of having a
-   change hero button"): the heroes you own as painted faces; tap one to wear it on the spot, the worn one lifted */
-.pf-crew { display: flex; flex-direction: column; gap: 8px; }
-.pf-crew-head { display: flex; align-items: baseline; gap: 10px; }
-.pf-crew-k { font: 400 var(--fs-k18) 'Bungee', sans-serif; letter-spacing: .1em; color: #fff; }
-.pf-crew-n { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #c9b8e8; }
-.pf-crew-row { display: flex; flex-wrap: wrap; gap: 10px; }
-.pf-crew-face {
-  position: relative; width: 64px; height: 64px; padding: 0; cursor: pointer; overflow: hidden;
-  background: var(--cf-d); border: 3px solid #000; border-radius: 8px; box-shadow: 3px 3px 0 #000; transition: transform 140ms cubic-bezier(.2, 1.4, .4, 1);
-}
-.pf-crew-face.is-gold { border-color: #F2B705; }
-.pf-crew-face.is-elite { border-color: #FFC83D; background: #2a0f4a; }
-.pf-crew-face.is-legend { border-color: #7CFFE0; }
-.pf-crew-face img { position: absolute; left: 50%; top: 4%; width: 150%; height: auto; translate: -50% 0; filter: drop-shadow(2px 2px 0 #000); }
-.pf-crew-face.is-on { transform: translateY(-4px); outline: 3px solid #FFE94A; outline-offset: 2px; cursor: default; }
-.pf-crew-face:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
-@media (hover: hover) { .pf-crew-face:not(.is-on):hover { transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { .pf-crew-face { transition: none; } }
-/* a big roster (oct26, BUZZ made a full account wrap a third row at 1280x600): a step smaller so it still fits without scrolling */
-.pf-crew-row.is-many { gap: 6px; }
-.pf-crew-row.is-many .pf-crew-face { width: 40px; height: 40px; border-width: 2px; box-shadow: 2px 2px 0 #000; }
-/* TITLE (oct21 — the menu's title plate became the PROFILE plate): your worn title in the header, tap → ALL TITLES */
+/* TITLE (oct28): the painted title plate on your name line — the plate IS the button (no box round it); a small
+   CHANGE ▸ tag sits beside it (never over the name). Tap → TITLES. */
+.pf-nameline { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pf-nameline .pf-name { flex: 1 1 auto; min-width: 0; }
 .pf-titlerow {
-  display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 6px; box-sizing: border-box; margin-left: 6px; overflow: hidden;
-  background: #12071f; border: 3px solid #a89a1c; border-radius: 8px; box-shadow: 3px 3px 0 #000; color: #fff; cursor: pointer;
-  transform: rotate(-2deg); transition: transform 120ms;
+  position: relative; flex: none; display: flex; align-items: center; min-height: 44px; padding: 0; margin: 0;
+  background: none; border: 0; cursor: pointer;
+  transform: rotate(-3deg); transition: transform 140ms cubic-bezier(.2,1.6,.4,1);
 }
-.pf-titlerow:hover { transform: rotate(0) translate(-1px, -2px); }
-.pf-titlerow:active { transform: translate(3px, 3px); box-shadow: none; }
-.pf-titlerow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; }
-.pf-titlerow-plate { display: flex; min-width: 0; }
-.pf-titlerow-go { font: 400 var(--fs-k14, 14px) 'Bungee', sans-serif; color: #FFE94A; white-space: nowrap; }
+/* a mouse needs no 44px finger target — the plate keeps to the name's own height so the card never grows a scroll */
+@media (pointer: fine) and (min-width: 601px) { .pf-titlerow { min-height: 0; } }
+.pf-titlerow:hover { transform: rotate(0) scale(1.05); }
+.pf-titlerow:active { transform: rotate(-3deg) scale(0.96); }
+.pf-titlerow:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 2px; border-radius: 8px; }
+.pf-title-plate { --krp-h: min(30px, calc(150px / var(--krp-aspect, 4))); } /* never taller than the name it sits beside */
+@media (max-width: 600px) { .pf-title-plate { --krp-h: min(40px, calc(200px / var(--krp-aspect, 4))); } }
+.pf-titlerow-go {
+  flex: none; margin-left: 6px;
+  font: 400 var(--fs-k13, 13px) 'Bungee', sans-serif; color: #0d0618; white-space: nowrap;
+  background: #FFE94A; border: 2px solid #b8a520; border-radius: 6px; padding: 1px 5px; box-shadow: 2px 2px 0 #000;
+  transform: rotate(4deg);
+}
 @media (prefers-reduced-motion: reduce) { .pf-titlerow, .pf-titlerow:hover { transition: none; } }
-@media (max-width: 520px) { .pf-titlerow-go { display: none; } }
+/* a phone-width card: the name gets the whole line, the title plate drops under it (the name never clips) */
+@media (max-width: 600px) { .pf-nameline { flex-direction: column; align-items: flex-start; gap: 8px; } .pf-nameline .pf-name { width: 100%; } }
 
 /* SHORT DESKTOP (Andy oct21 "Why do I need to scroll on my profile screen? I'm on a laptop … not … on a Chromebook"):
    a laptop's browser leaves ~650-730px. The card never scrolls there — the stage, stats and faces tighten to fit a
@@ -109,13 +97,9 @@
   .pf-stat-g { width: 32px; height: 32px; }
   .pf-stat-v { font-size: var(--fs-k26); }
   .pf-stat-k { font-size: var(--fs-k13); margin-top: 2px; }
-  .pf-crew { gap: 6px; }
-  .pf-crew-row { gap: 8px; }
-  .pf-crew-face { width: 48px; height: 48px; }
 }
 @media (min-width: 761px) and (max-height: 680px) {
   .pf-left .hs { max-width: min(360px, calc(100dvh - 290px)); }
-  .pf-crew-face { width: 44px; height: 44px; }
   .pf-stat-v { font-size: var(--fs-k22); }
   .pf-right { gap: 8px; }
   .pf-name { font-size: var(--fs-k30); -webkit-text-stroke-width: 4px; }
@@ -123,3 +107,10 @@
   .pf .pc-bio { padding-top: 6px; padding-bottom: 6px; }
   .pf .pc-bio .pc-bio-t { font-size: var(--fs-k18); }
 }
+
+/* oct28 DECLUTTER (Andy "unecessarily cramped … reduced unecessary stuff"): ONE button under your hero — CUSTOMIZE,
+   wide and loud (the tagline, CHANGE HERO and the YOUR HEROES strip are gone: CUSTOMIZE's HERO tab is the one place) */
+.pf-kit { min-height: 56px; min-width: min(280px, 100%); margin-top: 10px; padding: 0 28px; font-size: var(--fs-k24); text-transform: uppercase; color: #000; background: #2EFFE0; }
+@media (hover: hover) { .pf-kit:hover { transform: translate(-2px, -2px); } }
+/* CUSTOMIZE gets room (Andy "you can extend the borders"): the card widens on desktop, the menu fills it */
+.pf.is-customize { width: min(1240px, 100%); }

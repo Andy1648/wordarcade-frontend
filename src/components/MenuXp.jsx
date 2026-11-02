@@ -4,13 +4,14 @@
 // parked on the idle pool). The fx-layer size + XP bar box are measured on
 // mount/resize and cached (never per keystroke); each pop then picks a continuous random
 // position, kept off the layer edge and out of the bar box, so the readout is never covered.
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import './MenuXp.css';
 import { formatNum } from '../format';
 import { useLevelBar } from '../hooks/useLevelBar';
 import { tierFx, MILESTONE_FX } from '../progress/menuTier';
 import { CARD_MS } from '../lib/menuMoments';
-import { rebirthMult } from '../progress/xp';
+import { rebirthMult, loadProgress, getRebirths, tableRebirthThreshold } from '../progress/xp';
+import { careerLevel, popGrowth } from '../progress/popGrowth';
 import { reduceMotion } from '../lib/reduceMotion';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
 
@@ -33,13 +34,17 @@ export function MenuXpBar({ level, frac }) {
 
 const CENTER = 'translate(-50%,-50%) ';
 
-// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 20, cap 18 running.
-// At 30 keys/sec × 0.6s = 18 concurrent, so the cap sits exactly there (Economy v3 slows
-// pops to 600ms for a longer, floatier read).
+// ONE combined pop per keystroke: "[LETTER] [+N]". Single pool of 28, cap 18 live.
+// oct28 (Andy: "at a certain point i think all animations just get cleared … looks buggy"): over the cap the OLDEST
+// live pop is RETIRED — fast-forwarded into its own fade tail, so it fades out in ~150ms — and the new pop takes a FREE
+// node. One retire per keystroke, never a hard cut, never a mass clear (a level-up no longer cancels every pop either).
+// The 10 spare nodes cover the retirees still fading at a 30 keys/sec mash.
 const POP_MS = 600;
-const POP_POOL = 20;
+const POP_POOL = 28;
 const POP_CAP = 18; // pool sizing (NOT the retired concurrent-count budget — see CLAUDE.md
 // ANIMATION BUDGET): caps live pops so a mash REUSES pooled nodes instead of growing the pool.
+const POP_CAP_LEVELUP = 2; // while a LEVEL-UP / REBIRTH card plays, keys keep popping but stay sparse
+const POP_RETIRE_AT = 0.9; // a retired pop jumps here: past its hold, into its fade-out
 const POP_HALF = 30; // keep a pop this far off the fx-layer edge and the bar box
 const POP_MIN_GAP = 90; // reject a candidate within this many px of the last few spawns
 const RECENT_POS = 6; // ring buffer: reject against the last N accepted positions
@@ -64,9 +69,57 @@ const prefersReducedMotion = reduceMotion; // the in-game REDUCE MOTION toggle, 
 // ~260ms) and a bigger "CRIT +N", over a yellow ink STARBURST (the real asset public/fx/crit-burst.svg — never CSS
 // shapes). The bursts are a FIXED POOL reused round-robin: WAAPI scale / rotate / opacity, finite, will-change on for
 // the flight only. Placement reuses the pop's cached-size random position — no layout read per key.
-const CRIT_BURST_MS = 1300; // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
+// oct27 (Andy: "make the key animations last slightly longer"): every key pop lives POP_STRETCH × its tier length on a
+// fuller arc (a wind-up from small, an overshoot squash, a settle, a long readable LINGER, then the float-off); the crit
+// and the look's painted burst stretch with it. Still one finite pooled WAAPI per pop, transform / opacity only.
+const POP_STRETCH = 1.5; // oct28 ×1.5 (was 1.3): the longer entrance needs the room
+// oct28 (Andy: "dont do anything with the number boxes bc when they disappear (like stretch or smthn) it looks goofy"):
+// the +N box NEVER scales or stretches — one size for its whole life, it fades in, holds, and fades out on a small
+// STRAIGHT upward drift (translateY sits before the tilt, so the drift is screen-up whatever the tilt). Every pop takes
+// this one arc — CLASSIC, every worn look, the crit. The ring, sparkle and painted burst keep their own motion.
+const POP_HIT = 0.12; // where the fade-in lands (the ring / painted burst slam in then)
+const POP_DRIFT = 18; // px the +N rises over its whole life
+// THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
+// (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
+const KIT_POP_SCALE = 1.35;
+// A worn look keeps its pop LENGTH and its burst's spin (popMotion.js) — but its +N moves on the same flat arc as CLASSIC.
+function kitArc(look, rot, s, peak, rise, baseMs) {
+  const m = look && look.motion;
+  if (!m) return { frames: popArc(CENTER, rot, s), ms: baseMs, hit: POP_HIT, spin: 22 };
+  const o = m(CENTER, rot, s, peak, rise);
+  return { frames: popArc(CENTER, rot, s * KIT_POP_SCALE), ms: Math.round(baseMs * o.ms), hit: POP_HIT, spin: o.spin }; // a paid look's pop is the bigger one
+}
+const POP_BURST_MS = 560; // the look's painted burst under a +N (was 420)
+// The +N's one arc: constant scale `s` (its size — streak × career growth — never animates), opacity in → hold → out,
+// and a small straight rise.
+const popArc = (CENTER, rot, s) => {
+  const k = (y, opacity, offset, easing) => ({ transform: `${CENTER}translateY(${y}px) rotate(${rot}deg) scale(${s})`, opacity, offset, easing });
+  return [
+    k(0, 0, 0, 'ease-out'),
+    k(-POP_DRIFT * 0.2, 1, POP_HIT, 'linear'),
+    k(-POP_DRIFT * 0.6, 1, 0.74, 'ease-in'), // the LINGER: the +N is read
+    k(-POP_DRIFT, 0, 1, 'linear'),
+  ];
+};
+// KEY GROWTH (Andy oct28: "larger scaling up with level"): every pop is sized x popGrowth(career level) — the levels
+// this player has ever climbed (a rebirth banks them, so the keys never shrink). Capped (progress/popGrowth.js), and the
+// whole pop (streak x growth) is clamped so a phone never gets a +N wider than its screen. From career LV10 a CLASSIC
+// pop throws the painted burst RING (public/fx/burst-ring.svg as a mask, tinted the pop's flat colour) behind its +N,
+// from LV100 a SPARKLE (public/fx/sparkle.svg), from LV1000 the ring goes gold. Both are pooled children of the pooled
+// pop node with ONE WAAPI each, created on mount and replayed — transform / opacity only, will-change only in flight.
+const POP_SCALE_MAX = 1.6; // Andy oct28 "tone it down a lot" (was 2.6 / 1.6)
+const POP_SCALE_MAX_NARROW = 1.3;
+const CHAR_HALF_PX = 7.5; // ≈ half a Bungee glyph at the pop's size: a +N's half-width is estimated from its text, never measured
+const NARROW_W = 560; // fx-layer px below which the phone ceiling applies
+const RING_MS = 440;
+const SPARK_MS = 420;
+const SPARK_SRC = '/fx/sparkle.svg';
+export function currentCareer() {
+  return careerLevel(loadProgress().level, getRebirths(), tableRebirthThreshold);
+}
+const CRIT_BURST_MS = 1700; // oct27 ×1.3 (was 1300) // Andy oct9 "slightly longer so user can see how much xp": the crit key holds ~1s // Andy oct8 "a bit longer": the burst slams in, HOLDS, then fades (was 380)
 const CRIT_SHAKE_MS = 200;
-const CRIT_SHAKE_PX = 7;
+const CRIT_SHAKE_PX = 10; // Andy oct28 "screen shake slightly larger for crit" (was 7)
 const CRIT_PUNCH_MS = 140; // Andy oct9 "cleaner": ONE slam 1.5 → 1, no wobble (was 380: 1.6 → 0.88 → 1.08 → 1)
 const CRIT_SAFE = 90; // px: a crit's burst stays this far inside the layer edges
 const CRIT_TOP = 120; // px: and below the header band (the coin/gem pills and corner tiles)
@@ -124,18 +177,19 @@ const MILESTONE_CARD = Object.fromEntries(
 // within POP_MIN_GAP of any of the last RECENT_POS accepted positions — so pops read as
 // scattered, never as marching rows. Up to POP_TRIES attempts; if all fail the last
 // candidate is accepted. Records the accepted position in the `recent` ring buffer.
-function pickPosition(w, h, box, recent) {
-  const minX = POP_HALF;
-  const minY = POP_HALF;
-  const spanX = Math.max(0, w - POP_HALF * 2);
-  const spanY = Math.max(0, h - POP_HALF * 2);
+function pickPosition(w, h, box, recent, half = POP_HALF, halfX = half) {
+  const hx = Math.min(halfX, w / 2);
+  const minX = hx;
+  const minY = half;
+  const spanX = Math.max(0, w - hx * 2);
+  const spanY = Math.max(0, h - half * 2);
   const gap2 = POP_MIN_GAP * POP_MIN_GAP;
   let cand = { x: minX + spanX / 2, y: minY + spanY / 2 };
   for (let tries = 0; tries < POP_TRIES; tries++) {
     const x = minX + Math.random() * spanX;
     const y = minY + Math.random() * spanY;
     cand = { x, y };
-    if (box && x > box.l - POP_HALF && x < box.r + POP_HALF && y > box.t - POP_HALF && y < box.bt + POP_HALF) {
+    if (box && x > box.l - half && x < box.r + half && y > box.t - half && y < box.bt + half) {
       continue; // over the bar box
     }
     let tooClose = false;
@@ -155,31 +209,54 @@ function pickPosition(w, h, box, recent) {
   return cand;
 }
 
+// Pick the node for the next pop. Over `cap` live pops, the oldest live one is RETIRED (into its fade tail — it fades,
+// it is never cut), one per call. The new pop takes a free node; only with the whole pool busy does it reuse a node,
+// and then the oldest one already fading out.
+const startOf = (a) => a.startTime ?? 0;
 function pickIndex(anims, poolSize, cap, nextRef) {
-  const running = [];
+  const live = [];
   let free = -1;
+  let fading = -1;
   for (let n = 0; n < anims.length; n++) {
-    if (anims[n].playState === 'running') running.push(n);
-    else if (free === -1) free = n;
+    const a = anims[n];
+    if (a.playState !== 'running') { if (free === -1) free = n; }
+    else if (a.__retiring) { if (fading === -1 || startOf(a) < startOf(anims[fading])) fading = n; }
+    else live.push(n);
   }
-  let i;
-  if (running.length >= cap) {
-    i = running.reduce((oldest, n) => ((anims[n].startTime ?? 0) < (anims[oldest].startTime ?? 0) ? n : oldest), running[0]);
-  } else {
-    i = free !== -1 ? free : nextRef.current % poolSize;
+  if (live.length >= cap) {
+    const o = live.reduce((oldest, n) => (startOf(anims[n]) < startOf(anims[oldest]) ? n : oldest), live[0]);
+    const a = anims[o];
+    const dur = Number(a.effect && a.effect.getTiming().duration) || POP_MS;
+    if ((a.currentTime ?? 0) < dur * POP_RETIRE_AT) a.currentTime = dur * POP_RETIRE_AT;
+    a.__retiring = true;
+    if (fading === -1) fading = o;
   }
+  const i = free !== -1 ? free : fading !== -1 ? fading : nextRef.current % poolSize;
+  anims[i].__retiring = false;
   nextRef.current = (i + 1) % poolSize;
   return i;
 }
 
 // MenuXpFx — imperative: letterPop(char, "+N", scale, colour), edgePulse(colour) per
 // keystroke, celebrate(level) on a level-up.
-export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
+export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, ref) {
   const layerRef = useRef(null);
   // STEP 22 / A1: the MENU TIER (level + rebirth) lengthens and enriches every pop. Read through
   // a ref so a level-up mid-typing re-tiers the very next keystroke without re-creating the pool.
   const tierRef = useRef(tierFx(menuTier));
   tierRef.current = tierFx(menuTier);
+  // KEY GROWTH: the career level (Homepage passes it live; the splash / shop try-on read the save once) -> the size +
+  // dressing stage. Through refs, like the tier, so a level-up re-sizes the next key without touching the pool.
+  const [savedCareer] = useState(() => (career == null ? currentCareer() : 0));
+  const narrowRef = useRef(false);
+  const careerRef = useRef(1);
+  careerRef.current = career == null ? savedCareer : career;
+  const growthRef = useRef(null);
+  growthRef.current = popGrowth(careerRef.current, narrowRef.current);
+  const ringElsRef = useRef([]);
+  const ringAnimsRef = useRef([]);
+  const sparkElsRef = useRef([]);
+  const sparkAnimsRef = useRef([]);
   const burstRef = useRef(null);
   // Only a LEVEL-UP / REBIRTH owns the pop budget while it plays; the tier-up name card (which
   // can fire on menu open) must never mute the player's first keystrokes.
@@ -225,6 +302,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       const wrap = layer.getBoundingClientRect();
       layerRectRef.current = { left: wrap.left, top: wrap.top };
       layerSizeRef.current = { w: wrap.width, h: wrap.height };
+      narrowRef.current = wrap.width > 0 && wrap.width < NARROW_W;
+      growthRef.current = popGrowth(careerRef.current, narrowRef.current);
       const bar = document.querySelector('.menu-xp-bar');
       let box = null;
       if (bar) {
@@ -257,6 +336,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       a.cancel();
       return a;
     });
+
+    // KEY GROWTH dressing: one idle WAAPI per pooled ring / sparkle (keyframes re-set per spawn for a fresh angle).
+    const idle = (el, ms) => {
+      const a = el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: ms, easing: 'linear', fill: 'both' });
+      a.cancel();
+      a.onfinish = () => { el.style.willChange = ''; };
+      return a;
+    };
+    ringAnimsRef.current = ringElsRef.current.map((el) => idle(el, RING_MS));
+    sparkAnimsRef.current = sparkElsRef.current.map((el) => idle(el, SPARK_MS));
 
     const edgeOpts = { duration: EDGE_MS, easing: 'ease-out', fill: 'both' };
     edgeAnimsRef.current = edgeElsRef.current.map((el) => {
@@ -415,17 +504,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
   // null (CLASSIC, a word-rarity band pop) clears back to the CSS dress. Returns the fill used.
   const lookNextRef = useRef(0);
   // the painted burst under the number: shown + slammed in for a look, hidden otherwise (a pooled child, finite WAAPI)
-  function dressArt(pop, look) {
+  function dressArt(pop, look, crit = false, delay = 90, spin = 22) {
     const img = pop.children[2];
     if (!img) return;
-    if (!look || !look.art || prefersReducedMotion()) { img.style.display = 'none'; return; }
-    if (img.getAttribute('src') !== look.art) img.setAttribute('src', look.art);
+    const src = look && (crit ? look.crit : look.art);
+    if (!src || prefersReducedMotion()) { img.style.display = 'none'; return; }
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     img.style.display = 'block'; // the CSS rests it at display:none
-    // the number must read ON the painted burst: white, a heavy black outline + hard shadow (the burst carries the look)
-    const num = pop.children[1];
-    num.style.color = '#FFFFFF';
-    num.style.webkitTextStroke = '5px #000';
-    num.style.textShadow = '3px 3px 0 #000';
+    dressNum(pop.children[1], look);
     const rot = Math.random() * 60 - 30;
     if (img.__burst) { try { img.__burst.cancel(); } catch { /* gone */ } }
     img.style.willChange = 'transform, opacity'; // only for the burst's life
@@ -433,14 +519,29 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // a crisp slam (easing per step — a whole-run ease-out raced it through its hold): pops to 1.18 at full opacity,
       // settles, HOLDS, then a quick fade — 420 ms, finite
       { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.35)`, opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 8}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 12}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 16}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
-      { transform: `translate(-50%, -50%) rotate(${rot + 22}deg) scale(1.12)`, opacity: 0 },
-    ], { duration: 420, delay: 90, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.36}deg) scale(1.18)`, opacity: 1, offset: 0.2, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.55}deg) scale(1)`, opacity: 1, offset: 0.36, easing: 'linear' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin * 0.73}deg) scale(1.02)`, opacity: 1, offset: 0.74, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${rot + spin}deg) scale(1.12)`, opacity: 0 },
+    ], { duration: crit ? CRIT_BURST_MS : POP_BURST_MS, delay: crit ? 0 : delay, fill: 'backwards', easing: 'linear' }); // lands as the pop itself reaches full opacity
     img.__burst.onfinish = () => { img.style.willChange = ''; img.__burst = null; };
   }
+  // THE KIT's NUMBER (oct27): the +N sits on a chip of the look's own painted texture (its bar art) edged in the look's
+  // outline colour — static styles on the pooled node, set per spawn (MenuXp.css .is-kit).
+  function dressNum(node, look) {
+    if (look && look.chip) return look.chip(node); // a painted kit: its textured chip (popLooks.js, lazy)
+    clearNum(node);
+    // a look without its kit art yet: the oct25 dress — white over a heavy black outline, so it reads on its burst
+    if (look) { node.style.color = '#FFFFFF'; node.style.webkitTextStroke = '5px #000'; node.style.textShadow = '3px 3px 0 #000'; }
+  }
+  function clearNum(node) {
+    if (!node.classList.contains('is-kit')) return;
+    node.classList.remove('is-kit');
+    node.style.backgroundImage = '';
+    node.style.borderColor = '';
+  }
   function dressPop(node, look, colour, hardShadow) {
+    clearNum(node);
     if (!look) {
       node.style.color = colour;
       node.style.webkitTextStroke = '';
@@ -454,17 +555,62 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     return fill;
   }
 
+  // KEY GROWTH dressing on pop node i: the burst ring (stage 1+) and sparkle (stage 2+) land as the +N hits. `colour`
+  // null = stand down (a worn look paints its own burst; a crit has its own dress) — cancels whatever ran on this node.
+  function dressGrowth(i, colour, hitMs = 90) {
+    const ra = ringAnimsRef.current[i];
+    const sa = sparkAnimsRef.current[i];
+    const ring = ringElsRef.current[i];
+    const spark = sparkElsRef.current[i];
+    if (ra) ra.cancel();
+    if (sa) sa.cancel();
+    if (ring) ring.style.willChange = ''; // a cancel never fires onfinish — drop the hint here
+    if (spark) spark.style.willChange = '';
+    const g = growthRef.current;
+    if (!colour || g.stage < 1 || prefersReducedMotion() || !ring || !ra) return;
+    if (layerRef.current && !layerRef.current.classList.contains('is-grown')) layerRef.current.classList.add('is-grown');
+    const rot = Math.random() * 40 - 20;
+    ring.style.backgroundColor = g.stage >= 3 ? TIER_GOLD : colour;
+    ring.style.willChange = 'transform, opacity';
+    ra.effect.setKeyframes([
+      { transform: `translate(-50%, -50%) rotate(${rot}deg) scale(.3)`, opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 8}deg) scale(1.08)`, opacity: 0.9, offset: 0.3, easing: 'ease-out' },
+      { transform: `translate(-50%, -50%) rotate(${rot + 14}deg) scale(1.3)`, opacity: 0 },
+    ]);
+    ra.effect.updateTiming({ delay: hitMs });
+    ra.play();
+    if (g.stage < 2 || !spark || !sa) return;
+    if (!spark.getAttribute('src')) spark.setAttribute('src', SPARK_SRC); // fetched on the first stage-2 pop, never at paint
+    const flip = Math.random() < 0.5 ? -1 : 1;
+    spark.style.willChange = 'transform, opacity';
+    sa.effect.setKeyframes([
+      { transform: 'translate(-50%, -50%) rotate(0deg) scale(0)', opacity: 0, easing: 'cubic-bezier(.2,1.5,.4,1)' },
+      { transform: `translate(-50%, -50%) rotate(${flip * 35}deg) scale(1.15)`, opacity: 1, offset: 0.4, easing: 'ease-in' },
+      { transform: `translate(-50%, -50%) rotate(${flip * 90}deg) scale(0)`, opacity: 0 },
+    ]);
+    sa.effect.updateTiming({ delay: hitMs + 60 });
+    sa.play();
+  }
+  // streak scale x the career growth (`share` of it), clamped (the phone ceiling is lower)
+  const grownScale = (scale, share = 1) => {
+    const g = growthRef.current;
+    return Math.min(narrowRef.current ? POP_SCALE_MAX_NARROW : POP_SCALE_MAX, scale * (1 + (g.scale - 1) * share));
+  };
+
   useImperativeHandle(ref, () => (V3.fx || Object)({
     letterPop(letter, plusText, scale = 1, colour = '#2EFFE0', feelTier = 0, look = null) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return; // not measured yet, or no pool
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
-      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current);
+      const sz = grownScale(scale);
+      // a grown pop keeps its whole (estimated) width on screen — text length x glyph half-width x size, no layout read
+      const label = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
+      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current, POP_HALF * Math.max(1, sz), Math.max(POP_HALF, label.length * CHAR_HALF_PX * sz));
       el.classList.remove('is-crit'); // reset if this node was last used for a crit
       // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", in the
       // tap pop's dress (no typed letter). The CRIT keeps its key: CRIT +N says what happened.
@@ -476,10 +622,13 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       // children: [0] = (empty — the typed letter is not shown), [1] = "+N XP" in the tier colour
       el.children[0].textContent = '';
       // a band-only pop (useXpCapture: a menu WORD's rarity band, no +N) still shows its band word
-      el.children[1].textContent = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
+      el.children[1].textContent = label;
       const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
       dressPop(el.children[1], lk, tierColour, feelTier >= 3);
-      dressArt(el, lk);
+      const tf0 = tierRef.current;
+      const mo = kitArc(lk, Math.random() * 20 - 10, sz * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      dressArt(el, lk, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressGrowth(i, plusText && !lk ? tierColour : null, Math.round(mo.hit * mo.ms));
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       // Shards: KEY TIER T2+ throws its 4; the MENU TIER throws its own from T2 — whichever
@@ -489,19 +638,10 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       if (shardN > 0 && !prefersReducedMotion()) spawnShards(pos.x, pos.y, lk ? lk.shards : tierColour, shardN, 1 + tfx.tier * 0.12);
       // Streak tier scales the pop via the TRANSFORM (not font-size); per-pop variance adds a
       // small random rotation + scale multiplier on top so no two pops read identical.
-      const rot = Math.random() * 20 - 10; // [-10°, +10°]
-      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
-      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
-      // further, and lands with a punch (overshoot) before it floats off.
-      const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: tf.popMs });
-      anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 1, offset: 0.62 }, // Andy oct9: HOLD readable so the +N is seen
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
-      ]);
+      // per-pop variance (a small rotation + scale, picked in kitArc's call above) so no two pops read identical;
+      // LONGER at higher menu tiers (Andy A1), ×POP_STRETCH (oct27), and a worn look's own motion (kitArc)
+      anim.effect.updateTiming({ duration: mo.ms });
+      anim.effect.setKeyframes(mo.frames);
       anim.cancel();
       anim.play();
     },
@@ -514,12 +654,12 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     critArm() {
       // nothing to download any more (the crit is type + motion only); kept so callers don't change
     },
-    critPop(letter, critText, scale = 1) {
+    critPop(letter, critText, scale = 1, look = null) {
       const { w, h } = layerSizeRef.current;
       const anims = popAnimsRef.current;
       if (!w || !h || !anims.length) return;
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
@@ -538,6 +678,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           y: Math.min(Math.max(raw.y, CRIT_TOP), Math.max(CRIT_TOP, h - CRIT_SAFE)),
         };
       }
+      dressGrowth(i, null);
       el.classList.remove('is-tap');
       el.classList.add('is-crit');
       el.children[0].textContent = letter;
@@ -546,8 +687,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.children[1].textContent = critText;
       el.children[1].style.color = '';
       el.children[1].style.textShadow = '';
-      el.children[1].style.webkitTextStroke = ''; // a LOOK's outline never rides into the crit dress
-      if (el.children[2]) el.children[2].style.display = 'none'; // nor its painted burst
+      el.children[1].style.webkitTextStroke = ''; // the crit dress (CSS) unless a LOOK dresses it below
+      clearNum(el.children[1]);
+      // THE KIT's CRIT (oct27): a worn look throws its own painted CRIT burst behind the hit, its textured number, and
+      // a full ring of its shards; without one the crit keeps its own dress and no burst
+      el.classList.toggle('is-kit-crit', !!look);
+      if (look) {
+        dressArt(el, look, true);
+        if (!prefersReducedMotion()) spawnShards(pos.x, pos.y, look.shards, 6, 1.4);
+      } else if (el.children[2]) el.children[2].style.display = 'none';
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const still = prefersReducedMotion();
@@ -567,17 +715,16 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           sh.play();
         }
       }
-      // the key: a hard slam (1.9 → 1), a long readable HOLD (so the +N is seen), then it lifts off
+      // the key: no slam or squash (Andy oct28 — the number box never stretches): a quick fade in at its size, a long
+      // readable HOLD (so the +N is seen), then it fades off on the same small straight rise. The hit is the shake + burst.
       const dur = CRIT_BURST_MS;
-      const at = (ms) => Math.min(0.9, ms / dur);
-      const s = scale;
+      const s = grownScale(scale, 0.5); // a crit is already the big one — it takes half the career growth
       anim.effect.updateTiming({ duration: dur });
       anim.effect.setKeyframes([
-        { transform: `${CENTER}scale(${s * 1.9})`, opacity: 0, offset: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
-        { transform: `${CENTER}scale(${s})`, opacity: 1, offset: at(CRIT_PUNCH_MS) },
-        { transform: `${CENTER}scale(${s * 1.04})`, opacity: 1, offset: at(CRIT_PUNCH_MS * 2) },
-        { transform: `${CENTER}scale(${s})`, opacity: 1, offset: 0.8, easing: 'ease-in' },
-        { transform: `${CENTER}scale(${s * 0.92}) translateY(-12px)`, opacity: 0, offset: 1 },
+        { transform: `${CENTER}translateY(0px) scale(${s})`, opacity: 0, offset: 0, easing: 'ease-out' },
+        { transform: `${CENTER}translateY(${-POP_DRIFT * 0.1}px) scale(${s})`, opacity: 1, offset: Math.min(0.2, CRIT_PUNCH_MS / dur) },
+        { transform: `${CENTER}translateY(${-POP_DRIFT * 0.5}px) scale(${s})`, opacity: 1, offset: 0.8, easing: 'ease-in' },
+        { transform: `${CENTER}translateY(${-POP_DRIFT}px) scale(${s})`, opacity: 0, offset: 1 },
       ]);
       anim.cancel();
       anim.play();
@@ -597,7 +744,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
         y = box.t - POP_HALF > 0 ? box.t - POP_HALF : box.bt + POP_HALF;
       }
       const levelup = popCapRef.current && levelupAnimRef.current && levelupAnimRef.current.playState === 'running';
-      const i = pickIndex(anims, POP_POOL, levelup ? 1 : POP_CAP, popNextRef);
+      const i = pickIndex(anims, POP_POOL, levelup ? POP_CAP_LEVELUP : POP_CAP, popNextRef);
       const el = popElsRef.current[i];
       const anim = anims[i];
       if (!el || !anim) return;
@@ -605,23 +752,15 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
       el.classList.add('is-tap'); // hides the letter span, upsizes the "+N" (CSS)
       el.children[1].textContent = plusText;
       dressPop(el.children[1], look, colour, false); // tier colour for the tap, or the equipped LOOK
-      dressArt(el, look);
+      const tf0 = tierRef.current;
+      const mo = kitArc(look, Math.random() * 20 - 10, grownScale(scale) * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      dressArt(el, look, false, Math.round(mo.hit * mo.ms), mo.spin);
+      dressGrowth(i, look ? null : colour, Math.round(mo.hit * mo.ms));
       if (look && !prefersReducedMotion()) spawnShards(x, y, look.shards, Math.min(6, look.n));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
-      const rot = Math.random() * 20 - 10; // [-10°, +10°]
-      const s = scale * (0.92 + Math.random() * 0.16); // ×[0.92, 1.08]
-      // LONGER at higher menu tiers (Andy A1): the pop lives 600ms at T0 up to ~1.2s, rises
-      // further, and lands with a punch (overshoot) before it floats off.
-      const tf = tierRef.current;
-      anim.effect.updateTiming({ duration: tf.popMs });
-      anim.effect.setKeyframes([
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(8.96px)`, opacity: 0, offset: 0 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s * (1 + tf.tier * 0.05)}) translateY(-8.96px)`, opacity: 1, offset: 0.18 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-14px)`, opacity: 1, offset: 0.3 },
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-22px)`, opacity: 1, offset: 0.62 }, // Andy oct9: HOLD readable so the +N is seen
-        { transform: `${CENTER}rotate(${rot}deg) scale(${s}) translateY(-${tf.popRise}px)`, opacity: 0, offset: 1 },
-      ]);
+      anim.effect.updateTiming({ duration: mo.ms });
+      anim.effect.setKeyframes(mo.frames);
       anim.cancel();
       anim.play();
     },
@@ -641,8 +780,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     celebrate(level, size) {
       const a = levelupAnimRef.current;
       if (!a) return;
-      for (const p of popAnimsRef.current) p.cancel(); // celebration owns the budget
-      popCapRef.current = true;
+      popCapRef.current = true; // the card owns the budget: live pops finish their own fade, new keys stay sparse
       const m = size ? MILESTONE_FX[size] : null;
       if (m) {
         // Same card, same copy (the title and LV line stay); the kicker reads MILESTONE. Reduced
@@ -726,8 +864,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
     rebirthCelebration(n) {
       const a = levelupAnimRef.current;
       if (!a) return;
-      for (const p of popAnimsRef.current) p.cancel();
-      popCapRef.current = true;
+      popCapRef.current = true; // never a mass clear — live pops finish their own fade
       resetMilestoneCard();
       const total = rebirthMult(n);
       if (levelTitleRef.current) levelTitleRef.current.textContent = `REBIRTH ${formatNum(n)}`;
@@ -770,6 +907,21 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0 }, ref) {
           <span className="menu-xp-pop-plus" />
           {/* [2] the worn POP STYLE's painted burst (popLooks art) — src set per spawn, hidden without a look */}
           <img className="menu-xp-pop-art" alt="" draggable="false" />
+          {/* [3] / [4] KEY GROWTH dressing: the burst ring (a mask, tinted per spawn) and the sparkle — idle at rest */}
+          <span
+            className="menu-xp-pop-ring"
+            ref={(n) => {
+              ringElsRef.current[i] = n;
+            }}
+          />
+          <img
+            className="menu-xp-pop-spark"
+            alt=""
+            draggable="false"
+            ref={(n) => {
+              sparkElsRef.current[i] = n;
+            }}
+          />
         </span>
       ))}
       {Array.from({ length: EDGE_POOL }, (_, i) => (

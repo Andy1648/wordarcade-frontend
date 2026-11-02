@@ -10,7 +10,8 @@
 //   flame  #4–10   orange hex shield crowned with flames
 //   wing   #2–3    pink winged diamond crest
 //   crown  #1      the one-of-one: gold winged, crowned, flaming starburst (+ a one-shot shine on appear)
-//   past #50: no seal — the plain number (scarcity is the point)
+//   stone  #51–100 chipped bronze-and-stone badge (oct29, the TOP 100: hero-art painted it from the five above)
+//   past #100: no seal — the plain number (scarcity is the point)
 // Pure (no DOM): the board, the profile card and the tests all read it.
 
 export const SEAL_ART = {
@@ -19,6 +20,7 @@ export const SEAL_ART = {
   flame: '/lb/seal-flame.webp',
   star: '/lb/seal-star.webp',
   splat: '/lb/seal-splat.webp',
+  stone: '/lb/seal-stone.webp',
 };
 
 // best first: a lower index is a higher tier
@@ -28,9 +30,10 @@ export const NAME_TIERS = [
   { key: 'flame', top: 10, label: 'TOP 10' },
   { key: 'star', top: 25, label: 'TOP 25' },
   { key: 'splat', top: 50, label: 'TOP 50' },
+  { key: 'stone', top: 100, label: 'TOP 100' },
 ];
 
-/** The tier a board rank wears, or null past #50 / for no rank. */
+/** The tier a board rank wears, or null past #100 / for no rank. */
 export function nameTier(rank) {
   const r = Math.floor(Number(rank));
   if (!(r >= 1)) return null;

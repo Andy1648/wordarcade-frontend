@@ -14,7 +14,7 @@
   position: relative;
   display: flex;
   gap: 10px;
-  padding: 0 0 18px;
+  padding: 0 0 max(18px, calc(18px / var(--fit-zoom, 1)));
   margin: 0;
   background: none;
   border: 0;
@@ -33,6 +33,8 @@
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   font-size: var(--fs-k14);
+  /* under the lobby's fit-zoom (useFitZoom: 0.8 at 1280x551) k14 rendered 11px — the caption holds the 13px floor */
+  font-size: max(var(--fs-k14), calc(13.5px / var(--fit-zoom, 1)));
   letter-spacing: 0.08em;
   color: #9a8bbf;
 }
@@ -165,8 +167,8 @@
   .room-wrap[data-skin="v2"] .room-player-chip,
   .room-seat-open { min-height: 50px; }
   .room-wrap[data-skin="v2"] .room-start-btn { min-height: 76px; font-size: var(--fs-k34); }
-  /* phones never fit-zoom (zoom 1), so the 14px floor holds at k14 and a 9-letter name still fits a two-up chip */
-  .room-wrap[data-skin="v2"] .room-player-name { font-size: var(--fs-k14); }
+  /* (names stay k16 on a phone: the seat's name WRAPS now — overlap audit oct29 — so it no longer steps down to k14 to
+     squeeze a 9-letter name into a two-up chip) */
 }
 /* the live chip's slam-in animates its BACKGROUND to white (fill: both); the v2 card keeps its own fill and slams in on
    transform / opacity only */

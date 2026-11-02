@@ -35,7 +35,7 @@ export default function HeroCard({ hero, locked = false, req = null, dim = false
     t = setTimeout(loop, 700 + delay);
     return () => clearTimeout(t);
   }, [rare, delay]);
-  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.gold ? ' is-gold' : ''}${hero.legend ? ' is-legend' : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${dim ? ' is-dim' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
+  const cls = `hc${hero.elite ? ' is-elite' : ''}${hero.gold ? ' is-gold' : ''}${hero.legend ? ' is-legend' : ''}${hero.chase ? ` is-${hero.chase}` : ''}${locked ? ' is-locked' : ''}${req ? ' has-req' : ''}${dim ? ' is-dim' : ''}${on ? ' is-on' : ''}${sel ? ' is-sel' : ''}`;
   // a card can sit inside a bigger button (the menu's PROFILE tile) — then it is a plain span, not a nested button
   const Tag = onClick ? 'button' : 'span';
   const btn = onClick ? { type: 'button', onClick, 'aria-pressed': on, 'aria-label': `${hero.name}${hero.elite ? ', elite' : hero.legend ? ', legend' : hero.gold ? ', gold' : ''}${locked ? ', locked' : on ? ', equipped' : ''}` } : { 'aria-hidden': 'true' };

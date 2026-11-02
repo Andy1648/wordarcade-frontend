@@ -14,6 +14,7 @@ import * as ranks from './ranks.js';
 import * as hooks from './hooks.js';
 import * as stock from './stock.js'; // the SHOP's STOCK (P3) — ShopV2 reads it as V3.stock
 import * as drop from './dailyDrop.js'; // the DAILY FREE DROP — ShopV2 + the menu's UPGRADES dot read it as V3.drop
+import * as dots from './shopDots.js'; // the SHOP's NEW dots — the menu's UPGRADES dot + ShopV2's tabs read it as V3.dots
 import { __v3 as xpV3, storedLevel } from '../xp.js';
 import { __v3 as starsV3 } from '../stars.js';
 import { __v3 as gemsV3, dropGemsForWord, gemsMigrated, stampGemsMigrated } from '../gemsCore.js';
@@ -39,7 +40,7 @@ if (!V3.ready) {
   winsV3({ a: hooks.countingBank(bankWordWins), w: stock.stockWinsMult });
   frenzyV3(); // FUSE FRENZY = ×5 XP per key, no wins multiplier (Andy oct8)
   gemsResultV3({ a: hooks.flatStreak(gameResultPayout), b: hooks.countingResult(payGameResult) });
-  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, drop, m: hooks.mark2Factor, c2: hooks.mark2For, ready: true });
+  Object.assign(V3, { econ, curve, store, unlocks, ranks, hooks, stock, drop, dots, m: hooks.mark2Factor, c2: hooks.mark2For, ready: true });
   try {
     if (!gemsMigrated()) stampGemsMigrated({ peak: storedLevel() });
   } catch {

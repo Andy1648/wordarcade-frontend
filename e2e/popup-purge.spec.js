@@ -143,7 +143,9 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     expect(v.dialogs, 'no dialog').toEqual([]);
     // Andy oct9 ("that addicting feeling is gone - get it back. just use old one"): the LEVEL N card (+ its starburst)
     // is the ONE centre card season 2 keeps — it must play; nothing else large may appear in the middle
-    expect(v.hits.filter((h) => !/menu-xp-level(up|burst)/.test(h)), 'nothing else large appears in the middle of the screen').toEqual([]);
+    // oct28: a KEY POP's own burst ring (menu-xp-pop-ring, KEY GROWTH) is the keystroke's feedback, not a notice — a key
+    // that happens to land mid-screen while mashing may put its ~150px ring over the centre for ~0.4 s
+    expect(v.hits.filter((h) => !/menu-xp-(level(up|burst)|pop-ring)/.test(h)), 'nothing else large appears in the middle of the screen').toEqual([]);
     expect(v.hits.join(' | '), 'the old LEVEL N card played').toContain('menu-xp-levelup');
     expect(v.claims, 'no menu claim notification / claimed-wins toast').toEqual([]);
     await expect(page.locator('.menu-xp-levelup')).toHaveCSS('opacity', '0'); // finite: it has finished

@@ -42,6 +42,16 @@ export const LEGEND = [
   // The top of the LEGEND ladder: REBIRTH 15 (the third jackpot rebirth), then gems
   { id: 'nova', name: 'NOVA', tag: 'BIGGER THAN THE SKY', color: '#2EFFE0', dark: '#1A1060', legend: true },
 ];
+// CHASE (oct28, Andy: "a few SUPER-RARE chase heroes with that rare addicting feeling"): heroes you can NEVER buy or earn
+// on a counter — each GEAR ROLL has a tiny chance to DROP one (CHASE_ODDS: "1 IN N" printed on its locked card, so you
+// always know what you're chasing). Two MYTHIC, one SECRET. A drop is kept forever (HEROES_KEY, like a bought hero).
+export const CHASE = [
+  { id: 'drake', name: 'DRAKE', tag: 'HATCHED ANGRY', color: '#FF4FA3', dark: '#8E0F2A', legend: true, chase: 'mythic' },
+  { id: 'magma', name: 'MAGMA', tag: 'NEVER COOLS DOWN', color: '#FF6B3D', dark: '#2A1E26', legend: true, chase: 'mythic' },
+  { id: 'facet', name: 'FACET', tag: 'FLAWLESS', color: '#2EFFE0', dark: '#4A2A8A', legend: true, chase: 'secret' },
+];
+/** One gear roll's chance of each CHASE hero (1 IN N). */
+export const CHASE_ODDS = { drake: 500, magma: 500, facet: 2500 };
 /** HOLLOW's sale ends at the start of Nov 1 2026, US Pacific (07:00 UTC). */
 export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
@@ -95,7 +105,9 @@ export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirt
   boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
   nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
-  hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true } };
+  hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true },
+  // a CHASE hero's gate never opens: it only DROPS (rollChaseDrop) — the card prints its odds
+  ...Object.fromEntries(Object.entries(CHASE_ODDS).map(([id, n]) => [id, { drop: n, label: `1 IN ${n}`, gate: true }])) };
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
 // free of the progress store import (`mp` = online wins, `bots` = wins against bots)
 const counts = () => {
@@ -127,6 +139,7 @@ export function heroGateMet(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
   if (!u || !u.gate) return true;
   if (u.until != null) return now < u.until; // LIMITED: on sale until the date, never after
+  if (u.drop != null) return false; // CHASE: never sold — it only drops
   try { return (getRebirths() || 0) >= u.reb; } catch { return false; }
 }
 // GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
@@ -147,7 +160,7 @@ function grandfatherOct19() {
   } catch { /* blocked storage */ }
 }
 for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
-export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...ELITE, ...GOLD];
+export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...CHASE, ...ELITE, ...GOLD];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const HEROES_KEY = 'taw.s2.heroes';
@@ -156,14 +169,27 @@ export function ownedHeroes() {
   grandfatherOct19();
   try {
     const v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]');
-    return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && h.price)) : [];
+    return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && (h.price || h.chase))) : [];
   } catch { return []; }
 }
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
   if (h && h.gold) return goldProgress(id).done; // GOLD is earned with wins only, never bought
+  if (h && h.chase) return ownedHeroes().includes(id); // CHASE: only a drop makes it yours
   return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
 };
+/** THE CHASE DROP: one gear roll's chance at each CHASE hero you don't have yet (CHASE_ODDS). A hit is kept at once
+ *  (HEROES_KEY) and its id returned (the roll screen plays the NEW HERO reveal); a miss returns null. */
+export function rollChaseDrop(rand = Math.random) {
+  for (const h of CHASE) {
+    if (ownsHero(h.id)) continue;
+    if (rand() < 1 / CHASE_ODDS[h.id]) {
+      try { localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...ownedHeroes(), h.id])])); } catch { return null; }
+      return h.id;
+    }
+  }
+  return null;
+}
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([
   'riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero',
@@ -182,6 +208,8 @@ const PAINTED = new Set([
   'buzz-hero', 'buzz-win', 'buzz-ko',
   'zip-hero', 'zip-win', 'zip-ko', // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct26 (ChatGPT, RIOT / JINX / DUD as the style refs) // oct24 (ChatGPT, RIOT / JINX / DUD as the style refs)
   'nova-hero', 'nova-win', 'nova-ko', // oct24 LEGEND (ChatGPT, RIOT / JINX / DUD as the style refs)
+  // oct28 CHASE (ChatGPT, NOVA / MECHA / JINX as the style refs — one 3-pose sheet each)
+  'drake-hero', 'drake-win', 'drake-ko', 'magma-hero', 'magma-win', 'magma-ko', 'facet-hero', 'facet-win', 'facet-ko',
   // GOLD (oct18, HERO only)
   'riot-gold-hero', 'glitch-gold-hero', 'hype-gold-hero', 'brawl-gold-hero', 'hex-gold-hero',
 ]);
@@ -248,6 +276,9 @@ export const CAST_BEATS = {
   quill: { ms: 1300, k: [[0, 1, 1], [0.4, 0.97, 1.04], [0.75, 1.02, 0.98], [1, 1, 1]] }, // a theatrical inhale
   jinx: { ms: 900, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.6, 0.97, 1.03], [1, 1, 1]] }, // a cat's twitchy settle
   salty: { ms: 1100, k: [[0, 1, 1], [0.35, 1.04, 0.95], [0.7, 0.98, 1.03], [1, 1, 1]] }, // a sea-legs sway, heavy iron
+  drake: { ms: 1000, k: [[0, 1, 1], [0.3, 1.05, 0.94], [0.65, 0.97, 1.04], [1, 1, 1]] }, // a predator's coiled breath
+  magma: { ms: 1500, k: [[0, 1, 1], [0.25, 1.06, 0.93], [0.5, 1.06, 0.93], [0.8, 0.99, 1.01], [1, 1, 1]] }, // a heavy rock settle
+  facet: { ms: 1800, k: [[0, 1, 1], [0.5, 0.98, 1.03], [1, 1, 1]] }, // poised, barely moves (it knows)
   buzz: { ms: 520, k: [[0, 1, 1], [0.5, 1.03, 0.97], [1, 1, 1]] }, // a quick wing-beat hum
   zip: { ms: 700, k: [[0, 1, 1], [0.3, 1.05, 0.95], [0.6, 0.97, 1.03], [1, 1, 1]] }, // light on its toes, coiled
   mecha: { ms: 1200, k: [[0, 1, 1], [0.2, 1.04, 0.96], [0.4, 1.04, 0.96], [0.7, 0.98, 1.02], [1, 1, 1]] }, // a heavy hydraulic settle
@@ -453,29 +484,48 @@ export const CAST_FRAMES = {
   salty: { n: 12, seq: [[6, 168], [1, 252], [7, 208], [2, 312], [8, 104], [3, 156], [9, 280], [4, 420], [10, 400], [5, 420], [11, 180]], rest: 1800 },
   // ZIP (oct26): spins a throwing star on a fingertip → tosses it up → a quick crouch → catches it without looking → 'shh'
   zip: { n: 12, seq: [[6, 152], [1, 228], [7, 120], [2, 180], [8, 168], [3, 252], [9, 240], [4, 360], [10, 320], [5, 480], [11, 160]], rest: 1500 }, // 12 frames: 6-11 are painted in-betweens
+  // CHASE (oct28): DRAKE rolls a flame across its claws → tosses it → catches it in a fist, sparks → opens the glove, grin
+  drake: { n: 6, seq: [[1, 260], [2, 340], [3, 420], [4, 380], [5, 300]], rest: 1700 },
+  // MAGMA pulls the fist back → SLAMS it into its palm, sparks + lava → rolls its shoulders, cracks blazing → steams, settles
+  magma: { n: 6, seq: [[1, 320], [2, 300], [3, 520], [4, 480], [5, 360]], rest: 1900 },
+  // FACET turns the floating shard → flicks it spinning up → it hangs at the top → drops back into its hand
+  facet: { n: 6, seq: [[1, 380], [2, 340], [3, 520], [4, 380], [5, 340]], rest: 2000 },
   // BUZZ (oct26): the spelling-bee champion — licks the pencil tip → scribbles in the air, sparkles → a big scribble loop
   // overhead → polishes its gold medal → pencil over the shoulder, wink
   buzz: { n: 12, seq: [[6, 168], [1, 252], [7, 144], [2, 216], [8, 280], [3, 420], [9, 260], [4, 390], [10, 360], [5, 540], [11, 180]], rest: 1700 }, // 12 frames: 6-11 are painted in-betweens
   // NOVA (LEGEND): flicks its tiny star up → it bursts into a crown of five stars → a finger snap, the ring tilts → the
   // stars fall into its palm as a tiny ringed planet → holds it up, comet flaring
-  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [4, 620], [10, 440], [5, 462], [11, 198]], rest: 2000 },
+  // oct26: in-between 9 repainted (the snap hand lowering as the planet forms — the old one drew a prop on the wrong hand)
+  nova: { n: 12, seq: [[6, 152], [1, 228], [7, 304], [2, 456], [8, 120], [3, 180], [9, 248], [4, 372], [10, 440], [5, 462], [11, 198]], rest: 2000 },
   // ELITE / GOLD versions (oct19, Andy: "the confetti for hype ... it's so css we need to do better"): their own painted
   // flipbooks replace the prop streams too
   // MVP HYPE: megaphone down → YELLS into it → fists up, a painted confetti burst → thumb at the crown, wink
-  'hype-elite': { n: 4, seq: [[1, 700], [2, 1000], [3, 1100]], rest: 1800 },
+  // 6 frames (oct26, the ELITE idles were 4-frame jumps): megaphone down → swings it up → YELLS → flung high, a confetti
+  // burst → thumb at the crown, wink → lowers it, the last confetti falling
+  'hype-elite': { n: 6, seq: [[1, 220], [2, 700], [3, 1000], [4, 700], [5, 400]], rest: 1600 },
   // ROCKSTAR RIOT: horns up → strums (twice), notes fly → windmill + headbang, sparks off the guitar → rock-god pose
-  'riot-elite': { n: 4, seq: [[1, 220], [0, 120], [1, 220], [2, 900], [3, 1100]], rest: 1700 },
+  // 6 frames: horns up → strums → strums harder, notes fly (twice) → windmill headbang, sparks → guitar high, tongue out → lowers it
+  'riot-elite': { n: 6, seq: [[1, 220], [2, 220], [1, 180], [2, 220], [3, 900], [4, 1000], [5, 300]], rest: 1500 },
   // CHAMP BRAWL: guard → jab → hoists the BELT, camera flashes → kisses the glove at you
-  'brawl-elite': { n: 4, seq: [[1, 160], [0, 140], [1, 160], [2, 1100], [3, 1000]], rest: 1700 },
+  // 6 frames: guard → jab (twice) → reaches for the belt → hoists it, camera flashes → lowers it → kisses the glove, a heart
+  'brawl-elite': { n: 6, seq: [[1, 160], [0, 140], [1, 160], [2, 300], [3, 1100], [4, 300], [5, 900]], rest: 1500 },
   // GLITCH.EXE: bored hologram → types, code floats up → the whole body GLITCHES (sliced + pixels) → arms crossed, smug
-  'glitch-elite': { n: 4, seq: [[1, 700], [2, 160], [1, 120], [2, 420], [3, 1200]], rest: 2000 },
+  // 6 frames: bored, a hologram keyboard → types, code floats up → types faster → the body GLITCHES (twice) → snaps back → arms crossed
+  'glitch-elite': { n: 6, seq: [[1, 500], [2, 500], [3, 160], [4, 120], [3, 300], [4, 300], [5, 1200]], rest: 1800 },
   // ARCHMAGE HEX: leans on the staff → crystal flares → a swirl of runes + stars bursts out → calm, smug
-  'hex-elite': { n: 4, seq: [[1, 650], [2, 1050], [3, 1150]], rest: 2000 },
+  // 6 frames: leans on the staff → raises it, the crystal glows → it FLARES, eyes gold → a swirl of runes + stars → fades → smug
+  'hex-elite': { n: 6, seq: [[1, 500], [2, 700], [3, 1050], [4, 500], [5, 900]], rest: 1800 },
 };
-// GOLD versions act out their member's routine in solid gold — same beats, so they borrow the member's timing
-// (a member re-painted at 6 frames keeps a 4-frame GOLD: GOLD_SEQ4 holds the 4-frame beat it was painted to)
-const GOLD_SEQ4 = { hex: { n: 4, seq: [[1, 650], [2, 900], [3, 1150]], rest: 2000 }, brawl: { n: 4, seq: [[1, 150], [0, 130], [1, 150], [0, 160], [2, 650], [0, 180], [3, 950]], rest: 1700 }, glitch: { n: 4, seq: [[1, 380], [2, 520], [3, 1300]], rest: 2200 }, hype: { n: 4, seq: [[1, 280], [2, 300], [1, 280], [2, 300], [3, 1000]], rest: 1800 }, riot: { n: 4, seq: [[1, 170], [0, 120], [1, 170], [0, 120], [1, 200], [2, 1100], [3, 1000]], rest: 1700 } };
-for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ4[b] || CAST_FRAMES[b];
+// GOLD versions act out their member's routine in solid gold — 6 painted frames each (oct26 repaint: the 4-frame
+// GOLD sheets jumped between poses), small steps so the beats flow
+const GOLD_SEQ6 = {
+  riot: { n: 6, seq: [[1, 170], [2, 170], [1, 170], [2, 170], [3, 250], [4, 950], [5, 800]], rest: 1600 }, // shakes the can (twice) → a first puff → full spray → blows the nozzle
+  glitch: { n: 6, seq: [[1, 380], [2, 420], [3, 700], [4, 260], [5, 900]], rest: 2000 }, // the gum bubble grows, grows, HUGE → POP on its face → peels it off
+  hype: { n: 6, seq: [[1, 220], [2, 420], [3, 300], [4, 300], [5, 900]], rest: 1700 }, // the foam finger up → YELLS → swings it across and back → points at you, wink
+  brawl: { n: 6, seq: [[1, 90], [2, 160], [1, 90], [2, 160], [3, 250], [4, 650], [5, 800]], rest: 1600 }, // jab (twice) → winds low → UPPERCUT → gloves bumped, wink
+  hex: { n: 6, seq: [[1, 450], [2, 500], [3, 950], [4, 300], [5, 900]], rest: 1900 }, // looks up, a star → fingers wiggle stars → the book FLARES → snaps it shut → 'shh'
+};
+for (const b of ['riot', 'glitch', 'hype', 'brawl', 'hex']) CAST_FRAMES[`${b}-gold`] = GOLD_SEQ6[b];
 /** WIN flipbooks (oct19, Andy: "theres so much hero stuff we can improve on"): the victory pose acts out a short
  *  celebration on the results screen, the preview's WIN tab and the NEW HERO reveal. Frames are
  *  public/cast/anim/<id>-win-<n>.webp, registered on the pose's lowest point (the WIN poses are mid-jump). */
@@ -503,6 +553,12 @@ registerWinFrames('salty', WIN_SEQ6); // lands → leans on the cutlass → the 
 registerWinFrames('nova', WIN_SEQ6); // rises, the shooting star curls round → a spin → a clap of stars → points at you → arms crossed
 registerWinFrames('hollow', WIN_SEQ6); // lands crouched → fists up → the hop, fuse flares, candy corn bursts → cackles → catches a candy corn, points at you → arms crossed
 registerWinFrames('quill', WIN_SEQ6); // oct26 repaint (was 4 frames): hand on heart → reads the verse → arm to the sky, cape out → the bow → tosses you a rose → the smug nod
+// ELITE WIN flipbooks (oct26 — they showed a still): ChatGPT, each ELITE's WIN + standing pose attached
+registerWinFrames('riot-elite', WIN_SEQ6); // lands, guitar low → guitar high, horns → a power chord mid-air, sparks + confetti → a wild strum → knee-slide, points it at you → guitar on the shoulder
+registerWinFrames('glitch-elite', WIN_SEQ6); // crouched → fist up under a hologram grid → glitches into slices mid-air → snaps back, a download bar fills → finger-guns → arms crossed
+registerWinFrames('hype-elite', WIN_SEQ6); // lands → megaphone high → the wings flap, a confetti burst → YELLS into it → points it at you, wink → thumb at the crown
+registerWinFrames('brawl-elite', WIN_SEQ6); // boxing crouch → hoists the belt → camera flashes mid-air → a roaring double fist pump → points at you, belt on the shoulder → gloves crossed
+registerWinFrames('hex-elite', WIN_SEQ6); // lands → staff high, the crystal glows → floats in a swirl of runes → the book flips itself → a star at you, wink → leans on the staff
 registerWinFrames('buzz', WIN_SEQ6); // lands → pencil high like a trophy → buzzing mid-air, sparkles + honey drops → bites its gold medal → points the pencil at you → pencil on the shoulder
 registerWinFrames('zip', WIN_SEQ6); // ninja landing → flying jump kick → a fan of throwing stars mid-air → they thunk into the floor in a row → a quick bow → arms crossed
 /** K.O. flipbooks (oct26, Andy: "use [ChatGPT] on HEROES first … KO flipbooks"): the knocked-out hero on the results
@@ -529,6 +585,12 @@ registerKoFrames('jinx', KO_SEQ6); // the tail twitches → stars + halo → adm
 registerKoFrames('hollow', KO_SEQ6); // an eye glows back on → reaches for a candy corn → to its mouth → it slips and bonks its head
 registerKoFrames('salty', KO_SEQ6); // face-down: a boot twitches → lifts its head, stars → the spyglass, wrong way round → face-plants in the dust
 registerKoFrames('nova', KO_SEQ6); // planets drift round → a dazed eye → tries to lift its ring back up → the ring clonks its head
+// ELITE K.O. flipbooks (oct26): each ELITE's K.O. + standing pose attached
+registerKoFrames('riot-elite', KO_SEQ6); // an eye opens → grabs the guitar → one sad strum → a string snaps in its face, flops
+registerKoFrames('glitch-elite', KO_SEQ6); // crashed → a loading spinner → the visor flickers on, a loading bar → nearly loaded → the bar goes red and shatters, glitches out
+registerKoFrames('hype-elite', KO_SEQ6); // an eye opens → grabs the megaphone → a big breath → only a tiny squeak, flops
+registerKoFrames('brawl-elite', KO_SEQ6); // a glove twitches → onto one knee → staggers up, a wobbly guard → the belt slips to its ankles and trips it
+registerKoFrames('hex-elite', KO_SEQ6); // under its hat: peeks out → grabs the staff → a few weak sparkles → the spell backfires in its face
 registerKoFrames('buzz', KO_SEQ6); // a wing twitches → buzzes weakly off the floor → hovers, reaching for its snapped pencil → the wings sputter, it drops
 registerKoFrames('zip', KO_SEQ6); // an eye opens → a ninja kip-up, legs up → springs up halfway, wobbling → steps on its own throwing star, topples
 export const castFrames = (id, pose = 'hero') => (FRAME_SPECS[pose] && FRAME_SPECS[pose][id]) || null;

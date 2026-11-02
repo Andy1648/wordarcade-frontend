@@ -1,0 +1,61 @@
+/* SaveCodeNudge.css — WRITE DOWN YOUR CODE: a sticky card in the RIGHT-edge toast stack (KitEdgeToast.css .ket-host),
+   and the PROFILE popup's SAVE CODE chip. Flat fills, thick coloured outline, hard black offset shadow, 8px corners.
+   Phone: every text ≥ 16px, every target ≥ 44px. Nothing loops. */
+.ket.is-live { pointer-events: auto; width: min(340px, calc(100vw - 16px)); } /* the one toast that takes a pointer: COPY + ✕ */
+.ket.is-live .ket-card { height: auto; width: 100%; white-space: normal; }
+.scn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 14px 12px 16px;
+  box-sizing: border-box;
+}
+.scn-head {
+  font: 400 var(--fs-k16) var(--k-display);
+  color: var(--k-dim);
+  white-space: normal;
+}
+.scn-code {
+  font: 400 var(--fs-k28) var(--k-display);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--k-cyan);
+  -webkit-text-stroke: var(--k-stroke-l) var(--k-ink);
+  paint-order: stroke fill;
+  user-select: all;
+}
+.scn-row { display: flex; gap: 8px; }
+.scn-copy,
+.scn-x {
+  min-height: 44px;
+  border: 3px solid var(--k-cyan-d);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--k-ink);
+  font: 400 var(--fs-k18) var(--k-display);
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.scn-copy { flex: 1; background: var(--k-cyan); color: var(--k-ink); }
+.scn-x { width: 44px; background: var(--k-panel); color: var(--k-white); border-color: #5b3f8a; }
+.scn-copy:active,
+.scn-x:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--k-ink); }
+
+.scn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 4px 12px;
+  background: #24123d;
+  border: 3px solid var(--k-cyan-d, #12A99A);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.scn-chip:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
+.scn-chip-k { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #c9b8e8; }
+.scn-chip-v { font: 400 var(--fs-k20) 'Bungee', sans-serif; color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; letter-spacing: 1px; }

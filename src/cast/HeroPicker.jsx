@@ -5,7 +5,7 @@
 // Tapping a card opens HeroPreview on that variant, where the variant tabs (RIOT / GOLD / ELITE) preview the ones you
 // don't own — with their requirement or gem price and the one button that gets them. ‹ › flip members.
 import { useEffect, useState } from 'react';
-import { CAST, NEW_CREW, LEGEND, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, heroGateMet, goldProgress, limitedDaysLeft } from './cast.js';
+import { CAST, NEW_CREW, LEGEND, CHASE, ELITE, GOLD, HERO_UNLOCK, heroById, ownsHero, heroGateMet, goldProgress, limitedDaysLeft } from './cast.js';
 import { buyHero } from './heroShop.js';
 import HeroCard from './HeroCard.jsx';
 import FitText from '../components/kit/FitText.jsx';
@@ -18,7 +18,8 @@ import './HeroPicker.css';
 
 // one card each, the grid's (and ‹ ›'s) order — a LIMITED hero still on sale leads the grid (its clock is the point)
 const ON_SALE = LEGEND.filter((h) => h.limited && limitedDaysLeft(h.id));
-const MEMBERS = [...ON_SALE, ...CAST, ...NEW_CREW, ...LEGEND.filter((h) => !ON_SALE.includes(h))];
+// the CHASE heroes close the grid: the rarest things in the game, locked with their odds until one drops
+const MEMBERS = [...ON_SALE, ...CAST, ...NEW_CREW, ...LEGEND.filter((h) => !ON_SALE.includes(h)), ...CHASE];
 const ALL = [...MEMBERS, ...GOLD, ...ELITE];
 /** A member's variants, base first: [base, GOLD?, ELITE?]. */
 export const variantsOf = (m) => [m, GOLD.find((g) => g.base === m.id), ELITE.find((e) => e.base === m.id)].filter(Boolean);
@@ -38,6 +39,7 @@ function Status({ m, current }) {
   const vs = variantsOf(m);
   if (vs.some((v) => v.id === current)) return <span className="hp2-act is-on">EQUIPPED</span>;
   if (ownsHero(m.id)) return null; // owned, not worn: the card itself is the button
+  if (m.chase) return null; // CHASE: no price — its odds ride the card art (cardReq)
   return <span className="hp2-act is-price"><KitIcon name="gems" size={20} shadow={2} extras={false} />{formatNum(m.price)}</span>;
 }
 /** The requirement printed on a card's art: the earn (60 WINS / LEVEL 20 / REBIRTH 1) of a crew member you don't own
@@ -70,8 +72,10 @@ function Variants({ m }) {
   );
 }
 
-/** @param current the equipped id · @param onEquip(id) · @param onBought(id) · @param peekId open straight onto this hero's preview */
-export default function HeroPicker({ current, onEquip, onBought, peekId = null }) {
+/** @param current the equipped id · @param onEquip(id) · @param onBought(id) · @param peekId open straight onto this hero's preview
+ *  @param tapEquips (CUSTOMIZE, Andy oct28 "one grid, tap to equip"): a tap on a hero you own wears it at once; the
+ *  preview (variants, price, how to earn) opens only for one you don't own — or for the one you wear */
+export default function HeroPicker({ current, onEquip, onBought, peekId = null, tapEquips = false }) {
   const [peek, setPeek] = useState(peekId); // the variant being previewed (null = the grid)
   const [gems, setGems] = useState(getGems);
   const [hot, setHot] = useState(null); // the card under the pointer / focus plays its flipbook (the equipped one always does)
@@ -107,7 +111,7 @@ export default function HeroPicker({ current, onEquip, onBought, peekId = null }
         {MEMBERS.map((m, k) => {
           const v = shownVariant(m, current);
           return (
-            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} live={hot === v.id || v.id === current} delay={k * 520} onClick={() => setPeek(v.id)}>
+            <HeroCard key={m.id} hero={v} dim={!ownsHero(m.id)} req={v === m ? cardReq(m) : null} on={variantsOf(m).some((x) => x.id === current)} live={hot === v.id || v.id === current} delay={k * 520} onClick={() => (tapEquips && ownsHero(v.id) && v.id !== current ? onEquip(v.id) : setPeek(v.id))}>
               <Status m={m} current={current} />
               <Variants m={m} />
             </HeroCard>

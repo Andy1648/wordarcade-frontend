@@ -168,14 +168,14 @@ test('bridge: no-op for the menu paths and unknown paths (nothing to bridge)', (
   }
 });
 
-test('DAILY BLITZ: /daily?s=share bridges to ?dailyblitz=1 and KEEPS the share tag; the view owns /daily', () => {
-  const c = withWindow('/daily', '?s=share', bridgePathToSearch);
-  assert.ok(c.called, '/daily must bridge');
-  const u = new URL('http://x' + c.url);
-  assert.equal(u.pathname, '/daily');
-  assert.equal(u.searchParams.get('dailyblitz'), '1');
-  assert.equal(u.searchParams.get('s'), 'share');
-  assert.equal(canonicalPathForView('daily-blitz'), '/daily');
-  assert.equal(viewIntentFromPath('/daily'), 'daily-blitz');
-  assert.equal(viewIntentFromPath('/daily/'), 'daily-blitz');
+test('MINER: /miner/play and the retired /daily both bridge to ?play=miner (the quick-match launch intent)', () => {
+  for (const [path, search] of [['/miner/play', ''], ['/miner', ''], ['/daily', '?s=share'], ['/daily/play', '']]) {
+    const c = withWindow(path, search, bridgePathToSearch);
+    assert.ok(c.called, `${path} must bridge`);
+    const u = new URL('http://x' + c.url);
+    assert.equal(u.searchParams.get('play'), 'miner', path);
+  }
+  // a live mine is a room: back/forward never re-drives it from history
+  assert.equal(viewIntentFromPath('/daily'), null);
+  assert.equal(viewIntentFromPath('/miner/play'), null);
 });

@@ -201,16 +201,25 @@ const SHAKE_L = [
   { transform: 'translate(0,0)' },
 ];
 
+// OVERLAP AUDIT (oct29): 1024 wide joins the stacked layout. The mockup stage there scales to 0.75, but its labels keep
+// their 20px floors — so the tabs ran over STATS ("STA"), "BASE + GEAR XP" wrapped over its icon and REBIRTH spilled
+// 17px out of its chip. Under 1100 the stage is too small for its own floors; the stacked layout fits 1024x768.
+const NARROW_W = 1100;
+
 /** The stage scale: the 1366×657 mockup, fit to the window (measured on mount / resize only — never per frame). */
 function useStageScale(ref) {
-  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1000); // Andy oct14: tablets + narrow laptops take the stacked layout (was < 700 — a 1280/1366 stage squeezed or shrunk to 0.6)
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < NARROW_W); // Andy oct14: tablets + narrow laptops take the stacked layout (was < 700 — a 1280/1366 stage squeezed or shrunk to 0.6)
   useLayoutEffect(() => {
     const set = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const k = w >= 1000 ? Math.max(0.6, Math.min(1.7, Math.min((w - 8) / 1366, h / 657))) : 1;
-      if (ref.current) ref.current.style.setProperty('--st2-k', k.toFixed(4));
-      setNarrow(w < 1000);
+      const k = w >= NARROW_W ? Math.max(0.6, Math.min(1.7, Math.min((w - 8) / 1366, h / 657))) : 1;
+      if (ref.current) {
+        ref.current.style.setProperty('--st2-k', k.toFixed(4));
+        // a SHORT laptop (1280x551: the stage at ~0.84) is too small for the labels' 20px floors — see StatsV2.css [data-tight]
+        ref.current.toggleAttribute('data-tight', w >= NARROW_W && k < 0.95);
+      }
+      setNarrow(w < NARROW_W);
     };
     set();
     window.addEventListener('resize', set);

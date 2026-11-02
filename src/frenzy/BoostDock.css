@@ -81,6 +81,9 @@
 .bd-fill { display: block; height: 100%; background: var(--bd-tone); transform-origin: 0 50%; transition: transform 1s linear; }
 /* OVERDRIVE — the hero tile: same box (the dock cell is narrow), louder clock, thicker bar, a bigger tilt */
 .bd-tile.bd-hero { padding-bottom: 17px; }
+/* a painted boost (progress/boostArt.js) stands out of its tone tile, inked with a static hard shadow */
+.bd-badge.has-art { position: relative; overflow: visible; }
+.bd-art { width: 140%; height: 140%; object-fit: contain; filter: drop-shadow(2px 2px 0 #000); pointer-events: none; user-select: none; }
 .bd-hero .bd-badge { transform: rotate(-10deg) scale(1.08); }
 .bd-hero .bd-clock { font-size: var(--fs-k24); }
 .bd-hero .bd-bar { height: 10px; }

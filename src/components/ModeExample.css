@@ -157,3 +157,35 @@
 .mode-ex-gem { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 8px; }
 .mode-ex-gem .kit-icon { flex: 0 0 auto; }
 .mode-ex-gem-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-k22); line-height: 1.1; color: #2EFFE0; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+
+/* MINER: the prompt, then three answers getting rarer, each standing on its painted ore (static) */
+.mode-ex-orewrap {
+  flex-direction: column;
+  align-items: stretch;
+}
+.mode-ex-ores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.mode-ex-orechip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.mode-ex-ore {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.mode-ex-ore-w {
+  max-width: 100%;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-align: center;
+  overflow-wrap: anywhere; /* oct29 audit: TRUFFLE ran 11-23px out of the card at 390 */
+}
+/* oct29 audit: "THE RAREST PIZZA TOPPING" was cut at the right edge on a phone - the MINER prompt may take two lines */
+.mode-ex-orewrap .mode-ex-word { white-space: normal; }
