@@ -918,6 +918,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* only where the stage has the room — the reel's own height is never traded for it */
 @media (min-width: 900px) and (min-height: 760px) { .rsx-coll { display: flex; } }
 @media (min-width: 1600px) and (min-height: 1000px) { .rsx-chase { display: grid; } }
+/* OVERLAP AUDIT #2 (#5): while the first-roll tip is up its line owns the band between the reel and ROLL — the showcase
+   that fills that band (FOUND chips, THE CHASE; all zeros on the fresh save that sees the tip) steps out, layout kept so
+   nothing shifts, and is back the moment the tip is tapped away */
+.rs-overlay.is-tut .rsx-coll,
+.rs-overlay.is-tut .rsx-chase { visibility: hidden; }
 
 /* oct15 afternoon (Andy "cover is not covering the cards"): while the reveal cut-scene is up, the landed card's result
    line under the reel (stats, NEW chip) sits ABOVE the dim and showed through beside the reveal card — hide it then */
