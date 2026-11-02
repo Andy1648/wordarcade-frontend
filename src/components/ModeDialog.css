@@ -524,9 +524,11 @@
    content rule above); if a body is still too tall it scrolls inside the panel rather than stacking text. The Blitz
    block stays the one deliberate shrinker (its pack picker scrolls). */
 .mode-dialog-lower:not(.mode-dialog-lower--blitz) { flex-shrink: 0; }
-/* the chip's -2deg tilt drops its low corner ~3px under its own box: a fixed 8px floor under it, so even a body with no
-   slack (the lower block at its full height) never lets the title touch the sticker */
-.mode-dialog-chip { flex-shrink: 0; margin-bottom: 8px; }
+/* the chip's -2deg tilt drops its low corner ~3px under its own box: a fixed 8px floor between it and a non-Blitz
+   lower block, so even a body with no slack never lets the title touch the sticker. On the lower block, NOT the chip:
+   the Blitz dialog's pack picker is sized to the pixel (blitz-pack-picker-fit at 1280x720) and keeps its layout. */
+.mode-dialog-chip { flex-shrink: 0; }
+.mode-dialog-lower:not(.mode-dialog-lower--blitz) { margin-top: 8px; }
 /* ...and the phone panel gives that room back so it does not have to scroll: the shell's clamp(20px, 4vh, 40px) padding
    was 34px a side at 844px tall — on a 351px-wide panel that is ~20% of the width and 68px of height spent on margin.
    20px / 18px keeps the ✕ (absolute, top-right) clear of the chip and the body ~30px taller and ~32px wider. */
