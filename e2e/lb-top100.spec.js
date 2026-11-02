@@ -99,8 +99,8 @@ function overlapsIn(page) {
         const px = drawnPx(pn);
         if (px < (narrowStage ? 16 : 13) - 0.5) out.push(`podium ${col.dataset.place}: name at ${px.toFixed(1)}px`);
         const nb = pn.getBoundingClientRect(); const cb = col.getBoundingClientRect();
-        // the #1 name may borrow 10% each side on a desktop (nov2 simplify: its column is narrow now) - but never onto
-        // the #2 / #3 heroes or names (it borrows 10% a side)
+        // the #1 name may borrow 6% each side on a desktop (nov2 simplify: its column is narrow now) - but never onto
+        // the #2 / #3 heroes or names (it borrows 6% a side)
         const slack = col.dataset.place === '1' && !narrowStage ? cb.width * 0.16 : 2;
         if (nb.left < cb.left - slack || nb.right > cb.right + slack) out.push(`podium ${col.dataset.place}: name runs out of its column`);
         if (col.dataset.place === '1') {

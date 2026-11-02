@@ -22,7 +22,7 @@ test('ranks map to the hard-cutoff tiers', () => {
 });
 
 test('every tier has painted art', () => {
-  for (const t of NAME_TIERS) assert.match(SEAL_ART[t.key], /^\/lb\/seal-.+\.webp$/);
+  for (const t of NAME_TIERS) assert.match(SEAL_ART[t.key], /^\/lb\/seal2?-.+\.webp$/);
 });
 
 test('enteredTier: only a climb INTO a better tier is a ceremony', () => {
