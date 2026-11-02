@@ -201,6 +201,14 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '61');
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
     await expect(lb.locator('.lb2-row.is-rival')).toHaveAttribute('data-rank', '60');
+    // CLIMB 1 (nov2): the gap in the stat that decides the order (#60 is one rebirth ahead) + its fill bar
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
+    await expect(lb.locator('.lb2-row.is-me .lb2-gap')).toHaveCount(1);
+    // CLIMB 2: scrolled to the top of the list, YOUR row is still on screen inside the list (sticky, the same row)
+    await lb.locator('.lb2-scroll').evaluate((el) => { el.scrollTop = 0; });
+    await page.waitForTimeout(200);
+    const pin = await page.evaluate(() => { const s = document.querySelector('.lb2-scroll').getBoundingClientRect(); const m = document.querySelector('.lb2-row.is-me').getBoundingClientRect(); return { inside: m.top >= s.top - 1 && m.bottom <= s.bottom + 1, rows: document.querySelectorAll('.lb2-row.is-me').length }; });
+    expect(pin).toEqual({ inside: true, rows: 1 });
     // the TOP 100 tier wears its painted stone seal (51-100), and every painted cut line keeps the ribbon's own shape
     await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
     const ribs = await lb.locator('.lb2-sep-rib').evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return b.width / b.height; }));
@@ -234,3 +242,18 @@ test('@1024x768 the header (YOU / CHANGE) is clickable over the smaller podium',
   expect(covered).toBe(false);
   expect(await overlapsIn(page)).toEqual([]);
 });
+
+// CLIMB 3 (nov2): past the TOP 100 the player right above you rides in over your row, so there is still someone to PASS
+for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width} past #100: a ghost of the player above you, with the gap to pass them`, async ({ page }) => {
+    const lb = await boot(page, vp, { level: 10, rebirths: 0 });
+    await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '121');
+    const ghost = lb.locator('.lb2-row.is-ghost');
+    await expect(ghost).toHaveAttribute('data-rank', '120');
+    await expect(ghost).toHaveClass(/is-rival/);
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-ghost-${vp.width}.png` });
+    expect(await overlapsIn(page)).toEqual([]);
+  });
+}

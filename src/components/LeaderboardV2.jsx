@@ -24,6 +24,7 @@ import {
   fetchBoard,
   fetchView,
   fetchBoardCount,
+  fetchRowAbove,
   topPercent,
   getMyProfile,
   submitStats,
@@ -49,6 +50,7 @@ import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import RankSeal from '../leaderboard/RankSeal.jsx';
 import { nameTier, enteredTier } from '../leaderboard/nameTier.js';
+import { gapTo } from '../leaderboard/gap.js';
 import { lazyWithReload } from '../lib/chunkReload';
 
 const fmt = (n) => formatNum(Number(n) || 0);
@@ -341,9 +343,13 @@ export default function LeaderboardV2({ onBack }) {
     try {
       await submitStats();
       const [b, total] = await Promise.all([fetchBoard(), fetchBoardCount()]);
+      // THE GHOST (Andy nov2 climb pick 3): past the board, the player ranked right above you rides in over your row,
+      // so even #2,000 has someone to PASS
+      const meR = b.me ? Number(b.me.rank) : 0;
+      const ghost = meR > BOARD_SIZE + 1 ? await fetchRowAbove(meR) : null;
       const moves = boardMoves([...b.rows, ...(b.me ? [b.me] : [])], readSeen().all);
       writeSeen('all', boardSnapshot(b.rows, b.me));
-      setAll({ ...b, total, loaded: true, error: false, moves });
+      setAll({ ...b, ghost, total, loaded: true, error: false, moves });
       // reading the board is reading the news (as the live board): clear the badge, keep this rank as the baseline
       const mine = getMyProfile();
       const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
@@ -428,7 +434,8 @@ export default function LeaderboardV2({ onBack }) {
   // ranks 4 … 100 (Andy oct28 "extend to top 100"; 50 oct14, 20 oct13); past #100 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
-  if (meRow && !meOnBoard) list = [...rows.slice(3, BOARD_SIZE - 1), meRow];
+  const ghost = meRow && !meOnBoard && data.ghost && data.ghost.id !== meRow.id ? data.ghost : null;
+  if (meRow && !meOnBoard) list = ghost ? [...rows.slice(3, BOARD_SIZE - 2), ghost, meRow] : [...rows.slice(3, BOARD_SIZE - 1), meRow];
   const wk = tab === 'week';
   // a phone's header columns are 70px / 52px: the '+' ran REBIRTHS into LEVELS ("+REBIRTHS+LEVELS", audit 2); the row numbers
   // already read +R / +12
@@ -481,7 +488,10 @@ export default function LeaderboardV2({ onBack }) {
     // TOP 20: open the scroll list on YOUR row (one layout read when the data lands — never per frame)
     const sc = scrollRef.current;
     const meEl = sc && sc.querySelector('.lb2-row.is-me');
-    if (sc && meEl) sc.scrollTop = Math.max(0, meEl.offsetTop - (sc.clientHeight - meEl.offsetHeight) / 2);
+    // (YOUR row is sticky, so its own offsetTop is where it is STUCK: its place in the list is where the row before it ends)
+    const before = meEl && meEl.previousElementSibling;
+    const meTop = before ? before.offsetTop + before.offsetHeight : 0;
+    if (sc && meEl) sc.scrollTop = Math.max(0, meTop - (sc.clientHeight - meEl.offsetHeight) / 2);
     // THE CLIMB (Andy oct14 "climb animation when passing someone"): you moved up N since your last look → your row
     // starts where you WERE (N rows lower) and slides up past the players you overtook, who each drop one slot. One
     // finite transform one-shot after the list lands; rows measured once here (not per frame). Podium climbs keep
@@ -622,6 +632,7 @@ export default function LeaderboardV2({ onBack }) {
             const meK = myId ? list.findIndex((x) => x.id === myId) : -1;
             const rival = meK > 0 && list[meK - 1].rank === list[meK].rank - 1 ? list[meK - 1] : null;
             const isRival = !!(rival && r.id === rival.id);
+            const gap = mine && rival ? gapTo(r, rival, tab, gains) : null;
             const n = nums(r, tab, gains);
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
@@ -633,7 +644,7 @@ export default function LeaderboardV2({ onBack }) {
               <Fragment key={r.id}>
               {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
               {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
-              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`} data-len={tier ? undefined : String(fmt(r.rank)).length}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
@@ -655,10 +666,13 @@ export default function LeaderboardV2({ onBack }) {
                   {mine && newTier ? <span className="lb2-chase"><span className="lb2-new-tier">NEW · {newTier.label}</span></span> : null}
                   {mine && !newTier && (rival || r.rank > 10) ? (
                     <span className={`lb2-chase${rival ? ' has-rival' : ''}`}>
+                      {/* THE GAP BAR (Andy nov2 climb pick 1): the chase line's underline fills with how much of the deciding
+                          stat you already have; the number it still needs replaces "FOR #n" */}
+                      {gap ? <i className="lb2-gap lb2-fill" style={{ width: `${Math.round(gap.fill * 100)}%` }} aria-hidden="true" /> : null}
                       {/* YOUR distance to the NEAREST band rides INSIDE this line's FitText, after the rival — never beside your
                           name, where a long or shrunk name ran under it (Andy oct26 "overlap with my username and '15 TO TOP
                           10'"): the two scale as one, so they can never cross */}
-                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b><span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}</FitText> : null}
+                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b>{gap ? <span className="lb2-gap-n"> {gap.text}</span> : <span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>}{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}</FitText> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
                           small stage with a rival it steps aside so neither is cut */}
                       {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
