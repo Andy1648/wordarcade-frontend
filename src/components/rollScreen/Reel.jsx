@@ -603,7 +603,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     <div className="rs-shake" ref={reg('shake')} data-tier={spin ? tier : undefined}>
       <div className="rs-reel" aria-hidden="true" data-testid="roll-reel">
         <div className="rs-light" ref={reg('light')} style={{ '--rs-tier': lineOf(tier) }}><div className="rs-rays-ink" /></div>
-        <div className="rs-win" ref={reg('win')}>
+        {/* is-parked (design audit nov2: "EGG T|MER"): at rest the pointer's bar leaves the landed card and its top
+            triangle parks ABOVE it, so the name + stats read clean; a spin brings the bar back (CSS, opacity/transform) */}
+        <div className={`rs-win${atRest ? ' is-parked' : ''}`} ref={reg('win')} data-testid="roll-band">
           <div className="rs-track" ref={reg('track')} style={{ transform: reelTransform(LAND_AT) }}>
             {CELLS.map((i) => {
               const id = strip ? strip[i] : null;
