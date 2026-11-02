@@ -926,3 +926,8 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 /* oct29 (hero-art): the painted OVERDRIVE rocket is a thin diagonal — at the shared art box it read smaller than the
    chunky can / coins / clover beside it. It draws a fifth bigger (transform: layout untouched, still its own ratio). */
 .sp2-card-in[data-stock="overdrive"] > .sp2-art { transform: scale(1.2); }
+
+/* ===== HEAR BEFORE YOU BUY (oct29, CUSTOMIZE → SOUND): the keycap is the button; its speaker badge says so. A tap plays the
+   pack's click and the keycap presses down once (one finite WAAPI transform run per tap, ShopV2Looks pressKey). ===== */
+.sp2-hear { position: relative; }
+.sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
