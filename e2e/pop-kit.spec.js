@@ -22,10 +22,11 @@ async function boot(page, pop, vp = { width: 1366, height: 768 }) {
   await menuReady(page);
 }
 
-const kitNums = (page, id) => page.evaluate((id) => [...document.querySelectorAll('.menu-xp-pop-plus.is-kit')]
-  .filter((n) => (n.style.backgroundImage || '').includes(`bar-${id}`)).length, id);
+// pops the worn look dressed (nov2: a plain key flashes the look's burst — the textured chip is the CRIT's)
+const kitNums = (page, id) => page.evaluate((id) => [...document.querySelectorAll('.menu-xp-pop-art')]
+  .filter((n) => n.style.display === 'block' && (n.getAttribute('src') || '').includes(`burst-${id}`)).length, id);
 
-test('INFERNO worn: textured +N, the painted crit burst, the painted bar fill, longer pops', async ({ page }) => {
+test('INFERNO worn: the burst on its keys, the painted crit burst, the painted bar fill, longer pops', async ({ page }) => {
   await boot(page, 'inferno');
   await expect(page.locator('.kx-fill.is-skin .kx-fill-skin')).toHaveCount(1);
   expect(await page.locator('.kx-fill-skin').getAttribute('style')).toContain('bar-inferno');
