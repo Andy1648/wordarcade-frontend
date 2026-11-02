@@ -4,6 +4,8 @@
 --   * TIER ODDS UNCHANGED (EPIC 1 in 60, LEGENDARY 1 in 130, MYTHIC 1 in 2000, SECRET 1 in 15000): each tier's odds
 --     split over more gears (each EPIC now 1 in 1020, each MYTHIC 1 in 26000); RARE (the floor) is unchanged.
 --   * Only private.gear_pool changes. pick_gear / pity / tickets / luck cap read the pool, so they follow.
+--   * private.gear_luck (061's per-account luck cap) is refreshed too: every gear with ROLL LUCK at star 0, so a GENIE /
+--     ROCKET SKATES / ANCHOR owner's legit luck is never clamped (serverLuckCap.test.js pins every row).
 -- ORDER: run THIS SQL first, then merge the PR (the browser's pool then matches). serverRolls.test pins it.
 -- HOW: Supabase > SQL editor > New query > paste the WHOLE file > Run. Safe to re-run. ASCII only.
 
@@ -69,3 +71,41 @@ insert into private.gear_pool (mark_id, tier, x, ord) values
   ('mk-supernova', 'mythic', 26000, 58),
   ('mk-origin', 'secret', 30000, 59),
   ('mk-paradox', 'secret', 30000, 60);
+
+
+
+
+-- ---- 061's gear_luck table, with the nov2 gears, season 2 sizes (luck_cap reads it; the function is unchanged)
+truncate private.gear_luck;
+insert into private.gear_luck (mark_id, luck_pct) values
+  ('mk-cyclone', 5),
+  ('mk-slipstream', 50),
+  ('mk-hotwire', 5),
+  ('mk-highlighter', 5),
+  ('mk-flashcards', 2.5),
+  ('mk-gumball', 7.5),
+  ('mk-pyro', 10),
+  ('mk-talisman', 150),
+  ('mk-lavalamp', 10),
+  ('mk-fortune', 20),
+  ('mk-hoarder', 15),
+  ('mk-rocketskates', 10),
+  ('mk-telescope', 10),
+  ('mk-leviathan', 15),
+  ('mk-jackpot', 30),
+  ('mk-monsoon', 15),
+  ('mk-shamrock', 400),
+  ('mk-longshot', 22.5),
+  ('mk-arcadestick', 15),
+  ('mk-kraken', 50),
+  ('mk-firebird', 25),
+  ('mk-genie', 1400),
+  ('mk-grimoire', 50),
+  ('mk-paradox', 60),
+  ('mk-marathon', 15),
+  ('mk-ritual', 30),
+  ('mk-linguist', 30),
+  ('mk-ul-og', 15),
+  ('mk-ul-wishbone', 30),
+  ('mk-ul-mirror', 15),
+  ('mk-ul-midas', 15);
