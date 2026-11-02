@@ -125,21 +125,7 @@ function voice(ctx, when, cfg, rate, gainJitter, gainScale, cutoffMul) {
 // position (capped +24 semitones). Non-blocking; no-op if disabled. NEVER blocks the keydown handler.
 export function playClack(step = 0) {
   if (!enabled) return;
-  press(PARAMS[getEquippedSoundPack()], step);
-}
-
-/** HEAR BEFORE YOU BUY (oct29, CUSTOMIZE → SOUND): a tapped pack plays a short three-key riff in ITS timbre — any pack,
- *  owned or not, equipped or not. A tap is the player asking to hear it, so it plays even with key clicks off. Returns
- *  false for SILENT (nothing to hear). */
-export function previewClack(packId) {
-  const cfg = PARAMS[packId];
-  if (!cfg) return false;
-  [0, 2, 4].forEach((step, i) => setTimeout(() => press(cfg, step), i * 120));
-  return true;
-}
-
-// one keypress (+ its scheduled release) in the timbre `cfg`, `step` up the pentatonic ladder
-function press(cfg, step) {
+  const cfg = PARAMS[getEquippedSoundPack()];
   if (!cfg) return; // 'silent' pack — plays nothing; multiplier still applies
   if (!ensureCtx()) return;
   const ctx = audioCtx();
