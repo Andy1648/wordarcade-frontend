@@ -10,11 +10,12 @@ import { navControl } from './support/menu.js';
 const SHOTS = process.env.LB_SHOTS || '';
 const SECRET = 'b8'.repeat(24);
 const FUTURE = Date.now() + 3_600_000;
-// long names on purpose (oct29 audit: FitText shrank WEPFKWPFPOKW to 6.5px, ANDY_POCKETPUH too)
-const NAMES = ['yaoguangzaiyaoguang', 'NOVAKID', 'glyphqueen', 'TURBOTYPER', 'WEPFKWPFPOKWQXZ', 'sleepyfox', 'QWERTYGOD', 'ANDY_POCKETPUHHH', 'DRIFTKING', 'lexi'];
+// long names on purpose, up to the 16-character legal maximum (oct29 audit: FitText shrank WEPFKWPFPOKW to 6.5px)
+// + the nov2 audit-2 names that broke mid-word (DANIE / L, MAKAYL / A, a CJK name one letter a line on a phone)
+const NAMES = ['yaoguangzaiyaogu', 'NOVAKID', 'glyphqueen', 'YIPINGJT_唐一平', 'WEPFKWPFPOKWQXZ', 'sleepyfox', 'QWERTYGOD', 'ANDY_POCKETPUHHH', 'DANIEL', 'MAKAYLA'];
 const BIOS = ['too good', 'grinding since day one', 'no keyboard no problem', 'chromebook warrior', 'i type with my elbows', 'gg ez', 'rebirth addict', 'top 10 or bust', 'spelling bee dropout', 'hi mom'];
 const ROWS = Array.from({ length: 120 }, (_, i) => ({
-  id: `p${i}`, username: i < 10 ? NAMES[i] : i === 58 ? 'XXLONGNAMEWITHNOSPACES' : `PLAYER${String(i).padStart(3, '0')}`,
+  id: `p${i}`, username: i < 10 ? NAMES[i] : i === 58 ? 'XXLONGNAMENOSPAC' : i === 69 ? 'SUNDAESUNDAY' : `PLAYER${String(i).padStart(3, '0')}`,
   week_levels: i < 40 ? 80 - i : 0, week_rebirths: 0, week_stars: 0, level: 900 - i * 7, rebirths: Math.max(0, 40 - Math.floor(i / 3)),
   stars: i < 5 ? 5 - i : 0, lifetime_words: 9000 - i * 50, lifetime_letters: 40000, wins_per_word: 10, econ: 13, submitted_at: FUTURE,
 }));
@@ -46,7 +47,7 @@ async function boot(page, vp, me) {
   await navControl(page, 'leaderboard').click();
   const lb = page.locator('.lb2');
   await lb.waitFor({ state: 'visible' });
-  await expect(lb.locator('.lb2-pod-bio')).toHaveCount(3, { timeout: 10_000 });
+  await expect(lb.locator('.lb2-col--1')).toHaveAttribute('data-id', /.+/, { timeout: 10_000 });
   await page.waitForTimeout(3000); // the finite arrival (podium rise, row pulses, the climb) has settled
   return lb;
 }
@@ -58,6 +59,30 @@ function overlapsIn(page) {
     const box = (el) => el.getBoundingClientRect();
     const hit = (a, b, tol = 1) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > tol && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > tol;
     const narrowStage = !!document.querySelector('.lb2--narrow');
+    // how many lines a name's text is drawn on (distinct line tops of its text's client rects)
+    const lineCount = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return new Set([...rg.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top))).size; };
+    // audit 2: a name breaks between letters ONLY when it is wider than its whole column at its size, and never leaves a
+    // 1-2 letter orphan line. -> the reason it is broken badly, or null.
+    const badBreak = (el, colW) => {
+      if (lineCount(el) < 2) return null;
+      const probe = document.createElement('span');
+      const cs = getComputedStyle(el);
+      Object.assign(probe.style, { position: 'absolute', visibility: 'hidden', whiteSpace: 'nowrap', font: cs.font, letterSpacing: cs.letterSpacing, textTransform: cs.textTransform });
+      probe.textContent = el.textContent;
+      document.body.appendChild(probe);
+      const oneLine = probe.getBoundingClientRect().width;
+      probe.remove();
+      if (oneLine <= colW + 1) return `breaks though it fits (${Math.round(oneLine)}px in ${Math.round(colW)}px)`;
+      const node = el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild : null;
+      if (node) {
+        const tops = [];
+        for (let i = 0; i < node.length; i++) { const rg = document.createRange(); rg.setStart(node, i); rg.setEnd(node, i + 1); const q = rg.getBoundingClientRect(); if (q.width > 0) tops.push(Math.round(q.top)); }
+        const last = Math.max(...tops);
+        const n = tops.filter((t) => Math.abs(t - last) <= 2).length;
+        if (n <= 2) return `leaves a ${n}-letter orphan line`;
+      }
+      return null;
+    };
     // the size the text is DRAWN at: font-size times any transform scale on it or inside it (FitText scales an inner span)
     const drawnPx = (el) => {
       let k = 1;
@@ -74,9 +99,19 @@ function overlapsIn(page) {
         const px = drawnPx(pn);
         if (px < (narrowStage ? 16 : 13) - 0.5) out.push(`podium ${col.dataset.place}: name at ${px.toFixed(1)}px`);
         const nb = pn.getBoundingClientRect(); const cb = col.getBoundingClientRect();
-        if (nb.left < cb.left - 2 || nb.right > cb.right + 2) out.push(`podium ${col.dataset.place}: name runs out of its column`);
+        // the #1 name may borrow 10% each side on a desktop (nov2 simplify: its column is narrow now) - but never onto
+        // the #2 / #3 heroes or names (it borrows 10% a side)
+        const slack = col.dataset.place === '1' && !narrowStage ? cb.width * 0.16 : 2;
+        if (nb.left < cb.left - slack || nb.right > cb.right + slack) out.push(`podium ${col.dataset.place}: name runs out of its column`);
+        if (col.dataset.place === '1') {
+          for (const other of document.querySelectorAll('.lb2-col--2, .lb2-col--3')) {
+            for (const part of other.querySelectorAll('.lb2-stand, .lb2-pod-name')) if (hit(nb, box(part))) out.push(`podium 1: name touches ${other.className.match(/lb2-col--\d/)[0]}`);
+          }
+        }
         // Andy oct21: a name is NEVER cut - no ellipsis, nothing clipped (it wraps instead)
         const pcs = getComputedStyle(pn);
+        const plines = lineCount(pn);
+        if (plines > 2) out.push(`podium ${col.dataset.place}: name stacks ${plines} lines`);
         const clipsP = pcs.overflow !== 'visible' && (pn.scrollWidth > pn.clientWidth + 1 || pn.scrollHeight > pn.clientHeight + 3);
         if (pcs.textOverflow === 'ellipsis' || clipsP) out.push(`podium ${col.dataset.place}: name is cut`);
       }
@@ -100,6 +135,13 @@ function overlapsIn(page) {
         const px = drawnPx(nm);
         if (px < (narrow ? 16 : 13) - 0.5) out.push(`row #${r.dataset.rank}: name at ${px.toFixed(1)}px`);
         const ncs = getComputedStyle(nm);
+        // a name reads as a WORD: at most two lines (nov2: a lost layout rule stacked names one letter per line and the rows
+        // just grew - nothing overlapped, so only a line count catches it)
+        const why = badBreak(nm, nm.closest('.lb2-who-text, .lb2-who-cell').getBoundingClientRect().width);
+        if (why) out.push(`row #${r.dataset.rank} "${nm.textContent}": ${why}`);
+        const lines = lineCount(nm);
+        // two lines; a phone allows three for the worst case (16 letters, no gap, at the 16px floor in a ~100px column)
+        if (lines > (narrow ? 3 : 2)) out.push(`row #${r.dataset.rank}: name stacks ${lines} lines`);
         const clipsN = ncs.overflow !== 'visible' && nm.scrollWidth > nm.clientWidth + 1;
         if (ncs.textOverflow === 'ellipsis' || ncs.webkitLineClamp !== 'none' || clipsN) out.push(`row #${r.dataset.rank}: name is cut`);
       }
@@ -133,16 +175,17 @@ function overlapsIn(page) {
 }
 
 for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
-  test(`TOP 100 + bios @ ${vp.width}: no overlaps, readable bios, the board reaches #100`, async ({ page }) => {
-    // YOU at #7: the list opens on the TOP 10 rows (4-10 carry their bios)
+  test(`TOP 100 @ ${vp.width}: no overlaps, no bios on the board, the list dominates, the board reaches #100`, async ({ page }) => {
+    // YOU at #7: the list opens on the TOP 10 rows
     const lb = await boot(page, vp, { level: 860, rebirths: 38 });
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-top-${vp.width}.png` });
     expect(await overlapsIn(page)).toEqual([]);
-    const bios = lb.locator('.lb2-bio');
-    expect(await bios.count(), 'rows 4-10 (minus your own) carry a bio').toBeGreaterThanOrEqual(5);
-    for (const sel of ['.lb2-bio', '.lb2-pod-bio']) {
-      const px = await lb.locator(sel).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-      expect(px, `${sel} is readable`).toBeGreaterThanOrEqual(16);
+    // nov2 SIMPLIFY (Andy: "no need for paragraph descriptions"): a bio lives in the profile card, never on the board
+    await expect(lb.locator('.lb2-bio, .lb2-pod-bio')).toHaveCount(0);
+    // ...and the ladder, not the trophy wall, owns the screen: on a desktop the list is far wider than the podium
+    if (vp.width > 1000) {
+      const w = await page.evaluate(() => ({ list: document.querySelector('.lb2-list').getBoundingClientRect().width, pod: document.querySelector('.lb2-podium').getBoundingClientRect().width }));
+      expect(w.list / w.pod, `list ${Math.round(w.list)}px vs podium ${Math.round(w.pod)}px`).toBeGreaterThan(1.6);
     }
     // the header (YOU / CHANGE) is clickable - the #1 podium column never sits over it (oct29 audit, 1024-1366)
     const covered = await page.locator('.lb2-me-btn').evaluate((el) => { const b = el.getBoundingClientRect(); const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !(hit && el.contains(hit)); });
@@ -183,3 +226,11 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 768 }, { 
     expect(await overlapsIn(page)).toEqual([]);
   });
 }
+
+// audit 2 (LOW-MED): the #1 podium column's tap area never covers YOU / CHANGE at 1024
+test('@1024x768 the header (YOU / CHANGE) is clickable over the smaller podium', async ({ page }) => {
+  await boot(page, { width: 1024, height: 768 }, { level: 860, rebirths: 38 });
+  const covered = await page.locator('.lb2-me-btn').evaluate((el) => { const b = el.getBoundingClientRect(); const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !(hit && el.contains(hit)); });
+  expect(covered).toBe(false);
+  expect(await overlapsIn(page)).toEqual([]);
+});

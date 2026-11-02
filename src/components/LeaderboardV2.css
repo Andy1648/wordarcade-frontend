@@ -1080,45 +1080,11 @@
 .lb2--narrow .lb2-row.is-me .lb2-who-text > .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row .lb2-rival { display: none; }
 
-/* DESCRIPTIONS (Andy oct28 "descriptions for top accounts"): the TOP 10's bios. The podium's sits under the name, two lines
-   at most; a row's is the second line under the name (one line, its full text in the profile card). Space Mono, quiet ink -
-   the name stays the loudest thing on the row. */
-.lb2-pod-bio {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  max-width: 100%;
-  margin: 2px 0 calc(8px * var(--pk, 1));
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1.15;
-  text-align: center;
-  color: #d9c8f5;
-  overflow-wrap: anywhere;
-}
-.lb2-pod-bio::before { content: '\201C'; }
-.lb2-pod-bio::after { content: '\201D'; }
+/* (oct28's on-board DESCRIPTIONS are gone - nov2 SIMPLIFY: a bio lives in the profile card only) */
+/* the row's name cell: the face, then the text column (name line + chase) */
 .lb2 .lb2-row .lb2-who-cell { flex-direction: row; align-items: center; gap: calc(10px * var(--lb2-k)); }
 .lb2--narrow .lb2-row .lb2-who-cell { gap: 6px; }
 .lb2-who-text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; }
-.lb2-who-text.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
-.lb2-who-text.has-bio .lb2-name-line { max-width: 100%; }
-.lb2-bio {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1.15;
-  color: #b9a6dd;
-}
-.lb2-bio::before { content: '\201C'; }
-.lb2-bio::after { content: '\201D'; }
 
 /* ===== oct29 OVERLAP AUDIT (item 9, after #565) =====
    - a row GROWS to hold its bio / a two-line name (THIS WEEK's bios were cut at the bottom of a fixed 38-43px row);
@@ -1137,17 +1103,20 @@
   overflow-wrap: anywhere;
   text-overflow: clip;
   line-height: 1.05;
-  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc(100cqw / var(--nl, 8))));
+  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc(92cqw / var(--nl, 8))));
 }
 .lb2 .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: max(13px, min(max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))), calc((100cqw - 64px) / var(--nl, 8)))); }
 .lb2--narrow .lb2-row .lb2-name.lb2-name--wrap,
 .lb2--narrow .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
-/* a tag on the name's line (RIVAL, a weekly prize) takes its width out of the name's fit, so a name shrinks to the floor
-   before it ever wraps mid-word */
-.lb2 .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap {
-  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc((100cqw - 76px) / var(--nl, 8))));
-}
-.lb2--narrow .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
+/* nov2 overlap audit 2: a TAG never takes the name's width (THIS WEEK's gem prize squeezed DANIEL into DANIE / L and a phone
+   name into one letter a line). The name line WRAPS: the name sits at its natural width (sized to the column, floored), and a
+   tag that does not fit beside it drops to the next line. A name breaks between letters only when it alone is wider than the
+   whole column at the floor size. */
+.lb2 .lb2-row .lb2-name-line { flex-wrap: wrap; row-gap: 2px; }
+.lb2 .lb2-row .lb2-name-line > .lb2-name.lb2-name--wrap { flex: 0 1 auto; max-width: 100%; }
+/* a run of letters - Latin or CJK - stays whole; a name breaks at its _ / - (softBreak) and only past that between letters */
+.lb2 .lb2-name.lb2-name--wrap,
+.lb2 .lb2-pod-name-t.lb2-pod-name-t--cut { word-break: keep-all; }
 /* the podium name: sized to its column down to a readable floor; past that it WRAPS (Andy oct21: a name is NEVER cut
    with an ellipsis) - at a word gap if it has one, else between letters */
 .lb2 .lb2-pod-name-t.lb2-pod-name-t--cut {
@@ -1232,3 +1201,36 @@
 /* YOUR phone row has no face: there the name column is ~88px and the PASS <rival> / TO TOP line needs all of it (with the
    face it ran into REBIRTHS - power-popup-lb.spec "nothing crosses on YOUR row"). The yellow row + YOU tag mark it. */
 .lb2--narrow .lb2-row.is-me .lb2-face { display: none; }
+
+/* ===== nov2 SIMPLIFY (Andy: "the top 3 have too much room ... it gives discouraging vibes"): the board is a ladder you can
+   climb, not a trophy wall. The podium shrinks to ~60% in a narrow left column, vertically centred; the LIST - and YOUR row
+   in it - takes the width. On a phone the podium drops its title plates and shrinks again. */
+.lb2:not(.lb2--narrow) { --pk: calc(var(--lb2-k) * 0.68); } /* 0.68: a 16-letter #1 name still fits in two lines */
+.lb2:not(.lb2--narrow) .lb2-podium {
+  left: calc(22px * var(--lb2-k));
+  width: calc(460px * var(--lb2-k));
+  top: calc(130px * var(--lb2-k));
+  height: calc(460px * var(--lb2-k));
+}
+.lb2:not(.lb2--narrow) .lb2-cols,
+.lb2:not(.lb2--narrow) .lb2-list {
+  left: calc(500px * var(--lb2-k));
+  width: calc(794px * var(--lb2-k));
+}
+/* the #1 name may borrow ~30% past its (now narrow) column - the gap between the #2 and #3 heroes is clear at that height -
+   so a 16-letter name stays on two lines at the 13px floor even on a 1280x551 stage */
+.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-who > .lb2-pod-name { width: 120%; max-width: none; margin-left: -10%; margin-right: -10%; }
+/* the phone row hands the NAME more width (audit 2: at the 16px floor a 9-letter name needed ~100px and the column was 92):
+   tighter gaps and slimmer number columns - the numbers still fit (R40 / 9999) */
+.lb2--narrow .lb2-cols,
+.lb2--narrow .lb2-row { grid-template-columns: 30px minmax(0, 1fr) 34px 62px 48px; gap: 4px; padding: 0 6px; }
+.lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 38px); } /* the ▲▼ column + its 4px gap, never REBIRTHS */
+.lb2--narrow { --pk: 0.36; }
+.lb2--narrow .lb2-pod-plate { display: none; }
+/* the phone podium's art is sized in px (not --pk): ~30% smaller heroes + blocks, so the list starts higher */
+.lb2--narrow .lb2-stand { width: 64px; height: 64px; margin-bottom: -6px; }
+.lb2--narrow .lb2-col--1 .lb2-stand { width: 80px; height: 80px; margin-top: 4px; }
+.lb2--narrow .lb2-block { width: 58px; }
+.lb2--narrow .lb2-col .lb2-place { font-size: var(--fs-k20); }
+.lb2--narrow .lb2-col--1 .lb2-place { font-size: var(--fs-k28); }
+.lb2--narrow .lb2-col--3 .lb2-place { font-size: var(--fs-k18); }
