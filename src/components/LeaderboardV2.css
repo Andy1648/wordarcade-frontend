@@ -1219,12 +1219,17 @@
 }
 /* the #1 name may borrow ~30% past its (now narrow) column - the gap between the #2 and #3 heroes is clear at that height -
    so a 16-letter name stays on two lines at the 13px floor even on a 1280x551 stage */
-.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-who > .lb2-pod-name { width: 120%; max-width: none; margin-left: -10%; margin-right: -10%; }
+.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-who > .lb2-pod-name { width: 112%; max-width: none; margin-left: -6%; margin-right: -6%; }
 /* the phone row hands the NAME more width (audit 2: at the 16px floor a 9-letter name needed ~100px and the column was 92):
    tighter gaps and slimmer number columns - the numbers still fit (R40 / 9999) */
 .lb2--narrow .lb2-cols,
 .lb2--narrow .lb2-row { grid-template-columns: 30px minmax(0, 1fr) 34px 62px 48px; gap: 4px; padding: 0 6px; }
 .lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 38px); } /* the ▲▼ column + its 4px gap, never REBIRTHS */
+/* the podium's seals keep their size when the podium shrinks (they are the tier's flavor - nov2 repaint) */
+/* on the narrow podium the seal sits ABOVE the name, so the name keeps the column's whole width */
+.lb2:not(.lb2--narrow) .lb2-who > .lb2-pod-name { flex-direction: column; gap: 2px; }
+.lb2:not(.lb2--narrow) .lb2-pod-seal { --seal-k: 1; --num-k: 0.9; }
+.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-pod-seal { --seal-k: 1.25; --num-k: 1; }
 .lb2--narrow { --pk: 0.36; }
 .lb2--narrow .lb2-pod-plate { display: none; }
 /* the phone podium's art is sized in px (not --pk): ~30% smaller heroes + blocks, so the list starts higher */

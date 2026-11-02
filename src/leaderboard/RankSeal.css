@@ -38,9 +38,10 @@
 }
 .rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k15); }
 .rseal[data-digits='3'] .rseal-n { font-size: var(--fs-k13); }
-.rseal[data-tier='splat'] { --ny: -3px; }
-.rseal[data-tier='flame'] { --ny: 3.5px; }
-.rseal[data-tier='crown'] { --ny: 1px; }
+.rseal[data-tier='splat'] { --ny: -2px; }
+.rseal[data-tier='flame'] { --ny: 2.5px; }
+.rseal[data-tier='wing'] { --ny: 1px; }
+.rseal[data-tier='crown'] { --ny: 3px; }
 
 /* #1 is the one-of-one: the art runs a touch past its box, and on appear ONE white glint sweeps across it (masked to
    the art, so it never lights the row). Finite, transform/opacity only; reduced motion skips it. */
