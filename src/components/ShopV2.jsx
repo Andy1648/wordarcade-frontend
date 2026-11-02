@@ -60,6 +60,7 @@ const NOTE = {
   not_sold: 'NOT IN THE SHOP ANYMORE',
 };
 
+const POWER_FLASH = { frames: [{ opacity: 0 }, { opacity: 0.55, offset: 0.15 }, { opacity: 0 }], opts: { duration: 380, easing: 'ease-out' } };
 const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
 const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
@@ -68,7 +69,14 @@ const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { t
 // on its painted crystal backplate (ShopV2.css, RARITY BEYOND COLOUR). COMMON stays plain: the ladder has a bottom.
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
-function StockCard({ it, left, onBuy, floatRef, gems, now }) {
+// THE PURCHASE MOMENT (nov2 design audit #7, "buying has no moment"): a boost buy slams a BOUGHT! stamp onto its card
+// (the kit stamp: the card jolts, the ink spatters fly), the tier shine sweeps the face once and the gems pill counts the
+// price off — then the stamp lifts (BOUGHT_MS). Every piece a finite transform/opacity one-shot. The last unit's buy gets
+// the SOLD OUT stamp instead (it stays).
+const BOUGHT_MS = 600; // the whole moment ≤ 600 ms, and a tap mid-moment simply buys again (re-slams): nothing waits on it
+const SWEEP = { frames: [{ transform: 'translateX(-110%)' }, { transform: 'translateX(300%)' }], opts: { duration: 620, easing: 'cubic-bezier(.3,.6,.3,1)' } };
+
+function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef }) {
   const R = V3.stock.RARITY[it.rarity];
   const sold = left <= 0;
   const soon = it.buyable === false;
@@ -81,8 +89,10 @@ function StockCard({ it, left, onBuy, floatRef, gems, now }) {
   const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
-      stamped={sold}
-      kind="soldout"
+      stamped={sold || bought > 0}
+      kind={sold ? 'soldout' : 'bought'}
+      dim={sold}
+      playKey={bought}
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}${short ? ' is-short' : ''}${deal ? ' is-deal' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
@@ -110,7 +120,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now }) {
         <span className="sp2-big">{it.big}</span>
         {it.what ? <span className="sp2-what">{it.what}</span> : null}
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
-        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
+        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" ref={shineRef} src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : short ? <span className="sp2-short" data-testid={`short-${it.id}`}>NEED {formatNum(short)}</span> : formatNum(price)}
@@ -211,6 +221,16 @@ export default function ShopV2({ onBack }) {
   }, [evolve]);
   const nowRef = useRef(null);
   const floats = useRef({});
+  const shines = useRef({});
+  const [bought, setBought] = useState({}); // id → a counter while its BOUGHT! stamp is up (0 = none)
+  const boughtT = useRef({});
+  useEffect(() => () => Object.values(boughtT.current).forEach(clearTimeout), []);
+  const stampBought = (id) => {
+    setBought((b) => ({ ...b, [id]: (b[id] || 0) + 1 }));
+    clearTimeout(boughtT.current[id]);
+    boughtT.current[id] = setTimeout(() => setBought((b) => ({ ...b, [id]: 0 })), BOUGHT_MS);
+    fx(shines.current[id], SWEEP);
+  };
   const cards = useRef({});
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -279,6 +299,7 @@ export default function ShopV2({ onBack }) {
     setTier(r.tier);
     fx(plateRef.current, FX.bump);
     if (evolved) setEvolve((n) => n + 1); // a NEW FORM: the plate slams the new art in (below)
+    else fx(evolveRef.current, POWER_FLASH); // every other buy: the plate flashes once (nov2 audit #7 — a buy is a moment)
     fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
   };
 
@@ -318,7 +339,7 @@ export default function ShopV2({ onBack }) {
     }
     sndPurchase();
     evItemPurchased(`stock_${it.id}`);
-    fx(floats.current[it.id], FX.float);
+    if ((r.left[it.id] || 0) > 0) stampBought(it.id); // the last unit: its SOLD OUT stamp slams instead
   };
 
   return (
@@ -431,7 +452,7 @@ export default function ShopV2({ onBack }) {
             {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
-                <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
+                <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} bought={bought[it.id] || 0} shineRef={(el) => { shines.current[it.id] = el; }} floatRef={(el) => { floats.current[it.id] = el; }} />
               </div>
             ))}
           </div>
