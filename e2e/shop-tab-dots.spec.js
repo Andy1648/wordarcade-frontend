@@ -35,12 +35,10 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await page.locator('.sp2').waitFor({ state: 'visible' });
     await expect(tabDot(page, 'cosmetics')).toBeVisible();
     await expect(tabDot(page, 'boosts')).toHaveCount(0); // the shelf you're on is seen
-    // oct28: COSMETICS opens the profile's CUSTOMIZE menu on POP STYLE — showing the looks marks them seen
+    // COSMETICS shows the CUSTOMIZE menu inline on POP STYLE — showing the looks marks them seen
     await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();
-    await page.getByTestId('customize').waitFor({ state: 'visible' });
-    await page.keyboard.press('Escape');
-    await page.getByTestId('profile-popup').waitFor({ state: 'detached' });
-    await expect(page.locator('.sp2')).toBeVisible(); // Escape closed CUSTOMIZE, not the shop
+    await page.getByTestId('customize').waitFor({ state: 'visible' }); // nov2: inline on the shelf, no popup
+    await page.locator('.sp2-tab[data-shelf="boosts"]').click();
     await expect(tabDot(page, 'cosmetics')).toHaveCount(0); // seen stays seen
     await page.reload();
     await menuReady(page);
