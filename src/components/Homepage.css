@@ -727,16 +727,17 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
   cursor: pointer;
   transition: transform 80ms;
 }
-/* an EPIC+ gear's GearFx glow (z -2) sits behind the slot; ::before repaints the slot's face over the glow's centre */
+/* the worn slot isolates; ::before repaints the face (kept from the old GearFx layer — the showcase ring sits in it) */
 .hp-gear.is-worn { border-color: var(--gear-line); isolation: isolate; }
 .hp-gear.is-worn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: inherit; border-radius: 4px; pointer-events: none; }
 /* RARITY is the FRAME (Andy oct9 "a glow or smthn to rarer gears" — a glow breaks the flat rule): the border and the
    hard offset shadow take the tier colour, quiet → loud. RARE: the tier line.
    EPIC: + the shadow in the tier's dark edge. LEGENDARY: + the tier's face colour behind it. MYTHIC / SECRET: the
    shadow in the full tier colour, a step deeper, and the YOUR GEAR label on a solid tier plate. Static — no motion. */
-.hp-gear[data-tier='epic'] { box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
-.hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { background: var(--gear-fill); box-shadow: var(--b5) var(--b5) 0 var(--gear-edge); }
-.hp-gear:is([data-tier='mythic'], [data-tier='secret']) { box-shadow: var(--b6) var(--b6) 0 var(--gear-line); }
+/* design audit nov2 #8: EPIC+ no longer wears the GearFx aura (it read as a blurred halo) — the rarity is a FLAT, HARD
+   frame: a thick ring in the tier's dark edge round the tier border, the hard black offset spread by the ring. Static. */
+.hp-gear:is([data-tier='epic'], [data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { box-shadow: 0 0 0 var(--b4) var(--gear-edge), var(--b6) var(--b6) 0 var(--b4) #000; }
+.hp-gear:is([data-tier='legendary'], [data-tier='mythic'], [data-tier='secret']) { background: var(--gear-fill); }
 .hp-gear:disabled { opacity: 0.5; pointer-events: none; }
 @media (hover: hover) { .hp-gear:hover { transform: translate(-3px, -3px); } }
 .hp-gear:active { transform: translate(3px, 3px); }

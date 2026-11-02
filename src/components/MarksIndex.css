@@ -215,3 +215,9 @@
 /* NO SIDEWAYS SCROLL (oct21 no-scroll sweep): at 360x640 a tile's glow/shadow reached 3px past the grid, so the INDEX
    swiped sideways as well as down. It scrolls DOWN only (a real list). */
 .mx-grid { overflow-x: hidden; }
+
+/* HOUSE-STYLE BACK BUTTON (design audit nov2 #9): ← ROLL / ← MENU were a dark face in a purple hairline — now the solid
+   kit button the ROLL screen's ← MENU wears: a purple face, a thick darker-purple outline, 8px corners, the hard offset */
+.mx-back { background: #9A1AFF; border: 5px solid #5c0fa3; border-radius: 8px; }
+.mx-back:active { box-shadow: 0 0 0 #000; transform: translate(6px, 6px); }
+@media (max-width: 560px) { .mx-back { border-width: 4px; } }

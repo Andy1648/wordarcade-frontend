@@ -24,8 +24,7 @@ import { useReduceMotion } from '../lib/useReduceMotion';
 // payload ratchet (e2e/payload-budget.spec.js). Until it lands, the dashed hole holds the spot.
 const MarkBadge = lazy(() => import('./MarkBadge.jsx'));
 // the crit line's WORDS (critText) stay lazy too — loaded only when the worn gear has a crit rate
-// the EPIC+ glow (aura + motes, Andy oct9 "clash royale cards") — code and art load only when such a gear is worn
-const GearFx = lazy(() => import('./GearFx.jsx'));
+// (design audit nov2 #8: the slot no longer wears the GearFx aura — rarity is its hard tier FRAME, Homepage.css)
 
 /** Focus the control `id` inside `root` (App's overlay-return a11y — see Homepage). */
 export function focusNav(root, id) {
@@ -360,7 +359,6 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
       aria-haspopup={mark || two ? 'dialog' : undefined}
       aria-label={`${two ? '2nd gear' : 'Your gear'}: ${mark ? `${mark.name}, ${tier}, ${stat.big} ${stat.unit}` : 'none'}. Open your gear`}
     >
-      {mark && GLOW_TIERS.has(tier) ? <Suspense fallback={null}><GearFx tier={tier} /></Suspense> : null}
       {sheen ? <span className="hp-gear-sheen" aria-hidden="true"><img className="hp-gear-sheen-band" src="/fx/sheen.svg" alt="" draggable="false" /></span> : null}
       {/* the SHOWCASE's one-shot layers (LEGENDARY+, gearShowcase.js): a tier-colour FLASH over the face and a burst
           RING behind the glyph — opacity 0 at rest, nothing moves until a run */}

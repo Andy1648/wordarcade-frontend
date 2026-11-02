@@ -928,3 +928,44 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    line under the reel (stats, NEW chip) sits ABOVE the dim and showed through beside the reveal card — hide it then */
 body:has(.rs-cut.is-on) .rs-overlay .rs-result-slot { opacity: 0; transition: opacity 120ms ease-out; }
 body:has(.rs-cut.is-on) .rs-overlay .rs-track { opacity: 0.18; transition: opacity 160ms ease-out; }
+
+/* ===== HOUSE-STYLE CHROME (design audit nov2 #9): the buttons round the gold-standard cards read as thin flat boxes — a
+   dark face inside a purple hairline. Every control here is now a SOLID kit button: a flat coloured face, a thick
+   outline in the darker shade of that face, 8px corners, the hard black offset, Bungee. Press = the face sinks onto its
+   shadow (transform only). The pity bars are chunky meters, not hairlines. Static at rest. ===== */
+.rs-close,
+.rs-index-btn,
+.rs-rates-btn,
+.rs-auto-btn,
+.rs-ticket-btn { border-radius: 8px; }
+.rs-close,
+.rs-rates-btn,
+.rs-auto-btn { background: #9A1AFF; border: 5px solid #5c0fa3; }
+.rs-index-btn { background: #3D8BFF; border: 5px solid #1a4fb3; font-family: 'Bungee', sans-serif; font-weight: 400; text-transform: uppercase; }
+.rs-index-k { color: #fff; }
+.rs-rates-btn { transition: transform 120ms; }
+.rs-rates-k { font-size: var(--fs-k20); text-shadow: 2px 2px 0 #000; }
+@media (hover: hover) { .rs-rates-btn:hover { transform: translate(-2px, -2px); } }
+.rs-rates-btn:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #000; }
+.rs-auto-v.is-off { color: #FFE94A; }
+.rs-auto-btn.is-rare { border-color: #1a4fb3; }
+.rs-auto-btn.is-epic { border-color: #6a1fb8; }
+.rs-auto-btn.is-legendary { border-color: #b07a10; }
+.rs-auto-btn.is-locked { background: #3a2a5a; border-color: #241838; }
+/* EQUIPPED is a read-out, not a button: a panel framed in the worn gear's tier colour */
+.rs-equipped { border: 5px solid var(--rs-tier-edge, #5c0fa3); border-radius: 8px; }
+/* the pity METERS: a thick tier-dark outline, a deep well, the hard offset, rounded ends */
+.rs-pity-row { border-color: #5c0fa3; }
+.rs-pity-bar { height: 22px; box-sizing: border-box; background: #0d0618; border: 4px solid #6a1fb8; border-radius: 6px; box-shadow: 3px 3px 0 #000; }
+.rs-pity-row.is-leg .rs-pity-bar { border-color: #b07a10; }
+/* the FOUND chips' little bars: a real meter, not a 6px line */
+.rsx-chip { border-width: 4px; }
+.rsx-chip-bar { height: 12px; box-sizing: border-box; border: 3px solid #000; border-radius: 4px; }
+@media (max-height: 760px) {
+  .rs-pity-bar { height: 18px; }
+}
+@media (max-width: 480px) {
+  .rs-close, .rs-index-btn, .rs-rates-btn, .rs-auto-btn, .rs-equipped { border-width: 4px; }
+  .rs-pity-bar { height: 18px; border-width: 3px; }
+  .rs-opts .rs-rates-btn { border-width: 4px; }
+}
