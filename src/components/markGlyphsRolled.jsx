@@ -75,7 +75,7 @@ export const ROLLED_GLYPHS = {
   'mk-bullseye': ART('bullseye'),
   'mk-rocketskates': ART('rocketskates'),
   'mk-snowball': ART('snowball'),
-  'mk-telescope': ART('telescope'),
+  'mk-telescope': ART('telescope-v2'),
   'mk-drumsticks': ART('drumsticks'),
   'mk-anchor': ART('anchor'),
   'mk-comet': ART('comet'),
