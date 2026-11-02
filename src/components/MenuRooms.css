@@ -1,0 +1,185 @@
+/* MenuRooms.css — OPEN ROOMS (menu right column) + the N OPEN chip. Flat fills, colored outlines, hard black offset
+   shadows, 8px radius. Static at rest: the only motion is a row's one-shot enter + hover/press (transform/opacity). */
+
+/* the panel's own type tokens (the menu's pattern: Homepage.css --fs-hp*): a scale step, grown with the menu's --u */
+.mr-panel,
+.mr-chip {
+  --fs-mrtitle: max(var(--fs-k15), calc(17 * var(--u, 1px)));
+  --fs-mrhost: max(var(--fs-k14), calc(16 * var(--u, 1px)));
+  --fs-mrbtn: max(var(--fs-k14), calc(15 * var(--u, 1px)));
+  --fs-mrmeta: max(var(--fs-k13), calc(13 * var(--u, 1px)));
+}
+.mr-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: max(6px, calc(7 * var(--u, 1px)));
+  min-width: 0;
+  width: 100%;
+  padding: max(8px, calc(9 * var(--u, 1px)));
+  background: #1a0b2e;
+  border: 3px solid #5a1499;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: 'Space Mono', monospace;
+}
+.mr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 22px;
+}
+.mr-title {
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-mrtitle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #2EFFE0;
+  line-height: 1;
+}
+.mr-total {
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-mrbtn);
+  text-transform: uppercase;
+  line-height: 1;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 2px solid #12a894;
+  border-radius: 8px;
+  padding: 3px 7px;
+}
+
+.mr-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mr-row {
+  --mr-accent: #2EFFE0;
+  --mr-face: max(38px, calc(44 * var(--u, 1px)));
+  display: grid;
+  grid-template-columns: var(--mr-face) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 7px;
+  min-height: max(50px, calc(56 * var(--u, 1px)));
+  padding: 3px 4px 3px 3px;
+  background: #241040;
+  border: 2px solid #3d1d6b;
+  border-left: 5px solid var(--mr-accent);
+  border-radius: 8px;
+  animation: mr-row-in 260ms cubic-bezier(0.22, 1.4, 0.36, 1) var(--mr-delay, 0ms) both;
+}
+@keyframes mr-row-in {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: none; }
+}
+.mr-face {
+  width: var(--mr-face);
+  height: var(--mr-face);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0d0618;
+  border: 2px solid #000;
+  display: grid;
+  place-items: center;
+}
+.mr-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mr-face.is-hero img { object-position: 50% 18%; transform: scale(1.35); transform-origin: 50% 20%; }
+.mr-face.is-mode img { object-fit: contain; }
+.mr-face-tag { font-family: 'Bungee', sans-serif; font-size: var(--fs-mrbtn); text-transform: uppercase; color: var(--mr-accent); }
+.mr-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mr-host {
+  font-family: 'Bungee', sans-serif;
+  font-size: var(--fs-mrhost);
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: #FFE94A;
+}
+.mr-meta { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: var(--fs-mrmeta); line-height: 1.2; color: #d9c8ff; }
+.mr-modeico { width: 16px; height: 16px; object-fit: contain; flex: 0 0 auto; }
+.mr-mode { min-width: 0; flex: 1 1 auto; color: var(--mr-accent); font-weight: 700; } /* FitText: shrinks, never clipped */
+.mr-count { flex: 0 0 auto; font-weight: 700; color: #fff; }
+
+.mr-join,
+.mr-create,
+.mr-more,
+.mr-chip {
+  font-family: 'Bungee', sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transition: transform 120ms ease-out;
+}
+.mr-join {
+  min-width: max(56px, calc(62 * var(--u, 1px)));
+  min-height: 44px;
+  padding: 0 8px;
+  font-size: var(--fs-mrbtn);
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 3px solid #12a894;
+}
+.mr-join:hover:not(:disabled),
+.mr-create:hover:not(:disabled),
+.mr-more:hover:not(:disabled),
+.mr-chip:hover:not(:disabled) { transform: translate(-1px, -1px); }
+.mr-join:active:not(:disabled),
+.mr-create:active:not(:disabled),
+.mr-more:active:not(:disabled),
+.mr-chip:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.mr-join:disabled { opacity: 0.55; cursor: default; }
+
+.mr-more {
+  align-self: stretch;
+  min-height: 44px;
+  font-size: var(--fs-mrbtn);
+  color: #FFE94A;
+  background: #2a1450;
+  border: 2px solid #5a1499;
+}
+
+/* EMPTY: one compact line — "no open rooms · CREATE ONE" */
+.mr-empty {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  font-size: var(--fs-mrmeta);
+  color: #d9c8ff;
+}
+.mr-empty.is-loading { opacity: 0.5; }
+.mr-create {
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: var(--fs-mrbtn);
+  color: #0d0618;
+  background: #FF4FA3;
+  border: 3px solid #b8206e;
+}
+.mr-create:disabled { cursor: default; }
+
+/* CHIP: "N OPEN" — joins the phone's LV row / the narrow desktop's footer cluster; opens the JOIN ROOM screen */
+.mr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 3px solid #12a894;
+  white-space: nowrap;
+}
+.mr-chip-n { font-size: var(--fs-mrtitle); line-height: 1; }
+.mr-chip-k { font-size: var(--fs-mrbtn); line-height: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mr-row { animation: none; }
+  .mr-join, .mr-create, .mr-more, .mr-chip { transition: none; }
+}
