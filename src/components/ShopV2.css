@@ -1017,3 +1017,7 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   .sp2-card.is-epic.is-deal .sp2-band { padding-left: 4px; }
   .sp2-card.is-epic.is-deal .sp2-gem { top: auto; bottom: -10px; }
 }
+/* nov2 audit: EVERYTHING BOOST's name ran under the DEAL sash in its deal hour — on the deal card a long name wraps to two
+   centred lines in the room left of the sash (names never ellipsize), the band growing to hold them */
+.sp2-card.is-deal .sp2-band { height: auto; min-height: 30px; padding-top: 3px; padding-bottom: 3px; }
+.sp2-card.is-deal .sp2-name { white-space: normal; text-align: center; line-height: 1; overflow: visible; }
