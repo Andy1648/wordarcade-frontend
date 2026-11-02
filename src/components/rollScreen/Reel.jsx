@@ -575,7 +575,10 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     <span className="rv-edge" ref={reg('rvEdge')} />
                   </div>
                   <div className="rv-face" ref={reg('rvFace')}>
-                    {cr && GLOW_TIERS.has(cr.tier) ? <GearFx key={`g${cut.seq}`} tier={cr.tier} /> : null}
+                    {/* design audit nov2: the big card's soft GearFx aura read as a blurred lavender BOX washing over
+                        "1 IN X" — the reveal card sits on a crisp, flat tier BACKPLATE instead (hard outline + ink
+                        shadow, tilted a hair for asymmetry). Static: it arrives with the face, nothing loops. */}
+                    {cr ? <span className="rv-plate" aria-hidden="true" /> : null}
                     {cr ? (
                       <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx sheen className="rs-cut-card" />
                     ) : null}
@@ -596,7 +599,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                 ))}
               </div>
             </div>
-            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} glow={GLOW_TIERS.has(cr.tier) ? cr.tier : null} /> : null}
+            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} /> : null /* no soft aura on the reveal (audit nov2) */}
           </div>
           <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO CONTINUE</div>
         </div>

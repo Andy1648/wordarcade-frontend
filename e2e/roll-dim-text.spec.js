@@ -153,6 +153,16 @@ for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 551], [1024, 768], [390,
     await expect(page.locator('.rs-cut.is-on .rs-cut-card .mc-subs')).toBeVisible();
     expect(await page.locator('.rs-cut.is-on .mc').count()).toBe(1); // the reveal card is the only card on the reveal
     await expect(page.locator('.rs-cut.is-on .rv-main, .rs-cut.is-on .rv-extra')).toHaveCount(0);
+    // only REAL stats: no empty "—" substat row is shown on the reveal card
+    expect(await page.locator('.rs-cut.is-on .rs-cut-card .mc-sub').evaluateAll((els) => els
+      .filter((e) => getComputedStyle(e).display !== 'none' && e.textContent.trim() === '—').length)).toBe(0);
+    // no soft aura on the reveal (it read as a blurred lavender box over "1 IN X"): a crisp, flat tier backplate instead
+    await expect(page.locator('.rs-cut.is-on .gfx')).toHaveCount(0);
+    const plateCss = await page.locator('.rs-cut.is-on .rv-plate').evaluate((el) => {
+      const c = getComputedStyle(el);
+      return { filter: c.filter, image: c.backgroundImage, border: parseFloat(c.borderTopWidth) };
+    });
+    expect(plateCss).toEqual({ filter: 'none', image: 'none', border: 5 });
     const card = await box(page, '.rs-cut.is-on .rv-card');
     expect(card.y).toBeGreaterThanOrEqual(-1);
     expect(card.b).toBeLessThanOrEqual(h + 1);

@@ -579,6 +579,24 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    (36 card-px — 60px rendered at 1366×768), its label a touch smaller so both still fit the 44-px hero plate */
 /* the big card's EPIC+ aura reaches the stamp + TAP on a phone (they stack tight): the words stay ON TOP of it */
 .rs-cut-double, .rs-cut-tier, .rs-cut-stamp, .rs-cut-keep { position: relative; z-index: 2; }
+/* the reveal card's BACKPLATE (replaces the soft GearFx aura — no blur, no glow): a flat tier-colour plate, outlined in
+   its darker shade, with the house hard ink shadow, tilted -3deg so it peeks out unevenly behind the card */
+.rv-plate {
+  position: absolute;
+  left: -3.5%;
+  top: -2.5%;
+  width: 107%;
+  height: 105%;
+  box-sizing: border-box;
+  background: var(--rs-tier, #9A1AFF);
+  border: 5px solid color-mix(in srgb, var(--rs-tier, #9A1AFF) 55%, #000);
+  border-radius: 14px;
+  box-shadow: 8px 8px 0 #000;
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+/* only REAL stats on the reveal: the empty substat slots ("—") are hidden; the plate centres what is left */
+.rs-cut-card .mc-sub.is-none { display: none; }
 .rs-cut-card .mc-hero { gap: 0; padding-top: 0; }
 .rs-cut-card .mc-num { font-size: calc(var(--mc-u) * 36); line-height: 0.9; }
 .rs-cut-card .mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 34); }
