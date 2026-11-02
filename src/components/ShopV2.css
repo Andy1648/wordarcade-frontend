@@ -940,3 +940,35 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-card.is-short .sp2-card-in > .sp2-art.sp2-vessel { filter: saturate(.45) brightness(.75); }
 .sp2-card.is-short .sp2-price { background: #2a1648; color: #c9b8e8; border-color: #000; }
 .sp2-short { font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }
+
+/* ===== DEAL OF THE HOUR (oct29): the painted ribbon (hero-art, deal-ribbon-v1) WHOLE — its notched ends never cut — hung
+   off the card's TOP-RIGHT corner, outside the face (the gem holds the other corner): it can't sit on the art, the name
+   or the price. The art already runs top-left → bottom-right, the line a top-right corner sash takes; "−30%" rides its
+   flat middle in Bungee. The shelf's inset (10–12px) keeps it inside the shelf's clip. Static at rest; the price tag
+   shows the deal price, the shelf price struck beside it. e2e/shop-deal.spec.js ===== */
+.sp2-deal { position: absolute; z-index: 5; right: -8px; top: -8px; width: 74px; height: 74px; pointer-events: none; }
+.sp2-deal-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(2px 3px 0 #000); }
+.sp2-deal-t {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(45deg);
+  font-family: var(--k-display); text-transform: uppercase; font-size: var(--fs-k14); line-height: 1; color: #fff;
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill; white-space: nowrap;
+}
+/* the ×N LEFT sticker steps down a little on the deal card, out from under the sash, and the name centres in the band's
+   room left of it (names never ellipsize — the room is sized for EVERYTHING BOOST) */
+.sp2-card.is-deal .sp2-left { top: 58px; }
+.sp2-card.is-deal .sp2-band { padding-right: 46px; }
+.sp2-was { font-family: var(--k-display); font-size: var(--fs-k14); color: #3a2160; text-decoration-thickness: 3px; margin-left: 2px; }
+@media (max-width: 999px) {
+  .sp2-deal { right: -6px; top: -6px; width: 62px; height: 62px; }
+  .sp2-card.is-deal .sp2-band { padding-right: 38px; }
+  /* the phone band is narrow: the deal card's name wraps to two lines rather than run under the sash (never ellipsized) */
+  .sp2-card.is-deal .sp2-name { white-space: normal; text-align: center; line-height: 1; overflow: visible; }
+  .sp2-deal-t { font-size: var(--fs-k13); }
+  .sp2-card.is-deal .sp2-left { top: 54px; }
+}
+@media (min-width: 1000px) and (max-height: 580px) {
+  .sp2-deal { right: -6px; top: -6px; width: 62px; height: 62px; }
+  .sp2-card.is-deal .sp2-band { padding-right: 40px; }
+  .sp2-deal-t { font-size: var(--fs-k13); }
+  .sp2-card.is-deal .sp2-left { top: 50px; }
+}
