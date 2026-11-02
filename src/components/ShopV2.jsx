@@ -38,9 +38,10 @@ import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
-// COSMETICS (Andy oct28 "i want all cosmetics to be from profile"): the shop's COSMETICS tab opens the PROFILE's one
-// CUSTOMIZE menu over the shop (pop styles first) — the shop keeps no cosmetics screen of its own
-const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
+// COSMETICS (Andy oct28 "i want all cosmetics to be from profile"; nov2 "idk why cosmetics screen on upgrades gives popup
+// instead of just shop screen"): the COSMETICS tab is a shelf like BOOSTS — the ONE CUSTOMIZE menu (the same component
+// PROFILE shows, same stores) laid inline, pop styles first. Lazy: the pickers stay out of the idle-prefetched shop chunk.
+const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx'), 'ShopCosmetics');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
 const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
 
@@ -146,7 +147,7 @@ function DailyChestCard({ now, onOpen }) {
       <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
         <span className="sp2-band">
           <span className="sp2-name">DAILY</span>
-          <span className="sp2-left">{claimed ? '×0' : '×1'}<span className="sp2-left-w"> LEFT</span></span>
+          {/* no ×1 LEFT sticker (nov2 declutter): FREE / the CLAIMED stamp already say it, and it sat on "CHEST" */}
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
           <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
@@ -184,7 +185,6 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
-  const [cosmetics, setCosmetics] = useState(false); // the profile's CUSTOMIZE menu, opened over the shop
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
   const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
   const buying = useRef(false);
@@ -338,7 +338,6 @@ export default function ShopV2({ onBack }) {
           </div>
         </div>
       ) : null}
-      {cosmetics ? <Suspense fallback={null}><ProfilePopup view0="customize" tab0="pop" onClose={() => setCosmetics(false)} /></Suspense> : null}
       {ladder ? <PowerLadder current={form.n} onClose={() => { setLadder(false); plateRef.current?.focus(); }} /> : null}
       <div className="sp2-scale">
       <div className="sp2-stage">
@@ -411,7 +410,7 @@ export default function ShopV2({ onBack }) {
             <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
               {SHELVES.map(([k, label, icon]) => (
                 <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k}
-                  onClick={() => (k === 'cosmetics' ? setCosmetics(true) : setShelf(k))}>
+                  onClick={() => setShelf(k)}>
                   <img className="sp2-tab-ico" src={icon} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
                   {label}
                   {tabDot[k] && shelf !== k ? <span className="sp2-dot sp2-tab-dot" data-testid={`shop-tab-dot-${k}`} aria-hidden="true" /> : null}
@@ -420,9 +419,8 @@ export default function ShopV2({ onBack }) {
             </div>
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
-          <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR' : 'REDEEM A CODE'}
-          </div>
+          {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
+          {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
           {shelf === 'codes' ? <div className="sp2-shelf"><ShopV2Looks tab="codes" gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (

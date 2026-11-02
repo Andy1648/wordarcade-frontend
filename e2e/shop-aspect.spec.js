@@ -96,7 +96,7 @@ for (const vp of [{ w: 1366, h: 768 }, { w: 1280, h: 600 }, { w: 1920, h: 1080 }
     await check('boosts'); await shot(page, `${tag}-boosts`);
     await shop.locator('.sp2-cell[data-cell="extend"]').scrollIntoViewIfNeeded(); // the other WIDE card, down the shelf
     await check('boosts-end'); await shot(page, `${tag}-boosts-end`);
-    // COSMETICS (oct28): the profile's CUSTOMIZE menu over the shop — its pop styles, then every other tab
+    // COSMETICS (nov2): the CUSTOMIZE menu inline on the shelf — its pop styles, then every other tab
     await shop.locator('.sp2-tab[data-shelf="cosmetics"]').click();
     await page.getByTestId('customize').waitFor({ state: 'visible' });
     for (const t of ['pop', 'sound', 'hero', 'frame', 'fx']) {
@@ -104,8 +104,7 @@ for (const vp of [{ w: 1366, h: 768 }, { w: 1280, h: 600 }, { w: 1920, h: 1080 }
       await page.waitForTimeout(400);
       await check(`cosmetics-${t}`); await shot(page, `${tag}-cosmetics-${t}`);
     }
-    await page.keyboard.press('Escape');
-    await page.getByTestId('profile-popup').waitFor({ state: 'detached' });
+    await shop.locator('.sp2-tab[data-shelf="boosts"]').click(); // inline (nov2): back to the BOOSTS shelf
     // the POWER LADDER
     await shop.locator('.sp2-plate').click();
     await page.waitForTimeout(400);

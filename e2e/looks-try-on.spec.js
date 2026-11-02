@@ -25,7 +25,7 @@ async function boot(page, { flag = '' } = {}) {
   await menuReady(page);
   await navControl(page, 'shop').click();
   await page.locator('.sp2').waitFor({ state: 'visible' });
-  // oct28: the shop's COSMETICS opens the profile's CUSTOMIZE menu on its POP STYLE tab — the try-on lives there now
+  // the shop's COSMETICS shelf is the CUSTOMIZE menu inline (nov2), on its POP STYLE tab — the try-on lives there
   await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();
   await page.locator('.sp2-look[data-look="inferno"]').waitFor({ state: 'visible' });
 }
@@ -113,8 +113,6 @@ test('?trylooks=1: EQUIP any style for the session — the menu wears it, the sa
   await expect(page.locator('.sp2-look[data-look="legend"]')).toHaveClass(/is-on/);
   expect(await page.evaluate(() => localStorage.getItem('taw.equipped'))).toBe(saved);
   expect(await page.evaluate(() => localStorage.getItem('taw.owned') || '')).not.toContain('legend');
-  await page.keyboard.press('Escape'); // close CUSTOMIZE (oct28: the shop's COSMETICS opens it over the shop)
-  await page.getByTestId('profile-popup').waitFor({ state: 'detached' });
   await page.locator('.sp2-back, [aria-label="Back to menu"]').first().click();
   await menuReady(page);
   await page.waitForTimeout(600);
