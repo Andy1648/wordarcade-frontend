@@ -246,12 +246,12 @@ const AURAS = {
   // MECHA's own LEGEND aura (oct19): ghost smoke is BOO's — a machine crackles. A bolt arcs off a joint now and then,
   // flickering on-off like a short circuit, one joint after another.
   mecha: { ms: 2100, f: CRACKLE, e: 'linear', at: [
-    ['/cast/props/bolt.webp', 5, 30, 6], ['/cast/props/bolt.webp', 88, 50, 6], ['/cast/props/bolt.webp', 25, 56, 5],
+    ['/cast/props/bolt-v2.webp', 5, 30, 6], ['/cast/props/bolt-v2.webp', 88, 50, 6], ['/cast/props/bolt-v2.webp', 25, 56, 5],
   ] },
   // NOVA's own LEGEND aura (oct24): a starfield — stars twinkle on around it, one after another
   nova: { ms: 1800, f: TWINKLE, e: 'ease-in-out', at: [
-    ['/cast/props/spark-big.webp', 6, 22, 10], ['/cast/props/spark-sm.webp', 84, 14, 7], ['/cast/props/spark-big.webp', 80, 56, 9],
-    ['/cast/props/spark-sm.webp', 10, 62, 6], ['/cast/props/spark-sm.webp', 46, 2, 6],
+    ['/cast/props/spark-big-v2.webp', 6, 22, 10], ['/cast/props/spark-sm-v2.webp', 84, 14, 7], ['/cast/props/spark-big-v2.webp', 80, 56, 9],
+    ['/cast/props/spark-sm-v2.webp', 10, 62, 6], ['/cast/props/spark-sm-v2.webp', 46, 2, 6],
   ] },
   // the CHASE heroes' own auras (oct28): DRAKE sheds embers, MAGMA steams + spits flame, FACET throws sparkles
   drake: { ms: 1900, f: RISE, e: 'ease-out', at: [
@@ -261,8 +261,8 @@ const AURAS = {
     ['/cast/props/steam.webp', 14, 30, 12], ['/cast/props/flame.webp', 82, 52, 8], ['/cast/props/steam.webp', 74, 18, 11], ['/cast/props/flame.webp', 8, 62, 7],
   ] },
   facet: { ms: 1500, f: TWINKLE, e: 'ease-in-out', at: [
-    ['/cast/props/spark-big.webp', 8, 18, 10], ['/cast/props/spark-sm.webp', 86, 12, 7], ['/cast/props/spark-big.webp', 84, 52, 9],
-    ['/cast/props/spark-sm.webp', 6, 58, 7], ['/cast/props/spark-big.webp', 50, 0, 8], ['/cast/props/spark-sm.webp', 30, 70, 6],
+    ['/cast/props/spark-big-v2.webp', 8, 18, 10], ['/cast/props/spark-sm-v2.webp', 86, 12, 7], ['/cast/props/spark-big-v2.webp', 84, 52, 9],
+    ['/cast/props/spark-sm-v2.webp', 6, 58, 7], ['/cast/props/spark-big-v2.webp', 50, 0, 8], ['/cast/props/spark-sm-v2.webp', 30, 70, 6],
   ] },
   legend: { ms: 2600, f: TRAIL, e: 'cubic-bezier(.3,.5,.5,1)', at: [
     ['/cast/props/ghost-trail.webp', 4, 58, 16], ['/cast/props/ghost-trail.webp', 70, 64, 14], ['/cast/props/ghost-trail.webp', 10, 30, 12],
