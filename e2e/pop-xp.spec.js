@@ -31,7 +31,7 @@ async function xpFor(page, n) {
 test('COSMETICS → POP STYLE: each paid pop says what it pays (+5% XP … ×3 XP)', async ({ page }) => {
   await boot(page, 'classic');
   await page.locator('[data-nav="shop"]:visible').first().click();
-  await page.getByRole('tab', { name: /COSMETICS/i }).click(); // oct28: opens the profile's CUSTOMIZE on POP STYLE
+  await page.getByRole('tab', { name: /COSMETICS/i }).click(); // the CUSTOMIZE menu inline on the shelf (nov2), POP STYLE first
   await expect(page.getByTestId('pop-xp-chrome')).toHaveText('+5% XP');
   await expect(page.getByTestId('pop-xp-plasma')).toHaveText('+95% XP');
   await expect(page.getByTestId('pop-xp-legend')).toHaveText('×3 XP');
