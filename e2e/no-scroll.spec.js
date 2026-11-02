@@ -20,6 +20,7 @@ const ALLOW = [
   ['.cz.is-hero .cz-body:not(:has(.hpv))', 'CUSTOMIZE · HERO: every hero (oct28: the card stays put, the grid scrolls)'],
   ['.cz:is(.is-pop, .is-sound) .cz-body', 'CUSTOMIZE · POP STYLE / SOUND: every look'],
   ['.rl', 'the title ladder: all 16 titles'],
+  ['.rl-shelf', 'the title list on a short laptop (1280x551): all 16 titles'],
   ['.sp2-grid', 'the UPGRADES stock: more boosts below ("SCROLL FOR MORE")'],
   ['.sp2-shelf', 'the CODES shelf'],
   ['.ppp-window-scroll', 'the Category Blitz pack picker (Andy\'s named exception)'],
