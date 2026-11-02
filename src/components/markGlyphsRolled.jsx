@@ -19,18 +19,18 @@ const ART = (name) => <image href={`/gear/${name}.webp`} x="6" y="6" width="88" 
 
 export const ROLLED_GLYPHS = {
   // ---- the 27 ROLLABLE marks, kit construction ----
-  'mk-detonator': ART('matchstick'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/matchstick.svg filler)
-  'mk-cyclone': ART('piggybank'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/piggybank.svg filler)
-  'mk-scholar': ART('pencil'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/pencil.svg filler)
-  'mk-ouroboros': ART('stickynote'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/stickynote.svg filler)
-  'mk-tinder': ART('battery'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/battery.svg filler)
-  'mk-slipstream': ART('luckysock'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/sock.svg filler)
-  'mk-smith': ART('coffeemug'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/coffeemug.svg filler)
-  'mk-phoenix': ART('stapler'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/stapler.svg filler)
-  'mk-metronome': ART('eggtimer'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/eggtimer.svg filler)
-  'mk-pyro': ART('cashregister'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/cashregister.svg filler)
-  'mk-nova': ART('boombox'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/boombox.svg filler)
-  'mk-golem': ART('cartridge'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/cartridge.svg filler)
+  'mk-detonator': ART('matchstick-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/matchstick.svg filler)
+  'mk-cyclone': ART('piggybank-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/piggybank.svg filler)
+  'mk-scholar': ART('pencil-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/pencil.svg filler)
+  'mk-ouroboros': ART('stickynote-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/stickynote.svg filler)
+  'mk-tinder': ART('battery-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/battery.svg filler)
+  'mk-slipstream': ART('luckysock-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/sock.svg filler)
+  'mk-smith': ART('coffeemug-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/coffeemug.svg filler)
+  'mk-phoenix': ART('stapler-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/stapler.svg filler)
+  'mk-metronome': ART('eggtimer-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/eggtimer.svg filler)
+  'mk-pyro': ART('cashregister-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/cashregister.svg filler)
+  'mk-nova': ART('boombox-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/boombox.svg filler)
+  'mk-golem': ART('cartridge-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/cartridge.svg filler)
   'mk-leviathan': ART('leviathan'),
   'mk-eclipse': ART('eclipse'),
   'mk-singularity': ART('singularity'),
@@ -38,13 +38,13 @@ export const ROLLED_GLYPHS = {
   'mk-origin': ART('origin'),
   // ---- GEAR POOL v2 (Andy oct9): the 10 new gears, same kit construction (base + ONE shade plane, ink outline, ONE
   // glint upper-left, ONE asymmetric detail). Placeholder-grade: flagged for a real art pass in the PR. ----
-  'mk-hotwire': ART('sneaker'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/sneaker.svg filler)
-  'mk-grapple': ART('paperclip'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/paperclip.svg filler)
-  'mk-sparkplug': ART('usbstick'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/usbstick.svg filler)
-  'mk-brainstorm': ART('quizbuzzer'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/buzzer.svg filler)
+  'mk-hotwire': ART('sneaker-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/sneaker.svg filler)
+  'mk-grapple': ART('paperclip-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/paperclip.svg filler)
+  'mk-sparkplug': ART('usbstick-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/usbstick.svg filler)
+  'mk-brainstorm': ART('quizbuzzer-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/buzzer.svg filler)
   'mk-flashpoint': ART('flashpoint'), // Andy oct11: painted PNG (public/gear/flashpoint.webp)
   'mk-voltage': ART('voltage'), // Andy oct11: painted PNG (public/gear/voltage.webp)
-  'mk-talisman': ART('magic8ball'), // oct17 night: painted (Gemini, matched to the painted set; was the fill/eightball.svg filler)
+  'mk-talisman': ART('magic8ball-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/eightball.svg filler)
   'mk-headmaster': ART('headmaster'), // Andy oct11: painted PNG (public/gear/headmaster.webp)
   'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
   'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)

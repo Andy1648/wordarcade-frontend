@@ -63,3 +63,25 @@ test('findVisibleTarget is safe without a DOM', () => {
   assert.equal(findVisibleTarget('.anything'), null);
   assert.equal(findVisibleTarget(''), null);
 });
+
+// OVERLAP AUDIT #2 (#5): a `clear` edge keeps the line in the band between that content and the hole
+test('with a clear edge the line hugs the hole from above, inside the band, and reports the band height', () => {
+  // the ROLL screen at 1366x768: reel bottom 430, ROLL at 581..705 (pad 14)
+  const { hole, caption } = spotlightLayout(R(492, 581, 382, 124), 1366, 768, 100, 14, 430);
+  assert.equal(caption.side, 'above');
+  assert.equal(caption.room, hole.top - SPOT_GAP - (430 + SPOT_GAP));
+  assert.equal(caption.top, hole.top - SPOT_GAP - 100, 'bottom a GAP above the hole');
+  assert.ok(caption.top >= 430 + SPOT_GAP, 'never over the cleared content');
+});
+
+test('a line taller than the band holds the band top (never covers the cleared content)', () => {
+  const { caption } = spotlightLayout(R(492, 581, 382, 124), 1366, 768, 200, 14, 430);
+  assert.equal(caption.top, 430 + SPOT_GAP);
+});
+
+test('a clear edge that is not above the hole is ignored (the usual below / above rule)', () => {
+  const plain = spotlightLayout(R(100, 40, 80, 40), 1280, 720, 60);
+  assert.deepEqual(spotlightLayout(R(100, 40, 80, 40), 1280, 720, 60, SPOT_PAD, 600), plain);
+  assert.deepEqual(spotlightLayout(R(100, 40, 80, 40), 1280, 720, 60, SPOT_PAD, null), plain);
+  assert.equal(plain.caption.room, undefined);
+});
