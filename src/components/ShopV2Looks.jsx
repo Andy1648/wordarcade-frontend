@@ -61,7 +61,7 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, tryi
       {/* SOUND PACK ART (oct17 night): one painted keycap per pack, all 12 as one set (Gemini, public/shop/snd/) */}
       {type === 'soundPack' ? <img className="sp2-look-art" src={`/shop/snd/${it.id}.webp`} width="256" height="256" alt="" aria-hidden="true" draggable="false" /> : null}
       <span className="sp2-look-name">{it.name}</span>
-      {type === 'popStyle' && it.xpMult > 1 ? <span className="sp2-look-xp" data-testid={`pop-xp-${it.id}`}>{xpTag(it.xpMult)}</span> : <span className="sp2-look-what">{it.blurb}</span>}
+      {type === 'popStyle' && it.xpMult > 1 ? <span className="sp2-look-xp" data-testid={`pop-xp-${it.id}`}>{xpTag(it.xpMult)}</span> : null}
       <LookAct it={it} isOn={isOn} isOwned={isOwned} can={can} price={price} owner={owner} onBuy={onBuy} onEquip={onEquip} onWear={type === 'popStyle' ? onWear : null} />
     </div>
   );
@@ -154,8 +154,7 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }
   if (tab === 'codes') {
     return (
       <div className="sp2-codes">
-        <p className="sp2-codes-what">TYPE A CODE FROM THE DEV — IT PAYS WINS, GEMS OR STARTS A BOOST.</p>
-        {LEADERBOARD_ENABLED ? <RedeemCodes /> : <p className="sp2-codes-what">CODES NEED THE ONLINE BOARD — NOT AVAILABLE HERE.</p>}
+        {LEADERBOARD_ENABLED ? <RedeemCodes /> : <p className="sp2-codes-what">CODES NEED YOU ONLINE</p>}
       </div>
     );
   }
@@ -165,7 +164,7 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }
     <div className="sp2-looks">
       {only !== 'sound' ? (
         <>
-          <h3 className="sp2-looks-h">POP STYLES <span>— YOUR +XP POPS ON THE MENU · EACH ONE MULTIPLIES YOUR XP</span></h3>
+          <h3 className="sp2-looks-h">POP STYLES</h3>
           <div className="sp2-looks-grid">
             {POP_STYLES.map((it) => <LookCard key={it.id} it={it} type="popStyle" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} onTry={onTry} trying={!!live && live.id === it.id} owner={owner} onWear={onWear} />)}
           </div>
@@ -173,7 +172,7 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }
       ) : null}
       {only !== 'pop' ? (
         <>
-          <h3 className="sp2-looks-h">SOUND PACKS <span>— THE CLICK EVERY KEY MAKES</span></h3>
+          <h3 className="sp2-looks-h">SOUND PACKS</h3>
           <div className="sp2-looks-grid">
             {SOUND_PACKS.map((it) => <LookCard key={it.id} it={it} type="soundPack" owned={owned} equipped={equipped} gems={gems} onBuy={onBuy} onEquip={onEquip} />)}
           </div>
