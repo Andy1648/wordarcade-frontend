@@ -264,7 +264,11 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
           return o;
         });
       const id = url.searchParams.get('id');
-      return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : all.slice(0, Number(url.searchParams.get('limit') || 100)));
+      // the row above a rank (fetchRowAbove: rival pings + the ghost past the board): `rank=lt.N&order=rank.desc`
+      const lt = /^lt\.(\d+)$/.exec(url.searchParams.get('rank') || '');
+      let seen = lt ? all.filter((r) => r.rank < Number(lt[1])) : all;
+      if (url.searchParams.get('order') === 'rank.desc') seen = seen.slice().reverse();
+      return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : seen.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
     if (url.pathname.endsWith('/leaderboard')) {
       // PostgREST answers 400 for a column the view doesn't have (pre-017 `econ`)
