@@ -124,6 +124,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // AT REST (Andy oct11 "i want the animations to show on the roll screen as well (when its stopped)"): once the reel
   // has stopped, the landed card runs its live gear turn + shine like every other card; spinning, every cell is still
   const [atRest, setAtRest] = useState(true);
+  // PARK MOTION only after a spin (e2e mark-rolls "coming back from the INDEX"): the parked triangle's spot reads
+  // --rs-up, which the mount measure sets AFTER a forced style read — with the transition always on, every mount (the
+  // first open, and every return from the INDEX) slid + overshot the pointer into its park spot. Off until this Reel
+  // plays a spin, so a mount sits parked and only a spin's unpark / re-park animates.
+  const [ptrLive, setPtrLive] = useState(false);
   // FIRST PAINT FAST (Andy oct16 "lag … as people press buttons like gear … IT CANT DELAY"): the pool is REEL_LEN (44)
   // full MarkCards, but only ~7 are in the window at rest. Mounting all 44 on open was the GEARS button's 914 ms freeze
   // (4x CPU). The first frame now renders the cards within VISIBLE_CELLS of the landing cell; the rest fill in right
@@ -274,6 +279,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     }
     if (played) played.current = spin.seq;
     stopAll();
+    setPtrLive(true);
     setAtRest(false);
     setCut((c) => (c ? { ...c, res: null } : c));
     shade(0);
@@ -615,7 +621,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         <div className="rs-light" ref={reg('light')} style={{ '--rs-tier': lineOf(tier) }}><div className="rs-rays-ink" /></div>
         {/* is-parked (design audit nov2: "EGG T|MER"): at rest the pointer's bar leaves the landed card and its top
             triangle parks ABOVE it, so the name + stats read clean; a spin brings the bar back (CSS, opacity/transform) */}
-        <div className={`rs-win${atRest ? ' is-parked' : ''}`} ref={reg('win')} data-testid="roll-band">
+        <div className={`rs-win${atRest ? ' is-parked' : ''}${ptrLive ? ' is-ptr-live' : ''}`} ref={reg('win')} data-testid="roll-band">
           <div className="rs-track" ref={reg('track')} style={{ transform: reelTransform(LAND_AT) }}>
             {CELLS.map((i) => {
               const id = strip ? strip[i] : null;

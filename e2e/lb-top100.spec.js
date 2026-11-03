@@ -227,11 +227,20 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await page.waitForTimeout(200);
     const pin = await page.evaluate(() => { const s = document.querySelector('.lb2-scroll').getBoundingClientRect(); const m = document.querySelector('.lb2-row.is-me').getBoundingClientRect(); return { inside: m.top >= s.top - 1 && m.bottom <= s.bottom + 1, rows: document.querySelectorAll('.lb2-row.is-me').length }; });
     expect(pin).toEqual({ inside: true, rows: 1 });
-    // the TOP 100 tier wears its painted stone seal (51-100), and every painted cut line keeps the ribbon's own shape
+    // the TOP 100 tier wears its painted stone seal (51-100). The cut lines are SLIM FLAT dividers (Andy nov2: the
+    // painted ribbons "look horrendous"): no ribbon art, a readable name, no taller than a third of a row
     await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
-    const ribs = await lb.locator('.lb2-sep-rib').evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return b.width / b.height; }));
-    expect(ribs.length, 'the TOP 50 / TOP 100 cut lines are on the board').toBeGreaterThanOrEqual(2);
-    for (const r of ribs) expect(Math.abs(r - 1200 / 182), `a ribbon at ${r.toFixed(2)}:1 is stretched`).toBeLessThan(0.15);
+    const seps = await lb.locator('.lb2-sep').evaluateAll((els) => els.map((e) => {
+      const name = e.querySelector('.lb2-sep-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
+      const art = [e, ...e.querySelectorAll('*')].some((x) => ['', '::before', '::after'].some((p) => /url\(/.test(getComputedStyle(x, p || null).backgroundImage) || /url\(/.test(getComputedStyle(x, p || null).maskImage || '')));
+      return { art, px: name ? parseFloat(getComputedStyle(name).fontSize) : 0, h: e.getBoundingClientRect().height, rowH: row.getBoundingClientRect().height, text: name ? name.textContent : '' };
+    }));
+    expect(seps.length, 'the TOP 50 / TOP 100 cut lines are on the board').toBeGreaterThanOrEqual(2);
+    for (const sp of seps) {
+      expect(sp.art, `${sp.text}: a cut line wears no ribbon art`).toBe(false);
+      expect(sp.px, `${sp.text}: name size`).toBeGreaterThanOrEqual(16);
+      expect(sp.h, `${sp.text}: slim (${Math.round(sp.h)}px vs a ${Math.round(sp.rowH)}px row)`).toBeLessThanOrEqual(sp.rowH * 0.75);
+    }
     if (SHOTS) {
       await lb.locator('.lb2-sep[data-band="stone"]').scrollIntoViewIfNeeded();
       await page.waitForTimeout(300);
