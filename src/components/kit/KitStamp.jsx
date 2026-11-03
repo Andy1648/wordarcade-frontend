@@ -17,6 +17,7 @@ export const STAMP_KINDS = {
   new: { label: 'NEW!', spat: 'yellow', angle: 14 },
   max: { label: 'MAX', spat: 'lilac', angle: 9 },
   done: { label: 'DONE', spat: 'cyan', angle: -11 }, // a finished DAILY CONTRACT (the CLAIMED stamp's art, its own word)
+  bought: { label: 'BOUGHT!', spat: 'hot', angle: -10 }, // a shop buy (nov2 audit #7): the CLAIMED art, its own word
 };
 const TICKS = [0, 60, 120, 180, 240, 300];
 
@@ -60,7 +61,7 @@ function StampArt({ kind }) {
       </div>
     );
   }
-  const word = kind === 'done' ? 'DONE' : 'CLAIMED';
+  const word = kind === 'done' ? 'DONE' : kind === 'bought' ? 'BOUGHT!' : 'CLAIMED';
   return (
     <div className="kst-art kst-claimed">
       <div className="kst-cl kst-cl--under"><div className="kst-cl-in">{word}</div></div>

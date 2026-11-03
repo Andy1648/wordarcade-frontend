@@ -22,7 +22,7 @@ async function gotoMenuLive(page) {
 }
 
 test.describe('menu XP', () => {
-  test('a key pops "+N XP" — what it paid, no typed letter (Andy oct10)', async ({ page }) => {
+  test('a key pops "[KEY] +N XP" — the key it was and what it paid (Andy nov2)', async ({ page }) => {
     // Seed a very high XP so one keystroke nudges the fill fraction by only ~0.0006 — the
     // realistic case for the rAF-lerp rest check below. The lerp then converges in 1–2 frames
     // (frame-count-bound, so robust even when parallel test load throttles the frame rate); a
@@ -37,7 +37,7 @@ test.describe('menu XP', () => {
       letters: [...document.querySelectorAll('.menu-xp-pop-letter')].map((n) => n.textContent).filter(Boolean),
       plus: [...document.querySelectorAll('.menu-xp-pop-plus')].map((n) => n.textContent).filter(Boolean),
     }));
-    expect(r.letters, 'no typed letters').toEqual([]);
+    expect(r.letters.map((l) => l.toLowerCase()), 'the typed key rides its pop').toContain('q');
     // v11 round 3: a MENU letter is a fifth of a game letter — 2 XP at a fresh profile → the pop reads +2 XP
     expect(r.plus).toContain('+2 XP');
 

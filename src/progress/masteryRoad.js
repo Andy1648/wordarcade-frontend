@@ -73,7 +73,7 @@ export function rewardInfo(mode, shape) {
     case 'chest':
       return { kind: 'chest', name: 'GEM CHEST', art: '/shop/chest-v2.webp', gems: shape.gems, size: shape.gems >= 25 ? 'm' : 's' };
     case 'ticket':
-      return { kind: 'ticket', name: 'FREE ROLL', art: '/icons/gears.webp', gems: TICKET_GEMS, size: 'm' };
+      return { kind: 'ticket', name: 'FREE ROLL', art: '/icons/gears-v2.webp', gems: TICKET_GEMS, size: 'm' };
     case 'hero': {
       const h = heroById(m.hero);
       return { kind: 'hero', name: h ? h.name : 'HERO', art: `/cast/${m.hero}-hero.webp`, heroId: m.hero, size: 'l' };
