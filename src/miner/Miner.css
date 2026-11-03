@@ -956,3 +956,53 @@
     animation: none !important;
   }
 }
+
+
+/* ---- LOBBY POLISH (design audit 10, nov2): heroes in the seats, one inviting open seat, chunky START / + BOT ---- */
+.mn-lobby .mn-seats {
+  grid-template-columns: repeat(var(--mn-seat-n, 3), minmax(0, 220px));
+  justify-content: center;
+}
+.mn-lobby .mn-seat { min-height: clamp(150px, 34vh, 250px); }
+.mn-lobby .mn-seat-hero { max-height: 190px; }
+.mn-lobby .mn-seat-name { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; font-size: var(--fs-panel); -webkit-text-stroke: 0; }
+.mn-seat-hero { display: block; width: 100%; height: 100%; min-height: 0; max-height: 150px; }
+.mn-seat-hero .mn-seat-digger { width: 100%; height: 100%; max-height: none; aspect-ratio: auto; }
+.mn-seat.is-bot-fill { border-style: solid; border-color: #5a3a8a; box-shadow: 4px 4px 0 #000; }
+.mn-seat.is-bot-fill .mn-seat-digger { opacity: 0.7; }
+.mn-seat.is-open {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  align-items: center;
+  background: #1a0b2e;
+  border: 4px solid var(--mn-gold-dark);
+  box-shadow: 4px 4px 0 #000;
+}
+.mn-seat-plus {
+  align-self: center;
+  font-family: 'Bungee', sans-serif; text-transform: uppercase;
+  font-size: var(--fs-h1);
+  line-height: 1;
+  color: var(--mn-gold);
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+}
+.mn-seat.is-open .mn-seat-name { color: #fff; }
+.mn-seat-code {
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase;
+  font-size: var(--fs-body);
+  color: var(--mn-gold);
+  letter-spacing: 2px;
+}
+.mn-btn-big {
+  min-height: 64px;
+  padding: 0 28px;
+  font-family: 'Bungee', sans-serif; text-transform: uppercase;
+  font-size: var(--fs-panel);
+  border-width: 4px;
+  box-shadow: 6px 6px 0 #000;
+}
+.mn-btn-start { min-width: min(260px, 56vw); }
+.mn-btn-big:active { transform: translate(4px, 4px); }
+@media (max-width: 760px), (max-aspect-ratio: 4/5) {
+  .mn-lobby .mn-seats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mn-btn-big { min-height: 60px; padding: 0 18px; }
+}

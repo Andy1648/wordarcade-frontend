@@ -9,6 +9,9 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
+import { useMenuRoomsPoll } from './menuRoomsPoll.js';
+// OPEN ROOMS (nov2): the panel / chip are a lazy chunk (payload ratchet), mounted once the first public_rooms reply lands
+const MenuRooms = lazyWithReload(() => import('./MenuRooms.jsx'), 'MenuRooms');
 import { MenuIcons, MenuUtility, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
@@ -112,6 +115,8 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
+// the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
+const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
 import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
@@ -178,7 +183,7 @@ let cloudBootChecked = false;
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -721,6 +726,43 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
+  // THE WHEEL'S GEMS FLY HOME (design research move 10): a gem prize is paid under the wheel's scrim, where the menu's
+  // GEMS pill can't be seen — so the pill HOLDS them (gemsInFlight) until the wheel closes, then six painted gems arc
+  // from the WHEEL tile into it and it counts each one in as it lands (KitFlyLayer, pooled). Everything else that
+  // reads `gems` (dots, the roll gate) keeps the real balance.
+  const [gemsInFlight, setGemsInFlight] = useState(0);
+  const wheelOwed = useRef(0);
+  const [gemFly, setGemFly] = useState(null); // { from, amounts } while the lazy fly layer is up
+  const onWheelPaid = useCallback((g) => { wheelOwed.current += g; setGemsInFlight((n) => n + g); }, []);
+  useEffect(() => {
+    if (showWheel || !wheelOwed.current) return undefined;
+    const amount = wheelOwed.current;
+    wheelOwed.current = 0;
+    const id = requestAnimationFrame(() => { // after the wheel has unmounted: the tile's box, read once
+      const tile = [...document.querySelectorAll('[data-nav="wheel"]')].find((el) => el.getClientRects().length);
+      const b = tile ? tile.getBoundingClientRect() : null;
+      const from = b ? { x: b.left + b.width / 2, y: b.top + b.height / 2 } : null;
+      const parts = 6;
+      const share = Math.floor(amount / parts);
+      const amounts = Array.from({ length: parts }, (_, i) => (i === parts - 1 ? amount - share * (parts - 1) : share)).filter((a) => a > 0);
+      if (!from || !amounts.length) { setGemsInFlight(0); return; }
+      setGemFly({ from, amounts }); // mounts the lazy layer; its ref fires the flight (gemFlyMounted)
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showWheel]);
+  // safety: the pill is never left holding gems (a fly chunk that fails to load, a hidden tab) — release after 3 s
+  useEffect(() => {
+    if (!gemFly) return undefined;
+    const t = setTimeout(() => { setGemsInFlight(0); setGemFly(null); }, 3000);
+    return () => clearTimeout(t);
+  }, [gemFly]);
+  const shownGems = Math.max(0, gems - gemsInFlight);
+  // the lazy fly layer's ref: called once it has mounted — fly, then unmount it when every gem has landed
+  const gemFlyMounted = useCallback((api) => {
+    if (!api || !gemFly || gemFly.flown) return;
+    gemFly.flown = true;
+    api.fly({ from: gemFly.from, amounts: gemFly.amounts, onLand: (a) => setGemsInFlight((n) => Math.max(0, n - a)), onDone: () => { setGemsInFlight(0); setGemFly(null); } });
+  }, [gemFly]);
   const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
   useEffect(() => {
     if (!SEASON2) return undefined;
@@ -1514,6 +1556,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     />
   );
 
+  // OPEN ROOMS (Andy nov2): the live public-room list. The PANEL owns the paged desktop's right column (≥1200, under
+  // CONTRACTS); everywhere else an "N OPEN" CHIP joins an existing cluster (phone LV row / desktop footer links). Data is
+  // App's existing publicRooms + list_public_rooms on the one socket, polled only while this menu shows it (menuRoomsPoll.js); the panel itself is the lazy MenuRooms chunk.
+  const roomsOn = !!(rooms && onRefreshRooms && reveal.core && !titlePlay);
+  const roomsPanel = roomsOn && hasMainColumn && MENU_VARIANT !== 'slab';
+  useMenuRoomsPoll(onRefreshRooms, roomsOn && wsStatus === 'open' && !tourCovered && !navigating);
+  // "heard": the first public_rooms reply since mount (App rebuilds the array per reply; the mount run is a stale copy)
+  const [roomsHeard, setRoomsHeard] = useState(false);
+  const roomsFirstRef = useRef(true);
+  useEffect(() => {
+    if (roomsFirstRef.current) { roomsFirstRef.current = false; return; }
+    setRoomsHeard(true);
+  }, [rooms]);
+  const roomsChip = roomsOn && !roomsPanel && roomsHeard ? (
+    <Suspense fallback={null}><MenuRooms variant="chip" rooms={rooms} heard={roomsHeard} onOpenAll={handleDialogJoin} navigating={navigating} className={isPhoneMenu ? 'hp-m-rooms' : 'hp-rooms-chip'} /></Suspense>
+  ) : null;
+
   return (
     <div ref={navRootRef} className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
       <div
@@ -1562,13 +1621,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               : null}
             xpBar={xpBar}
             markChip={markChip}
+            roomsChip={roomsChip}
             wins={wins}
-            gems={markShown && reveal.gears ? gems : null}
+            gems={markShown && reveal.gears ? shownGems : null}
           />
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
+        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? shownGems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1591,6 +1651,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             </button>
           )}
           {LEADERBOARD_ENABLED && reveal.core && <LiveTicker className="homepage-live" />}
+          {roomsChip}
           {/* boost timers, where the paged layout has no bottom-right cell (Homepage.css .hp-dock--extras) */}
           <div className="hp-dock hp-dock--extras"><BoostDock /></div>
         </div>
@@ -1605,6 +1666,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             under the icons sharing their right edge (Brawl Stars / Clash Royale); ?menu=slab = the framed right-column slab
             instead (research: claude notes menu-profile-layout-research.md). Under 1200 the face sits in the icon cluster. */}
         {isPagedMenu && dailyTile && <div className={`hp-main is-${MENU_VARIANT}`}>{dailyTile}</div>}
+
+        {/* OPEN ROOMS (Andy nov2): the paged desktop's right column under CONTRACTS — a grid cell (Homepage.css .hp-rooms),
+            never a fixed orphan. Under 1200 / on a phone the "N OPEN" chip joins the footer links / the LV row instead. */}
+        {roomsPanel && (
+          <div className="hp-rooms">
+            {/* the grid slot is eager; the panel chunk loads on the first list reply (until then the slot is empty) */}
+            {roomsHeard && <Suspense fallback={null}><MenuRooms
+              variant="panel"
+              rooms={rooms}
+              heard={roomsHeard}
+              name={playerName}
+              onJoin={onJoinPublicRoom}
+              onCreate={onCreatePublic}
+              onNavigate={() => setNavigating(true)}
+              onOpenAll={handleDialogJoin}
+              navigating={navigating}
+              online={wsStatus === 'open'}
+            /></Suspense>}
+          </div>
+        )}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
@@ -1691,10 +1772,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </ScreenBoundary>
       )}
 
+      {/* the wheel's gems fly from the WHEEL tile into the GEMS pill on close (a pooled fly layer — never its own fixed UI
+          position: it is a full-screen, pointer-events:none overlay with no layout of its own) */}
+      {gemFly ? (
+        <Suspense fallback={null}>
+          <GemFly ref={gemFlyMounted} target={() => [...document.querySelectorAll('.menu-gems-chip .kp-icon')].find((el) => el.getClientRects().length)} icon="gems" />
+        </Suspense>
+      ) : null}
       {showWheel && (
         <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
           <Suspense fallback={null}>
-            <DailyWheel onClose={() => setShowWheel(false)} />
+            <DailyWheel onClose={() => setShowWheel(false)} onPaid={onWheelPaid} />
           </Suspense>
         </ScreenBoundary>
       )}
