@@ -120,7 +120,7 @@ function BadgeRow({ badges }) {
         return (
           <li key={id} className="pc-badge" style={{ '--tc': TC[t], '--tf': TF[t] }} title={`${name} ${max ? 'MAX' : ROMAN[t]}`}>
             <span className="pc-badge-plate" aria-hidden="true" />
-            <img className="pc-badge-glyph" src={`/ach/${g}.svg`} alt="" aria-hidden="true" />
+            <img className="pc-badge-glyph" src={`/ach/${g}-v1.webp`} alt="" aria-hidden="true" />
             <span className="pc-badge-roman">{max ? 'MAX' : ROMAN[t]}</span>
             <span className="pc-sr">{`${name} ${max ? 'MAX' : ROMAN[t]}`}</span>
           </li>
