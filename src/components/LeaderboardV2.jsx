@@ -45,6 +45,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
 import { CAST, castFor, castSrc, heroById } from '../cast/cast.js';
+import { headImgStyle } from '../cast/faceBox.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
@@ -676,6 +677,8 @@ export default function LeaderboardV2({ onBack }) {
             const isRival = !!(rival && r.id === rival.id);
             const gap = mine && rival ? gapTo(r, rival, tab, gains) : null;
             const n = nums(r, tab, gains);
+            // the row's head: the hero they wear, else the cast member their id gives them, cropped to ITS head (faceBox.js)
+            const faceId = heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id;
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
             const band = rankBand(r.rank);
@@ -693,7 +696,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-who-cell">
                   {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
                       member their seat colour gives them (the podium's rule) */}
-                  <span className="lb2-face" aria-hidden="true"><img src={castSrc(heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
+                  <span className="lb2-face" aria-hidden="true" data-hero={faceId}><img src={castSrc(faceId)} style={headImgStyle(faceId)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
                   <span className="lb2-who-text">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}
