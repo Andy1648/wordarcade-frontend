@@ -150,6 +150,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     // after-action: the "?" opens the math, which stays inside the screen
     await page.getByTestId('st2-info').click();
     await expect(page.getByTestId('st2-basex')).toBeVisible();
+    await page.waitForTimeout(700); // the press-juice squash (a finite one-shot) settles before anything is measured
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-stats-math-${tag}.png` });
     await clean(page, '.st2-hero', 'stats hero + math');
     expect(await smallTargets(page, '.st2-head, .st2-hero'), '≥ 44px targets').toEqual([]);
