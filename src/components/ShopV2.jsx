@@ -449,7 +449,7 @@ export default function ShopV2({ onBack }) {
                 <DailyChestCard now={now} onOpen={() => { sndPurchase(); setChest(true); }} />
               </div>
             ) : null}
-            {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
+            {/* move 8, fixed rhythm: FREE chest → the featured SEALED ROLL → boosts (placed in ShopV2.css, FIXED SHOP RHYTHM) */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} bought={bought[it.id] || 0} shineRef={(el) => { shines.current[it.id] = el; }} floatRef={(el) => { floats.current[it.id] = el; }} />
