@@ -180,6 +180,18 @@
 
 /* KEY TIER tier T2+ particle shards (feat/purchase-feel item 1). Pooled squares,
    idle at opacity 0; a spawn sets background + WAAPI transform/opacity (<=400ms). */
+/* LEVEL-UP BLADES (fx/shards): painted crystal blades, their own pool (MenuXp spawnBlades). Over the starburst, under
+   the LEVEL N card (paint order). will-change only for a flight, set + cleared in JS. */
+.menu-xp-blade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0;
+}
 .menu-xp-shard {
   position: absolute;
   left: 0;

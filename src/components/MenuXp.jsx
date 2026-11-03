@@ -13,6 +13,7 @@ import { CARD_MS } from '../lib/menuMoments';
 import { rebirthMult, loadProgress, getRebirths, tableRebirthThreshold } from '../progress/xp';
 import { careerLevel, popGrowth } from '../progress/popGrowth';
 import { reduceMotion } from '../lib/reduceMotion';
+import { SHARD_MS as BLADE_MS, bladeFrames, bladeFlavour, clearVectors, fitInside, setSrc } from '../fx/shards/shardPlan.js';
 import { V3 } from '../progress/season'; // P7 (SEASON2 only): V3.fx turns the centre cards below into edge toasts
 
 // MenuXpBar — the SPLASH's mini level bar ("LV n" + a bare track). The menu's bar is the v2 kit's
@@ -60,6 +61,15 @@ const EDGE_POOL = 2;
 const SHARD_MS = 360; // 300-400ms per spec
 const SHARD_PER_POP = 4; // <=6 per spec
 const SHARD_POOL = 32; // SHARD_PER_POP × ~8 concurrent pops
+// LEVEL-UP BLADES (nov2): the level-up / rebirth card throws the PAINTED crystal blades (fx/shards) — their OWN pool, so
+// the key pops' / crits' square shards (.menu-xp-shard, SHARD_POOL) are untouched. One pool per colour so a burst never
+// waits on a src swap; the sprites load after the menu settles (BLADE_LOAD_MS), never on boot.
+const BLADE_SETS = ['cyan', 'gold'];
+const BLADE_POOL = 12; // per set — one strong idea: 8–12 blades
+const BLADE_HALF = 28; // half the .menu-xp-blade box
+const BLADE_LOAD_MS = 3000;
+// the box the blades clear: the LEVEL N card + its starburst, so they fly out past the spikes, not into them
+const BLADE_CLEAR = { w: 380, h: 240 };
 // Feel-tier colours: T1-T4 teal, T5+ gold. (T0 keeps the streak colour it's given.)
 const TIER_TEAL = '#2EFFE0';
 const TIER_GOLD = '#FFD54A';
@@ -295,6 +305,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
   const winsStampAnimRef = useRef(null);
   const winsHintAnimRef = useRef(null);
   const layerSizeRef = useRef({ w: 0, h: 0 }); // fx-layer px size (mount/resize only)
+  const bladeElsRef = useRef({ cyan: [], gold: [] });
   const recentPosRef = useRef([]); // ring buffer of the last few accepted {x,y} (anti-repeat)
   const popNextRef = useRef(0);
   const edgeNextRef = useRef(0);
@@ -467,6 +478,34 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
     return undefined;
   }, []);
 
+  // the blade sprites load once the menu has settled (pure writes; 8 unique files, browser-cached)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      for (const set of BLADE_SETS) bladeElsRef.current[set].forEach((el, i) => { if (el && !el.getAttribute('src')) el.setAttribute('src', setSrc(set, i)); });
+    }, BLADE_LOAD_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  // LEVEL-UP BLADES: `n` painted blades of `set` burst from the card's centre, clear a w×h box round its title, and stay
+  // inside the fx layer (fitInside). Pure writes — the layer size is the mount/resize cache, never a layout read.
+  function spawnBlades(set, n, box) {
+    const { w, h } = layerSizeRef.current;
+    const els = bladeElsRef.current[set] || [];
+    if (!w || !h || !els.length) return;
+    const from = { x: w / 2, y: h * 0.46 };
+    const k = Math.min(n, BLADE_POOL);
+    const vs = fitInside(clearVectors(k, Math.min(box.w, w * 0.85), Math.min(box.h, h * 0.5), { reach: [50, 160] }), from, w, h, { pad: 24, min: 30 });
+    vs.forEach((v, i) => {
+      const el = els[i];
+      if (!el || !el.getAttribute('src')) return; // not loaded yet (a level-up in the first seconds): the starburst carries it
+      const frames = bladeFrames(v, { s: v.s * 0.9, ...bladeFlavour(i) }).map((f) => ({ ...f, transform: `translate(${from.x - BLADE_HALF}px, ${from.y - BLADE_HALF}px) ${f.transform}` }));
+      el.style.willChange = 'transform, opacity'; // the flight only — cleared on finish
+      const a = el.animate(frames, { duration: BLADE_MS - 80 + (i % 5) * 20, easing: 'linear' });
+      a.onfinish = () => { el.style.willChange = ''; };
+      a.oncancel = a.onfinish;
+    });
+  }
+
   // Throw SHARD_PER_POP pooled shards from (x,y) — KEY TIER tier T2+ (item 1).
   function spawnShards(x, y, colour, count = SHARD_PER_POP, reach = 1) {
     const anims = shardAnimsRef.current;
@@ -502,8 +541,7 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       burstAnimRef.current.cancel();
       burstAnimRef.current.play();
     }
-    const { w, h } = layerSizeRef.current;
-    if (w && h) spawnShards(w / 2, h * 0.46, TIER_GOLD, SHARD_POOL, 4);
+    spawnBlades('gold', BLADE_POOL, BLADE_CLEAR);
   }
 
   // Put the shared card back to its everyday timeline after a milestone played on it. A no-op until a
@@ -860,8 +898,8 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
           burstAnimRef.current.cancel();
           burstAnimRef.current.play();
         }
-        const { w, h } = layerSizeRef.current;
-        if (w && h) spawnShards(w / 2, h * 0.46, tf.tier >= 5 ? TIER_GOLD : TIER_TEAL, Math.min(SHARD_POOL, tf.levelUpShards + (m ? m.shards : 0)), 3 + tf.tier * 0.6);
+        // the painted blades: cyan, GOLD from tier 5 or on a milestone; more of them as the tier climbs (8 → 12)
+        spawnBlades(tf.tier >= 5 || m ? 'gold' : 'cyan', m ? BLADE_POOL : 8 + Math.min(4, tf.tier), BLADE_CLEAR);
       }
     },
     // MILESTONE MOMENTS: ms left on a milestone card (0 otherwise) — the tier-up card waits it out
@@ -993,6 +1031,17 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
         />
       ))}
       <div className="menu-xp-levelburst" ref={burstRef} />
+      {BLADE_SETS.map((set) => Array.from({ length: BLADE_POOL }, (_, i) => (
+        <img
+          key={`b${set}${i}`}
+          className="menu-xp-blade"
+          alt=""
+          draggable="false"
+          ref={(n) => {
+            bladeElsRef.current[set][i] = n;
+          }}
+        />
+      )))}
       <div className="menu-xp-levelup" ref={levelupRef}>
         <span className="menu-xp-levelup-title" ref={levelTitleRef}>
           LEVEL UP
