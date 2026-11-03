@@ -1,9 +1,9 @@
-// AvatarFrame.jsx — your hero's PORTRAIT in the round frame you wear (avatarFrame.js). Wear none and it renders its
+// AvatarFrame.jsx — your hero's PORTRAIT in the square frame you wear (avatarFrame.js). Wear none and it renders its
 // children untouched (the portrait as it always was). Wear one and it takes the portrait's slot (`className` = the
-// portrait's own sizing class): the face becomes a circle in the frame's window and the painted ring sits on top,
-// a little bigger than the slot (`grow`) so its crystals / flames / bolts break the box. Static: no motion of its own.
+// portrait's own sizing class): the face becomes a rounded square in the frame's window and the painted frame sits on
+// top, a little bigger than the slot (`grow`) so its crystals / flames / brackets break the box. Static: no motion of its own.
 import { useEffect, useState } from 'react';
-import { AVATAR_WIN, KIT_CHANGE, wornAvatarFrame } from './avatarFrame.js';
+import { AVATAR_WIN, KIT_CHANGE, avatarFrameSrc, wornAvatarFrame } from './avatarFrame.js';
 import './AvatarFrame.css';
 
 const pct = (n) => `${Math.round(n * 100) / 100}%`;
@@ -26,7 +26,7 @@ export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow 
   return (
     <span className={`avf ${className}`} data-avf={frame} aria-hidden="true">
       <span className="avf-face" style={face}><img src={src} alt="" draggable="false" /></span>
-      <img className="avf-ring" src={`/cast/avatar/${frame}.webp`} style={ring} width="256" height="256" alt="" draggable="false" />
+      <img className="avf-ring" src={avatarFrameSrc(frame)} style={ring} width="256" height="256" alt="" draggable="false" />
     </span>
   );
 }
