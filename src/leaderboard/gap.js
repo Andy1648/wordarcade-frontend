@@ -3,6 +3,8 @@
 // ★ → R → level (all-time, 022), +★ → +R → +levels (THIS WEEK gains, 024), or words (the pre-024 weekly view).
 // `fill` is how much of that stat you already have (0..1), for the bar under the chase line.
 
+import { formatNum } from '../format.js';
+
 const n = (v) => Number(v) || 0;
 
 function keysFor(tab, gains) {
@@ -20,7 +22,7 @@ export function gapTo(me, rival, tab = 'all', gains = true) {
     if (a === b) continue;
     if (a > b) return null; // ahead on the deciding stat — the board's order disagrees (a stale row); say nothing
     const d = b - a;
-    return { text: `+${d.toLocaleString('en-US')} ${unit}`, fill: b > 0 ? Math.max(0, Math.min(1, a / b)) : 0 };
+    return { text: `+${formatNum(d)} ${unit}`, fill: b > 0 ? Math.max(0, Math.min(1, a / b)) : 0 };
   }
   // every stat tied: the next level passes them
   const last = keysFor(tab, gains).slice(-1)[0];
