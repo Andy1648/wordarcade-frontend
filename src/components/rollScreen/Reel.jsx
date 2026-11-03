@@ -220,7 +220,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
     if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
-    const kind = revealKind(tier, mode);
+    const kind = revealKind(tier, mode, { dupe: !!res.dupe, pipUp: !!res.pipUp });
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
     const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
@@ -391,6 +391,16 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         { opacity: DIM_LIGHTS, offset: tl.flip.at / span },
         { opacity: 0 },
       ], { duration: span, easing: 'ease-in-out', fill: 'none' });
+    }
+    // BEAT 1, ANTICIPATION (design research move 1): the card back SQUASHES like a crate bracing — down + wide, then up
+    // + narrow, home — before anything else moves (every tier; transform only, finite, from its base)
+    if (tl.squash) {
+      anim(n.rvRattle, [
+        { transform: 'scale(1, 1)' },
+        { transform: 'scale(1.07, 0.9)', offset: 0.45 },
+        { transform: 'scale(0.97, 1.04)', offset: 0.75 },
+        { transform: 'scale(1, 1)' },
+      ], { duration: tl.squash.ms, delay: tl.squash.at, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'none' });
     }
     // BEFORE the flip: EPIC rattles; LEGENDARY+ telegraph — the back's edge lights in the RARITY COLOUR and the rattle
     // builds; SECRET spins the back up (faster and faster) with the edge glinting through it

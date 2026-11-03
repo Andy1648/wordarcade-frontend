@@ -16,8 +16,8 @@ test('escalation: every tier keeps every layer of the tier below and ADDS at lea
   assert.deepEqual(LAYERS.rare, ['flip', 'sheen', 'sparkles']);
 });
 
-test('reveal lengths scale ~0.5 / 1.0 / 1.6 / 2.2 / 3.0 s, strictly rising', () => {
-  const want = { rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
+test('reveal lengths scale ~0.6 / 1.1 / 1.5 / 2.2 / 3.0 s (the squash opens each), strictly rising', () => {
+  const want = { rare: 600, epic: 1100, legendary: 1500, mythic: 2200, secret: 3000 };
   let prev = 0;
   for (const t of REVEAL_TIERS) {
     const tl = revealTimeline(t);
@@ -92,4 +92,13 @@ test('idle sheen: LEGENDARY+ only, round-robin over the visible cards, -1 when n
   assert.equal(nextIdleSheen(ids, new Set(['a', 'c']), 2), 0);
   assert.equal(nextIdleSheen(ids, new Set(), 0), -1);
   assert.equal(nextIdleSheen([], new Set(['a']), -1), -1);
+});
+
+test('move 1, the four beats: every tier opens on the card-back SQUASH; RARE..LEGENDARY are done inside 1.5 s', () => {
+  for (const t of REVEAL_TIERS) {
+    const tl = revealTimeline(t);
+    assert.deepEqual(tl.squash, { at: 0, ms: 160 }, t);
+    assert.ok(tl.flip.at >= 120 || tl.spinUp, `${t}: the flip waits for the squash`);
+  }
+  for (const t of ['rare', 'epic', 'legendary']) assert.ok(revealTimeline(t).total <= 1500, `${t} total ${revealTimeline(t).total}`);
 });

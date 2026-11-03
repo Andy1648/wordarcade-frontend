@@ -297,8 +297,11 @@ export function needMoreText(price, have, fmt = (n) => String(n)) {
  * (LEGENDARY+: full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up
  * until a tap. The layers each tier plays are revealPlan.js's.
  */
-export function revealKind(tier, mode = 'full') {
+export function revealKind(tier, mode = 'full', { dupe = false, pipUp = false } = {}) {
   if (mode !== 'full') return 'line';
+  // MOVE 7 (design research): a DUPLICATE skips the ceremony — the short line path (the painted line burst + the result
+  // line under the reel, ~400 ms). Only a NEW gear or a dupe that steps a ★ pip up (a tier-up) earns the cutscene.
+  if (dupe && !pipUp) return 'line';
   const r = tierIndex(tier);
   if (r >= tierIndex('legendary')) return 'full';
   return r === tierIndex('epic') ? 'dim' : 'lite';

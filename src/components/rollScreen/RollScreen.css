@@ -613,6 +613,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rv-body { display: grid; justify-items: center; align-items: center; gap: 14px; min-width: 0; }
 .rs-cut-mark { position: relative; }
 .rv-rattle, .rv-card { position: relative; width: var(--mc-w); height: calc(var(--mc-w) * 1.6667); }
+.rv-rattle { transform-origin: 50% 90%; } /* the anticipation squash plants on the card's base */
 .rv-face { position: absolute; left: 0; top: 0; width: var(--mc-w); height: calc(var(--mc-w) * 1.6667); } /* sized: the EPIC+ GearFx aura is laid round it */
 .rv-back { position: absolute; left: 0; top: 0; width: calc(var(--mc-w) * 1.0444); opacity: 0; }
 .rv-back-art { display: block; width: 100%; height: auto; }

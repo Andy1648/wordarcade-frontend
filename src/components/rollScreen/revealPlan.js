@@ -8,7 +8,11 @@
 //              + the flip lands as a SLAM (squash) + a small screen shake
 //   mythic     + a colour flash + a second burst ring
 //   secret     + the lights dim + a longer spin-up
-// The reveal lasts ~0.25 / 0.5 / 1.0 / 1.6 / 2.2 / 3.0 s. Then the STATS EXTENSION (≤ 1.2 s) ticks the gear's stats in.
+// The reveal lasts ~0.6 / 1.1 / 1.5 / 2.2 / 3.0 s. Then the STATS EXTENSION (≤ 1.2 s) ticks the gear's stats in.
+// THE FOUR BEATS (design research move 1): ANTICIPATION — the card back SQUASHES (every tier) then rattles; TELL — the
+// rarity colour + its chord before the flip (LEGENDARY up); REVEAL — the flip / slam + the painted blades; SETTLE —
+// the stats stamp in. RARE → LEGENDARY land inside 1.5 s; MYTHIC / SECRET keep their longer chase ceremony (Andy oct9
+// "mythic and secret should be even greater") — and a tap skips any reveal at any point.
 // A tap closes the reveal at any point (the result line under the reel already holds the result).
 
 export const REVEAL_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
@@ -50,12 +54,15 @@ export function revealTimeline(tier) {
   // BEFORE the flip: secret dims + spins up (with the telegraph glinting through it); legendary / mythic telegraph;
   // epic only rattles
   const dim = on('dimLights') ? { at: 0, ms: 420 } : null;
+  // ANTICIPATION: the card back squashes first (a crate bracing), then the rattle / telegraph picks up a beat later
+  const squash = { at: 0, ms: 160 };
+  const A = on('spinUp') ? 0 : 120;
   const spinUp = on('spinUp') ? { at: 300, ms: 1300 } : null;
   let telegraph = null;
-  if (on('telegraph')) telegraph = spinUp ? { at: 800, ms: 800 } : { at: 0, ms: t === 'mythic' ? 850 : 650 };
+  if (on('telegraph')) telegraph = spinUp ? { at: 800, ms: 800 } : { at: A, ms: t === 'mythic' ? 850 : 430 };
   let preShake = null;
-  if (on('preShake')) preShake = telegraph ? { ...telegraph } : { at: 0, ms: 300 };
-  const pre = spinUp ? spinUp.at + spinUp.ms : telegraph ? telegraph.at + telegraph.ms : preShake ? preShake.ms : 0;
+  if (on('preShake')) preShake = telegraph ? { ...telegraph } : { at: A, ms: 300 };
+  const pre = spinUp ? spinUp.at + spinUp.ms : telegraph ? telegraph.at + telegraph.ms : preShake ? preShake.at + preShake.ms : A;
   const flipMs = on('slam') ? 300 : 250;
   const flip = { at: pre, ms: flipMs };
   const land = pre + flipMs;
@@ -71,11 +78,11 @@ export function revealTimeline(tier) {
   const sparkles = on('sparkles') ? { at: t === 'rare' ? land - 50 : land + 30, ms: t === 'rare' ? 300 : 420, n: SPARKS[t] } : null;
   const stampAt = land + (on('slam') ? 60 : 0);
   // the TARGET durations (research §4) pad the tail so every tier's reveal reads as its own length
-  const TARGET = { rare: 500, epic: 1000, legendary: 1600, mythic: 2200, secret: 3000 };
+  const TARGET = { rare: 500, epic: 1000, legendary: 1450, mythic: 2200, secret: 3000 };
   const ends = [flip, slam, screenShake, flash, burst, ring2, sheen, sparkles, dim, spinUp, telegraph, preShake]
     .filter(Boolean).map((s) => s.at + s.ms);
   const total = Math.max(TARGET[t], ...ends);
-  return { tier: t, dim, spinUp, telegraph, preShake, flip, land, slam, screenShake, flash, burst, ring2, sheen, sparkles, stampAt, total };
+  return { tier: t, squash, dim, spinUp, telegraph, preShake, flip, land, slam, screenShake, flash, burst, ring2, sheen, sparkles, stampAt, total };
 }
 
 /**
