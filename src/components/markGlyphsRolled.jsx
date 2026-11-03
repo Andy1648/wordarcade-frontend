@@ -84,6 +84,12 @@ export const ROLLED_GLYPHS = {
   'mk-gauntlet': ART('gauntlet-v2'),
   'mk-grimoire': ART('grimoire'),
   'mk-supernova': ART('supernova'),
+  // NEW GEARS nov3: 7 painted in ONE ChatGPT Plus chat (best of 4 each), the gear sheet as the style ref
+  'mk-cherrybomb': ART('cherrybomb'),
+  'mk-spraycan': ART('spraycan'),
+  'mk-popcorn': ART('popcorn'),
+  'mk-pinata': ART('pinata'),
+  'mk-megaton': ART('megaton'),
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
   'mk-ul-og': ART('unlisted/og'),
   'mk-ul-wishbone': ART('unlisted/wishbone'),
