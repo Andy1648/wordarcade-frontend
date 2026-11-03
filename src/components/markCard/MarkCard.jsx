@@ -32,6 +32,7 @@
 import { memo, useEffect, useRef } from 'react';
 import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
 import ShinyBadge from '../rollScreen/ShinyBadge';
+import KitIcon from '../kit/KitIcon.jsx';
 import { markEntry } from '../../progress/markRolls';
 import { CARD_RAR, LOCKED, cardTier } from './palette.js';
 import CardFrame from './CardFrame.jsx';
@@ -131,8 +132,10 @@ function MarkCard({
               </svg>
             </span></span>
           </span>
-          <MarkBadge mark={entry} rank={rank} size={132} permanent={kind === 'perm'} cog={false} className="mc-badge" />
+          <MarkBadge mark={entry} rank={rank} size={132} permanent={kind === 'perm'} cog={false} silhouette={locked} className="mc-badge" />
           {shiny && !locked ? <ShinyBadge className="mc-shiny" /> : null}
+          {/* NOT YOURS YET (nov2, research move 20): the gear's painted art as a dark silhouette in its tier cog + a lock */}
+          {locked ? <span className="mc-lockchip" aria-hidden="true"><KitIcon name="lock" size={20} shadow={1} extras={false} /></span> : null}
           {c.copies > 1 && !locked ? <span className="mc-dupes" aria-label={`${c.copies} copies`}>×{c.copies}</span> : null}
         </div>
         <div className={`mc-name${nameFit}${parts.name ? ` ${parts.name}` : ''}`}>{c.name}</div>

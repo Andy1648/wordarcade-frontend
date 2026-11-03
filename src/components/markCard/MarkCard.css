@@ -252,3 +252,14 @@
 
 /* a locked EARNED gear (Andy oct8): a lock + ACHIEVEMENT in the hero (it is not rolled — no odds) */
 .mc-lock { flex: none; color: var(--mc-line); }
+
+/* NOT YOURS YET (nov2, research move 20): a locked gear is its REAL art, darkened (MarkBadge's own silhouette mode, the
+   tier cog lit behind it) and the painted lock rides the art's top-right. The painted gear art is a round STICKER (the
+   item on its own swirl ring), so a flat black cut-out of it is only a disc: it is SHADOWED instead - colourless and deep
+   dark, the item's own lines still showing through. */
+.mc.is-locked .mc-badge.is-sil .mx-sil { filter: grayscale(1) brightness(0.3); }
+.mc-lockchip {
+  position: absolute; top: -4%; right: -6%; z-index: 3;
+  display: grid; place-items: center; width: 30px; height: 30px;
+  background: #1a0b2e; border: 3px solid #000; border-radius: 8px; box-shadow: 2px 2px 0 #000;
+}
