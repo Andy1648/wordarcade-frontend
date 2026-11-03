@@ -11,7 +11,12 @@ import { navControl } from './support/menu.js';
 const SECRET = 'b9'.repeat(24);
 const SHOTS = process.env.SHOTS;
 
-async function boot(page) {
+// every DEAL OF THE HOUR window (v3/stock.js dealOf — the same pins as shop-deal.spec.js): the deal card's ribbon + struck
+// price change its layout, so an unpinned clock let CI pass or fail by the hour it ran (nov3: EXTEND's hour, 1280x551)
+const DEAL_HOURS = { wins25: 1796085000000, luck2: 1796092200000, overdrive: 1796095800000, xp25: 1796103000000, extend: 1796117400000 };
+
+async function boot(page, at) {
+  await page.clock.setFixedTime(at);
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-bg', username: 'Badges', level: 40, rebirths: 1, lifetime_words: 0, lifetime_letters: 0, wins_per_word: 0, econ: 12 };
@@ -66,13 +71,15 @@ const audit = (page) => page.evaluate(() => {
 });
 
 for (const [w, h] of [[1024, 768], [1280, 551], [1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
-  test(`${w}x${h}: no badge on a card's words, the POWER badge off its heading, the shelf header inside`, async ({ page }) => {
-    await page.setViewportSize({ width: w, height: h });
-    await boot(page);
-    if (w < 1000) await page.setViewportSize({ width: w, height: 3000 }); // the phone page scrolls: measure every card
-    await page.waitForTimeout(300);
-    const bad = await audit(page);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/badges-${w}x${h}.png`, fullPage: w < 1000 });
-    expect(bad, bad.join('\n')).toEqual([]);
-  });
+  for (const [deal, at] of Object.entries(DEAL_HOURS)) {
+    test(`${w}x${h} · ${deal}'s deal hour: no badge on a card's words, the POWER badge off its heading, the shelf header inside`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await boot(page, at);
+      if (w < 1000) await page.setViewportSize({ width: w, height: 3000 }); // the phone page scrolls: measure every card
+      await page.waitForTimeout(300);
+      const bad = await audit(page);
+      if (SHOTS) await page.screenshot({ path: `${SHOTS}/badges-${w}x${h}-${deal}.png`, fullPage: w < 1000 });
+      expect(bad, bad.join('\n')).toEqual([]);
+    });
+  }
 }
