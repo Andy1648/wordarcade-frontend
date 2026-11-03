@@ -324,7 +324,9 @@ html[data-beat='true'] .homepage-logo {
   paint-order: stroke fill;
   text-shadow: var(--b3, 3px) var(--b3, 3px) 0 #000;
 }
-/* nov2 RANK LEAGUES: the plate's name wears its league's ink (LeagueBadge.css colours) */
+/* nov2 RANK LEAGUES: the plate's name wears its league's ink (LeagueBadge.css colours) and its painted badge in front */
+.hp-rankplate-n:has(.hp-plate-league) { display: inline-flex; align-items: center; gap: 4px; }
+.hp-plate-league { width: 1.25em; height: 1.25em; object-fit: contain; flex: none; margin: -0.15em 0; }
 .hp-rankplate-n[data-league='bronze'] { color: #D98A4E; }
 .hp-rankplate-n[data-league='silver'] { color: #D4DAE3; }
 .hp-rankplate-n[data-league='crystal'] { color: #2EFFE0; }

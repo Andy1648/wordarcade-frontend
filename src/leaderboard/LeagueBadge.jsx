@@ -1,13 +1,12 @@
 // LeagueBadge — your RANK LEAGUE (leagues.js), worn where titles used to be: the profile, the menu's profile plate, the
 // board's past-#100 rows and the results. The league NAME on its league-coloured plate (Bungee, thick rim a shade darker,
-// hard black shadow); the painted league badge sits in front of it once hero-art's set lands (LEAGUE_ART). `place` adds
+// hard black shadow), the painted league badge in front of it (LEAGUE_ART, leagues.js). `place` adds
 // your exact board place after the name. No rank → UNRANKED (an unclaimed name has no board place). Motion is the caller's.
-import { leagueOf } from './leagues.js';
+import { leagueOf, LEAGUE_ART } from './leagues.js';
 import { formatNum } from '../format';
 import './LeagueBadge.css';
 
-// the painted set (one chat, one style, escalating — Andy nov2 "stop with the single AI giveaway art"); empty until it lands
-export const LEAGUE_ART = {};
+export { LEAGUE_ART };
 
 export default function LeagueBadge({ rank, place = false, className = '', ...rest }) {
   const l = leagueOf(rank);

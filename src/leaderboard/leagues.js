@@ -18,6 +18,10 @@ export const LEAGUES = [
   { key: 'bronze', name: 'BRONZE', top: Infinity },
 ];
 
+// The painted league badge set (fx-components nov2: ONE ChatGPT chat, one style, escalating — fire from TITAN; Andy "stop
+// with the single AI giveaway art"). Immutable art: a repaint gets a new filename (art-manifest).
+export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league-${l.key}-v1.webp`]));
+
 /** The league a board rank sits in, or null with no rank (an unclaimed name is UNRANKED). */
 export function leagueOf(rank) {
   const r = Math.floor(Number(rank));
