@@ -757,6 +757,26 @@ export async function fetchRowsBelow(rank, n = 2) {
     return [];
   }
 }
+/** YOUR NEIGHBOURHOOD past the board (Andy nov2: "2 above, you, 2 below"): the `n` players ranked just above and just
+ *  below `rank`, each list in board order (best first), never me. { above: [], below: [] } on any failure. Two GETs. */
+export async function fetchNeighbours(rank, n = 2) {
+  const out = { above: [], below: [] };
+  if (!LEADERBOARD_ENABLED) return out;
+  const mine = getMyProfile();
+  const cols = `rank,id,username,level,rebirths,lifetime_words${SEASON2 ? ',stars' : ''}`;
+  const get = async (q) => {
+    try {
+      const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&${q}`, { headers: headers() });
+      return r.ok ? ((await r.json()) || []).filter((x) => !mine || x.id !== mine.id) : [];
+    } catch {
+      return [];
+    }
+  };
+  const [up, down] = await Promise.all([get(`rank=lt.${Number(rank)}&order=rank.desc&limit=${n + 1}`), get(`rank=gt.${Number(rank)}&order=rank.asc&limit=${n}`)]);
+  out.above = up.slice(0, n).reverse();
+  out.below = down.slice(0, n);
+  return out;
+}
 /** The row just above `rank` on the live board (not me), or null. One GET. */
 export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;

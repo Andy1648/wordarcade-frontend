@@ -24,7 +24,7 @@ import {
   fetchBoard,
   fetchView,
   fetchBoardCount,
-  fetchRowAbove,
+  fetchNeighbours,
   topPercent,
   getMyProfile,
   submitStats,
@@ -355,10 +355,10 @@ export default function LeaderboardV2({ onBack }) {
       // THE GHOST (Andy nov2 climb pick 3): past the board, the player ranked right above you rides in over your row,
       // so even #2,000 has someone to PASS
       const meR = b.me ? Number(b.me.rank) : 0;
-      const ghost = meR > BOARD_SIZE + 1 ? await fetchRowAbove(meR) : null;
+      const near = meR > BOARD_SIZE + 1 ? await fetchNeighbours(meR, 2) : null;
       const moves = boardMoves([...b.rows, ...(b.me ? [b.me] : [])], readSeen().all);
       writeSeen('all', boardSnapshot(b.rows, b.me));
-      setAll({ ...b, ghost, total, loaded: true, error: false, moves });
+      setAll({ ...b, near, total, loaded: true, error: false, moves });
       // reading the board is reading the news (as the live board): clear the badge, keep this rank as the baseline
       const mine = getMyProfile();
       const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
@@ -443,8 +443,17 @@ export default function LeaderboardV2({ onBack }) {
   // ranks 4 … 100 (Andy oct28 "extend to top 100"; 50 oct14, 20 oct13); past #100 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
-  const ghost = meRow && !meOnBoard && data.ghost && data.ghost.id !== meRow.id ? data.ghost : null;
-  if (meRow && !meOnBoard) list = ghost ? [...rows.slice(3, BOARD_SIZE - 2), ghost, meRow] : [...rows.slice(3, BOARD_SIZE - 1), meRow];
+  // YOUR NEIGHBOURHOOD (Andy nov2): past the board the list ends on the 2 players above you, you, and the 2 below - plain
+  // rows in the same list (no new view, no new chrome); the board's own last rows make room for them
+  const near = meRow && !meOnBoard && data.near ? data.near : null;
+  const nearRows = near ? [...near.above, ...near.below] : [];
+  const isNear = (r) => nearRows.some((x) => x.id === r.id);
+  const rightAbove = near && near.above.length ? near.above[near.above.length - 1] : null; // the player right above you
+  if (meRow && !meOnBoard) {
+    const tail = near ? [...near.above, meRow, ...near.below] : [meRow];
+    const head = rows.slice(3, BOARD_SIZE).filter((r) => !tail.some((x) => x.id === r.id) && Number(r.rank) < Number((tail[0] || meRow).rank));
+    list = [...head.slice(0, Math.max(0, BOARD_SIZE - 3 - tail.length)), ...tail];
+  }
   const wk = tab === 'week';
   // a phone's header columns are 70px / 52px: the '+' ran REBIRTHS into LEVELS ("+REBIRTHS+LEVELS", audit 2); the row numbers
   // already read +R / +12
@@ -457,8 +466,8 @@ export default function LeaderboardV2({ onBack }) {
   // THE CLIMB INTO A TIER since your last look on this tab (a first look is not a climb)
   const myMove = meRow ? Number(data.moves[meRow.id] || 0) : 0;
   const newTier = meRow && myMove > 0 ? enteredTier(Number(meRow.rank) + myMove, meRow.rank) : null;
-  // YOUR CLIMB: the player ranked right above you (on the board, or the ghost past it) and the gap to pass them
-  const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || ghost : null;
+  // YOUR CLIMB: the player ranked right above you (on the board, or your neighbourhood past it) and the gap to pass them
+  const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || rightAbove : null;
   const climbGap = climbTo ? gapTo(meRow, climbTo, tab, gains) : null;
 
 
@@ -701,7 +710,7 @@ export default function LeaderboardV2({ onBack }) {
               {sep && (league
                 ? <div className="lb2-sep is-league" data-league={league.key} aria-hidden="true"><LeagueBadge rank={r.rank} className="lb2-sep-league" /></div>
                 : <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
-              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${isNear(r) ? ' is-near' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`} data-len={tier ? undefined : String(fmt(r.rank)).length}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
