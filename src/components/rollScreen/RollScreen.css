@@ -267,7 +267,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 /* the burst: OUTSIDE the band's clip, centred on the landing card */
 .rs-parts { position: absolute; z-index: 3; left: 50%; top: calc(var(--band) / 2); width: 0; height: 0; pointer-events: none; }
-.rs-part { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; opacity: 0; }
+/* the painted blade shards (fx/shards/shardPlan.js): a square box, the sprite contained (its tip drawn up-right) */
+.rs-part { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; object-fit: contain; opacity: 0; }
 
 /* ---- the result LINE: NAME · ×1.5 · WINS · ★ — pops in once ---- */
 /* Andy nov2 "the cover that dims the left and right side after rolling also covers the words under the cards": the
@@ -548,8 +549,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut.is-full .rs-cut-stamp { font-size: min(11cqw, 92px); -webkit-text-stroke: 8px #000; }
 .rs-cut-mark { display: grid; justify-items: center; }
 .rs-cut-keep { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; opacity: 0; }
-.rs-parts.is-cut { top: 50%; }
-.rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
+.rs-parts.is-cut { top: 50%; z-index: 0; } /* inside .rs-cut-mark: centred on the card, painted under it */
+.rs-cut .rs-part { width: 84px; height: 84px; left: -42px; top: -42px; }
 
 /* ---- ROLL REVEAL v2 (Reel.jsx + revealPlan.js): the flip, its escalating layers, the stats extension ----
    Every piece of art is an asset in /public/fx (card-back, card-back-edge as a mask, sheen, sparkle, burst-ring as a
