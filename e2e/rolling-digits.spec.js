@@ -49,3 +49,21 @@ test('a spend while a gain still rolls counts down in plain text — the roll ne
   const target = (await pill.getAttribute('aria-label')).replace(/^WINS\s+/, '');
   await expect(pill.locator('.kp-num')).toHaveText(target);
 });
+
+test('a burst of small gains (gems landing ~85 ms apart) rolls ONCE to the final total', async ({ page }) => {
+  await open(page);
+  const pill = page.locator('.kp').filter({ has: page.locator('.kp-name', { hasText: 'GEMS' }) }).first();
+  await page.evaluate(() => {
+    window.__rolls = 0;
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...a) { if (this.classList && this.classList.contains('rd-strip')) window.__rolls += 1; return animate.apply(this, a); };
+  });
+  // six gains 60 ms apart, fired in-page (a Playwright click round-trip is slower than the gems' landing rhythm)
+  await page.evaluate(() => new Promise((done) => { let n = 0; const b = document.querySelector('[data-testid="kit-gain-gems"]'); const tick = () => { b.click(); n += 1; if (n < 6) setTimeout(tick, 60); else done(); }; tick(); }));
+  await expect(pill.locator('.rd-col')).toHaveCount(0, { timeout: 3_000 });
+  const target = (await pill.getAttribute('aria-label')).replace(/^GEMS\s+/, '');
+  await expect(pill.locator('.kp-num')).toHaveText(target);
+  const digits = target.replace(/[^0-9]/g, '').length;
+  const rolls = await page.evaluate(() => window.__rolls);
+  expect(rolls, 'one roll for the whole burst, not one per gain').toBeLessThanOrEqual(digits * 2);
+});

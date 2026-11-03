@@ -31,6 +31,9 @@ export const PILL_KINDS = {
   levels: { label: 'LEVELS', icon: 'levels', tone: 'purple' },
 };
 export const POP_STACK_MS = 750;
+// a burst of small gains (gems landing ~85 ms apart) COALESCES into one roll: each gain waits this long and a newer one
+// replaces it, so the figure rolls once to the final total (the +N stack and the bump still answer every gain)
+export const ROLL_COALESCE_MS = 90;
 // the gain BUMP (gains/gainPlan.js BUMP_MS / BUMP_SCALE — inlined: the pill is on the menu's first paint, the gain
 // module is not)
 const BUMP_MS = 180;
@@ -153,11 +156,12 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
     const num = numRef.current;
     if (num) {
       if (up) {
-        // the roll lands WITH the count (a long gain flight delays it, never stretches it past ROLL_MS)
+        // the roll lands WITH the count (a long gain flight delays it, never stretches it past ROLL_MS); rapid gains
+        // coalesce into one roll (ROLL_COALESCE_MS — a newer roll supersedes a pending one)
         const text = formatShort(value);
         s.rolling = true;
         fit(text);
-        rollDigits(num, text, { delay: Math.max(0, gainMs - ROLL_MS), ms: Math.min(ROLL_MS, gainMs) });
+        rollDigits(num, text, { delay: Math.max(ROLL_COALESCE_MS, gainMs - ROLL_MS), ms: Math.min(ROLL_MS, gainMs) });
       } else {
         // a spend counts down in plain text: a roll still landing must not write over it
         s.rolling = false;
