@@ -71,7 +71,7 @@ function PayLine({ i, full = false, size = 20 }) {
   );
 }
 
-export default function DailyDrop({ now }) {
+export default function DailyDrop({ now, onPaid }) {
   const D = V3.drop;
   const TIERS = D.DROP_TIERS;
   const day = D.dayKey(now);
@@ -148,6 +148,7 @@ export default function DailyDrop({ now }) {
     setClimb(null);
     if (!r.ok) return;
     setReward(r);
+    if (r.gems && onPaid) onPaid(r.gems); // the shop flies them into its gems pill once the popup closes
     busy.current = true;
     setTimeout(() => {
       busy.current = false;

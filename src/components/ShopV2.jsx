@@ -15,7 +15,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import './ShopV2.css';
 import { powerForm, nextPowerForm } from '../progress/powerArt.js';
 import PowerLadder from './PowerLadder.jsx';
-import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, FX, fx } from './kit/index.js';
+import { KitBackButton, KitHoldButton, KitPill, KitTimerChip, KitStampCard, KitIcon, KitFlyLayer, FX, fx } from './kit/index.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { useWinsBalance } from '../progress/useWinsBalance';
 import { getKeyTier, keyTierCost, keyXpMult } from '../progress/xp';
@@ -201,6 +201,29 @@ export default function ShopV2({ onBack }) {
   const buying = useRef(false);
   const chestRef = useRef(chest);
   chestRef.current = chest;
+  // THE CHEST'S GEMS FLY HOME (design research move 10): the drop pays inside its popup, over the shop's scrim, where
+  // the gems pill can't be seen — so the pill HOLDS the paid gems (inFlight) until the popup closes, then six painted
+  // gems arc from the DAILY CHEST card into it and it counts each one in as it lands (KitFlyLayer, pooled).
+  const [inFlight, setInFlight] = useState(0);
+  const owed = useRef(0);
+  const flyRef = useRef(null);
+  useEffect(() => {
+    if (chest || !owed.current) return undefined;
+    const amount = owed.current;
+    owed.current = 0;
+    const id = requestAnimationFrame(() => { // after the popup has unmounted: the card's box, read once
+      const card = document.querySelector('[data-testid="daily-chest-card"]');
+      const b = card ? card.getBoundingClientRect() : null;
+      const from = b ? { x: b.left + b.width / 2, y: b.top + b.height / 2 } : null;
+      const parts = 6;
+      const share = Math.floor(amount / parts);
+      const amounts = Array.from({ length: parts }, (_, i) => (i === parts - 1 ? amount - share * (parts - 1) : share)).filter((a) => a > 0);
+      if (!flyRef.current || !from) { setInFlight(0); return; }
+      flyRef.current.fly({ from, amounts, onLand: (a) => setInFlight((n) => Math.max(0, n - a)), onDone: () => setInFlight(0) });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [chest]);
+  const onDropPaid = (g) => { owed.current += g; setInFlight((n) => n + g); };
   const [ladder, setLadder] = useState(false); // THE POWER LADDER popup (a tap on the plate)
   const ladderRef = useRef(ladder);
   ladderRef.current = ladder;
@@ -368,7 +391,7 @@ export default function ShopV2({ onBack }) {
           <div className="sp2-pop-in">
             <button type="button" className="sp2-pop-x" onClick={() => setChest(false)} aria-label="Close the daily chest">✕</button>
             {/* the tap-to-open flow rides the RESTOCK clock's 1 s tick (`now`) */}
-            <DailyDrop now={now} />
+            <DailyDrop now={now} onPaid={onDropPaid} />
           </div>
         </div>
       ) : null}
@@ -380,7 +403,7 @@ export default function ShopV2({ onBack }) {
           <h2 className="sp2-title">UPGRADES</h2>
           <div className="sp2-pills">
             <KitPill ref={winsPill} kind="wins" value={wins} ariaLabel={`${formatNum(wins)} wins`} />
-            <KitPill ref={gemsPill} kind="gems" value={gems} ariaLabel={`${formatNum(gems)} gems`} />
+            <KitPill ref={gemsPill} kind="gems" value={Math.max(0, gems - inFlight)} ariaLabel={`${formatNum(gems)} gems`} />
           </div>
         </header>
 
@@ -476,6 +499,7 @@ export default function ShopV2({ onBack }) {
       </div>
       </div>
       <ShardBurst ref={shardsRef} set="gold" />
+      <KitFlyLayer ref={flyRef} target={() => gemsPill.current && gemsPill.current.iconEl()} icon="gems" />
     </div>
   );
 }

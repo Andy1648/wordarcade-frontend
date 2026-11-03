@@ -100,9 +100,14 @@ test('COMMON pays +15 gems through the gem door; a claimed day never pays twice'
   for (let i = 0; i < 4; i += 1) await dd.locator('.dd-tap').click();
   await expect(dd.locator('.dd-big')).toHaveText('COMMON');
   await expect(dd.locator('.dd-reward')).toHaveText(/\+15\s*GEMS/);
-  await expect(shop.locator('.kp-tone-cyan')).toContainText('115'); // the GEMS pill heard the grant
+  // the gems are paid at once (the save), but the pill HOLDS them while the popup covers it (move 10): they fly from
+  // the DAILY CHEST card into the pill when the popup closes (reduced motion here: they land at once on close)
+  expect((await stored(page)).gems).toBe(115);
+  await expect(shop.locator('.kp-tone-cyan')).toContainText('100');
   await dd.locator('.dd-tap').click({ force: true }); // aria-disabled once claimed — a tap still reaches it
   expect((await stored(page)).gems).toBe(115);
+  await page.locator('.sp2-pop-x').click();
+  await expect(shop.locator('.kp-tone-cyan')).toContainText('115'); // the GEMS pill counted them in
 });
 
 test('already claimed today: no dot, the tile shows the reward and NEXT IN; taps pay nothing', async ({ page }) => {
