@@ -1144,7 +1144,7 @@ function KillFeed({ events, playerColors = {}, maxRows }) {
                       </>
                     )}
                     {ev.type === 'timeout' && (
-                      <span className="kill-feed-action">TIMED OUT 💀</span>
+                      <span className="kill-feed-action">TIMED OUT <span className="kill-feed-skull" aria-hidden="true" /></span>
                     )}
                     {ev.type === 'skip' && (
                       <span className="kill-feed-action">SKIPPED</span>
@@ -3098,7 +3098,7 @@ export default function GameScreen({
           }}
           aria-hidden="true"
         >
-          <span className="bomb-flight-icon">💣</span>
+          <span className="bomb-flight-icon" />
         </div>
       )}
       {/* Color-temperature wash: deepens with eliminations (subliminal). */}
