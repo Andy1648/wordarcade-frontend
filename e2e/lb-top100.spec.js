@@ -203,6 +203,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await expect(lb.locator('.lb2-row.is-rival')).toHaveAttribute('data-rank', '60');
     // CLIMB 1 (nov2): the gap in the stat that decides the order (#60 is one rebirth ahead) + its fill bar
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
+    // ALL TIME the chase names the next RANK LEAGUE, in the dividers' language (#61 -> TITAN ends at #50)
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('11 TO TITAN');
+    if (vp.width > 1000) await expect(lb.locator('.lb2-climb-band')).toHaveText('11 TO TITAN');
     await expect(lb.locator('.lb2-row.is-me .lb2-gap')).toHaveCount(1);
     // the list opens on whole rows: the first thing under its top edge starts AT the edge (no sliver of a cut row)
     const sliver = await page.evaluate(() => { const sc = document.querySelector('.lb2-scroll'); const first = [...sc.children].find((el) => el.offsetTop + el.offsetHeight > sc.scrollTop + 1); return first ? Math.round(sc.scrollTop - first.offsetTop) : 0; });
@@ -259,6 +262,8 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 768 }, { 
     await expect(lb.locator('.lb2-tab[data-tab="week"]')).toHaveAttribute('aria-selected', 'true');
     await expect(lb.locator('.lb2-row').first()).toBeVisible({ timeout: 10_000 });
     await page.waitForTimeout(2500);
+    // THIS WEEK keeps its TOP-N wording (the week board has no leagues)
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('TO TOP 25');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-week-${vp.width}.png` });
     // YOUR CLIMB's THIS WEEK gem ladder stays inside its panel
     if (vp.width > 1000) {

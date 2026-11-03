@@ -18,7 +18,7 @@ import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
 import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
-import { leagueOf } from '../leaderboard/leagues.js';
+import { leagueOf, nextLeague } from '../leaderboard/leagues.js';
 import {
   boardCaps,
   fetchBoard,
@@ -315,6 +315,16 @@ const softBreak = (name) => String(name == null ? '' : name).split(/(?<=[_-])/).
 
 /** The closest board band above a rank: past #100 → TOP 100, #51–100 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
 const nearestBand = (rank) => (rank > 100 ? 100 : rank > 50 ? 50 : rank > 25 ? 25 : 10);
+// the NEXT GOAL a chase line names: on ALL TIME the next RANK LEAGUE up ("11 TO TITAN" - nov2, the dividers are leagues
+// now, so the chase speaks the same language); THIS WEEK keeps its TOP-N band (the week board has no leagues)
+const climbGoal = (rank, wk) => {
+  if (!wk) {
+    const nl = nextLeague(rank);
+    if (nl) return { n: nl.places, to: nl.league.name };
+  }
+  const b = nearestBand(rank);
+  return { n: rank - b, to: `TOP ${b}` };
+};
 
 export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
@@ -641,7 +651,7 @@ export default function LeaderboardV2({ onBack }) {
                 {climbGap ? <span className="lb2-climb-bar" aria-hidden="true"><i className="lb2-fill" style={{ width: `${Math.round(climbGap.fill * 100)}%` }} /></span> : null}
               </p>
             ) : null}
-            {meRow && Number(meRow.rank) > 10 ? <p className="lb2-climb-band"><b>{fmt(meRow.rank - nearestBand(meRow.rank))}</b> TO TOP {nearestBand(meRow.rank)}</p> : null}
+            {meRow && Number(meRow.rank) > 10 ? (() => { const g = climbGoal(Number(meRow.rank), wk); return <p className="lb2-climb-band"><b>{fmt(g.n)}</b> TO {g.to}</p>; })() : null}
             {wk ? (
               <ol className="lb2-climb-prizes" aria-label="This week's prizes">
                 {Array.from({ length: 10 }, (_, i) => i + 1).filter((k) => weekPrize(k)).map((k) => (
@@ -719,10 +729,10 @@ export default function LeaderboardV2({ onBack }) {
                       {/* YOUR distance to the NEAREST band rides INSIDE this line's FitText, after the rival — never beside your
                           name, where a long or shrunk name ran under it (Andy oct26 "overlap with my username and '15 TO TOP
                           10'"): the two scale as one, so they can never cross */}
-                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b>{gap ? <span className="lb2-gap-n"> {gap.text}</span> : <span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>}{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}</FitText> : null}
+                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b>{gap ? <span className="lb2-gap-n"> {gap.text}</span> : <span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>}{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(climbGoal(r.rank, wk).n)}</b> TO {climbGoal(r.rank, wk).to}</span> : null}</FitText> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
                           small stage with a rival it steps aside so neither is cut */}
-                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
+                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(climbGoal(r.rank, wk).n)}</b> TO {climbGoal(r.rank, wk).to}</span> : null}
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}
