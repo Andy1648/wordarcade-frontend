@@ -277,7 +277,7 @@ export function noteNeed(need) {
   return writeWheel({ ...readWheel(), need: Math.floor(need) });
 }
 /** How many more game words today's spin needs: the server's need against the higher of its count and this browser's
- *  (the board row lags the save by up to a submit). null need (a pre-081 server) = nothing to earn. */
+ *  (the board row lags the save by up to a submit). null need (a pre-083 server) = nothing to earn. */
 export function wordsLeft(need, serverWords, localWords) {
   if (!Number.isFinite(need)) return 0;
   return Math.max(0, Math.floor(need) - Math.max(Number(serverWords) || 0, Number(localWords) || 0));

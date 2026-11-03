@@ -225,7 +225,7 @@ export default function DailyWheel({ onClose, onPaid }) {
       }
       // the streak today's spin continues (067: one missed day is forgiven, two or more start again at DAY 1)
       const gap = r.lastDay > 0 ? wheelDay() - r.lastDay : 99;
-      // EARNED (081, Andy nov4 "dont have daily spin for free"): GAME words since the last spin unlock it
+      // EARNED (083, Andy nov4 "dont have daily spin for free"): GAME words since the last spin unlock it
       noteNeed(r.need);
       const left = wordsLeft(r.need, r.words, lifetimeGameWords());
       setSt({ phase: left > 0 ? 'locked' : 'ready', left, streak: gap <= 2 ? r.streak : 0, adOn: r.adOn, ad: r.ad });

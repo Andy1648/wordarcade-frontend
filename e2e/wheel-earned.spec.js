@@ -1,5 +1,5 @@
 // e2e/wheel-earned.spec.js — EARNED SPINS (Andy nov4: "dont have daily spin for free (people say its not fun bc its too
-// free and should be functionality)"; 081_wheel_earned.sql). Today's spin unlocks after 15 GAME words since the last one:
+// free and should be functionality)"; 083_wheel_earned.sql). Today's spin unlocks after 15 GAME words since the last one:
 //   1. not yet earned: the wheel opens LOCKED — a words bar ("6 / 15 GAME WORDS"; hidden on a short phone), PLAY (its line: "N MORE WORDS TO SPIN") back to the menu; no SPIN, the
 //      hub disabled; the menu's wheel dot is gone once the need is known (honest dots: no dot until it pays).
 //   2. earned: SPIN, it lands and pays as before.

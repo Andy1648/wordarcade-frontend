@@ -25,7 +25,7 @@ export async function wheelState(now = Date.now()) {
       streak: Math.max(0, Math.floor(Number(r.streak) || 0)),
       lastDay: Math.max(0, Math.floor(Number(r.last_day) || 0)),
       adOn: r.ad_on === true,
-      // 081 EARNED: the board's game words and the count today's spin needs (null on a pre-081 server: nothing to earn)
+      // 083 EARNED: the board's game words and the count today's spin needs (null on a pre-083 server: nothing to earn)
       words: Number.isFinite(Number(r.words)) ? Number(r.words) : 0,
       need: r.need == null || !Number.isFinite(Number(r.need)) ? null : Number(r.need),
       free: r.free ? normalizeSpin(r.free) : null,

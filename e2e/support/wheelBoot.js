@@ -7,7 +7,7 @@ const SPIN_ID = '11111111-2222-4333-8444-555555555555';
 const TICKET_ID = '99999999-8888-4777-8666-555555555555';
 
 
-// earn = { words, need } mocks 081_wheel_earned.sql (the board's game words + what today's spin needs); omitted = a pre-081
+// earn = { words, need } mocks 083_wheel_earned.sql (the board's game words + what today's spin needs); omitted = a pre-083
 // server (no words / need: nothing to earn)
 export async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'jackpot', earn = null } = {}) {
   await installBackendMock(page);

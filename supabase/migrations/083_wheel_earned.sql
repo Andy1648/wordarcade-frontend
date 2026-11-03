@@ -1,4 +1,4 @@
--- 081_wheel_earned.sql - THE DAILY WHEEL IS EARNED, NOT FREE (Andy nov4: "dont have daily spin for free (people say its not
+-- 083_wheel_earned.sql - THE DAILY WHEEL IS EARNED, NOT FREE (Andy nov4: "dont have daily spin for free (people say its not
 -- fun bc its too free and should be functionality)"). Today's spin unlocks after 15 GAME words since your last spin -
 -- about one game. Still ONE spin a day; the odds, the prizes, the streak (one missed day forgiven, every 7th a SUPER)
 -- and the claim are unchanged.
@@ -16,7 +16,7 @@
 --   * A save reset (lb_reset_ack) wipes lifetime_words to 0: the mark is clamped down to the current count, so the next
 --     15 game words earn the spin again (never a negative or endless wait).
 --
--- ORDER: after 078 (and 079 / 080). WRITE-ONLY: Claude never runs migrations. Run once in the Supabase SQL editor. Safe
+-- ORDER: after 078 (and 079-082; 081 = seed_board_1000b, 082 = paid gems). WRITE-ONLY: Claude never runs migrations. Run once in the Supabase SQL editor. Safe
 -- to re-run (add column if not exists, create or replace + the same grants). ASCII only.
 
 alter table private.wheel_track add column if not exists last_words bigint;
@@ -91,7 +91,7 @@ begin
 
   if p_kind = 'free' then
     if p_day <= tr.last_day then return json_build_object('ok', false, 'reason', 'spun'); end if; -- a replayed / older day
-    -- 081 EARNED: 15 game words since the last spin, on a board write from the last day
+    -- 083 EARNED: 15 game words since the last spin, on a board write from the last day
     select words into n from private.wheel_earn where id = 1;
     n := coalesce(n, 15);
     if coalesce(p.lifetime_words, 0) < m + n or p.submitted_at is null or p.submitted_at < now() - interval '1 day' then
