@@ -9,8 +9,9 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
-import MenuRooms, { useMenuRoomsPoll } from './MenuRooms.jsx';
-import { activeBoosts } from '../progress/liveBoost.js';
+import { useMenuRoomsPoll } from './menuRoomsPoll.js';
+// OPEN ROOMS (nov2): the panel / chip are a lazy chunk (payload ratchet), mounted once the first public_rooms reply lands
+const MenuRooms = lazyWithReload(() => import('./MenuRooms.jsx'), 'MenuRooms');
 import { MenuIcons, MenuUtility, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
@@ -1518,7 +1519,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // OPEN ROOMS (Andy nov2): the live public-room list. The PANEL owns the paged desktop's right column (≥1200, under
   // CONTRACTS); everywhere else an "N OPEN" CHIP joins an existing cluster (phone LV row / desktop footer links). Data is
-  // App's existing publicRooms + list_public_rooms on the one socket, polled only while this menu shows it (MenuRooms.jsx).
+  // App's existing publicRooms + list_public_rooms on the one socket, polled only while this menu shows it (menuRoomsPoll.js); the panel itself is the lazy MenuRooms chunk.
   const roomsOn = !!(rooms && onRefreshRooms && reveal.core && !titlePlay);
   const roomsPanel = roomsOn && hasMainColumn && MENU_VARIANT !== 'slab';
   useMenuRoomsPoll(onRefreshRooms, roomsOn && wsStatus === 'open' && !tourCovered && !navigating);
@@ -1529,26 +1530,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (roomsFirstRef.current) { roomsFirstRef.current = false; return; }
     setRoomsHeard(true);
   }, [rooms]);
-  // rows by screen height (a row is two readable lines — name + JOIN over the mode chip + x/max): 3, or 4 from 880px
-  // tall. The right column's free cell is ~420px at 720 tall (e2e/menu-rooms.spec.js asserts no overlap at 5 sizes).
-  // Media queries, not measurement: nothing here reads layout.
-  const roomsH4 = useMediaQuery('(min-height: 880px)');
-  // the boost dock shares the right column (bottom-aligned): one row fewer per running boost tile so they never meet
-  const roomsRows = Math.max(0, (roomsH4 ? 4 : 3) - (roomsPanel ? activeBoosts().length : 0));
-  // the panel only ever calls App's EXISTING handlers (the same ones JOIN ROOM uses); App owns every view change
-  const roomsJoin = (code, name) => {
-    if (navigating || !onJoinPublicRoom) return;
-    sound.click();
-    onJoinPublicRoom(code, name); // join_room → App's room_update path (functional setView) / failure → JOIN ROOM screen
-  };
-  const roomsCreate = () => {
-    if (navigating || !onCreatePublic) return;
-    sound.click();
-    setNavigating(true);
-    onCreatePublic();
-  };
-  const roomsChip = roomsOn && !roomsPanel ? (
-    <MenuRooms variant="chip" rooms={rooms} heard={roomsHeard} onOpenAll={handleDialogJoin} navigating={navigating} className={isPhoneMenu ? 'hp-m-rooms' : 'hp-rooms-chip'} />
+  const roomsChip = roomsOn && !roomsPanel && roomsHeard ? (
+    <Suspense fallback={null}><MenuRooms variant="chip" rooms={rooms} heard={roomsHeard} onOpenAll={handleDialogJoin} navigating={navigating} className={isPhoneMenu ? 'hp-m-rooms' : 'hp-rooms-chip'} /></Suspense>
   ) : null;
 
   return (
@@ -1649,18 +1632,19 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             never a fixed orphan. Under 1200 / on a phone the "N OPEN" chip joins the footer links / the LV row instead. */}
         {roomsPanel && (
           <div className="hp-rooms">
-            <MenuRooms
+            {/* the grid slot is eager; the panel chunk loads on the first list reply (until then the slot is empty) */}
+            {roomsHeard && <Suspense fallback={null}><MenuRooms
               variant="panel"
               rooms={rooms}
               heard={roomsHeard}
-              maxRows={roomsRows}
               name={playerName}
-              onJoin={roomsJoin}
-              onCreate={roomsCreate}
+              onJoin={onJoinPublicRoom}
+              onCreate={onCreatePublic}
+              onNavigate={() => setNavigating(true)}
               onOpenAll={handleDialogJoin}
               navigating={navigating}
               online={wsStatus === 'open'}
-            />
+            /></Suspense>}
           </div>
         )}
 

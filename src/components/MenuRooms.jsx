@@ -9,56 +9,25 @@
 // link's failure already does (App 'error' + context join_room).
 //
 // Two shapes, both IN an existing layout home (NO ORPHAN FIXED UI):
-//  - 'panel': the paged desktop's right column (≥1200px), a grid cell under CONTRACTS. 4 rows (5 on a tall screen),
+//  - 'panel': the paged desktop's right column (≥1200px), a grid cell under CONTRACTS. 3 rows (4 from 880px tall),
 //    minus one per running boost tile (the boost dock shares the column), then "+N MORE".
 //  - 'chip':  everywhere else (phone row, <1200 desktop footer cluster) — "N OPEN" that opens the JOIN ROOM screen.
 //    Hidden at zero rooms (Andy nov2).
+// LAZY (payload ratchet): Homepage loads this chunk only after the first public_rooms reply; the poll lives in
+// menuRoomsPoll.js (eager, tiny).
 // Motion: static at rest; a row's one-shot enter (transform/opacity) and hover/press only — no loops.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GAMES } from '../gameData';
 import { isHeroId } from '../cast/mainFace.js';
+import { activeBoosts } from '../progress/liveBoost.js';
+import { useSound } from '../contexts/SoundContext';
 import './MenuRooms.css';
-
-export const MENU_ROOMS_POLL_MS = 8000;
 
 const MODE = GAMES.reduce((acc, g) => {
   acc[g.id] = { label: g.name.replace('\n', ' '), color: g.baseColor, art: g.artLayers ? g.artLayers.hero : null };
   return acc;
 }, {});
 const modeOf = (type) => MODE[type] || { label: String(type || 'GAME').replace(/-/g, ' ').toUpperCase(), color: '#2EFFE0', art: null };
-
-/**
- * Poll the public-room list while the menu is on screen: one request on start, then every MENU_ROOMS_POLL_MS — only
- * while `live` (socket open + the list is shown + nothing covers the menu) AND the tab is visible. The callback is
- * read through a ref: App re-renders ~1-2x/s with a fresh closure, and keying the timer on it would reset it forever.
- */
-export function useMenuRoomsPoll(onRefresh, live) {
-  const ref = useRef(onRefresh);
-  ref.current = onRefresh;
-  useEffect(() => {
-    if (!live) return undefined;
-    let id = null;
-    const visible = () => typeof document === 'undefined' || document.visibilityState === 'visible';
-    const tick = () => { if (visible() && ref.current) ref.current(); };
-    const start = () => {
-      if (id != null || !visible()) return;
-      tick();
-      id = setInterval(tick, MENU_ROOMS_POLL_MS);
-    };
-    const stop = () => {
-      if (id == null) return;
-      clearInterval(id);
-      id = null;
-    };
-    const onVis = () => (visible() ? start() : stop());
-    start();
-    document.addEventListener('visibilitychange', onVis);
-    return () => {
-      stop();
-      document.removeEventListener('visibilitychange', onVis);
-    };
-  }, [live]);
-}
 
 /** Fullest first (the same order Quick Play fills in), then the server's order. Pure. */
 export function sortRooms(rooms) {
@@ -111,16 +80,29 @@ export default function MenuRooms({
   variant = 'panel',
   rooms,
   heard = true,
-  maxRows = 4,
+  maxRows = null, // null = by screen height (below); a number pins it (tests)
   name,
   onJoin,
   onCreate,
+  onNavigate,
   onOpenAll,
   navigating = false,
   online = true,
   className = '',
 }) {
   const [joining, setJoining] = useState(null);
+  const { sound } = useSound();
+  // rows by screen height (a row is two readable lines — name + JOIN over the mode chip + x/max): 3, or 4 from 880px
+  // tall — the right column's free cell is ~420px at 720 tall (e2e/menu-rooms.spec.js asserts no overlap at 5 sizes).
+  // A media query, not measurement: nothing here reads layout.
+  const [tall, setTall] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-height: 880px)').matches);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia('(min-height: 880px)');
+    const on = () => setTall(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
   // a dropped socket can never answer the join — unlock the rows so a reconnect can try again
   useEffect(() => { if (!online) setJoining(null); }, [online]);
   const list = sortRooms(rooms);
@@ -136,14 +118,24 @@ export default function MenuRooms({
     );
   }
 
+  // only App's EXISTING handlers (the ones JOIN ROOM uses); App owns every view change
   const handleJoin = (code) => {
     if (joining || navigating || !onJoin) return;
     const n = (name || '').trim();
     if (!n) { if (onOpenAll) onOpenAll(); return; } // no name yet: the JOIN ROOM screen asks for one
+    sound.click();
     setJoining(code);
-    onJoin(code, n);
+    onJoin(code, n); // join_room → App's room_update path (functional setView) / failure → JOIN ROOM screen
   };
-  const shown = list.slice(0, Math.max(0, maxRows));
+  const handleCreate = () => {
+    if (navigating || !onCreate) return;
+    sound.click();
+    if (onNavigate) onNavigate();
+    onCreate();
+  };
+  // the boost dock shares the right column (bottom-aligned): one row fewer per running boost tile so they never meet
+  const rows = maxRows != null ? maxRows : (tall ? 4 : 3) - activeBoosts().length;
+  const shown = list.slice(0, Math.max(0, rows));
   const more = list.length - shown.length;
 
   return (
@@ -155,7 +147,7 @@ export default function MenuRooms({
       {list.length === 0 ? (
         <p className={`mr-empty${heard ? '' : ' is-loading'}`} data-testid="menu-rooms-empty">
           <span>no open rooms ·</span>
-          <button type="button" className="mr-create" onClick={onCreate} disabled={navigating || !heard}>CREATE ONE</button>
+          <button type="button" className="mr-create" onClick={handleCreate} disabled={navigating || !heard}>CREATE ONE</button>
         </p>
       ) : (
         <>
