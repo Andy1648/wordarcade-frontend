@@ -32,6 +32,9 @@
 .mx-sheet::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--mx-tier, #5c0fa3); }
 /* the card's own layer: a rare gear's GearFx glow sits behind it (z-index -1 inside this isolated box) */
 .mx-sheet-card { position: relative; isolation: isolate; }
+/* THE FLOATING BLADES (GearFx motes) sit on the card's sides; the sheet's stats column runs beside its RIGHT side, and the
+   card's isolated layer paints over that text — so on the sheet only the left side's blades rise (never over the stats) */
+.mx-sheet-card .gfx-mote.is-right { display: none; }
 /* AURA ROOM (Andy nov2 "borders are still cropping the gear auras (such as on leaderboard)"): the sheet scrolls on a
    short screen (overflow-y:auto), so it clips at its padding box — and a MYTHIC / SECRET glow reaches --gfx-out 42px
    past the card, where the sheet only had 22–24px of padding. The card's margin tops the padding up to the widest
