@@ -20,7 +20,8 @@
 // the track's transform, in % — nothing is measured, ever; no per-frame main-thread work); every other effect is a finite WAAPI one-shot on transform/opacity (the mockup's
 // endless rays / blink are FINITE here: the rays turn for RAYS_MS then rest, the "TAP TO KEEP" blinks twice);
 // will-change is ON only while a node animates and cleared when it stops; nothing loops. Every non-rectangle shape is
-// an asset (/art/rolls/rays.svg as a tinted mask, /art/rolls/{shard,spark,blob}.svg particles, the inline pointer SVG).
+// an asset (/art/rolls/rays.svg as a tinted mask, the painted blade shards in /fx/shards via fx/shards/shardPlan.js, the
+// inline pointer SVG).
 // REDUCED MOTION: mode 'none' — no spin, no shake, no burst, no reveal layer: the reel sits on the result and the
 // line shows at once.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -38,22 +39,20 @@ import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
+import { shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
 } from './revealPlan.js';
 import {
-  REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
+  revealCardW, REEL_LEN, LAND_AT, BURST_POOL, DIM_CELLS, RAYS_MS, spinMs, easePow, spinFrom, reelPos, timeAt, tickTimes,
   tierIndex, revealKind, dimFor, hasLight, burstCount, shakePx, shakeFrames, burstVectors, NEAR_MISS_TICKS, FLASH_TIERS, WASH_TIERS,
   KEEP_HOLD_MS, CHARGE_MS, CHARGE_SHAKE_AT, OVERHOLD_MS, CHARGE_RATTLE, tellFor, tellFrames,
 } from './reelPlan.js';
 
-const ART = '/art/rolls/';
-const PARTICLE_ART = ['shard.svg', 'spark.svg', 'blob.svg'];
 const CELLS = Array.from({ length: REEL_LEN }, (_, i) => i);
 const PARTS = Array.from({ length: BURST_POOL }, (_, i) => i);
 const VEC = burstVectors(BURST_POOL);
-const VEC_BIG = burstVectors(BURST_POOL, 2.6);
 const markOf = (id) => rollMarkById(id) || { id, tier: 'rare', name: '' };
 const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
 // REEL SHOWCASE: a passing cell of a gear you don't own shows the INDEX's locked silhouette (tier frame, "???")
@@ -125,6 +124,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // AT REST (Andy oct11 "i want the animations to show on the roll screen as well (when its stopped)"): once the reel
   // has stopped, the landed card runs its live gear turn + shine like every other card; spinning, every cell is still
   const [atRest, setAtRest] = useState(true);
+  // PARK MOTION only after a spin (e2e mark-rolls "coming back from the INDEX"): the parked triangle's spot reads
+  // --rs-up, which the mount measure sets AFTER a forced style read — with the transition always on, every mount (the
+  // first open, and every return from the INDEX) slid + overshot the pointer into its park spot. Off until this Reel
+  // plays a spin, so a mount sits parked and only a spin's unpark / re-park animates.
+  const [ptrLive, setPtrLive] = useState(false);
   // FIRST PAINT FAST (Andy oct16 "lag … as people press buttons like gear … IT CANT DELAY"): the pool is REEL_LEN (44)
   // full MarkCards, but only ~7 are in the window at rest. Mounting all 44 on open was the GEARS button's 914 ms freeze
   // (4x CPU). The first frame now renders the cards within VISIBLE_CELLS of the landing cell; the rest fill in right
@@ -218,13 +222,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
     const kind = revealKind(tier, mode);
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
-    const k = kind === 'line' ? burstCount(tier, mode) : 0;
+    const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
       const v = VEC[i];
-      anim(n[`p${i}`], [
-        { opacity: 1, transform: 'translate3d(0,0,0) scale(0.4) rotate(0deg)' },
-        { opacity: 0, transform: `translate3d(${v.x}px,${v.y}px,0) scale(${v.s}) rotate(${v.r}deg)` },
-      ], { duration: 650 + (i % 4) * 60, easing: 'cubic-bezier(.15,.8,.3,1)' });
+      // the painted blade shards (fx/shards): each snaps out tip-first, hangs, drifts and fades
+      anim(n[`p${i}`], bladeFrames(v, { s: v.s, ...bladeFlavour(i) }), { duration: SHARD_MS - 60 + (i % 4) * 20, easing: 'linear' });
     }
     if (kind !== 'line') {
       phase.current = 'cut';
@@ -277,6 +279,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     }
     if (played) played.current = spin.seq;
     stopAll();
+    setPtrLive(true);
     setAtRest(false);
     setCut((c) => (c ? { ...c, res: null } : c));
     shade(0);
@@ -348,7 +351,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   const cutStats = cutRes ? revealStatsOf(cutRes, view) : null;
   const statsRef = useRef(null);
   statsRef.current = cutStats;
+  const sizeOff = useRef(null); // the reveal's resize listener, dropped when the reveal closes / the reel unmounts
   useLayoutEffect(() => {
+    if (sizeOff.current) { sizeOff.current(); sizeOff.current = null; }
     if (!cutRes) return;
     const n = nodes.current;
     const tier = cutRes.tier;
@@ -358,6 +363,15 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     const st = statsRef.current;
     const ext = extensionPlan({ extras: st ? st.crit.length : 0, perk: !!(st && st.perks.length), dupe: !!(st && st.dupe), stars: st ? st.pips : 0 });
     const xAt = extensionAt(tier);
+    // THE CARD DOMINATES (design audit nov2): the reveal card is sized from the viewport — ~65% of the height on
+    // desktop, ~75% of the width on a phone — measured once as the reveal opens (no per-frame read; revealCardW is pure)
+    const size = () => {
+      const w = revealCardW({ vw: window.innerWidth, vh: window.innerHeight, kind, plate: !!(st && (st.perks.length || st.dupe)) });
+      if (n.cut) { n.cut.style.setProperty('--mc-w', `${w}px`); n.cut.style.setProperty('--mc-s', String(w / 180)); }
+    };
+    size();
+    window.addEventListener('resize', size);
+    sizeOff.current = () => window.removeEventListener('resize', size);
     const ease = { in: 'cubic-bezier(.5,0,.9,.5)', out: 'cubic-bezier(.1,.6,.3,1)', pop: 'cubic-bezier(.2,1.4,.4,1)' };
     anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
@@ -435,15 +449,13 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
-      const k = burstCount(tier);
-      const far = full ? 1.6 : 1.1;
+      const k = Math.min(burstCount(tier), SHARD_MAX); // one strong idea: 8–14 blades, never a stacked spray
+      // the blades burst from behind the card and must CLEAR it (up / down too, not only past its sides): one size read
+      // per reveal (never per frame), in the card's own untransformed box — the pool sits in the same container
+      const card = n.rvCard;
+      const vs = clearVectors(k, card ? card.offsetWidth : 252, card ? card.offsetHeight : 420, { reach: full ? [70, 190] : [40, 130] });
       for (let i = 0; i < k; i += 1) {
-        const v = VEC_BIG[i];
-        anim(n[`q${i}`], [
-          { opacity: 0, transform: 'translate3d(0,0,0) scale(0.5)' },
-          { opacity: 1, transform: 'translate3d(0,0,0) scale(0.8)', offset: 0.01 },
-          { opacity: 0, transform: `translate3d(${v.x * (far / 1.6)}px,${v.y * (far / 1.6)}px,0) scale(${v.s * far}) rotate(${v.r * 2}deg)` },
-        ], { duration: (full ? 1100 : 760) + (i % 5) * 90, delay: tl.burst.at, easing: 'cubic-bezier(.15,.8,.3,1)' });
+        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: SHARD_MS - 80 + (i % 5) * 20, delay: tl.burst.at, easing: 'linear' });
       }
       if (full) later(() => sndShardBurst(tier), tl.burst.at);
     }
@@ -521,7 +533,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   const busy = () => phase.current === 'spin' || phase.current === 'landed' || phase.current === 'cut';
   if (ctl) ctl.current = { finish, busy, charge };
 
-  useEffect(() => () => { stopAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { stopAll(); if (sizeOff.current) sizeOff.current(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const strip = spin ? spin.strip : idle;
   const tier = spin ? spin.result.tier : 'rare';
@@ -556,6 +568,12 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
               {/* the burst rings: the jagged ring asset as a mask, tinted the rarity (EPIC+ one, MYTHIC+ two) */}
               <span className="rv-ring" ref={reg('rvRing0')} />
               <span className="rv-ring is-2" ref={reg('rvRing1')} />
+              {/* the painted blade shards burst from BEHIND the card (centred on it, under the rattle in paint order) */}
+              <div className="rs-parts is-cut">
+                {PARTS.map((i) => (
+                  <img key={i} className="rs-part" ref={reg(`q${i}`)} src={shardSrc(cr ? cr.tier : tier, i)} alt="" draggable="false" />
+                ))}
+              </div>
               <div className="rv-rattle" ref={reg('rvRattle')}>
                 <div className="rv-card" ref={reg('rvCard')}>
                   {/* the FACE-DOWN card (asset) — its edge (a mask asset) lights in the rarity colour on a telegraph */}
@@ -564,7 +582,10 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                     <span className="rv-edge" ref={reg('rvEdge')} />
                   </div>
                   <div className="rv-face" ref={reg('rvFace')}>
-                    {cr && GLOW_TIERS.has(cr.tier) ? <GearFx key={`g${cut.seq}`} tier={cr.tier} /> : null}
+                    {/* design audit nov2: the big card's soft GearFx aura read as a blurred lavender BOX washing over
+                        "1 IN X" — the reveal card sits on a crisp, flat tier BACKPLATE instead (hard outline + ink
+                        shadow, tilted a hair for asymmetry). Static: it arrives with the face, nothing loops. */}
+                    {cr ? <span className="rv-plate" aria-hidden="true" /> : null}
                     {cr ? (
                       <MarkCard key={cut.seq} id={cr.markId} tier={crm.tier} name={crm.name} state={view} shiny={!!cr.shiny} fx sheen className="rs-cut-card" />
                     ) : null}
@@ -585,16 +606,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
                 ))}
               </div>
             </div>
-            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} glow={GLOW_TIERS.has(cr.tier) ? cr.tier : null} /> : null}
+            {cr ? <RevealStats key={cut.seq} stats={cutStats} reg={reg} /> : null /* no soft aura on the reveal (audit nov2) */}
           </div>
           <div className="rs-cut-keep" ref={reg('cutKeep')}>TAP TO CONTINUE</div>
         </div>
         <div className="rv-flash" ref={reg('rvFlash')} style={cr ? { background: cr.tier === 'secret' ? '#fff' : lineOf(cr.tier) } : undefined} />
-        <div className="rs-parts is-cut">
-          {PARTS.map((i) => (
-            <img key={i} className="rs-part" ref={reg(`q${i}`)} src={`${ART}${PARTICLE_ART[i % PARTICLE_ART.length]}`} alt="" draggable="false" />
-          ))}
-        </div>
       </div>
     </>
   );
@@ -603,7 +619,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     <div className="rs-shake" ref={reg('shake')} data-tier={spin ? tier : undefined}>
       <div className="rs-reel" aria-hidden="true" data-testid="roll-reel">
         <div className="rs-light" ref={reg('light')} style={{ '--rs-tier': lineOf(tier) }}><div className="rs-rays-ink" /></div>
-        <div className="rs-win" ref={reg('win')}>
+        {/* is-parked (design audit nov2: "EGG T|MER"): at rest the pointer's bar leaves the landed card and its top
+            triangle parks ABOVE it, so the name + stats read clean; a spin brings the bar back (CSS, opacity/transform) */}
+        <div className={`rs-win${atRest ? ' is-parked' : ''}${ptrLive ? ' is-ptr-live' : ''}`} ref={reg('win')} data-testid="roll-band">
           <div className="rs-track" ref={reg('track')} style={{ transform: reelTransform(LAND_AT) }}>
             {CELLS.map((i) => {
               const id = strip ? strip[i] : null;
@@ -633,7 +651,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         </div>
         <div className="rs-parts">
           {PARTS.map((i) => (
-            <img key={i} className="rs-part" ref={reg(`p${i}`)} src={`${ART}${PARTICLE_ART[i % PARTICLE_ART.length]}`} alt="" draggable="false" />
+            <img key={i} className="rs-part" ref={reg(`p${i}`)} src={shardSrc(tier, i)} alt="" draggable="false" />
           ))}
         </div>
       </div>

@@ -144,7 +144,9 @@
      showcase + notes scroll INSIDE it (.pn-scroll, a real list) and COLLECT sits under that region, outside the scroll
      (overlap audit oct29: it used to stick over the scrolling list, rows cut in half under it at 390 and 360) */
   .pn-panel { max-height: calc(100dvh - 128px); }
-  .pn-scroll { display: flex; flex-direction: column; align-items: center; gap: inherit; width: 100%; box-sizing: border-box; margin-top: -10px; padding: 10px 4px 4px 0; flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+  .pn-scroll { display: flex; flex-direction: column; align-items: center; gap: inherit; width: 100%; box-sizing: border-box; margin-top: -10px; padding: 44px 4px 4px 0; flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; }
+  /* AURA ROOM (Andy nov2): .pn-scroll clips at its padding box, and the fanned cards' MYTHIC / SECRET glow (GearFx at
+     ×0.8 → 34px, the fan's tilt adds a few) rose 24–30px past its top edge, sheared flat — 44px of top padding clears it */
   .pn-foot { flex: none; padding-top: 2px; }
 }
 @media (max-width: 420px) {

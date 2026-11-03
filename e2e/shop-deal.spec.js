@@ -66,7 +66,7 @@ const dealLayout = (page) => page.evaluate(() => {
 });
 
 for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844]]) {
-  for (const id of ['xp25', 'overdrive']) {
+  for (const id of ['xp25', 'overdrive', 'extend']) {
     test(`${w}x${h}: ${id}'s hour — one DEAL card, −30% on its tag, the sash clear of the name / sticker / price`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       const shop = await boot(page, HOUR[id], 5000);
@@ -82,6 +82,9 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844]]) {
       expect(m.overlaps, JSON.stringify(m)).toEqual([]);
       expect(m.ribbonInShelf, 'the ribbon sits whole inside the shelf (never clipped)').toBe(true);
       expect(m.wasInsidePrice, 'the struck price sits inside its tag').toBe(true);
+      // nov2 audit: the deal card's name is never cut (EVERYTHING BOOST wrapped under the sash)
+      const cut = await card(shop, id).locator('.sp2-name').evaluate((n) => n.scrollWidth - n.clientWidth);
+      expect(cut, 'the name on the deal card is not cut').toBeLessThanOrEqual(1);
       if (SHOTS) await page.screenshot({ path: `${SHOTS}/deal-${id}-${w}x${h}.png` });
     });
   }

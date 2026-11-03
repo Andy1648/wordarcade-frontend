@@ -17,6 +17,7 @@ export const STAMP_KINDS = {
   new: { label: 'NEW!', spat: 'yellow', angle: 14 },
   max: { label: 'MAX', spat: 'lilac', angle: 9 },
   done: { label: 'DONE', spat: 'cyan', angle: -11 }, // a finished DAILY CONTRACT (the CLAIMED stamp's art, its own word)
+  bought: { label: 'BOUGHT!', spat: 'hot', angle: -10 }, // a shop buy (nov2 audit #7): hero-art's painted SOLD! stamp
 };
 const TICKS = [0, 60, 120, 180, 240, 300];
 
@@ -57,6 +58,14 @@ function StampArt({ kind }) {
           <span className="kst-max-t">MAX</span>
         </div>
         <div className="kst-grain kst-grain--max" />
+      </div>
+    );
+  }
+  if (kind === 'bought') {
+    // the shop's purchase stamp is PAINTED (hero-art, public/shop/stamp-sold-v1 — "SOLD!", only the ink opaque)
+    return (
+      <div className="kst-art kst-paint">
+        <img src="/shop/stamp-sold-v1.webp" width="512" height="256" alt="" draggable="false" />
       </div>
     );
   }

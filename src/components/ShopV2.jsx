@@ -38,9 +38,10 @@ import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
-// COSMETICS (Andy oct28 "i want all cosmetics to be from profile"): the shop's COSMETICS tab opens the PROFILE's one
-// CUSTOMIZE menu over the shop (pop styles first) — the shop keeps no cosmetics screen of its own
-const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
+// COSMETICS (Andy oct28 "i want all cosmetics to be from profile"; nov2 "idk why cosmetics screen on upgrades gives popup
+// instead of just shop screen"): the COSMETICS tab is a shelf like BOOSTS — the ONE CUSTOMIZE menu (the same component
+// PROFILE shows, same stores) laid inline, pop styles first. Lazy: the pickers stay out of the idle-prefetched shop chunk.
+const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx'), 'ShopCosmetics');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
 const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
 
@@ -59,6 +60,7 @@ const NOTE = {
   not_sold: 'NOT IN THE SHOP ANYMORE',
 };
 
+const POWER_FLASH = { frames: [{ opacity: 0 }, { opacity: 0.55, offset: 0.15 }, { opacity: 0 }], opts: { duration: 380, easing: 'ease-out' } };
 const EVOLVE_FLASH = [{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 0 }];
 const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { transform: 'scale(.86) rotate(4deg)', opacity: 1, offset: 0.45 }, { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.72 }, { transform: 'scale(1) rotate(0)', opacity: 1 }];
 
@@ -67,7 +69,14 @@ const EVOLVE_SLAM = [{ transform: 'scale(1.9) rotate(-14deg)', opacity: 0 }, { t
 // on its painted crystal backplate (ShopV2.css, RARITY BEYOND COLOUR). COMMON stays plain: the ladder has a bottom.
 /** One BOOST card (Andy oct8 "boost what?"): band = the item's NAME (rarity = the band colour) · ×N LEFT, icon, the
  *  EFFECT big, WHAT it boosts, HOW LONG, the gem price; SOLD OUT stamp at 0 left. */
-function StockCard({ it, left, onBuy, floatRef, gems, now }) {
+// THE PURCHASE MOMENT (nov2 design audit #7, "buying has no moment"): a boost buy slams a BOUGHT! stamp onto its card
+// (the kit stamp: the card jolts, the ink spatters fly), the tier shine sweeps the face once and the gems pill counts the
+// price off — then the stamp lifts (BOUGHT_MS). Every piece a finite transform/opacity one-shot. The last unit's buy gets
+// the SOLD OUT stamp instead (it stays).
+const BOUGHT_MS = 600; // the whole moment ≤ 600 ms, and a tap mid-moment simply buys again (re-slams): nothing waits on it
+const SWEEP = { frames: [{ transform: 'translateX(-110%)' }, { transform: 'translateX(300%)' }], opts: { duration: 620, easing: 'cubic-bezier(.3,.6,.3,1)' } };
+
+function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef }) {
   const R = V3.stock.RARITY[it.rarity];
   const sold = left <= 0;
   const soon = it.buyable === false;
@@ -80,8 +89,10 @@ function StockCard({ it, left, onBuy, floatRef, gems, now }) {
   const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
-      stamped={sold}
-      kind="soldout"
+      stamped={sold || bought > 0}
+      kind={sold ? 'soldout' : 'bought'}
+      dim={sold}
+      playKey={bought}
       className={`sp2-card is-${it.rarity}${soon ? ' is-soon' : ''}${short ? ' is-short' : ''}${deal ? ' is-deal' : ''}`}
       style={{ '--sp2-line': R.line, '--sp2-fill': R.fill }}
       onClick={() => onBuy(it)}
@@ -109,7 +120,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now }) {
         <span className="sp2-big">{it.big}</span>
         {it.what ? <span className="sp2-what">{it.what}</span> : null}
         {it.time ? <span className="sp2-time">{it.time}</span> : null}
-        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
+        {it.rarity === 'rare' || it.rarity === 'epic' ? <img className="sp2-shine" ref={shineRef} src={`/fx/shine-${it.rarity}.svg`} alt="" draggable="false" /> : null}
         <span className="sp2-price">
           <KitIcon name={soon ? 'lock' : 'gems'} size={22} shadow={2} extras={false} />
           {soon ? 'SOON' : short ? <span className="sp2-short" data-testid={`short-${it.id}`}>NEED {formatNum(short)}</span> : formatNum(price)}
@@ -146,7 +157,7 @@ function DailyChestCard({ now, onOpen }) {
       <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
         <span className="sp2-band">
           <span className="sp2-name">DAILY</span>
-          <span className="sp2-left">{claimed ? '×0' : '×1'}<span className="sp2-left-w"> LEFT</span></span>
+          {/* no ×1 LEFT sticker (nov2 declutter): FREE / the CLAIMED stamp already say it, and it sat on "CHEST" */}
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
           <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
@@ -184,7 +195,6 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
-  const [cosmetics, setCosmetics] = useState(false); // the profile's CUSTOMIZE menu, opened over the shop
   const [chest, setChest] = useState(false); // the DAILY CHEST popup
   const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
   const buying = useRef(false);
@@ -211,6 +221,16 @@ export default function ShopV2({ onBack }) {
   }, [evolve]);
   const nowRef = useRef(null);
   const floats = useRef({});
+  const shines = useRef({});
+  const [bought, setBought] = useState({}); // id → a counter while its BOUGHT! stamp is up (0 = none)
+  const boughtT = useRef({});
+  useEffect(() => () => Object.values(boughtT.current).forEach(clearTimeout), []);
+  const stampBought = (id) => {
+    setBought((b) => ({ ...b, [id]: (b[id] || 0) + 1 }));
+    clearTimeout(boughtT.current[id]);
+    boughtT.current[id] = setTimeout(() => setBought((b) => ({ ...b, [id]: 0 })), BOUGHT_MS);
+    fx(shines.current[id], SWEEP);
+  };
   const cards = useRef({});
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
@@ -279,6 +299,7 @@ export default function ShopV2({ onBack }) {
     setTier(r.tier);
     fx(plateRef.current, FX.bump);
     if (evolved) setEvolve((n) => n + 1); // a NEW FORM: the plate slams the new art in (below)
+    else fx(evolveRef.current, POWER_FLASH); // every other buy: the plate flashes once (nov2 audit #7 — a buy is a moment)
     fx(nowRef.current, FX.land(1)); // R5 oct8 #1: the NOW number lands with the surge
   };
 
@@ -318,7 +339,7 @@ export default function ShopV2({ onBack }) {
     }
     sndPurchase();
     evItemPurchased(`stock_${it.id}`);
-    fx(floats.current[it.id], FX.float);
+    if ((r.left[it.id] || 0) > 0) stampBought(it.id); // the last unit: its SOLD OUT stamp slams instead
   };
 
   return (
@@ -338,7 +359,6 @@ export default function ShopV2({ onBack }) {
           </div>
         </div>
       ) : null}
-      {cosmetics ? <Suspense fallback={null}><ProfilePopup view0="customize" tab0="pop" onClose={() => setCosmetics(false)} /></Suspense> : null}
       {ladder ? <PowerLadder current={form.n} onClose={() => { setLadder(false); plateRef.current?.focus(); }} /> : null}
       <div className="sp2-scale">
       <div className="sp2-stage">
@@ -411,7 +431,7 @@ export default function ShopV2({ onBack }) {
             <div className="sp2-tabs" role="tablist" aria-label="Shop shelves">
               {SHELVES.map(([k, label, icon]) => (
                 <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k}
-                  onClick={() => (k === 'cosmetics' ? setCosmetics(true) : setShelf(k))}>
+                  onClick={() => setShelf(k)}>
                   <img className="sp2-tab-ico" src={icon} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
                   {label}
                   {tabDot[k] && shelf !== k ? <span className="sp2-dot sp2-tab-dot" data-testid={`shop-tab-dot-${k}`} aria-hidden="true" /> : null}
@@ -420,9 +440,8 @@ export default function ShopV2({ onBack }) {
             </div>
             {shelf === 'boosts' && <KitTimerChip remaining={restockIn(now)} total={RESTOCK_MS / 1000} label="RESTOCK" note={null} className="sp2-timer" />}
           </div>
-          <div className="sp2-stock-sub sp2-shelf-sub">
-            {shelf === 'boosts' ? 'TIMED BOOSTS · STOCK REFILLS EVERY HOUR' : 'REDEEM A CODE'}
-          </div>
+          {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
+          {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
           {shelf === 'codes' ? <div className="sp2-shelf"><ShopV2Looks tab="codes" gems={gems} onNote={setNote} /></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (
@@ -433,7 +452,7 @@ export default function ShopV2({ onBack }) {
             {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
-                <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} floatRef={(el) => { floats.current[it.id] = el; }} />
+                <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} bought={bought[it.id] || 0} shineRef={(el) => { shines.current[it.id] = el; }} floatRef={(el) => { floats.current[it.id] = el; }} />
               </div>
             ))}
           </div>
