@@ -234,7 +234,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* PARKED (design audit nov2: the bar ran through the landed card's name + stats, "EGG T|MER"): at rest the bar and the
    bottom triangle fade out and the top triangle rises until its tip sits at the card's top edge (never past the
    panel's frame: --rs-up). Finite transitions, transform/opacity only; a spin (is-parked off) brings them back. */
-.rs-ptr-bar, .rs-ptr-tri { transition: opacity 200ms ease-out, transform 240ms cubic-bezier(.2, 1.3, .4, 1); }
+/* is-ptr-live (Reel.jsx): the transition is on only once this Reel has spun — a mount (first open, back from the INDEX)
+   sits parked at once instead of sliding in when the mount measure sets --rs-up */
+.rs-win.is-ptr-live .rs-ptr-bar, .rs-win.is-ptr-live .rs-ptr-tri { transition: opacity 200ms ease-out, transform 240ms cubic-bezier(.2, 1.3, .4, 1); }
 .rs-win.is-parked .rs-ptr-bar,
 .rs-win.is-parked .rs-ptr-tri.is-bot { opacity: 0; }
 .rs-win.is-parked .rs-ptr-tri.is-top {
