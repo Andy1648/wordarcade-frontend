@@ -114,6 +114,8 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
+// the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
+const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
 import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
@@ -723,6 +725,43 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
+  // THE WHEEL'S GEMS FLY HOME (design research move 10): a gem prize is paid under the wheel's scrim, where the menu's
+  // GEMS pill can't be seen — so the pill HOLDS them (gemsInFlight) until the wheel closes, then six painted gems arc
+  // from the WHEEL tile into it and it counts each one in as it lands (KitFlyLayer, pooled). Everything else that
+  // reads `gems` (dots, the roll gate) keeps the real balance.
+  const [gemsInFlight, setGemsInFlight] = useState(0);
+  const wheelOwed = useRef(0);
+  const [gemFly, setGemFly] = useState(null); // { from, amounts } while the lazy fly layer is up
+  const onWheelPaid = useCallback((g) => { wheelOwed.current += g; setGemsInFlight((n) => n + g); }, []);
+  useEffect(() => {
+    if (showWheel || !wheelOwed.current) return undefined;
+    const amount = wheelOwed.current;
+    wheelOwed.current = 0;
+    const id = requestAnimationFrame(() => { // after the wheel has unmounted: the tile's box, read once
+      const tile = [...document.querySelectorAll('[data-nav="wheel"]')].find((el) => el.getClientRects().length);
+      const b = tile ? tile.getBoundingClientRect() : null;
+      const from = b ? { x: b.left + b.width / 2, y: b.top + b.height / 2 } : null;
+      const parts = 6;
+      const share = Math.floor(amount / parts);
+      const amounts = Array.from({ length: parts }, (_, i) => (i === parts - 1 ? amount - share * (parts - 1) : share)).filter((a) => a > 0);
+      if (!from || !amounts.length) { setGemsInFlight(0); return; }
+      setGemFly({ from, amounts }); // mounts the lazy layer; its ref fires the flight (gemFlyMounted)
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showWheel]);
+  // safety: the pill is never left holding gems (a fly chunk that fails to load, a hidden tab) — release after 3 s
+  useEffect(() => {
+    if (!gemFly) return undefined;
+    const t = setTimeout(() => { setGemsInFlight(0); setGemFly(null); }, 3000);
+    return () => clearTimeout(t);
+  }, [gemFly]);
+  const shownGems = Math.max(0, gems - gemsInFlight);
+  // the lazy fly layer's ref: called once it has mounted — fly, then unmount it when every gem has landed
+  const gemFlyMounted = useCallback((api) => {
+    if (!api || !gemFly || gemFly.flown) return;
+    gemFly.flown = true;
+    api.fly({ from: gemFly.from, amounts: gemFly.amounts, onLand: (a) => setGemsInFlight((n) => Math.max(0, n - a)), onDone: () => { setGemsInFlight(0); setGemFly(null); } });
+  }, [gemFly]);
   const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
   useEffect(() => {
     if (!SEASON2) return undefined;
@@ -1581,12 +1620,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             markChip={markChip}
             roomsChip={roomsChip}
             wins={wins}
-            gems={markShown && reveal.gears ? gems : null}
+            gems={markShown && reveal.gears ? shownGems : null}
           />
         ) : (
         <>
         {/* LEFT: the WINS / GEMS pills over the UPGRADES · ROLL · INDEX · REBIRTH rail. */}
-        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? gems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
+        {reveal.core && <MenuRail items={railItems} wins={wins} gems={markShown && reveal.gears ? shownGems : null} navigating={navigating} settings={settingsRail} foot={gearSlot} />}
 
         {/* TOP CENTRE: the wordmark — the mockup's three stacked Bungee faces. */}
         <div className="homepage-logo-wrap">
@@ -1730,10 +1769,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </ScreenBoundary>
       )}
 
+      {/* the wheel's gems fly from the WHEEL tile into the GEMS pill on close (a pooled fly layer — never its own fixed UI
+          position: it is a full-screen, pointer-events:none overlay with no layout of its own) */}
+      {gemFly ? (
+        <Suspense fallback={null}>
+          <GemFly ref={gemFlyMounted} target={() => [...document.querySelectorAll('.menu-gems-chip .kp-icon')].find((el) => el.getClientRects().length)} icon="gems" />
+        </Suspense>
+      ) : null}
       {showWheel && (
         <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
           <Suspense fallback={null}>
-            <DailyWheel onClose={() => setShowWheel(false)} />
+            <DailyWheel onClose={() => setShowWheel(false)} onPaid={onWheelPaid} />
           </Suspense>
         </ScreenBoundary>
       )}
