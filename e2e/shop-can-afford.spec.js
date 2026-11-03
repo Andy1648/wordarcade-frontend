@@ -1,6 +1,7 @@
 // e2e/shop-can-afford.spec.js — CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and
 // design)"): with 100 gems, what you can buy now (XP 45, WINS 60) keeps its lit price; everything else says how many gems
-// short you are on its price tag (LUCK 120 → NEED 20 …), the art goes quiet, and the words always fit their tag. Buying
+// short you are on its RED price tag (LUCK 120 → NEED 20 …) with its art still lit (nov3 move 9: no dimming), the words
+// always fit their tag, and a tap on one shakes it and says where gems come from. Buying
 // drops the balance and the state follows. SHOTS=<dir> saves a screenshot per viewport.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -53,6 +54,16 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844]]) {
       await expect(card(shop, id)).toHaveClass(/is-short/);
       await expect(shop.getByTestId(`short-${id}`)).toHaveText(`NEED ${need}`);
     }
+    // move 9: a short card's art is never dimmed, and its tag is red (the lit ones keep cyan)
+    const look = await page.evaluate(() => [...document.querySelectorAll('.sp2-card.is-short .sp2-card-in')].map((c) => {
+      const art = c.querySelector(':scope > .sp2-art, :scope > .sp2-ico');
+      return { id: c.dataset.stock, filter: art ? getComputedStyle(art).filter : 'none', tag: getComputedStyle(c.querySelector('.sp2-price')).backgroundColor };
+    }));
+    expect(look.length).toBeGreaterThan(3);
+    for (const l of look) {
+      expect(l.filter, l.id).not.toMatch(/saturate|brightness|grayscale/);
+      expect(l.tag, l.id).toBe('rgb(232, 38, 46)');
+    }
     // the NEED words sit inside their tag (measured on the text itself), the tag inside its card face
     const off = await page.evaluate(() => [...document.querySelectorAll('.sp2-short')].flatMap((t) => {
       const tag = t.closest('.sp2-price').getBoundingClientRect();
@@ -64,7 +75,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [1280, 551], [390, 844]]) {
       return out;
     }));
     expect(off, JSON.stringify(off)).toEqual([]);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/afford-${w}x${h}.png` });
+    if (SHOTS) { await page.waitForFunction(() => [...document.images].every((i) => i.complete && i.naturalWidth), null, { timeout: 6000 }).catch(() => {}); await page.waitForTimeout(400); await page.screenshot({ path: `${SHOTS}/afford-${w}x${h}.png` }); }
   });
 }
 
@@ -75,4 +86,12 @@ test('buying moves the line: 100 gems → buy XP (45) → WINS (60) is now NEED 
   await card(shop, 'xp25').click();
   await expect(card(shop, 'wins25')).toHaveClass(/is-short/);
   await expect(shop.getByTestId('short-wins25')).toHaveText('NEED 5');
+});
+
+test("tapping a card you can't afford shakes it and says where gems come from — nothing is bought", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const shop = await boot(page, 100);
+  await card(shop, 'luck2').click();
+  await expect(shop.locator('.sp2-note')).toContainText('PLAY A GAME TO EARN GEMS');
+  await expect(shop.getByTestId('short-luck2')).toHaveText('NEED 20');
 });

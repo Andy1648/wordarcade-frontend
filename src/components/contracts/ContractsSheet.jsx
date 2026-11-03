@@ -30,10 +30,10 @@ const ART = {
   wb: '/cards/wb-hero.webp',
   blitz: '/cards/cb-hero.webp',
   sat: '/cast/props/spellbook.webp',
-  chain: '/ach/chain.svg',
+  chain: '/ach/chain-v1.webp',
   fuse: '/cast/props/bolt.webp',
   race: '/cast/props/spark-big.webp',
-  any: '/ach/key.svg',
+  any: '/ach/key-v1.webp',
 };
 const TONE = { wb: 'cyan', blitz: 'hot', sat: 'yellow', chain: 'purple', fuse: 'purple', race: 'pink', any: 'lilac' };
 const TILT = [-1.6, 1.1, -0.7]; // dealt like a hand, never a straight table row
