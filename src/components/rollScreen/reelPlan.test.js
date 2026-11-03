@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   drawStrip, tableEntries, REEL_LEN, LAND_AT, spinMs, SPIN_MS, easePow, reelPos, tickTimes, spinFrom, revealMode,
   hasCutscene, dimFor, hasLight, burstCount, BURST_POOL, shakePx, shakeFrames, autoShouldStop, needMoreText,
-  burstVectors, TIER_LADDER, restOffset, REST_MAX, crossShare, timeAt, DIM_CELLS,
+  burstVectors, TIER_LADDER, restOffset, REST_MAX, crossShare, timeAt, DIM_CELLS, revealCardW, CARD_RATIO_H,
 } from './reelPlan.js';
 import { rollTable, freshState, ROLL_MARKS, rollMarkById } from '../../progress/markRolls.js';
 
@@ -210,4 +210,22 @@ test('R4 THE TELL: EPIC+ only, honest (never for RARE or a short land), intensit
   }
   assert.equal(TELL.epic.rumble, false);
   assert.equal(TELL.legendary.rumble, true);
+});
+
+test('the reveal card dominates (design audit nov2): ~65% of the height on desktop, ~75% of the width on a phone, room left', () => {
+  const h = (o) => revealCardW(o) * CARD_RATIO_H;
+  // desktop: 60–65% of the height, never so tall that "1 IN X" / TAP TO CONTINUE fall off
+  for (const [vw, vh] of [[1920, 1080], [1366, 768], [1024, 768]]) {
+    assert.ok(h({ vw, vh }) >= vh * 0.6 && h({ vw, vh }) <= vh * 0.655, `${vw}x${vh}`);
+    assert.ok(h({ vw, vh, kind: 'full' }) <= vh - 300 + 1, `${vw}x${vh} full leaves the banner room`);
+  }
+  // a short laptop: the room for the stamp + TAP wins over the 65%
+  assert.ok(h({ vw: 1280, vh: 551 }) <= 551 - 200 + 1);
+  // phone: ~75% of the width when the height allows, else what fits
+  assert.equal(revealCardW({ vw: 390, vh: 844 }), Math.round(390 * 0.75));
+  assert.equal(revealCardW({ vw: 360, vh: 640 }), Math.round(360 * 0.75));
+  assert.ok(h({ vw: 360, vh: 640, kind: 'full' }) <= 640 - 230 + 1);
+  // a perk / dupe plate: beside the card on desktop (width room), under it on a phone (height room)
+  assert.ok(revealCardW({ vw: 1024, vh: 768, plate: true }) <= 1024 - 500);
+  assert.ok(h({ vw: 390, vh: 844, plate: true }) <= 844 - 280 + 1);
 });

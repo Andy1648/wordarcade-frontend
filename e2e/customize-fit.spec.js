@@ -90,7 +90,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     }
   });
 
-  test(`${w}x${h}: the shop's tabs wear their icons, never overlap or leave the row; COSMETICS opens CUSTOMIZE`, async ({ page }) => {
+  test(`${w}x${h}: the shop's tabs wear their icons, never overlap or leave the row; COSMETICS is the same menu INLINE`, async ({ page }) => {
     await boot(page, w, h);
     await navControl(page, 'shop').click();
     await page.locator('.sp2').waitFor({ state: 'visible' });
@@ -101,8 +101,51 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     expect(m.outside, 'shop tabs inside the shelf').toEqual([]);
     expect(m.small, 'shop tabs ≥ 44px').toEqual([]);
     await expect(page.locator('.sp2-tab .sp2-tab-ico')).toHaveCount(3);
+    // nov2 (Andy "idk why cosmetics screen on upgrades gives popup"): COSMETICS is a shelf — the CUSTOMIZE menu inline in
+    // the shop, no popup over it; every tab's controls apart, inside the shelf, and the try-on never needs a scroll
     await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();
-    await expect(page.getByTestId('customize')).toBeVisible();
+    await expect(page.getByTestId('shop-cosmetics').getByTestId('customize')).toBeVisible();
+    await expect(page.getByTestId('profile-popup')).toHaveCount(0);
     await expect(page.locator('.cz-tab[data-cz="pop"]')).toHaveAttribute('aria-selected', 'true');
+    for (const [t, sel] of [['pop', '.sp2-look'], ['sound', '.sp2-look'], ['hero', '.hc'], ['frame', '.skp-tile, .skp-stage, .skp-act > *'], ['fx', '.skp-tile, .skp-stage, .skp-act > *']]) {
+      await page.locator(`.cz-tab[data-cz="${t}"]`).click();
+      await page.waitForTimeout(400);
+      const c = await layout(page, '.sp2-stock', `.sp2-tab, .cz-tab, ${sel}`);
+      expect(c.overlaps, `shop COSMETICS · ${t}: overlaps`).toEqual([]);
+      expect(c.outside, `shop COSMETICS · ${t}: inside the shelf`).toEqual([]);
+      expect(c.small, `shop COSMETICS · ${t}: tap targets ≥ 44px`).toEqual([]);
+      if ((t === 'frame' || t === 'fx') && w >= 1000) {
+        const sc = await page.locator('.sp2-shelf-cz .cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
+        expect(sc, `shop COSMETICS · ${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
+      }
+    }
+    // equipping here is equipping everywhere: wear a hero in the shop → the profile shows it
+    await page.locator('.cz-tab[data-cz="hero"]').click();
+    const owned = await page.evaluate(() => [...document.querySelectorAll('.hc[data-hero]')].map((e) => e.dataset.hero));
+    expect(owned.length).toBeGreaterThan(1);
+  });
+}
+
+// nov2 overlap audit #2 item 9: CUSTOMIZE → HERO tags never shrink under 16px on a phone (they wrap instead)
+for (const [w, h] of [[360, 640], [390, 844]]) {
+  test(`${w}x${h}: CUSTOMIZE → HERO card tags stay ≥ 16px and inside their card`, async ({ page }) => {
+    await boot(page, w, h);
+    await page.locator('[data-nav="profile"]:visible').first().click();
+    await page.getByTestId('profile-kit').click();
+    await page.locator('.hc').first().waitFor();
+    await page.waitForTimeout(400);
+    const tags = await page.evaluate(() => [...document.querySelectorAll('.hc-req')].map((t) => {
+      const span = t.querySelector('.hc-req-t');
+      const px = parseFloat(getComputedStyle(span).fontSize);
+      const m = getComputedStyle(span).transform;
+      const k = m && m !== 'none' ? Number(m.split('(')[1].split(',')[0]) : 1;
+      const r = t.getBoundingClientRect(); const c = t.closest('.hc').getBoundingClientRect();
+      return { label: span.textContent, px: +(px * k).toFixed(1), inside: r.left >= c.left - 1 && r.right <= c.right + 1 };
+    }));
+    expect(tags.length).toBeGreaterThan(0);
+    for (const t of tags) {
+      expect(t.px, `${t.label}: drawn at ${t.px}px`).toBeGreaterThanOrEqual(16);
+      expect(t.inside, `${t.label}: inside its card`).toBe(true);
+    }
   });
 }

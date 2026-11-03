@@ -303,6 +303,26 @@ export function revealKind(tier, mode = 'full') {
   if (r >= tierIndex('legendary')) return 'full';
   return r === tierIndex('epic') ? 'dim' : 'lite';
 }
+/** THE REVEAL CARD'S WIDTH (design audit nov2: a ~250px card floating in a void lost the big stat hit Andy asked for
+ *  oct14). The card DOMINATES: ~65% of the viewport height on desktop, ~75% of the width on a phone — always leaving
+ *  room for what stacks with it ("1 IN X", the FULL reveal's tier banner, TAP TO CONTINUE, a perk/dupe plate).
+ *  Pure: Reel.jsx measures the viewport once as a reveal opens (and on resize) and sets --mc-w / --mc-s from this. */
+export const CARD_RATIO_H = 300 / 180;
+export function revealCardW({ vw, vh, kind = 'dim', plate = false }) {
+  const full = kind === 'full';
+  let h;
+  let w;
+  if (vw >= 720) {
+    const reserve = full ? 300 : 200;
+    h = Math.min(vh * 0.65, vh - reserve);
+    w = h / CARD_RATIO_H;
+    w = Math.min(w, plate ? (vw - 500) : vw * 0.8); // a perk / dupe plate sits beside the card (≤ 380 + a 40 gap)
+  } else {
+    const reserve = (full ? 230 : 150) + (plate ? 130 : 0); // the plate stacks under the card on a phone
+    w = Math.min(vw * 0.75, (vh - reserve) / CARD_RATIO_H);
+  }
+  return Math.max(120, Math.round(w));
+}
 /** Under AUTO ROLL an EPIC dim reveal closes by itself after this long (the mockup's 1.3 s), then the next roll. */
 export const AUTO_DIM_MS = 1300;
 /** The rays turn only while a full reveal plays in (finite), then rest. */

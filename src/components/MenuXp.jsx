@@ -78,6 +78,14 @@ const POP_STRETCH = 1.5; // oct28 ×1.5 (was 1.3): the longer entrance needs the
 // STRAIGHT upward drift (translateY sits before the tilt, so the drift is screen-up whatever the tilt). Every pop takes
 // this one arc — CLASSIC, every worn look, the crit. The ring, sparkle and painted burst keep their own motion.
 const POP_HIT = 0.12; // where the fade-in lands (the ring / painted burst slam in then)
+// THE KEY's entrance (nov2): the typed letter starts small and slams up past its size, then settles — 260 ms, finite,
+// transform / opacity only, on the letter span alone (the +N beside it never scales)
+const KEY_IN_MS = 260;
+const KEY_IN = [
+  { transform: 'scale(.25)', opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+  { transform: 'scale(1.22)', opacity: 1, offset: 0.55, easing: 'ease-out' },
+  { transform: 'scale(1)', opacity: 1 },
+];
 const POP_DRIFT = 18; // px the +N rises over its whole life
 // THE KIT's MOTION (oct27, Andy: "better animations … on the key pops"): a worn look's +N moves like its theme
 // (progress/popMotion.js, carried on the lazy look as look.motion) — same pooled node, same finite WAAPI, its own keyframes; CLASSIC keeps popArc.
@@ -258,6 +266,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
   const growthRef = useRef(null);
   growthRef.current = popGrowth(careerRef.current, narrowRef.current);
   const ringElsRef = useRef([]);
+  // THE KEY (nov2, Andy: "we still need the letters"): one idle WAAPI per pooled pop's LETTER span — the typed key slams
+  // in from small (snappy, finite) while its "+N" just fades on the pop's own arc (the number never scales).
+  const letterAnimsRef = useRef([]);
   const ringAnimsRef = useRef([]);
   const sparkElsRef = useRef([]);
   const sparkAnimsRef = useRef([]);
@@ -338,6 +349,14 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
         popOpts
       );
       a.cancel();
+      return a;
+    });
+
+    letterAnimsRef.current = popElsRef.current.map((el) => {
+      const node = el.children[0];
+      const a = node.animate(KEY_IN, { duration: KEY_IN_MS, fill: 'backwards' });
+      a.cancel();
+      a.onfinish = () => { node.style.willChange = ''; };
       return a;
     });
 
@@ -623,21 +642,37 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
       const sz = grownScale(scale);
       // a grown pop keeps its whole (estimated) width on screen — text length x glyph half-width x size, no layout read
       const label = !plusText ? letter : /XP/.test(plusText) ? plusText : `${plusText} XP`;
-      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current, POP_HALF * Math.max(1, sz), Math.max(POP_HALF, label.length * CHAR_HALF_PX * sz));
+      const wide = (plusText && letter ? label.length + 3 : label.length) * CHAR_HALF_PX * sz; // the key adds ~3 glyphs
+      const pos = pickPosition(w, h, barBoxRef.current, recentPosRef.current, POP_HALF * Math.max(1, sz), Math.max(POP_HALF, wide));
       el.classList.remove('is-crit'); // reset if this node was last used for a crit
-      // Andy oct10 ("why are there neon letters … those arent explained"): a key pops what it PAID — "+N XP", in the
-      // tap pop's dress (no typed letter). The CRIT keeps its key: CRIT +N says what happened.
-      el.classList.add('is-tap');
+      // nov2 (Andy: "we shouldnt have removed the key animation … idc what u do to make crit special but we still need
+      // the letters"): a key pops "[KEY] +N XP" — the typed letter big, slamming in from small, its +N beside it. A
+      // band-only pop (no +N: a menu WORD's rarity band) keeps the tap dress, its band word alone. The CRIT stays its own
+      // thing: the key stacked over CRIT +N, crit orange, the painted burst and the screen shake.
+      const keyed = !!plusText && !!letter;
+      el.classList.toggle('is-tap', !keyed);
+      el.classList.toggle('is-key', keyed);
       // KEY TIER tier (item 1) drives the visible/audible escalation the player BOUGHT:
       // T1-T4 teal, T5+ gold (overrides the streak colour); T3+ a hard offset shadow;
       // T2+ particle shards. All finite/pooled; particles skip under reduced motion.
       const tierColour = feelTier >= 5 ? TIER_GOLD : feelTier >= 1 ? TIER_TEAL : colour;
-      // children: [0] = (empty — the typed letter is not shown), [1] = "+N XP" in the tier colour
-      el.children[0].textContent = '';
+      // children: [0] = the typed KEY (tier / look colour), [1] = "+N XP"
+      el.children[0].textContent = keyed ? letter : '';
       // a band-only pop (useXpCapture: a menu WORD's rarity band, no +N) still shows its band word
       el.children[1].textContent = label;
       const lk = plusText ? look : null; // a word-rarity band pop keeps its band colour
-      dressPop(el.children[1], lk, tierColour, feelTier >= 3);
+      const ink = dressPop(el.children[1], lk, tierColour, feelTier >= 3);
+      const key = el.children[0];
+      key.style.color = keyed ? ink : '';
+      key.style.textShadow = keyed && (lk || feelTier >= 3) ? `3px 3px 0 ${lk ? (lk.stroke === '#000' ? lk.shadow : lk.stroke) : '#000'}` : '';
+      const la = letterAnimsRef.current[i];
+      if (la) {
+        la.cancel();
+        if (keyed && !prefersReducedMotion()) {
+          key.style.willChange = 'transform, opacity'; // only for the slam's life (onfinish clears it)
+          la.play();
+        } else key.style.willChange = '';
+      }
       const tf0 = tierRef.current;
       const mo = kitArc(lk, Math.random() * 20 - 10, sz * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
       dressArt(el, lk && lookBurstDue() ? lk : null, false, Math.round(mo.hit * mo.ms), mo.spin);

@@ -57,6 +57,13 @@
   border-radius: 8px;
   box-shadow: 6px 6px 0 #000;
 }
+.ut-line.is-fit {
+  /* fitted into a tight band (a tutorial's `clear`, OVERLAP AUDIT #2 #5): the plate tightens with the smaller type and
+     the stroke scales with it so the letters never clog (5px at the full size) */
+  padding: 6px 14px 8px;
+  -webkit-text-stroke-width: min(5px, 0.16em);
+  text-wrap: balance; /* two even lines, never one long line + an orphaned "FREE." */
+}
 .ut-line.is-centered {
   top: 50%;
   transform: translateY(-50%);

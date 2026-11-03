@@ -41,12 +41,14 @@
   font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #FFE94A;
 }
 .hc-req .kit-icon { flex: none; }
-.hc-req-t { flex: 0 1 auto; min-width: 0; }
+/* nov2 audit: the label WRAPS at its own size (two lines over the art) instead of shrinking — FitText took a phone's
+   "GONE FOREVER" down to 6.8px */
+.hc-req-t { flex: 0 1 auto; min-width: 0; white-space: normal; line-height: 1.05; text-align: left; }
 /* a LEGEND short of its rebirth: the lock, white on a pink outline, so it reads LOCKED rather than as a goal */
 .hc-req.is-lock { color: #fff; border-color: #FF4FA3; }
 .hc.has-req .hc-hero { filter: grayscale(.7) brightness(.55); }
 @media (max-width: 760px) {
-  .hc-req { font-size: var(--fs-k15); padding: 3px 6px 3px 3px; gap: 3px; }
+  .hc-req { font-size: var(--fs-k16); padding: 3px 6px 3px 3px; gap: 3px; }
   .hc-name { font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
 }
 /* not owned yet (one-card picker): the hero greyed back; the status pill under the card says how to get it */
