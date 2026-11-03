@@ -34,6 +34,7 @@ import { nameVerdict } from './nameFilter.js';
 import PodiumIcon from '../components/PodiumIcon';
 import './ClaimPrompt.css';
 import { SEASON2 } from '../progress/season.js';
+import BoardClimb from './BoardClimb.jsx';
 
 const VERDICT_COPY = {
   shape: '3–16 LETTERS, NUMBERS OR _',
@@ -52,7 +53,18 @@ const ERROR_COPY = {
 };
 
 // P7 POPUP PURGE (SEASON2 only): no claim sticker on the end screen — a name is claimed on the LEADERBOARD itself. Flag OFF: unchanged.
+// The claim sticker stays purged; the slot ALSO carries a CLAIMED player's board climb after a run in season 2 (nov2
+// research move 5 - BoardClimb: your row slides past the players you overtook, then the up chip stamps in; nothing at all
+// when you didn't move up). An inline strip, not a popup.
 export default function ClaimPrompt(props) {
+  return (
+    <>
+      {SEASON2 ? <BoardClimb /> : null}
+      <ClaimSticker {...props} />
+    </>
+  );
+}
+function ClaimSticker(props) {
   return SEASON2 ? null : <ClaimPromptLive {...props} />;
 }
 
