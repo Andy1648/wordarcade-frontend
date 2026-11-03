@@ -19,6 +19,7 @@ import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
 import { rivalCopy, rivalGapLine, rivalGapSpoken } from './rival.js';
 import { enteredTier } from './nameTier.js';
+import { leagueOf, leagueMove } from './leagues.js';
 import { SEASON2, V3 } from '../progress/season.js'; // P7: V3.rankUp = the kit's top-edge RANK-UP banner (v3 chunk)
 import './RankUpMoment.css';
 
@@ -42,18 +43,33 @@ export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', nam
     if (SEASON2) {
       if (sentRef.current) return undefined; // once per mount (StrictMode re-runs effects in dev)
       sentRef.current = true;
+      // nov3 RANK LEAGUES: the slab shows the league you are in now (its painted badge); crossing UP a league line is the
+      // PROMOTION (the badge slams + its shards burst — KitRankBanner), crossing down is said quietly (no slam, no shards)
+      const lg = leagueOf(to);
+      const mv = leagueMove(from, to);
+      const league = lg ? lg.key : undefined;
+      const fromTo = { from: { name: `#${formatNum(from)}`, req: 'R0' }, to: { name: `#${formatNum(to)}`, req: 'R7' } };
+      // a LEAGUE crossing goes through the one notice door that is open (V3.leagueNews); everything else stays V3.rankUp
+      // (silent under the one-notice rule)
+      const say = mv && V3.leagueNews ? V3.leagueNews : V3.rankUp;
       if (kind === 'passed') {
-        V3.rankUp({ head: rivalCopy({ name, from, to, levels, rebirths }).title, from: { name: `#${formatNum(from)}`, req: 'R6' }, to: { name: `#${formatNum(to)}`, req: 'R0' } });
+        say({ head: rivalCopy({ name, from, to, levels, rebirths }).title, league, drop: !!(mv && mv.dir === 'down'), ...fromTo });
+      } else if (kind === 'dropped') {
+        say({ head: `DROPPED TO ${lg ? lg.name : 'A LOWER LEAGUE'}`, league, drop: true, ...fromTo });
+      } else if (mv && mv.dir === 'up') {
+        say({ head: 'PROMOTED', league, promo: true, ...fromTo, to: { ...fromTo.to, code: lg.name } });
       } else {
-        // a climb INTO a tier names it (Andy oct21 name prestige): "MADE TOP 10" / "NEW #1" instead of BOARD
+        // a climb INTO a seal tier names it (Andy oct21 name prestige): "MADE TOP 10" / "NEW #1" instead of BOARD
         const t = enteredTier(from, to);
         const head = !t ? 'BOARD' : t.key === 'crown' ? 'NEW #1' : `MADE ${t.label}`;
-        V3.rankUp({ head, from: { name: `#${formatNum(from)}`, req: 'R0' }, to: { name: `#${formatNum(to)}`, req: 'R7', code: standing } });
+        V3.rankUp({ head, league, ...fromTo, to: { ...fromTo.to, code: standing } });
       }
       if (popRef.current) popRef.current();
       if (doneRef.current) doneRef.current();
       return undefined;
     }
+    // the season-1 card has no league drop: a dropped moment just hands the queue back
+    if (kind === 'dropped') { if (doneRef.current) doneRef.current(); return undefined; }
     const a = setTimeout(() => setSaid(true), 60);
     const b = setTimeout(() => doneRef.current && doneRef.current(), RANKUP_MS);
     const c = setTimeout(() => popRef.current && popRef.current(), RANKUP_POP_MS);
@@ -61,6 +77,7 @@ export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', nam
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one moment per mount: its props are fixed for its life
   }, []);
   if (SEASON2) return null;
+  if (kind === 'dropped') return null; // season 1 has no league drop card
   if (kind === 'passed') {
     const copy = rivalCopy({ name, from, to, levels, rebirths });
     const gap = rivalGapLine(levels, rebirths);

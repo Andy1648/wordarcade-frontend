@@ -38,3 +38,15 @@ test('nextLeague: places to climb into the band above', () => {
   assert.equal(nextLeague(1), null);
   assert.equal(nextLeague(0), null);
 });
+
+test('promotion shards: every set is a painted shard set; bronze + silver promote quietly', async () => {
+  const { LEAGUE_SHARDS, LEAGUE_COLOR } = await import('./leagues.js');
+  const { SHARD_SETS } = await import('../fx/shards/shardPlan.js');
+  for (const [k, set] of Object.entries(LEAGUE_SHARDS)) {
+    assert.ok(LEAGUES.some((l) => l.key === k), `${k} is a league`);
+    assert.ok(SHARD_SETS.includes(set), `${k}: ${set} is a shard set`);
+  }
+  assert.equal(LEAGUE_SHARDS.bronze, undefined);
+  assert.equal(LEAGUE_SHARDS.silver, undefined);
+  for (const l of LEAGUES) assert.match(LEAGUE_COLOR[l.key], /^#[0-9A-F]{6}$/i);
+});

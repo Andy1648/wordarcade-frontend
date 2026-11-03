@@ -26,6 +26,7 @@ const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlo
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
+import { leagueMove } from './leagues.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -715,7 +716,11 @@ export async function checkRankUp(epoch = boardSeenEpoch) {
   const up = applyRankCheck(now);
   setRankBaseline(cur); // every check re-baselines: a rebirth is measured against the visit before it
   if (up) return up;
-  return rivalCheck({ before, now, prev, cur, epoch });
+  const rival = await rivalCheck({ before, now, prev, cur, epoch });
+  if (rival) return rival;
+  // nov3 RANK LEAGUES: a drop OUT of a league is said once, quietly ("DROPPED TO SILVER") — a drop inside one stays silent
+  const mv = leagueMove(before, now);
+  return mv && mv.dir === 'down' && epoch === boardSeenEpoch ? { kind: 'dropped', from: before, to: now } : null;
 }
 
 // ---- extensions-spec a: RIVAL PINGS (dormant, flagOn('rival')) ------------------------------------

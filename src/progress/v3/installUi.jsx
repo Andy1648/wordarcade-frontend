@@ -34,6 +34,10 @@ V3.Notify = (props) => (
 );
 V3.toast = SILENT ? none : say('pushToast'); // right-edge toast (KitEdgeToast)
 V3.rankUp = SILENT ? none : say('pushRankUp'); // top-edge RANK-UP banner (KitRankBanner)
+// THE LEAGUE EXCEPTION (nov3, mission control for Andy: "a Clash-style slam when you cross into a higher league (or drop
+// out of one) … following the one-notice rule"): crossing a LEAGUE line is said on the same top-edge slab — once per
+// crossing, never for a move inside a league (those stay silent with the rest of the board news above).
+V3.leagueNews = say('pushRankUp');
 V3.fx = (api) => wrapFx(api, V3.toast);
 
 // PHASE 4 — THE SEASON 2 RESET (023_season2_reset.sql): the boot check (wipe a pre-season-2 save once the server reset

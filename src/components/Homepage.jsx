@@ -1193,7 +1193,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
       .then(() => checkRankUp(epoch))
       .then((r) => {
-        if (live && r && r.kind === 'passed') {
+        if (live && r && (r.kind === 'passed' || r.kind === 'dropped')) {
           // extensions-spec a (dormant, flagOn('rival') inside checkRankUp): "XAVI PASSED YOU" — the rank-up
           // card's passed variant, at INFO on the same queue. No news dot / icon hold: the trophy's
           // "rank went up" wording would lie, and the icon already wears the live rank.
@@ -1549,7 +1549,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind === 'dropped' && <Suspense fallback={null}><RankUpMoment kind="dropped" from={rankUp.from} to={rankUp.to} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind !== 'passed' && rankUp.kind !== 'dropped' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
         {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
 
         {/* PHONE (<=480px): MobileMenu instead of the desktop grid below (a RENDER branch — the card

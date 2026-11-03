@@ -14,23 +14,23 @@ const row = (id, username, o) => ({ id, username, level: 10, rebirths: 0, stars:
 // ten rows above you → you are #11: TITAN (#11–50)
 const ABOVE = Array.from({ length: 10 }, (_, i) => row(`r${i}`, `RIVAL${i}`, { stars: 10 - i, rebirths: 5 }));
 
-async function boot(page, w, h) {
+async function boot(page, w, h, last = '11') {
   await page.setViewportSize({ width: w, height: h });
   await installBackendMock(page);
   const shared = { rows: [...ABOVE.map((x) => ({ ...x })), row('me', 'NOBUFF', { rebirths: 3, level: 60 })], secrets: new Map([[SECRET, 'me']]), saves: new Map() };
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, weekly: true, rebirth: { delayMs: 0 }, season2: true });
-  await page.addInitScript((secret) => {
+  await page.addInitScript(({ secret, last }) => {
     if (sessionStorage.getItem('lg.seeded')) return;
     sessionStorage.setItem('lg.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
     localStorage.setItem('taw.lb.profile', JSON.stringify({ id: 'me', username: 'NOBUFF' }));
     localStorage.setItem('taw.lb.secret', secret);
-    localStorage.setItem('taw.lb.lastRank', '11');
+    localStorage.setItem('taw.lb.lastRank', last);
     localStorage.setItem('taw.econ', '12');
     localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 60, f: 0.1, rc: 3, v: 10 }));
     localStorage.setItem('taw.s2.rebirths', '3');
-  }, SECRET);
+  }, { secret: SECRET, last });
   await page.goto('/?portal=1&season2=1');
 }
 
@@ -79,3 +79,51 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/board-${w}.png` });
   });
 }
+
+// nov3 PROMOTION: last seen #120 (CRYSTAL) → now #11 (TITAN): the top-edge slab says PROMOTED, the TITAN badge slams in and
+// its painted shards burst on impact — one finite moment, done well inside a second. A DROP (#5 CHAMPION → #11 TITAN) is
+// the same slab said quietly: no PROMOTED, no slam, no shards.
+for (const [w, h] of [[1366, 768], [390, 844]]) {
+  test(`@${w}: crossing UP a league line = PROMOTED slab + badge slam + the league's shards`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await boot(page, w, h, '120');
+    await page.evaluate(() => {
+      window.__shardPlays = 0;
+      const play = Element.prototype.animate;
+      Element.prototype.animate = function (...a) { if (this.classList && this.classList.contains('gsb-s')) window.__shardPlays++; return play.apply(this, a); };
+    });
+    const slab = page.locator('.krb.is-league');
+    await expect(slab).toBeVisible({ timeout: 20_000 });
+    await expect(slab).toHaveClass(/is-promo/);
+    await expect(slab).toHaveAttribute('data-league', 'titan');
+    await expect(slab.locator('.krb-head')).toContainText('PROMOTED');
+    await expect(slab.locator('.krb-league-name')).toHaveText('TITAN');
+    await expect(slab.locator('.krb-to')).toHaveText('#11');
+    await expect(slab.locator('.krb-league-art')).toHaveAttribute('src', '/lb/league-titan-v1.webp');
+    await expect.poll(() => page.evaluate(() => window.__shardPlays), { timeout: 5_000 }).toBeGreaterThan(0);
+    // nothing in the slab overlaps (from / arrow / badge) and the text reads
+    const boxes = await slab.locator('.krb-from, .krb-arrow, .krb-league').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return [r.left, r.right]; }));
+    for (let i = 1; i < boxes.length; i++) expect(boxes[i][0], 'slab items overlap').toBeGreaterThanOrEqual(boxes[i - 1][1] - 1);
+    const px = await slab.locator('.krb-league-name, .krb-to, .krb-from').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+    expect(Math.min(...px)).toBeGreaterThanOrEqual(13);
+    if (SHOTS) { await page.waitForTimeout(250); await page.screenshot({ path: `${SHOTS}/promo-${w}.png` }); }
+  });
+}
+
+test('crossing DOWN a league line is said quietly: the slab names the lower league, no slam, no shards', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await boot(page, 1366, 768, '5');
+  await page.evaluate(() => {
+    window.__shardPlays = 0;
+    const play = Element.prototype.animate;
+    Element.prototype.animate = function (...a) { if (this.classList && this.classList.contains('gsb-s')) window.__shardPlays++; return play.apply(this, a); };
+  });
+  const slab = page.locator('.krb.is-league');
+  await expect(slab).toBeVisible({ timeout: 20_000 });
+  await expect(slab).toHaveClass(/is-drop/);
+  await expect(slab).not.toHaveClass(/is-promo/);
+  await expect(slab).toHaveAttribute('data-league', 'titan');
+  await page.waitForTimeout(1200);
+  expect(await page.evaluate(() => window.__shardPlays), 'a drop throws no shards').toBe(0);
+  await expect(page.locator('.krb-burst')).toHaveCount(0);
+});

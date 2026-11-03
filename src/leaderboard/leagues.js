@@ -22,6 +22,11 @@ export const LEAGUES = [
 // with the single AI giveaway art"). Immutable art: a repaint gets a new filename (art-manifest).
 export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league-${l.key}-v1.webp`]));
 
+// The league's flat colour (LeagueBadge.css plates) and the painted shard set its PROMOTION throws (fx/shards SHARD_SETS).
+// BRONZE / SILVER promote quietly: no shards — the burst is something the climb into the upper leagues earns.
+export const LEAGUE_COLOR = { bronze: '#D98A4E', silver: '#D4DAE3', gold: '#FFC23D', crystal: '#2EFFE0', master: '#B04BFF', titan: '#FF6B3D', champion: '#FF4FA3', legend: '#FFE94A' };
+export const LEAGUE_SHARDS = { gold: 'gold', crystal: 'cyan', master: 'violet', titan: 'gold', champion: 'pink', legend: 'prism' };
+
 /** The league a board rank sits in, or null with no rank (an unclaimed name is UNRANKED). */
 export function leagueOf(rank) {
   const r = Math.floor(Number(rank));
