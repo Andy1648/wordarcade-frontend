@@ -38,6 +38,7 @@ import { takeRebirthNow } from '../progress/rebirthNow';
 import { rebirthWordsShort, WORDS_PER_REBIRTH } from '../progress/rebirthWords';
 import { performRebirth, performAscend, warmRebirth } from '../leaderboard/serverRebirth';
 import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
+import { emblemSrc } from '../progress/rebirthEmblem.js';
 import { rebirth as evRebirth, refreshSessionProps } from '../lib/events.js';
 import { sndRebirth } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
@@ -54,17 +55,12 @@ function readState() {
   return { level, rebirths, stars, gate, auto, wordsShort, levelReady: level >= gate, ready: level >= gate && wordsShort === 0 };
 }
 
-/** The hexagon emblem plate (vector art; the kit's REBIRTH icon on it). */
-function HexPlate() {
+/** THE REBIRTH EMBLEM (nov2, design audit #12 "REBIRTH has no prestige object"): a painted hexagon badge that climbs
+ *  a band every JACKPOT rebirth (R5, R10, R15, R20): bronze → silver → gold → crystal → mythic. */
+function HexPlate({ rebirths }) {
   return (
     <div className="rb2-hex" aria-hidden="true">
-      <svg className="rb2-hex-plate" viewBox="0 0 120 110" width="104" height="96" focusable="false">
-        <polygon points="36,12 90,10 116,56 90,102 34,104 8,58" fill="#000" transform="translate(6 6)" />
-        <polygon points="36,12 90,10 116,56 90,102 34,104 8,58" fill="#B04BFF" stroke="#000" strokeWidth="6" strokeLinejoin="round" />
-        <polygon points="44,26 82,24 100,56 82,88 42,90 24,58" fill="#2a0e4a" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
-        <path d="M40 18 L86 17" stroke="#D88BFF" strokeWidth="5" strokeLinecap="round" />
-      </svg>
-      <KitIcon name="rebirth" size={52} shadow={2} extras={false} className="rb2-hex-icon" />
+      <img className="rb2-hex-art" src={emblemSrc(rebirths)} width="256" height="256" alt="" draggable="false" />
     </div>
   );
 }
@@ -234,7 +230,7 @@ export default function RebirthV2({ onBack }) {
 
         <section className="rb2-left">
           <div className="rb2-now-after">
-            <HexPlate />
+            <HexPlate rebirths={rebirths} />
             <div className="rb2-r">
               <span className="rb2-cap">NOW</span>
               <span className="rb2-r-now" data-testid="rb2-now">R{formatNum(rebirths)}</span>
