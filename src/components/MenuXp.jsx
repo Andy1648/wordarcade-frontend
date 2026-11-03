@@ -674,7 +674,9 @@ export const MenuXpFx = forwardRef(function MenuXpFx({ menuTier = 0, career }, r
         } else key.style.willChange = '';
       }
       const tf0 = tierRef.current;
-      const mo = kitArc(lk, Math.random() * 20 - 10, sz * (0.92 + Math.random() * 0.16), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
+      // a little size variety per key, UPWARD only (nov3, Andy: "never smaller than the original" — the old ×0.92–1.08
+      // jitter could shrink a LV1 pop below it; e2e/pop-floor.spec.js)
+      const mo = kitArc(lk, Math.random() * 20 - 10, sz * (1 + Math.random() * 0.08), 1 + tf0.tier * 0.05, tf0.popRise, Math.round(tf0.popMs * POP_STRETCH));
       dressArt(el, lk && lookBurstDue() ? lk : null, false, Math.round(mo.hit * mo.ms), mo.spin);
       dressGrowth(i, plusText && !lk ? tierColour : null, Math.round(mo.hit * mo.ms));
       el.style.left = `${pos.x}px`;
