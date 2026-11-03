@@ -1,6 +1,8 @@
 // SpotlightTutorial.jsx — the ONE tutorial style (Andy oct5): "screen dims, the one target glows, tap anywhere
 // to continue. No OK-button popups." A dim wash with a bright hole cut round the target, a glow ring on the
-// hole's edge, one short line beside it. Tap ANYWHERE (or Escape / Enter) and it is done.
+// hole's edge, one short line beside it. Tap ANYWHERE (or Escape / Enter) and it is done - and a tap ON the lit target
+// is a real tap on it (nov3: the GEARS tip ate the first tap on the very tile it pointed at, so a new player had to tap
+// GEARS twice): the hole lets clicks through to the target, which finishes the tip as it opens.
 //
 // Measurement: the target's rect + the line's height are read ONCE when it shows and again only on resize
 // (never per frame); the geometry itself is the pure spotlightLayout(). Motion: one finite fade-in of the
@@ -86,6 +88,17 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
     };
   }, []);
 
+  // A tap ON the lit target goes through to it (the hole has no catcher) - and finishes the tip on its way (capture, so
+  // the tip is done before the target's own handler runs; nothing is prevented)
+  useEffect(() => {
+    const onClick = (e) => {
+      const el = findTarget(tutorial.target);
+      if (el && e.target instanceof Node && el.contains(e.target)) finish();
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [tutorial.target, finish]);
+
   // Escape / Enter finish it. Capture + stop so the panel underneath (MARKS / SHOP close on Escape) never sees it.
   useEffect(() => {
     const onKey = (e) => {
@@ -102,9 +115,17 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
   const cap = layout ? layout.caption : null;
   const holeStyle = hole ? { left: `${hole.left}px`, top: `${hole.top}px`, width: `${hole.width}px`, height: `${hole.height}px` } : null;
   const lineStyle = cap && cap.top != null ? { top: `${cap.top}px`, ...(fitPx ? { fontSize: `${fitPx}px` } : null) } : null;
+  // the tap CATCHERS: four strips round the hole take "tap anywhere" - the hole itself catches nothing, so the target
+  // under it gets its own tap
+  const catchers = hole ? [
+    { left: 0, top: 0, width: '100vw', height: `${Math.max(0, hole.top)}px` },
+    { left: 0, top: `${hole.top + hole.height}px`, width: '100vw', bottom: 0 },
+    { left: 0, top: `${hole.top}px`, width: `${Math.max(0, hole.left)}px`, height: `${hole.height}px` },
+    { left: `${hole.left + hole.width}px`, top: `${hole.top}px`, right: 0, height: `${hole.height}px` },
+  ] : [];
 
-  // onClick (not pointerdown): the tap's click lands on this layer, so it can never fall through to the
-  // button underneath once the layer is gone
+  // onClick (not pointerdown): a tap on a catcher / the line / the dim lands on this layer and finishes the tip, so it can
+  // never fall through to a button underneath once the layer is gone (only the lit target is meant to get its tap)
   return createPortal(
     <div
       ref={rootRef}
@@ -120,6 +141,7 @@ export default function SpotlightTutorial({ tutorial, onDone }) {
         <>
           <div className="ut-hole" style={holeStyle} aria-hidden="true" />
           <div className="ut-ring" style={holeStyle} aria-hidden="true" />
+          {catchers.map((c, i) => <div key={i} className="ut-catch" style={c} aria-hidden="true" />)}
         </>
       ) : (
         <div className="ut-dim" aria-hidden="true" />

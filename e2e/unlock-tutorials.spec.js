@@ -117,7 +117,9 @@ test('GEMS: once MARKS is there, the gem count is lit once — tap anywhere, nev
   await page.reload();
   await menuReady(page);
   await page.waitForTimeout(4000);
-  await expect(page.locator('.ut-overlay')).toHaveCount(0);
+  // GEMS never again. (Other tips still due on this save may follow - the GEARS tip, never marked seen here, comes back
+  // ~5 s after the reload; this used to assert NO tip at all and only passed because GEARS landed after the 4 s window.)
+  await expect(page.locator('.ut-overlay[data-tut="gems"]')).toHaveCount(0);
 });
 
 test('an existing LV300 player is not walked through anything', async ({ page }) => {
