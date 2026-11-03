@@ -410,8 +410,8 @@
   .sp2-price .kit-icon { width: 16px; height: 16px; }
   .sp2-float { font-size: var(--fs-k18); }
   .sp2-note { bottom: -24px; font-size: var(--fs-k14); }
-  /* the new SEALED ROLLS own the phone's first stock row (Andy: the new thing is SEEN, never below a scroll): tabs in
-     ONE row (the chip drops under them), the two rolls lead, the chest follows */
+  /* the SEALED ROLL shares the phone's first stock row with the FREE chest (Andy: the new thing is SEEN, never below a
+     scroll; move 8: FREE first): tabs in ONE row (the chip drops under them) */
   .sp2-stock-head { flex-wrap: wrap; row-gap: 8px; }
   .sp2-shelf-sub { display: none; } /* the shelf line is desktop flavour; on a phone the page scrolls and the tabs say it */
   .sp2-cell.is-chest { order: 1; }
@@ -837,7 +837,15 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 @media (min-width: 1000px) {
   .sp2-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-.sp2-cell.is-ticket { grid-column: 1; grid-row: 1 / span 2; }
+.sp2-cell.is-ticket { grid-column: 2; grid-row: 1 / span 2; }
+/* FIXED SHOP RHYTHM (nov3 design-research move 8): the FREE tile is ALWAYS first — the DAILY chest top-left, FREE or its
+   countdown to the next one — then the ONE featured tile (the tall SEALED ROLL), then the boosts fill the rest under the
+   shelf's single RESTOCK timer. Both placements are explicit, so a stock change can never reshuffle the first view.
+   e2e/shop-rhythm.spec.js. */
+.sp2-cell.is-chest { grid-column: 1; grid-row: 1; }
+/* the chest's FREE dot moves to its outer (top-left) corner: on the top-right it met the featured roll's rarity gem
+   across the cell gap */
+.sp2-chest .sp2-dot { right: auto; left: -8px; }
 .sp2-cell.is-ticket .sp2-card-in { container-type: size; justify-content: center; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-band { position: absolute; top: 0; left: 0; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
