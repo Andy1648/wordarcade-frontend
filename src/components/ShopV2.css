@@ -941,12 +941,11 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
 
 /* ===== CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and design)"): what you can buy
-   right now reads lit — the cyan price tag; what you can't goes quiet — the art desaturates (a static filter, never
-   animated), the tag turns to dark ink and says how many gems short you are ("NEED 45"). Same gem balance the menu's
-   dot reads. e2e/shop-can-afford.spec.js. ===== */
-.sp2-card.is-short .sp2-card-in > :is(.sp2-art, .sp2-ico) { filter: saturate(.35) brightness(.7) drop-shadow(3px 3px 0 #000); }
-.sp2-card.is-short .sp2-card-in > .sp2-art.sp2-vessel { filter: saturate(.45) brightness(.75); }
-.sp2-card.is-short .sp2-price { background: #2a1648; color: #c9b8e8; border-color: #000; }
+   right now wears the cyan price tag; what you can't keeps its art LIT (nov3 design-research move 9 — dimming turned a
+   short wallet's whole shelf grey, so the shop stopped selling) and only its TAG changes: red ink, "NEED 45". A tap
+   still answers with the deny shake + the gems pill, and the note says where gems come from (ShopV2.jsx NOTE.gems).
+   e2e/shop-can-afford.spec.js. ===== */
+.sp2-card.is-short .sp2-price { background: #E8262E; color: #fff; border-color: #7A0A10; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 .sp2-short { font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }
 
 /* ===== DEAL OF THE HOUR (oct29): the painted ribbon (hero-art, deal-ribbon-v1) WHOLE — its notched ends never cut — hung
