@@ -81,7 +81,7 @@ export const ROLLED_GLYPHS = {
   'mk-comet': ART('comet'),
   'mk-meltdown': ART('meltdown'),
   'mk-genie': ART('genie'),
-  'mk-gauntlet': ART('gauntlet'),
+  'mk-gauntlet': ART('gauntlet-v2'),
   'mk-grimoire': ART('grimoire'),
   'mk-supernova': ART('supernova'),
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
