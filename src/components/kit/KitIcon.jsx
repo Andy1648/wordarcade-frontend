@@ -17,7 +17,7 @@ export const ICON_ART = Object.freeze({
   wins: '/icons/wins.webp',
   stats: '/icons/stats.webp',
   rebirth: '/icons/rebirth.webp',
-  gears: '/icons/gears.webp',
+  gears: '/icons/gears-v2.webp', // nov2: the badass painted cog (ChatGPT Plus, best of 8)
   gems: '/icons/gems.webp',
   leaderboard: '/icons/leaderboard.webp',
   achievements: '/icons/achievements.webp',

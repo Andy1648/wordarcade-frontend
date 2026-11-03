@@ -2,6 +2,8 @@
 // ratchet): your MAIN's HERO image path from storage, shape-checked only. cast.js readMain() (ownership, fallbacks)
 // stays the authority everywhere a hero is actually drawn big.
 const ID = /^((riot|glitch|hype|brawl|hex)(-elite|-gold)?|dud|lexi|boo|shh|sizzle|mecha|quill|jinx|hollow|salty|buzz|zip|nova|drake|magma|facet)$/;
+/** A hero id this file can draw a face for (shape check only) — the menu's OPEN ROOMS rows (host's hero from the server). */
+export const isHeroId = (v) => typeof v === 'string' && ID.test(v);
 export function mainFaceSrc(id) {
   let v = id;
   if (!v) { try { v = localStorage.getItem('taw.main'); } catch { v = null; } }

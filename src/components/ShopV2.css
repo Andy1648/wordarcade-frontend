@@ -1021,3 +1021,19 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    centred lines in the room left of the sash (names never ellipsize), the band growing to hold them */
 .sp2-card.is-deal .sp2-band { height: auto; min-height: 30px; padding-top: 3px; padding-bottom: 3px; }
 .sp2-card.is-deal .sp2-name { white-space: normal; text-align: center; line-height: 1; overflow: visible; }
+
+/* ===== POP STYLE RARITY (nov2 design audit #15): the frame is the tier — the shop's rarity line colour, a thick border and
+   a tier fill; RARE / EPIC swatches stand on their painted backplate (the shop's own, big enough here: the swatch is ~96px);
+   EPIC and up pin the gold-set gem to the top-left corner; GOLD and up wear gold. Static — the hover pop is the only
+   motion. CLASSIC (free) stays plain. e2e/customize-fit.spec.js ===== */
+.sp2-look { position: relative; }
+.sp2-look.is-t-rare { border-color: #3D8BFF; background: #0f2350; }
+.sp2-look.is-t-epic { border-color: #B04BFF; background: #2a0e4a; }
+.sp2-look.is-t-legendary { border-color: #FFC23D; background: #3d2a05; }
+.sp2-look:is(.is-t-rare, .is-t-epic) .sp2-look-stage { background: url(/shop/backplate-rare-v1.webp) center / 118% 118% no-repeat; border-radius: 8px; }
+.sp2-look.is-t-epic .sp2-look-stage { background-image: url(/shop/backplate-epic-v1.webp); }
+.sp2-look:is(.is-t-rare, .is-t-epic) .sp2-look-burst { opacity: 0; } /* the plate is the burst behind the swatch now */
+.sp2-look.is-t-legendary .sp2-look-name { color: #FFE94A; }
+.sp2-look.is-on { border-color: #2EFFE0; } /* equipped reads over any tier */
+.sp2-look-gem { position: absolute; z-index: 2; left: -12px; top: -12px; width: 36px; height: 36px; transform: rotate(-10deg); pointer-events: none; }
+@media (max-width: 760px) { .sp2-look-gem { width: 28px; height: 28px; left: -8px; top: -8px; } }

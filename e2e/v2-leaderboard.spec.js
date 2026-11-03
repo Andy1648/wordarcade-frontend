@@ -121,12 +121,12 @@ test('▲▼ from the last look; the look is remembered for next time', async ({
   const seen = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.lbseen')));
   expect(seen.all).toMatchObject({ a: 1, b: 2, c: 3, d: 4, e: 5, me: 13 });
   // nothing on the board loops; the arrival one-shots finish. The TOP 3 IDLE (Andy oct12) is the one sanctioned
-  // motion after that: a FINITE beat on a podium character (oct16: each cast member idles its own way — LeaderboardV2 BEATS) / its glint / #1's crown — never infinite, never anything else.
+  // motion after that: a FINITE beat on a podium character or YOUR CLIMB's hero (nov2) (oct16: each cast member idles its own way — LeaderboardV2 BEATS) / its glint / #1's crown — never infinite, never anything else.
   await page.waitForTimeout(2600);
   const anims = await page.evaluate(() => document.getAnimations()
     .filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.lb2'))
     .map((a) => ({ inf: a.effect.getTiming().iterations === Infinity, running: a.playState === 'running',
-      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-buddy, .lb2-glint') })));
+      idle: !!a.effect.target.closest('.lb2-pod-name, .lb2-buddy, .lb2-glint, .lb2-climb-hero') })));
   expect(anims.filter((a) => a.inf).length, 'nothing infinite on the board').toBe(0);
   expect(anims.filter((a) => a.running && !a.idle).length, 'no still-running animation at rest but the top-3 idle beat').toBe(0);
 });
@@ -190,7 +190,8 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 657 }, { 
         const rc = el.getBoundingClientRect();
         if (rc.width === 0 || rc.height === 0) continue;
         if (el.closest('svg') && el.tagName.toLowerCase() !== 'svg') continue;
-        if (el.closest('.lb2-fx')) continue; // the top-3 celebration (aria-hidden, one-shot) may fly past the edge mid-burst
+        if (el.closest('.lb2-fx')) continue;
+        if (el.closest('.rseal-shine')) continue; // a seal's shine stripe rests outside its seal, clipped (overflow:hidden + the seal mask) // the top-3 celebration (aria-hidden, one-shot) may fly past the edge mid-burst
         const sc = el.closest('.lb2-scroll'); // TOP 20: a row scrolled out of the list's box is clipped, not off-screen
         if (sc && sc !== el) { const b = sc.getBoundingClientRect(); if (rc.bottom <= b.top + 1 || rc.top >= b.bottom - 1) continue; }
         if (rc.left < -1 || rc.top < -1 || rc.right > W + 1 || rc.bottom > H + 1) off.push(String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className));

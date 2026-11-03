@@ -17,8 +17,12 @@ import GearFx from '../GearFx';
 const STAR5 = 'M6.5 0.6 L8.2 4.6 L12.5 4.9 L9.2 7.7 L10.2 12 L6.5 9.7 L2.8 12 L3.8 7.7 L0.5 4.9 L4.8 4.6 Z';
 const SLOTS = Array.from({ length: MAX_PIPS }, (_, i) => i);
 
+// ONE STAT BLOCK (design audit nov2): the MAIN stat + substats are printed on the reveal card itself, so this plate no
+// longer repeats them (with the old see-through backdrop the stats showed THREE times: card, plate, the reel's ghost).
+// It says only what the card can't — the PERKS and a duplicate's gems — and renders nothing when there is neither.
+// The MAIN / extras nodes are not mounted, so their one-shots in Reel.jsx are no-ops (anim() skips a missing node).
 function RevealStats({ stats, reg, glow = null }) {
-  if (!stats) return null;
+  if (!stats || (!stats.perks.length && !stats.dupe)) return null;
   return (
     <div className={`rv-stats is-plated${glow ? ' is-glow' : ''}`} data-testid="roll-reveal-stats" data-glow={glow || undefined}>
       {/* EVERY reveal sits its stats on the plate (Andy oct14 "larger stat reveals on rolls"): a RARE's column used to
@@ -27,19 +31,6 @@ function RevealStats({ stats, reg, glow = null }) {
         {glow ? <GearFx tier={glow} scale={0.75} /> : null}
         <span className="rv-stats-plate" />
       </span>
-      <div className="rv-main" ref={reg('xMain')}>
-        <span className={`rv-main-num${stats.num.length >= 5 ? ' is-l' : ''}`}>{stats.num}</span>
-        {stats.kind ? <span className="rv-main-kind">{stats.kind}</span> : null}
-      </div>
-      {stats.crit.length ? (
-        <div className="rv-extras">
-          {stats.crit.map((l, i) => (
-            <span key={l.id} className="rv-extra" ref={reg(`xEx${i}`)}>
-              <span className="rv-extra-num">{l.num}</span> <span className="rv-extra-kind">{l.kind}</span>
-            </span>
-          ))}
-        </div>
-      ) : null}
       {stats.perks.length ? (
         <div className="rv-perk" ref={reg('xPerk')}>
           <span className="rv-perk-kick">PERK{stats.perks.length > 1 ? 'S' : ''}</span>
