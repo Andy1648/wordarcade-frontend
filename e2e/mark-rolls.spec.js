@@ -157,7 +157,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
     'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 59, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 1');
   await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: SPUN });
@@ -172,7 +172,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {

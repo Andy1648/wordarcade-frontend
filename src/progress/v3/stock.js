@@ -46,7 +46,8 @@ export const STOCK = [
   // (lb_ticket_buy — price, hourly stock and the floor are its own; rollTickets.js TICKET_SHOP mirrors them) and the shop
   // card routes the tap there (buyStock answers 'ticket'). the card draws the vessel (VesselArt). NO tagline (Andy oct25:
   // too much writing) — the art + tier word + price carry it; new-gear-first stays a quiet server behaviour.
-  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', price: 500, max: 2 },
+  // design research move 6: a bundle states its GUARANTEED floor in words, not just the tier name
+  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', what: 'OR BETTER · GUARANTEED', price: 500, max: 2 },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },
