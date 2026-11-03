@@ -17,7 +17,7 @@
 export const TITLE_FORMATS = {
   tape: { label: 'TAPE', src: '/titles/title-tape-v1.png', aspect: 3.95, box: [0.12, 0.22, 0.12, 0.2], tilt: -2, stroke: 0 },
   sticker: { label: 'STICKER', src: '/titles/title-sticker-v1.png', aspect: 3.46, box: [0.12, 0.24, 0.14, 0.3], tilt: -3, stroke: 3 },
-  steel: { label: 'STEEL', src: '/titles/title-plate-v1.png', aspect: 4.44, box: [0.1, 0.18, 0.1, 0.2], tilt: 0, stroke: 0 },
+  steel: { label: 'STEEL', src: '/titles/title-plate-v2.png', aspect: 3.29, box: [0.15, 0.22, 0.15, 0.22], tilt: 0, stroke: 0 },
   banner: { label: 'BANNER', src: '/titles/title-banner-v1.png', aspect: 3.57, box: [0.16, 0.34, 0.16, 0.2], tilt: 0, stroke: 3 },
   neon: { label: 'NEON', src: '/titles/title-neon-v1.png', aspect: 5.88, box: [0.07, 0.2, 0.07, 0.2], tilt: 0, stroke: 3 },
   marquee: { label: 'MARQUEE', src: '/titles/title-marquee-v1.png', aspect: 4.01, box: [0.08, 0.32, 0.08, 0.2], tilt: -1, stroke: 4 },
