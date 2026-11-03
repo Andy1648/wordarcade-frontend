@@ -987,7 +987,7 @@
 }
 .mn-seat.is-open .mn-seat-name { color: #fff; }
 .mn-seat-code {
-  font-family: 'Bungee', sans-serif; text-transform: uppercase;
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase;
   font-size: var(--fs-body);
   color: var(--mn-gold);
   letter-spacing: 2px;
@@ -1004,6 +1004,5 @@
 .mn-btn-big:active { transform: translate(4px, 4px); }
 @media (max-width: 760px), (max-aspect-ratio: 4/5) {
   .mn-lobby .mn-seats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mn-lobby .mn-seat-name { font-size: var(--fs-body); }
   .mn-btn-big { min-height: 60px; padding: 0 18px; }
 }
