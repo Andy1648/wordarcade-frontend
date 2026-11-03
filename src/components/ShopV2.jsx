@@ -57,6 +57,7 @@ const NOTE = {
   soon: 'SEALED ROLLS OPEN SOON',
   offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
   budget: 'NOT YET — PLAY A LITTLE MORE',
+  gems: 'PLAY A GAME TO EARN GEMS',
   sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
   not_sold: 'NOT IN THE SHOP ANYMORE',
 };
@@ -86,7 +87,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef 
   const deal = !it.ticket && V3.stock.dealOf(now) === it.id;
   const price = it.ticket ? it.price : V3.stock.stockPrice(it.id, now);
   // CAN-AFFORD (oct29 shop functionality): a card you can buy now keeps its lit price; one you can't says how many
-  // gems short you are on the price itself (the tap still answers with the deny shake + the gems pill)
+  // gems short you are on the price itself, in red, the art still lit (the tap answers with the deny shake + the gems pill + where to earn)
   const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
@@ -333,14 +334,14 @@ export default function ShopV2({ onBack }) {
     if (buying.current) return;
     const short = it.price - getGems();
     if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
-    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); return; }
+    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); setNote(NOTE.gems); return; }
     buying.current = true;
     const r = await buyTicket(it.ticket);
     buying.current = false;
     if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') gemsPill.current?.deny(r.short || short);
+      if (r.reason === 'gems') { gemsPill.current?.deny(r.short || short); setNote(NOTE.gems); }
       else if (r.reason === 'sold_out') { setLeft(V3.stock.setStockLeft(it.id, 0)); setNote(NOTE.sold_out); }
       else setNote(NOTE[r.reason] || NOTE.offline);
       return;
@@ -368,7 +369,7 @@ export default function ShopV2({ onBack }) {
     setLeft(r.left);
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') gemsPill.current?.deny(r.short);
+      if (r.reason === 'gems') { gemsPill.current?.deny(r.short); setNote(NOTE.gems); }
       else setNote(NOTE[r.reason] || null);
       return;
     }
@@ -485,7 +486,7 @@ export default function ShopV2({ onBack }) {
                 <DailyChestCard now={now} onOpen={() => { sndPurchase(); setChest(true); }} />
               </div>
             ) : null}
-            {/* the SEALED ROLLS lead the shelf, right after the chest — the new thing is in the FIRST view, never below a scroll */}
+            {/* move 8, fixed rhythm: FREE chest → the featured SEALED ROLL → boosts (placed in ShopV2.css, FIXED SHOP RHYTHM) */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} bought={bought[it.id] || 0} shineRef={(el) => { shines.current[it.id] = el; }} floatRef={(el) => { floats.current[it.id] = el; }} />

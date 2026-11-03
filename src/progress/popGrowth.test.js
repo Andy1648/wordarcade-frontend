@@ -41,9 +41,18 @@ test('a rebirth never shrinks the pop', () => {
   assert.ok(popGrowth(careerLevel(1, 1, gate)).scale > popGrowth(careerLevel(25, 0, gate)).scale);
 });
 
-test('the early levels are felt but modest (L10 ~+7%)', () => {
-  assert.ok(popGrowth(10).scale > 1.05);
-  assert.ok(popGrowth(10).scale < 1.1);
+test('the early levels are felt but modest (L10 ~+3%)', () => {
+  assert.ok(popGrowth(10).scale > 1.02);
+  assert.ok(popGrowth(10).scale < 1.05);
+});
+
+// nov2 (Andy: "dont make the difference too visible … just the original size worked"): LV1 is the original size, and
+// the whole climb is a gentle bonus — never more than +15% on any screen
+test('LV1 is the original size (the floor) and growth tops out within +15%', () => {
+  assert.equal(popGrowth(1).scale, 1);
+  assert.equal(popGrowth(1, true).scale, 1);
+  assert.ok(1 + GROWTH_MAX <= 1.15 && 1 + GROWTH_MAX >= 1.1);
+  assert.ok(1 + GROWTH_MAX_NARROW <= 1.15);
 });
 
 test('pop dressing comes in stages', () => {

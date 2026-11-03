@@ -13,7 +13,7 @@
 //   * CLAIM pays the gems ONCE (claimAchievementV3 — one tier per call; a 2nd tap on a stamped tile does nothing), the
 //     tile is stamped CLAIMED (kit stamp), and the gems FLY to the counter (KitFlyLayer — pooled nodes): the pill
 //     counts up as each one lands. MAXED tiles carry the kit MAX stamp.
-// Glyphs are the mockup's vector art as files (/public/ach/*.svg — art is an asset, never CSS). Motion: kit one-shots
+// Glyphs are painted emblems (/public/ach/*-v1.webp; were the mockup's vector *.svg — art is an asset, never CSS). Motion: kit one-shots
 // on transform / opacity; nothing loops at rest; REDUCE MOTION lands every gem at once (KitFlyLayer).
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -31,7 +31,7 @@ import { formatNum } from '../format';
 
 const TC = ['#A9B4C8', '#3D8BFF', '#B04BFF', '#FFC23D', '#FF3D7F'];
 const TF = ['#262b38', '#0f2350', '#2a0e4a', '#3d2a05', '#4a0a22'];
-const glyph = (g) => `/ach/${g}.svg`;
+const glyph = (g) => `/ach/${g}-v1.webp`; // nov3: painted badge emblems (ChatGPT, best of 4); the old /ach/*.svg glyphs stay for any other reader
 const STAMP_MS = 1250; // the CLAIMED stamp holds the tile this long (the mockup's beat), then it shows the next tier
 const FLY_PARTS = 6;
 
