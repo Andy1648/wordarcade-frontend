@@ -50,7 +50,7 @@ test('unlockNews: every rebirth unlock open and not yet said, in ladder order, w
   assert.deepEqual(N.unlockNews([], { rebirths: 0, stars: 1 }).map((u) => u.id), ['autoRoll', 'autoRebirth', 'mark2', 'luck', 'odLong', 'powerSale', 'drop2']);
 });
 
-test('checkNews: the first look is silent; a rebirth then says RANK UP + its unlock ONCE; nothing pays', () => {
+test('checkNews: the first look is silent; a rebirth then says its unlock ONCE (no title banner since nov2); nothing pays', () => {
   reset();
   const store = globalThis.localStorage;
   const first = N.checkNews({ state: { rebirths: 0, stars: 0 }, best: 0, store });
@@ -58,7 +58,7 @@ test('checkNews: the first look is silent; a rebirth then says RANK UP + its unl
   const wins0 = W.getWins();
   const gems0 = G.getGems();
   const after = N.checkNews({ state: { rebirths: 1, stars: 0 }, best: 0, store });
-  assert.deepEqual(after.rank, { from: { name: 'INKLING', req: 'R0' }, to: { name: 'TYPO', req: 'R1' } });
+  assert.equal(after.rank, null, 'titles retired nov2: no RANK UP banner');
   assert.deepEqual(after.unlocks.map((u) => u.label), ['AUTO ROLL']);
   assert.equal(W.getWins(), wins0, 'a rank-up pays no wins');
   assert.equal(G.getGems(), gems0, 'a rank-up pays no gems');
@@ -66,10 +66,7 @@ test('checkNews: the first look is silent; a rebirth then says RANK UP + its unl
   // a save that arrives already past things (the first look) never replays them
   reset();
   assert.deepEqual(N.checkNews({ state: { rebirths: 7, stars: 0 }, best: 7, store }), { rank: null, unlocks: [] });
-  // the shown rank is the best ever (an ascension resets rebirths but every ★ rank sits above R10)
-  const asc = N.checkNews({ state: { rebirths: 0, stars: 1 }, best: 7, store });
-  assert.equal(asc.rank.to.name, 'VOIDTYPER');
-  assert.equal(asc.rank.from.name, 'CAPSLOCK');
+  assert.equal(N.checkNews({ state: { rebirths: 0, stars: 1 }, best: 7, store }).rank, null);
 });
 
 test('checkNews survives blocked storage (says nothing it cannot remember, never throws)', () => {

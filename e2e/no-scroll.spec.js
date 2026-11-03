@@ -19,8 +19,6 @@ const ALLOW = [
   ['.mx-grid', 'the gear INDEX: every gear'],
   ['.cz.is-hero .cz-body:not(:has(.hpv))', 'CUSTOMIZE · HERO: every hero (oct28: the card stays put, the grid scrolls)'],
   ['.cz:is(.is-pop, .is-sound) .cz-body', 'CUSTOMIZE · POP STYLE / SOUND: every look'],
-  ['.rl', 'the title ladder: all 16 titles'],
-  ['.rl-shelf', 'the title list on a short laptop (1280x551): all 16 titles'],
   ['.sp2-grid', 'the UPGRADES stock: more boosts below ("SCROLL FOR MORE")'],
   ['.sp2-shelf', 'the CODES shelf'],
   ['.ppp-window-scroll', 'the Category Blitz pack picker (Andy\'s named exception)'],
@@ -79,8 +77,6 @@ const SCREENS = {
   'hero picker': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc').first().waitFor(); },
   // oct28: a tap on an OWNED hero wears it — a locked one (a CHASE hero) opens the preview
   'hero preview': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc[data-hero="facet"]').click(); await p.locator('.hpv').waitFor(); },
-  // oct22 (#483): the XP bar's plate is the PROFILE plate; the ladder opens from the profile's TITLE
-  'title ladder': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-title').click(); await p.getByTestId('rank-ladder').waitFor(); },
   'daily contracts': async (p) => { await nav(p, 'contracts').click(); await p.getByTestId('contracts-sheet').waitFor(); },
   upgrades: async (p) => { await navControl(p, 'shop').click(); await p.locator('.sp2').waitFor(); },
   'gears roll': async (p) => { await navControl(p, 'gears').click(); await p.locator('.rs-overlay').waitFor(); },
