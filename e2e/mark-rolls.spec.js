@@ -52,6 +52,16 @@ const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filte
   return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running'
     && !(/^(mc-spin|mc-bob|mc-rock)$/.test(a.animationName || '') && a.effect.getTiming().iterations === Infinity);
 }).length);
+// AUTO's other honest stops: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target — or the
+// roll DROPPED a chase hero (cast.js rollChaseDrop stops AUTO). A gems-ran-out stop is neither.
+const stoppedOnHit = (page) => page.evaluate(() => {
+  const top = ['legendary', 'mythic', 'secret'];
+  const tiers = [...document.querySelectorAll('[data-testid="mark-roll-result"], [data-testid="mark-roll-extra"] [data-tier]')]
+    .map((el) => el.getAttribute('data-tier'));
+  let heroes = [];
+  try { heroes = JSON.parse(localStorage.getItem('taw.s2.heroes') || '[]'); } catch { heroes = []; }
+  return tiers.some((t) => top.includes(t)) || ['drake', 'magma', 'facet'].some((h) => heroes.includes(h));
+});
 const SPUN = 4600; // past the full spin (2.4 s every tier, NIGHT oct8) + its land beat, with room
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
 // A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
@@ -203,7 +213,9 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   // top target). A duplicate also pays gems back (gear v4 DUPE_GEMS: rare 5), so the end balance varies with the draw.
   // What must ALWAYS hold: never negative, never wins — and when it stopped short, the shortfall shown is the real one.
   expect(after.gems).toBeGreaterThanOrEqual(0);
-  if (after.gems < 10) {
+  // main 8ef41de3 (#596) failed here on a LEGENDARY (MONSOON) landing with 5 gems left: AUTO stopped on its target, so no
+  // shortfall is shown — only a stop with NO top-target hit (and no chase drop) owes the −X
+  if (after.gems < 10 && !(await stoppedOnHit(page))) {
     const need = String(10 - after.gems);
     await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', need);
     await expect(page.locator('.rs-need')).toHaveText(`−${need}`);
