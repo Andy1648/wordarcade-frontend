@@ -687,8 +687,9 @@ export default function LeaderboardV2({ onBack }) {
             const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
               <Fragment key={r.id}>
-              {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
+              {/* the cut line: a slim flat divider - the band name, then a rule in its colour (Andy nov2: the painted ribbons
+                  "look horrendous"; the rank LEAGUES' badge set replaces this label once it lands) */}
+              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
