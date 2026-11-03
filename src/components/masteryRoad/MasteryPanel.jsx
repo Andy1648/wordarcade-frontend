@@ -77,7 +77,7 @@ function Track({ p, reached, frac, kx, ky, className }) {
 }
 
 /** @param onPaid (gems, event) — the parent flies the gems to its pill */
-export default function MasteryPanel({ onPaid }) {
+export default function MasteryPanel({ onPaid, onClaim }) {
   const [roads, setRoads] = useState(() => MODES.map(roadStatus));
   const [mode, setMode] = useState(() => firstMode(roads));
   const [said, setSaid] = useState({ i: -1, text: '' });
@@ -91,6 +91,7 @@ export default function MasteryPanel({ onPaid }) {
     setRoads(MODES.map(roadStatus));
     setSaid({ i, text: res.gems ? `+${formatNum(res.gems)}` : 'YOURS' });
     pop(artRefs.current[i]);
+    if (onClaim) onClaim(e); // every claimed node cracks open (the painted blades), gems or not
     if (res.gems && onPaid) onPaid(res.gems, e);
   };
 

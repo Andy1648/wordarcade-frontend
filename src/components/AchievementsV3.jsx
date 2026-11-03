@@ -20,6 +20,7 @@ import { createPortal } from 'react-dom';
 import './AchievementsV3.css';
 import { KitBackButton, KitButton, KitGhostButton, KitPill, KitStampCard, KitFlyLayer, KitIcon, KitSlabTabs } from './kit/index.js';
 import MasteryPanel from './masteryRoad/MasteryPanel.jsx';
+import ShardBurst from './gains/ShardBurst.jsx';
 import { allRoads } from '../progress/masteryRoad.js';
 import { achievementsV3, claimAchievementV3, ROMAN } from '../progress/v3/achievements';
 import { LADDER_GEARS, ladderOwnedGears } from '../progress/ladderGears.js';
@@ -121,6 +122,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
   const ref = useRef(null);
   const pillRef = useRef(null);
   const flyRef = useRef(null);
+  const shardsRef = useRef(null);
   const stampingRef = useRef(null); // the id being stamped, set synchronously (a double click in one task pays once)
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -144,6 +146,15 @@ export default function AchievementsV3({ onClose, focusId = null }) {
     return () => clearTimeout(t);
   }, [stamp]);
 
+  // CLAIM SHARDS (nov2): a claim cracks its button open — the painted cyan crystal blades (fx/shards, the gems' colour)
+  // burst from it, clear it, and the gems fly out over them. One read of the button's box, in the handler (never per frame).
+  const burstAt = (e, n) => {
+    const el = e && e.currentTarget;
+    if (!el || !shardsRef.current) return;
+    const b = el.getBoundingClientRect();
+    shardsRef.current.burst({ x: b.left + b.width / 2, y: b.top + b.height / 2 }, { w: b.width, h: b.height, set: 'cyan', n });
+  };
+
   // CLAIM: one tier, paid once. `e` = the click (its point is where the gems burst from).
   // the gems a road claim paid fly from its button to the pill, exactly like an achievement's
   const flyGems = (amount, e) => {
@@ -157,7 +168,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
     flyRef.current?.fly({ from, amounts: splitReward(amount), onLand: (a) => setInFlight((n) => Math.max(0, n - a)) });
   };
 
-  const claim = (id, e) => {
+  const claim = (id, e, big = false) => {
     if (stampingRef.current === id) return; // the tile is still being stamped
     const res = claimAchievementV3(id);
     if (!res.ok) return;
@@ -167,6 +178,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
     const row = next.find((r) => r.id === id);
     setRows(next);
     setStamp({ id, key: Date.now(), next: row && !row.maxed ? `${ROMAN[row.tier]} · ${formatNum(row.need)}` : 'MAXED' });
+    burstAt(e, big ? 12 : 8); // the hero's big CLAIM throws the full set, a list tile a lighter one
     // the gems fly from the button to the counter; the pill counts each one in as it lands
     let from = null;
     if (e && e.clientX) from = { x: e.clientX, y: e.clientY };
@@ -210,7 +222,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
           </header>
 
           {tab === 1 ? (
-            <div className="av3-body av3-body--mastery"><MasteryPanel onPaid={flyGems} /></div>
+            <div className="av3-body av3-body--mastery"><MasteryPanel onPaid={flyGems} onClaim={(e) => burstAt(e, 10)} /></div>
           ) : (
           <div className="av3-body">
             {hero && (
@@ -238,7 +250,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
                       labelSize={34}
                       width={330}
                       ariaLabel={`Claim ${hero.name} for ${hero.reward} gems`}
-                      onClick={(e) => claim(hero.id, e)}
+                      onClick={(e) => claim(hero.id, e, true)}
                     />
                   ) : !hero.maxed && !heroStamped ? (
                     <span className="av3-hero-reward">
@@ -303,6 +315,7 @@ export default function AchievementsV3({ onClose, focusId = null }) {
           )}
         </div>
       </div>
+      <ShardBurst ref={shardsRef} set="cyan" />
       <KitFlyLayer ref={flyRef} target={() => pillRef.current && pillRef.current.iconEl()} icon="gems" />
     </div>,
     document.body,

@@ -4,7 +4,8 @@
 // violet for a rebirth, gold for a JACKPOT — and is set at render, so the sprites are loaded before the burst.
 //
 //   <div style={{ position: 'relative' }}><ShardBurst ref={s} set="gold" /></div>
-//   s.current.burst(viewportPoint, { w, h, set })   // w/h: the box the blades must clear (the plate); set: this burst's colours
+//   s.current.burst(viewportPoint, { w, h, set, n })   // w/h: the box the blades must clear (the plate); set: this burst's
+//                                                      // colours; n: how many (≤ SHARD_COUNT — a small claim throws fewer)
 //
 // The layer's own origin is measured on mount / resize only; a burst() is pure writes.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
@@ -46,7 +47,8 @@ const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' },
       const x0 = from.x - o.x - HALF;
       const y0 = from.y - o.y - HALF;
       // the blades clear the slammed box, and never fly off the screen (innerWidth/Height: no layout read)
-      const vs = fitInside(clearVectors(SHARD_COUNT, box ? box.w : 120, box ? box.h : 120, { reach: [50, 130] }), from, window.innerWidth, window.innerHeight);
+      const n = Math.max(1, Math.min(SHARD_COUNT, (box && box.n) || SHARD_COUNT));
+      const vs = fitInside(clearVectors(n, box ? box.w : 120, box ? box.h : 120, { reach: [50, 130] }), from, window.innerWidth, window.innerHeight);
       // the colours of THIS burst (the `set` prop already loaded them; a src write to a cached sprite is instant); the
       // last blade to land hands the pool back to the `set` prop (its own finish event — no timer to drift from the clock)
       if (box && box.set) paint(box.set);
