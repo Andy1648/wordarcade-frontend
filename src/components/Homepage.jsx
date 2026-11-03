@@ -120,7 +120,7 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
-import { leagueOf } from '../leaderboard/leagues.js';
+import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
@@ -1476,7 +1476,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
-        <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>{titleName}</span>
+        <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>
+          {myLeague ? <img className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
+          {titleName}
+        </span>
       </span>
     </button>
   );

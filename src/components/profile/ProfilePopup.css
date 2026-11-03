@@ -60,7 +60,7 @@
 .pf-nameline { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .pf-nameline .pf-name { flex: 1 1 auto; min-width: 0; }
 .pf-league { transform: rotate(-3deg); } /* your league tilts onto the name, the way the seals stamp the board */
-.pf-league .lg-badge-name, .pf-league .lg-badge-n { font-size: var(--fs-panel); } /* sized to sit beside the big name, not under it */
+.pf-league { font-size: var(--fs-panel); } /* sized to sit beside the big name, not under it */
 /* a phone-width card: the name gets the whole line, the title plate drops under it (the name never clips) */
 @media (max-width: 600px) { .pf-nameline { flex-direction: column; align-items: flex-start; gap: 8px; } .pf-nameline .pf-name { width: 100%; } }
 
