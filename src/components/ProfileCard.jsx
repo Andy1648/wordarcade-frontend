@@ -282,4 +282,4 @@ export default function ProfileCard({ row, mine = false, onClose }) {
 }
 
 // the PROFILE popup (oct17) reuses your own description editor — the same one the board card shows (titles removed oct17: Andy "no need for titles … we already have enough cosmetics")
-export { Bio };
+export { Bio, BadgeRow };

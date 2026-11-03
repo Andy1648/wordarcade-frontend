@@ -17,13 +17,11 @@ import HeroUnlock from '../../cast/HeroUnlock.jsx';
 import { unseenHeroes } from '../../cast/heroSeen.js';
 import { rarityOf } from '../../cast/CastArt.jsx';
 import FitText from '../kit/FitText.jsx';
-import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js';
 import { kitPlay } from '../kit/motion.js';
-import { Bio } from '../ProfileCard.jsx';
+import { Bio, BadgeRow } from '../ProfileCard.jsx';
 import { myBio, myShowcase } from '../../leaderboard/showcase.js';
 import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client.js';
-import { readCounters } from '../../progress/v3/store.js';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
 import { unlistedIndex } from '../../unlisted/unlisted.js';
@@ -47,15 +45,23 @@ function wornTitle() {
 
 const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transform: 'scale(1.02)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
 
-function Stat({ icon, glyph, tone, value, label }) {
+/** A banner STAT MEDALLION (nov2 design audit #14 / research 5.1 — "a banner with fixed slots: 3 trackers"): hero-art's
+ *  painted medallion (public/profile/medal-<id>-v1 — the stopwatch, the chevron rim, the phoenix: the art says WHAT it
+ *  counts), the number in Bungee on its glossy centre disc (`cy` = that disc's centre, % of the art), the label under it. */
+const MEDAL_CY = { time: 58, level: 58, rebirths: 54 };
+function Medal({ tone, value, label, id }) {
   return (
-    <div className="pf-stat" style={{ '--pf-t': tone }}>
-      {glyph ? <img className="pf-stat-g" src={`/ach/${glyph}.svg`} alt="" aria-hidden="true" /> : <KitIcon name={icon} size={44} shadow={2} extras={false} />}
-      <FitText className="pf-stat-v">{value}</FitText>
-      <span className="pf-stat-k">{label}</span>
+    <div className="pf-medal" style={{ '--pf-t': tone, '--mcy': `${MEDAL_CY[id] || 50}%` }} data-testid={`profile-medal-${id}`}>
+      <span className="pf-medal-disc">
+        <img className="pf-medal-art" src={`/profile/medal-${id === 'rebirths' ? 'rebirth' : id}-v1.webp`} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+        <FitText className="pf-medal-v fit-center">{value}</FitText>
+      </span>
+      <span className="pf-medal-k">{label}</span>
     </div>
   );
 }
+/** The 3 badge slots: your three highest claimed achievement tiers (the board card's own badge row). */
+const top3 = (badges) => Object.fromEntries(Object.entries(badges || {}).sort((a, b) => b[1] - a[1]).slice(0, 3));
 
 /** @param onClose · @param onMainChange(id) the menu re-reads your hero
  *  @param view0 'profile' | 'customize' (the shop's COSMETICS opens straight onto CUSTOMIZE) · @param tab0 CUSTOMIZE's first tab */
@@ -77,7 +83,6 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
   const h = heroById(id) || CAST[0];
   const me = getMyProfile();
   const st = myStats();
-  const c = readCounters();
   const play = readPlaySec();
   const show = myShowcase();
   // THE UNLISTED: still read once on open — it runs the back-fill (unlisted.js) — but nothing here shows it: no shelf,
@@ -132,7 +137,9 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
             <div className="pf-right">
               <div className="pf-id">
                 <div className="pf-nameline">
-                  <FitText className="pf-name">{me ? me.username : 'NO NAME YET'}</FitText>
+                  {/* ONE name source (nov2 audit #14: "NO NAME YET" sat beside a KEYFIEND plate): no name yet → the plate
+                      stands alone and the hint under it says how to get one */}
+                  {me ? <FitText className="pf-name">{me.username}</FitText> : null}
                   {/* TITLE (oct28): the painted title sits ON your name, the way everyone else sees it; tap → TITLES */}
                   <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
                     <KitRankPlate rank={title.req} fit className="pf-title-plate" />
@@ -142,14 +149,14 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
                 {me ? <Suspense fallback={null}><SaveCodeChip /></Suspense> : null}
               </div>
-              <div className="pf-stats">
-                <Stat icon="clock" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
-                <Stat glyph="key" tone="#FFE94A" value={formatNum(st.lifetimeWords || c.words || 0)} label="WORDS TYPED" />
-                <Stat glyph="cup" tone="#FF4FA3" value={formatNum((c.mp || 0) + (c.bots || 0))} label="GAMES WON" />
-                <Stat icon="levels" tone="#B04BFF" value={formatNum(st.level)} label="LEVEL" />
-                <Stat icon="rebirth" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
-                <Stat icon="index" tone="#c9b8ff" value={show.gears_total ? `${formatNum(show.gears_found)}/${formatNum(show.gears_total)}` : '0'} label="GEARS FOUND" />
+              {/* THE BANNER (nov2 design audit #14, research 5.1): three trackers, not a six-tile dashboard — the rest lives
+                  in STATS — and up to three badges, your best */}
+              <div className="pf-medals">
+                <Medal id="time" tone="#2EFFE0" value={formatPlayTime(play)} label="TIME PLAYED" />
+                <Medal id="level" tone="#B04BFF" value={formatNum(st.level)} label="LEVEL" />
+                <Medal id="rebirths" tone="#FF6B3D" value={formatNum(st.rebirths)} label="REBIRTHS" />
               </div>
+              <BadgeRow badges={top3(show.badges)} />
               {me ? <Bio text={myBio()} mine /> : null}
             </div>
           </div>

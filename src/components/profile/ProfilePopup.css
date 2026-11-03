@@ -114,3 +114,30 @@
 @media (hover: hover) { .pf-kit:hover { transform: translate(-2px, -2px); } }
 /* CUSTOMIZE gets room (Andy "you can extend the borders"): the card widens on desktop, the menu fills it */
 .pf.is-customize { width: min(1240px, 100%); }
+
+/* ===== THE BANNER (nov2 design audit #14, research 5.1): three painted STAT MEDALLIONS (hero-art, public/profile/
+   medal-*-v1) in a row — the number set in Bungee with a thick black stroke on each medallion's glossy centre disc
+   (--mcy: that disc's centre), the label in the stat's colour under it — and up to three badges under them. No dashboard
+   of six small tiles. e2e/customize-fit.spec.js measures it. ===== */
+.pf-medals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.pf-medal { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.pf-medal-disc { position: relative; width: min(140px, 100%); aspect-ratio: 1; }
+.pf-medal-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(4px 4px 0 #000); }
+.pf-medal-v {
+  position: absolute; left: 22%; right: 22%; top: var(--mcy); translate: 0 -50%;
+  font: 400 var(--fs-k30) 'Bungee', sans-serif; text-transform: uppercase; line-height: 1; color: #fff;
+  -webkit-text-stroke: 6px #000; paint-order: stroke fill; text-align: center;
+}
+.pf-medal-k { font: 400 var(--fs-k16) 'Bungee', sans-serif; text-transform: uppercase; color: var(--pf-t); -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-align: center; white-space: nowrap; }
+@media (max-width: 760px) {
+  .pf-medals { gap: 6px; }
+  .pf-medal-v { font-size: var(--fs-k22); -webkit-text-stroke-width: 5px; }
+  .pf-medal-k { font-size: var(--fs-k14); white-space: normal; }
+}
+@media (min-width: 761px) and (max-height: 700px) {
+  .pf-medal-disc { width: min(112px, 100%); }
+  .pf-medal-v { font-size: var(--fs-k24); }
+}
+/* the banner's badge slots are real slots — bigger than the board card's 46px row */
+.pf .pc-badges { grid-template-columns: repeat(3, 64px); gap: 12px; padding: 0 6px 6px 0; }
+@media (max-width: 760px) { .pf .pc-badges { grid-template-columns: repeat(3, 52px); gap: 10px; } }

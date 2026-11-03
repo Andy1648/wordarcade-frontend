@@ -134,3 +134,5 @@ button.kstc:focus-visible { outline: var(--k-ink-m) solid var(--k-cyan); outline
 @media (prefers-reduced-motion: reduce) {
   .kstc-body { transition: none; }
 }
+/* the PAINTED purchase stamp (nov2, hero-art stamp-sold-v1): a 2:1 ink impression, its own ratio */
+.kst-paint img { display: block; width: 170px; height: 85px; object-fit: contain; pointer-events: none; user-select: none; }
