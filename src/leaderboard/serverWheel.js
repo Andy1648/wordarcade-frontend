@@ -25,6 +25,9 @@ export async function wheelState(now = Date.now()) {
       streak: Math.max(0, Math.floor(Number(r.streak) || 0)),
       lastDay: Math.max(0, Math.floor(Number(r.last_day) || 0)),
       adOn: r.ad_on === true,
+      // 081 EARNED: the board's game words and the count today's spin needs (null on a pre-081 server: nothing to earn)
+      words: Number.isFinite(Number(r.words)) ? Number(r.words) : 0,
+      need: r.need == null || !Number.isFinite(Number(r.need)) ? null : Number(r.need),
       free: r.free ? normalizeSpin(r.free) : null,
       ad: r.ad ? normalizeSpin(r.ad) : null,
     };
@@ -34,13 +37,14 @@ export async function wheelState(now = Date.now()) {
   }
 }
 
-/** Resolves { spin } (normalized) or { error: 'spun' | 'ads_off' | 'free_first' | 'day' | 'off' }. */
+/** Resolves { spin } (normalized) or { error: 'spun' | 'ads_off' | 'free_first' | 'day' | 'off' | 'words', have?, need? }. */
 export async function spinWheel(kind = 'free', now = Date.now()) {
   if (!wheelOn()) return { error: 'off' };
   try {
     const r = await rpc('lb_wheel_spin', { p_secret: getSecret(), p_day: wheelDay(now), p_kind: kind });
     const s = normalizeSpin(r);
     if (s) return { spin: s };
+    if (r && r.reason === 'words') return { error: 'words', have: Number(r.have) || 0, need: Number(r.need) || 0 };
     return { error: (r && r.reason) || 'off' };
   } catch (e) {
     if (missing(e)) off = true;

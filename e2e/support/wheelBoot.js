@@ -7,14 +7,16 @@ const SPIN_ID = '11111111-2222-4333-8444-555555555555';
 const TICKET_ID = '99999999-8888-4777-8666-555555555555';
 
 
-export async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'jackpot' } = {}) {
+// earn = { words, need } mocks 081_wheel_earned.sql (the board's game words + what today's spin needs); omitted = a pre-081
+// server (no words / need: nothing to earn)
+export async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 'jackpot', earn = null } = {}) {
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   const row = { id: 'me-wh', username: 'Spinner', level: 24, rebirths: 2, lifetime_words: 400, lifetime_letters: 2000, wins_per_word: 0, econ: 13 };
   const shared = { rows: [row], secrets: new Map([[SECRET, row.id]]), saves: new Map() };
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, season2: true });
   // the 067 mock: one spin per day per kind; the same row on every later ask
-  const db = { spun: null, claimed: false, calls: { spin: 0, claim: 0, state: 0 } };
+  const db = { earn, spun: null, claimed: false, calls: { spin: 0, claim: 0, state: 0 } };
   const PAY = { 0: ['gems', 25], 1: ['xp', 10], 2: ['gems', 60], 3: ['ticket', 0], 4: ['wins', 10], 5: ['ticket', 0], 6: ['gems', 120], 7: ['cosmetic', 0] };
   const body = (day, again) => {
     const [prize, base] = PAY[slot];
@@ -32,10 +34,11 @@ export async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 
     const json = (b) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
     if (url.pathname.endsWith('lb_wheel_state')) {
       db.calls.state += 1;
-      return json({ ok: true, day: p.p_day, streak, last_day: p.p_day - 1, ad_on: false, free: db.spun ? body(db.spun, true) : null, ad: null });
+      return json({ ok: true, day: p.p_day, streak, last_day: p.p_day - 1, ad_on: false, free: db.spun ? body(db.spun, true) : null, ad: null, ...(earn ? { words: earn.words, need: earn.need } : {}) });
     }
     if (url.pathname.endsWith('lb_wheel_spin')) {
       db.calls.spin += 1;
+      if (earn && !db.spun && earn.words < earn.need) return json({ ok: false, reason: 'words', have: earn.words, need: earn.need });
       const again = db.spun === p.p_day;
       db.spun = p.p_day;
       return json(body(p.p_day, again));

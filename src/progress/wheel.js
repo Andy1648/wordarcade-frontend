@@ -15,9 +15,9 @@
 //   STREAK: every 3rd+ day in a row is HOT (gems ×1.5), every 7th is SUPER (gems ×2, boosts 20 MIN, a ticket one tier
 //   up). One missed day is forgiven. The odds never change — only what a slot pays (the server applies it).
 import { localDayIndex } from './streak.js';
-import { WHEEL_KEY, WHEEL_CHANGE, wheelReady } from './wheelDot.js';
+import { WHEEL_KEY, WHEEL_CHANGE, WHEEL_WORDS, wheelReady } from './wheelDot.js';
 
-export { WHEEL_KEY, WHEEL_CHANGE, wheelReady };
+export { WHEEL_KEY, WHEEL_CHANGE, WHEEL_WORDS, wheelReady };
 
 /** Rewarded-ad extra spin: the client half of the feature flag (AdSense H5 is not approved yet). */
 export const WHEEL_AD_ON = false;
@@ -254,9 +254,10 @@ export function readWheel() {
       paid: Array.isArray(o && o.paid) ? o.paid.filter((x) => UUID.test(String(x))) : [],
       day: Number.isInteger(o && o.day) ? o.day : 0,
       streak: Number.isInteger(o && o.streak) ? o.streak : 0,
+      need: Number.isFinite(o && o.need) ? o.need : null,
     };
   } catch {
-    return { paid: [], day: 0, streak: 0 };
+    return { paid: [], day: 0, streak: 0, need: null };
   }
 }
 function writeWheel(o) {
@@ -268,6 +269,18 @@ function writeWheel(o) {
 export function noteSpun(day, streak) {
   const w = readWheel();
   return writeWheel({ ...w, day: Math.max(w.day, day), streak: Number.isInteger(streak) ? streak : w.streak });
+}
+
+/** Remember the game-word count the next spin needs (the menu dot compares it to your words). */
+export function noteNeed(need) {
+  if (!Number.isFinite(need)) return false;
+  return writeWheel({ ...readWheel(), need: Math.floor(need) });
+}
+/** How many more game words today's spin needs: the server's need against the higher of its count and this browser's
+ *  (the board row lags the save by up to a submit). null need (a pre-081 server) = nothing to earn. */
+export function wordsLeft(need, serverWords, localWords) {
+  if (!Number.isFinite(need)) return 0;
+  return Math.max(0, Math.floor(need) - Math.max(Number(serverWords) || 0, Number(localWords) || 0));
 }
 
 /**

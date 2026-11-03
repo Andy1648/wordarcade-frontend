@@ -402,3 +402,13 @@
 .dw-pop-art { width: 70%; height: 70%; filter: drop-shadow(1cqw 1cqw 0 #000); }
 .dw-pop-burst { width: 150%; height: 150%; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .dw-pop, .dw-lit, .dw-wedge { display: none; } }
+
+/* EARNED SPINS (Andy nov4 "dont have daily spin for free"): until today's game words are in, the foot shows how far —
+   a chunky bar (transform-only fill, static), the words left, and PLAY back to the menu. The hub stays disabled. */
+.dw-earn { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.dw-earn-bar { position: relative; display: grid; place-items: center; width: 240px; height: 34px; overflow: hidden; box-sizing: border-box; border: 3px solid #000; border-radius: 8px; background: #241142; box-shadow: 3px 3px 0 #000; }
+.dw-earn-fill { position: absolute; inset: 0; background: var(--k-cyan, #2EFFE0); transform-origin: left center; }
+/* the count rides ON the bar; PLAY's own line says how many are left */
+.dw-earn-t { position: relative; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+/* a short phone: PLAY alone (its line carries the count) — the wheel keeps its size, the foot its SPIN height */
+@media (max-height: 700px) and (max-aspect-ratio: 6/5) { .dw-earn-bar { display: none; } }
