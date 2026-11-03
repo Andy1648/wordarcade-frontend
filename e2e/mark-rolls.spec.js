@@ -94,8 +94,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(page.locator('.rs-overlay')).toBeVisible(); // the tap closed the spotlight, not the ROLL screen
 
   await expect(page.getByTestId('mark-roll-10')).toHaveCount(0);
-  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN [\d,]+/);
-  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN ≤ [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN ≤ [\d,]+/);
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveText(/FREE ROLL/);
   const pityBefore = await pity(page);
@@ -446,6 +446,12 @@ test('RATES opens your next roll\'s odds per tier; Esc closes it and leaves the 
   await expect(pop.locator('.rs-rates-row')).toHaveCount(5);
   await expect(pop.locator('.rs-rates-row[data-tier="secret"] .rs-rates-odds')).toHaveText(/^1 IN [\d,.KM]+$/);
   await expect(pop.locator('.rs-rates-row[data-tier="rare"] .rs-rates-odds')).toHaveText(/^[\d.]+%$/); // never "1 IN 1"
+  // nov3 (design research move 6): the popup sits ON TOP — it used to render behind the reel panel, "visible" yet unseen
+  const onTop = await pop.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && e.contains(t); });
+  expect(onTop, 'nothing covers the odds').toBe(true);
+  // …and it states the pity guarantees
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/EPIC\+ WITHIN \d+ ROLLS?/);
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/LEGENDARY\+ WITHIN \d+ ROLLS?/);
   const box = await pop.locator('.rs-rates-x').boundingBox();
   expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
   await page.keyboard.press('Escape');
