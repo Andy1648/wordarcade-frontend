@@ -12,6 +12,7 @@ import { LEADERBOARD_ENABLED, fetchMyRank, fetchRowsBelow, getLastRank, getMyPro
 import { castFor, castSrc, heroById } from '../cast/cast.js';
 import { kitPlay } from '../components/kit/motion.js';
 import { formatNum } from '../format';
+import '../components/kit/tokens.css';
 import './BoardClimb.css';
 
 const SLIDE_MS = 400;
