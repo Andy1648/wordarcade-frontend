@@ -44,18 +44,17 @@
 .gfx[data-glow='secret'] .gfx-aura.is-s2 { opacity: 0; border-image-source: url('/fx/gear-aura-secret2.png'); }
 .gfx[data-glow='secret'] .gfx-aura.is-s3 { opacity: 0; border-image-source: url('/fx/gear-aura-secret3.png'); }
 .gfx[data-glow='secret'] .gfx-aura.is-glitch { opacity: 0; border-image-source: url('/fx/gear-aura-secret-glitch.png'); }
+/* THE FLOATING BLADES (nov2): each mote is a painted crystal blade (fx/shards, the tier's colours), not a masked sparkle */
 .gfx-mote {
   position: absolute;
-  width: var(--gfx-ms, 26px);
-  height: var(--gfx-ms, 26px);
-  margin-top: calc(var(--gfx-ms, 26px) / -2);
+  width: calc(var(--gfx-ms, 26px) * 1.5);
+  height: calc(var(--gfx-ms, 26px) * 1.5);
+  margin-top: calc(var(--gfx-ms, 26px) * -0.75);
+  object-fit: contain;
   opacity: 0;
-  background: #fff;
-  -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
-  mask: url('/fx/gear-mote.svg') center / contain no-repeat;
 }
-.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
-.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
+.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 1.2); }
+.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 1.2); }
 /* SECRET's ORBIT: a ring of rainbow motes round the card. The ring is a square as tall as the glow minus one --gfx-out,
    squashed to the host's proportions by a STATIC scaleX (--gfx-osx, measured once on mount); the inner spin layer is
    what the breath rotates (WAAPI transform + opacity). Each mote hangs off a static arm at its angle. */
