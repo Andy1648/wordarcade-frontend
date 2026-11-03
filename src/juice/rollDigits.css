@@ -1,0 +1,14 @@
+/* rollDigits.css — the rolling-digit columns (rollDigits.js). Only present while a number rolls; at rest the element holds
+   plain text. A column is one cell tall and clips its strip vertically only (the stroke / hard shadow may spill sideways);
+   the strip moves on translateY only. Everything else (font, colour, stroke, shadow) is inherited from the number.
+   inline-flex: a column's baseline is its FIRST cell's, so a rolling digit sits on the same baseline as the `,` / `K` /
+   `+` beside it (an inline-block would take its last cell's). */
+.rd-col {
+  display: inline-flex;
+  flex-direction: column;
+  height: 1em;
+  line-height: 1em;
+  clip-path: inset(-0.1em -0.5em); /* a sliver of vertical bleed for the stroke; the neighbour cells sit a full 1em away */
+}
+.rd-strip { display: block; }
+.rd-c { display: block; height: 1em; line-height: 1em; text-align: center; }

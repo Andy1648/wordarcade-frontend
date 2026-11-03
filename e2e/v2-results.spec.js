@@ -370,3 +370,33 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1280, height: 551 }, { 
     expect(d.offscreen).toEqual([]);
   });
 }
+
+// ROLLING DIGITS (design research move 11): the tally's numbers ROLL into place — odometer strips on translateY only,
+// every strip finite and landed inside ~700 ms — and at rest each number is plain text again (no strips left behind).
+test('the tally ROLLS its digits: transform-only strips, landed quickly, plain text at rest', async ({ page }) => {
+  test.setTimeout(90_000);
+  await play(page, { outcome: 'win' });
+  const card = page.locator('.rs2');
+  await page.evaluate(() => {
+    window.__roll = { strips: 0, maxMs: 0, props: new Set() };
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (kf, opts) {
+      if (this.classList && this.classList.contains('rd-strip')) {
+        window.__roll.strips += 1;
+        window.__roll.maxMs = Math.max(window.__roll.maxMs, (opts && opts.duration) || 0);
+        for (const f of kf) for (const k of Object.keys(f)) if (!['offset', 'easing', 'composite'].includes(k)) window.__roll.props.add(k);
+      }
+      return animate.call(this, kf, opts);
+    };
+  });
+  await expect.poll(() => page.evaluate(() => document.querySelectorAll('.rs2 .rd-col').length), { timeout: 8_000 }).toBeGreaterThan(0);
+  await expect(card).toHaveAttribute('data-tally', 'done', { timeout: 12_000 });
+  const r = await page.evaluate(() => ({ ...window.__roll, props: [...window.__roll.props] }));
+  expect(r.strips).toBeGreaterThan(0);
+  expect(r.props, 'a strip animates transform only').toEqual(['transform']);
+  expect(r.maxMs, 'every digit lands inside 700 ms').toBeLessThanOrEqual(700);
+  await expect(card.locator('.rd-col')).toHaveCount(0);
+  await expect(card.locator('[data-rolling]')).toHaveCount(0);
+  const total = await card.locator('.rs2-total-num').getAttribute('data-wins-total');
+  expect((await card.locator('.rs2-total-num').textContent()).replace(/,/g, '')).toBe(`+${total}`);
+});
