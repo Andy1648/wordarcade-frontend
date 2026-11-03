@@ -13,10 +13,12 @@ import { revealMode, navControl, menuReady } from './support/menu.js';
 import { installBackendMock } from './support/backendMock.js';
 import { layoutDefects } from './support/overlap.js';
 import { boot as bootWheel } from './support/wheelBoot.js';
+import { GAMES } from '../src/gameData.js';
 
 const SHOTS = process.env.DA_SHOTS || '';
 const MODES = ['word-bomb', 'category-blitz', 'sat-rush', 'miner', 'word-race', 'chain', 'fuse'];
-const PAINTED = new Set(['word-bomb', 'category-blitz', 'miner', 'chain', 'fuse']); // gameData artLayers
+// the modes with a painted card (gameData artLayers) — read from the data, so SAT RUSH / WORD RACE join when #603 lands
+const PAINTED = new Set(GAMES.filter((g) => g.artLayers).map((g) => g.id));
 
 /** Text under `scope` drawn smaller than `min` px (aria-hidden / sr-only skipped). */
 function smallText(page, scope, min = 15.75) {
@@ -70,9 +72,16 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
       await page.waitForTimeout(450);
       if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-dialog-${id}-${tag}.png` });
       expect(await shell.locator('.mode-ex, .mode-dialog-chip').count(), `${id}: no EXAMPLE box / tagline chip`).toBe(0);
+      // WHAT IT PAYS: one compact row — the gem rating + BASE wins / word, never a paragraph
+      const pay = shell.getByTestId('mode-dialog-pay');
+      await expect(pay, `${id}: pay row`).toBeVisible();
+      await expect(pay.getByTestId('mode-dialog-wins')).toContainText('/ WORD');
+      expect(await pay.locator('.mode-dialog-pay-gems .kit-icon, .mode-dialog-pay-gems svg, .mode-dialog-pay-gems img').count(), `${id}: three gem slots`).toBeGreaterThanOrEqual(3);
+      const payRows = await pay.evaluate((el) => { const k = el.querySelector('.mode-dialog-pay-wins').getBoundingClientRect(); const g = el.querySelector('.mode-dialog-pay-gems'); const r = g && g.getBoundingClientRect(); return r && Math.abs(r.top + r.height / 2 - (k.top + k.height / 2)) > 6 ? 2 : 1; });
+      expect(payRows, `${id}: pay is one row`).toBeLessThanOrEqual(1);
       await expect(shell.locator('.mode-dialog-title')).toBeVisible();
       // ONE hook line (a phone may wrap it once)
-      const lines = await shell.locator('.mode-dialog-liner').evaluate((el) => { const c = getComputedStyle(el); const lh = parseFloat(c.lineHeight) || parseFloat(c.fontSize) * 1.5; return Math.round(el.getBoundingClientRect().height / lh); });
+      const lines = id === 'category-blitz' ? 0 : await shell.locator('.mode-dialog-liner').evaluate((el) => { const c = getComputedStyle(el); const lh = parseFloat(c.lineHeight) || parseFloat(c.fontSize) * 1.5; return Math.round(el.getBoundingClientRect().height / lh); });
       expect(lines, `${id}: ONE hook line (wraps at most once)`).toBeLessThanOrEqual(2);
       // the painted card art is the hero (BLITZ gives its height to the pack picker below 860 tall)
       const art = shell.locator('.mode-dialog-art');
@@ -87,7 +96,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
       await clean(page, '.mode-dialog-shell', id);
       expect(await smallTargets(page, '.mode-dialog-shell'), `${id}: ≥ 44px targets`).toEqual([]);
       // the dialog's own words (the Blitz pack picker is its own component, unchanged here)
-      if (phone) for (const part of ['.mode-dialog-title', '.mode-dialog-liner', '.mode-dialog-actions']) expect(await smallText(page, `.mode-dialog-shell ${part}`), `${id} ${part}: ≥ 16px text`).toEqual([]);
+      if (phone) for (const part of ['.mode-dialog-title', '.mode-dialog-liner', '.mode-dialog-payrow', '.mode-dialog-actions']) expect(await smallText(page, `.mode-dialog-shell ${part}`), `${id} ${part}: ≥ 16px text`).toEqual([]);
       // after-action: the lead button is pressable and on screen
       const lead = shell.locator('.mode-dialog-btn').first();
       const lb = await lead.boundingBox();

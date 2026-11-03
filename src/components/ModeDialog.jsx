@@ -8,6 +8,10 @@ import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
 import { reduceMotion } from '../lib/reduceMotion';
+import KitIcon from './kit/KitIcon.jsx';
+import { GEM_RATING } from './gemRating.js';
+import { perWordRateNow } from '../progress/wins';
+import { formatRate } from '../format';
 
 
 // Open/close feel (fix/dialog-quality item 2): ONE transform+opacity transition on ONE element
@@ -138,6 +142,11 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
 
   const accent = mode.accent;
   const art = game.artLayers || null;
+  // WHAT IT PAYS (Andy oct10 "ABSOLUTELY know where the gems come from"; kept through design audit nov2 #4): ONE compact
+  // row — the card's gem-friendly rating (1–3 lit gems, gemRating.js) and the base WINS / WORD (the same perWordRateNow
+  // the menu card prints; MINER banks on Blitz's rails, as ModeExample says). No sentence.
+  const gemsLit = GEM_RATING[game.id] || 0;
+  const rateNow = perWordRateNow({ mode: game.id === 'miner' ? 'category-blitz' : game.id });
   const overlay = (
     <div className="mode-dialog-overlay" role="presentation">
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
@@ -199,6 +208,19 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
+            <div className="mode-dialog-payrow" data-testid="mode-dialog-pay">
+              {gemsLit ? (
+                <span className="mode-dialog-pay-gems" data-gems={gemsLit} role="img" aria-label={`Gem friendly: ${gemsLit} of 3`}>
+                  {[1, 2, 3].map((i) => <KitIcon key={i} name="gems" size={20} shadow={1} extras={false} className={i <= gemsLit ? 'is-lit' : 'is-dim'} />)}
+                </span>
+              ) : null}
+              <span className="mode-dialog-pay-wins" data-testid="mode-dialog-wins">
+                <KitIcon name="wins" size={22} shadow={1} extras={false} />
+                {game.id === 'fuse' ? null : <span className="mode-dialog-pay-k">BASE</span>}
+                <b className="mode-dialog-pay-n">{formatRate(rateNow.rate)}</b>
+                <span className="mode-dialog-pay-k">/ WORD</span>
+              </span>
+            </div>
 
             {modeKey === 'blitz' && (
               <PackPicker
