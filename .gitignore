@@ -1,5 +1,7 @@
 node_modules
 dist
+dist-portal
+dist-crazygames
 dist-ssr
 *.local
 

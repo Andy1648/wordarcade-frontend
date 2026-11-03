@@ -16,6 +16,7 @@ import { GAMES } from '../gameData.js';
 import { loadProgress } from '../progress/xp';
 import { allMasteryStates } from '../progress/mastery';
 import { track } from '../lib/analytics';
+import { navHref } from '../router.js';
 import './TryModeRow.css';
 
 /** Per-mode play counts from the mastery track (cumulative accepted words per mode). */
@@ -46,7 +47,7 @@ export default function TryModeRow({ current, className = '' }) {
 
   function onClick() {
     try { track('try_mode_clicked', { from: current, to: pick.id }); } catch { /* analytics only */ }
-    window.location.assign(pick.path);
+    window.location.assign(navHref(pick.path));
   }
 
   return (

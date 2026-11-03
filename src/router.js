@@ -123,6 +123,17 @@ export function roomCodeFromPath(pathname = window.location.pathname) {
   return m ? normalizeRoomCode(decodeURIComponent(m[1])) : null;
 }
 
+const IS_PORTAL_BUILD = (import.meta.env && import.meta.env.VITE_PORTAL) === '1';
+
+/** The href for a full navigation to a clean path ('/chain/play'). On typeaword.com that is the path itself; in a
+ *  PORTAL build (served from a CDN subpath) it is the SAME document with the bridged query ('?chain=1'), which the
+ *  import-time entry readers pick up exactly as they would after bridgePathToSearch. */
+export function navHref(path) {
+  if (!IS_PORTAL_BUILD) return path;
+  const q = PATH_TO_QUERY[normalizePath(path)];
+  return q ? `?${q}` : '?';
+}
+
 // Run BEFORE the entry-param modules import (main.jsx's first statement). For a known clean path with
 // no existing query, add the equivalent query via replaceState so the import-time readers see it.
 // Idempotent and safe: a path that already has a query, or an unknown path, is left alone.
@@ -167,6 +178,10 @@ export function canonicalPathForView(view) {
 // (CrazyGames ?cg=1, ?portal=1, and the SAT dev flags). Deep-link shares (?join/?daily/?satrush/etc.)
 // ARE safe to canonicalise to a path.
 export function hasStickyQuery(search = window.location.search) {
+  // A PORTAL build (itch.io / CrazyGames zip) is served from a CDN subpath (…/<game>/<ver>/index.html) with
+  // document-relative asset paths, so the URL must stay exactly as launched: pushing '/chain/play' would move the
+  // document to the CDN root and every './art' path with it. Build-time constant — false on typeaword.com.
+  if (IS_PORTAL_BUILD) return true;
   try {
     const p = new URLSearchParams(search || '');
     return (

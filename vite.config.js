@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import reduceMotionScope from './scripts/postcss-reduce-motion.js'
+import { crazyGamesPlugin } from './scripts/crazygames-build.js'
 
 // VERCEL STATIC PARITY (dev + preview). THE DIVERGENCE THIS CLOSES: on Vercel the FILESYSTEM is
 // matched BEFORE `rewrites`, so `/chain` serves `public/chain/index.html` (the SEO landing page) and
@@ -231,11 +232,16 @@ function pageMetaPlugin(outDir) {
 // UNCHANGED — base '/', outDir 'dist', absolute /assets/ paths. The values set
 // here for the default branch are Vite's own defaults, so behavior is identical.
 export default defineConfig(({ mode }) => {
-  const isPortal = mode === 'portal'
-  const outDir = isPortal ? 'dist-portal' : 'dist'
+  // `crazygames` (npm run build:crazygames) is the portal build PLUS the CrazyGames specifics in
+  // crazyGamesPlugin() (scripts/crazygames-build.js): public-asset paths made document-relative, AdSense
+  // stripped, the CrazyGames SDK v3 tag added, SEO-only files dropped. Emitted to dist-crazygames/.
+  const isCrazyGames = mode === 'crazygames'
+  const isPortal = mode === 'portal' || isCrazyGames
+  const outDir = isCrazyGames ? 'dist-crazygames' : isPortal ? 'dist-portal' : 'dist'
   return {
     plugins: [
       react(),
+      ...(isCrazyGames ? [crazyGamesPlugin({ publicDir: 'public', outDir })] : []),
       // Dev serves from public/, preview from the build output. `command` is 'serve' for BOTH
       // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —
       // the middleware is handed both roots and takes whichever exists, build output first.

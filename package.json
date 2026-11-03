@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:portal": "vite build --mode portal",
+    "build:crazygames": "vite build --mode crazygames",
     "lint": "eslint src",
     "test": "node --test \"src/**/*.test.js\"",
     "test:e2e": "playwright test",

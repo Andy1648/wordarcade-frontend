@@ -149,6 +149,8 @@ const RESOLVING_TYPES = new Set([
   'error',
 ]);
 import { Analytics } from '@vercel/analytics/react';
+// CrazyGames zip: no Vercel beacon (it loads /_vercel/insights/script.js, which only exists on Vercel).
+import { IS_CRAZYGAMES, setGameplay } from './platform/crazygames';
 import './Transitions.css';
 import { reduceMotion } from './lib/reduceMotion';
 
@@ -689,6 +691,14 @@ function App() {
 
   // An "active session" = the player holds a server-side seat: the waiting room or a live game.
   const inActiveSession = view === 'room' || (view === 'game' && !gameOver);
+
+  // CrazyGames build only (platform/crazygames.js; a no-op on typeaword.com): gameplayStart while a round or a
+  // solo run is on screen, gameplayStop everywhere else. Reads view/gameOver only — never gates a screen.
+  useEffect(() => {
+    if (!IS_CRAZYGAMES) return;
+    const solo = view === SAT_RUSH_VIEW || view === DAILY_BLITZ_VIEW || view === CHAIN_VIEW || view === FUSE_VIEW;
+    setGameplay(solo || (view === 'game' && !gameOver));
+  }, [view, gameOver]);
 
   // ---- Mid-session reconnect state machine (feat/reconnect) ----
   // null = healthy | 'trying' = dropped mid-session, RECONNECTING overlay up, BOARD KEPT | 'lost' =
@@ -3242,7 +3252,7 @@ function App() {
       <CursorTrail />
       {/* Vercel Web Analytics - renders nothing; beacons pageviews on the
           deployed site (no-op on localhost). */}
-      <Analytics />
+      {IS_CRAZYGAMES ? null : <Analytics />}
     </div>
     </SoundContext.Provider>
   );

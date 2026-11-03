@@ -24,6 +24,7 @@ import './theme/themes.css'
 import './theme/arcane.css'
 import { initTheme } from './theme/themes'
 import { initReduceMotion } from './lib/reduceMotion'
+import { initCrazyGames } from './platform/crazygames'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
@@ -65,6 +66,8 @@ try { initTheme() } catch { /* never block startup */ }
 // REDUCE MOTION: the in-game toggle owns data-reduce-motion. index.html's one-line inline script sets it
 // pre-paint (so a player who turned it on never sees a frame of motion); this is the fallback.
 try { initReduceMotion() } catch { /* never block startup */ }
+// CrazyGames build only (VITE_PLATFORM=crazygames): SDK init + the embed class. A no-op on typeaword.com.
+try { initCrazyGames() } catch { /* never block startup */ }
 
 // ---- Third-party boot (perf/first-load): NOTHING third-party runs on the critical path. ----
 // Sentry's init and PostHog both start from ONE idle callback scheduled after the window 'load'
