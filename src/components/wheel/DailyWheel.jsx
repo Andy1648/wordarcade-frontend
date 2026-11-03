@@ -29,8 +29,9 @@ import { ready as sfxReady } from '../../audio/gameSounds';
 import { tone, pentFreq, NOTE } from '../../audio/audioCore.js';
 import {
   WHEEL_SLOTS, SLICE_DEG, WHEEL_AD_ON, artSrc, oddsRows, landAngle, spinPlan, flapperTrack,
-  resultText, bonusText, nextBonus, payLanded, noteSpun, readWheel, wheelDay,
+  resultText, bonusText, nextBonus, payLanded, noteSpun, readWheel, wheelDay, weekRow,
 } from '../../progress/wheel.js';
+import { kitPlay } from '../kit/motion.js';
 import { wheelState, spinWheel, claimWheel } from '../../leaderboard/serverWheel.js';
 import { grantGems } from '../../progress/gemsCore.js';
 import { grantStockFx } from '../../progress/v3/stock.js';
@@ -46,6 +47,29 @@ const PAY = { grantGems, grantFx: grantStockFx, grantKit };
 const WIND_DEG = 24; // the pull-back before the launch
 const POP_MS = 1150; // the prize's burst-out + drop
 const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
+
+// THE WEEK ROW (nov3 design-research move 18): the 7 days of this streak week — spun days stamped, today lit, the HOT
+// days in orange, and DAY 7's SUPER SPIN as the painted wheel with its ×2 (what day 7 pays: gems ×2, boosts 20 MIN, a
+// ticket one tier up — 067). Static at rest; today's pip pops once when the panel opens.
+const TODAY_POP = [{ transform: 'scale(.6)' }, { transform: 'scale(1.18)', offset: 0.6 }, { transform: 'scale(1)' }];
+function StreakWeek({ today, spun, bonus }) {
+  const todayRef = useRef(null);
+  useEffect(() => { kitPlay(todayRef.current, TODAY_POP, { duration: 320, easing: 'cubic-bezier(.3,1.6,.5,1)' }); }, [today]); // once the server's day is in
+  const row = weekRow(today, spun);
+  return (
+    <span className={`dw-streak dw-week${bonus ? ` is-${bonus}` : ''}`} role="img" data-testid="wheel-week"
+      aria-label={`Spin streak day ${Math.max(1, today)}${bonus ? ` · ${bonusText(bonus)}` : ''} · day ${row[6].day} is a super spin`}>
+      {row.map((c) => (c.day % 7 === 0 ? (
+        <span key={c.day} ref={c.now ? todayRef : null} className={`dw-day7 is-${c.state}`} data-day={c.day} data-state={c.state}>
+          <img src={artSrc('icon')} alt="" draggable="false" />
+          <b className="dw-day7-x">×2</b>
+        </span>
+      ) : (
+        <span key={c.day} ref={c.now ? todayRef : null} className={`dw-pip is-${c.state}${c.bonus ? ` is-${c.bonus}` : ''}`} data-day={c.day} data-state={c.state}>{c.day}</span>
+      )))}
+    </span>
+  );
+}
 
 // one peg click, scheduled on the audio clock at `when` (s)
 function sndTickAt(when, i) {
@@ -401,10 +425,7 @@ export default function DailyWheel({ onClose, onPaid }) {
             <h2 className="dw-title"><img className="dw-title-art" src={artSrc('title-v1')} alt="Daily wheel" draggable="false" /></h2>
             {/* the streak + ODDS share one row under the wordmark: the foot keeps one job (SPIN, then the result) */}
             <div className="dw-head-row">
-              <span className={`dw-streak${bonusNow ? ` is-${bonusNow}` : ''}`} aria-label={`Spin streak ${streak} days`}>
-                <span className="dw-streak-n">DAY {Math.max(1, streak)}</span>
-                {bonusNow ? <span className="dw-streak-b">{bonusText(bonusNow)}</span> : null}
-              </span>
+              <StreakWeek today={streak} spun={!!s} bonus={bonusNow} />
               <button type="button" className="dw-odds-btn" onClick={() => setOdds((o) => !o)} aria-expanded={odds}>ODDS</button>
             </div>
           </div>

@@ -225,10 +225,25 @@ export function resultText(s) {
   return 'NEW COSMETIC';
 }
 export const bonusText = (b) => (b === 'super' ? 'SUPER SPIN · ×2' : b === 'hot' ? 'HOT STREAK · ×1.5' : '');
+/** The bonus a streak DAY pays (067): every 7th SUPER, the 3rd day on HOT. */
+export const dayBonus = (d) => (d % 7 === 0 ? 'super' : d >= 3 ? 'hot' : null);
+/**
+ * THE WEEK ROW (nov3 design-research move 18): the 7 days of the streak week `today` falls in (day 1–7, 8–14, …), each
+ * { day, bonus, state } — 'done' (spun), 'today' (today's spin still waiting) or 'next'; day 7's SUPER is always in view.
+ * `today` = the streak day today's spin is; `spun` = it has been spun.
+ */
+export function weekRow(today, spun) {
+  const t = Math.max(1, Math.floor(Number(today) || 1));
+  const base = t - (((t - 1) % 7) + 1);
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = base + i + 1;
+    return { day, bonus: dayBonus(day), state: day < t || (day === t && spun) ? 'done' : day === t ? 'today' : 'next', now: day === t };
+  });
+}
 /** What tomorrow's streak bonus will be, from today's streak count. */
 export function nextBonus(streak) {
   const n = Math.max(0, Math.floor(Number(streak) || 0)) + 1;
-  return n % 7 === 0 ? 'super' : n >= 3 ? 'hot' : null;
+  return dayBonus(n);
 }
 
 // ---- the paid store (a spin pays into THIS save once) -------------------------------------------------------------
