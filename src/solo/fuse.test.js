@@ -302,3 +302,27 @@ test('one life: start on 1, the first expire ends the run, a full strip grants n
   assert.equal(e.ended, true);
   assert.equal(eng.state.alive, false);
 });
+
+// ---- CROSS-RUN MEMORY (nov4, Andy "fuse can feel too repetitive"): a run skips the LAST run's fragments ----
+test('bag draw(avoid) skips avoided fragments while any other is left, then serves them', () => {
+  const bag = createFragmentBag(['aa', 'bb', 'cc', 'dd'], mulberry32(3));
+  const avoid = new Set(['aa', 'bb']);
+  const first = [bag.draw(avoid), bag.draw(avoid)];
+  assert.deepEqual(first.sort(), ['cc', 'dd'], 'the avoided ones wait');
+  assert.deepEqual([bag.draw(avoid), bag.draw(avoid)].sort(), ['aa', 'bb'], 'then come back — the bag still empties');
+});
+
+test('a run with `recent` never reopens on the last run\'s fragments (while the tier has others)', () => {
+  const rng = mulberry32(99);
+  let prev = null;
+  let overlap = 0;
+  let total = 0;
+  for (let r = 0; r < 200; r++) {
+    const eng = createFuseEngine({ ..._real, rng, recent: prev });
+    const frags = [eng.start().fragment];
+    for (let w = 1; w < 10; w++) { eng.state.wordsSolved = w; frags.push(eng.serve().fragment); }
+    if (prev) { overlap += frags.filter((f) => prev.has(f)).length; total += frags.length; }
+    prev = new Set(frags);
+  }
+  assert.equal(overlap, 0, `${overlap}/${total} opening fragments repeated the last run`);
+});
