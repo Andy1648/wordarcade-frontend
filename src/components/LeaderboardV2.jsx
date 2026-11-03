@@ -195,14 +195,9 @@ const DROP = [
 // NAME PRESTIGE (Andy oct21 "make people feel even better for being top"): every top-50 name wears a painted NUMBERED
 // seal (nameTier.js). On arrival each seal STAMPS down once (rows stagger top-down); the climb INTO a better tier since
 // your last look gets the big slam + a NEW · TOP 10 tag on your own row. One-shots on existing nodes; nothing loops.
-const STAMP = [
-  { transform: 'scale(1.9) rotate(-14deg)', opacity: 0 },
-  { transform: 'scale(.86) rotate(3deg)', opacity: 1, offset: 0.6 },
-  { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.82 },
-  { transform: 'scale(1) rotate(0)', opacity: 1 },
-];
-// the top-3 rows' seals sit at the board's left edge (a phone's screen edge): a smaller stamp keeps frame 0 on screen
-const STAMP_T3 = [
+// every board seal sits at the board's left edge (a phone's screen edge): a gentle 1.4x stamp keeps every frame on screen
+// (a 1.9x stamp put a phone row's seal off-screen mid-flight - CI's slower runner caught it: v2-leaderboard @390, nov3)
+const STAMP_EDGE = [
   { transform: 'scale(1.4) rotate(-10deg)', opacity: 0 },
   { transform: 'scale(.9) rotate(3deg)', opacity: 1, offset: 0.6 },
   { transform: 'scale(1) rotate(0)', opacity: 1 },
@@ -486,10 +481,10 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-row.is-me').forEach((el) => kitPlay(el, pulse('rotate(-1deg)'), { duration: 750, iterations: 2, delay: 500, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-col.is-me .lb2-who').forEach((el) => kitPlay(el, pulse(''), { duration: 750, iterations: 2, delay: 600, easing: 'ease-in-out' }));
-    root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
+    root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP_EDGE, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
     root.querySelectorAll('.lb2-col').forEach((col) => {
       const land = (BLOCK_AT[Number(col.dataset.place) || 0] || 0) + 420;
-      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_T3, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
+      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_EDGE, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
     });
     if (newTier) {
       const mySeal = root.querySelector('.lb2-row.is-me .lb2-seal, .lb2-col.is-me .lb2-pod-seal');
