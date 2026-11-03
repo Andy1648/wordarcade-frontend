@@ -15,6 +15,7 @@
 // fast-forwards. Nothing loops (the mockup's spinning rays, glowing own row and pulsing button are one-shots here).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatNum, formatMultExact, formatShort } from '../../format';
+import { rollDigits, ROLL_MS } from '../../juice/rollDigits.js';
 import KitIcon from '../kit/KitIcon.jsx';
 import GainLayer from '../gains/GainLayer.jsx';
 import { countMs, BUMP_MS, BUMP_SCALE } from '../gains/gainPlan.js';
@@ -50,7 +51,6 @@ const POP = [{ transform: 'translateY(-20px) scale(.3) rotate(-12deg)', opacity:
 const LAND = [{ transform: 'translate(0,0)' }, { transform: 'translate(-4px,-6px) scale(1.02)', offset: 0.35 }, { transform: 'translate(0,0) scale(1)' }];
 const PULSE = [{ transform: 'scale(1)' }, { transform: 'scale(1.05)', offset: 0.5 }, { transform: 'scale(1)' }];
 const SLIDE = [{ transform: 'translateX(-40px)', opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }];
-const eo = (k) => 1 - Math.pow(1 - k, 3);
 const BUMP = [{ transform: 'scale(1)' }, { transform: `scale(${BUMP_SCALE})`, offset: 0.4 }, { transform: 'scale(1)' }];
 // THE END (art run oct16, Andy: "END on the best-word slam (I love that)"): once the tally has landed, the best word
 // slams down last — the final beat of the card.
@@ -216,8 +216,8 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
     land('.rs2-gems', tGems + T.count);
     timers.push(setTimeout(() => { const b = el.querySelector('.game-over-rematch'); if (b) kitPlay(b, PULSE, { duration: 500, easing: 'ease-in-out' }); }, tEnd + 200));
     // THE GAIN (NIGHT oct8 #3): once WINS EARNED has counted, its wins fly from the total into the WINS wallet; the
-    // wallet counts from the FIRST landing (countMs) and bumps on every landing
-    let winsRaf = 0;
+    // wallet rolls from the FIRST landing and bumps on every landing
+    let rolled = false;
     if (total > 0) {
       timers.push(setTimeout(() => {
         const src = el.querySelector('.rs2-total-num');
@@ -227,26 +227,23 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
         gainRef.current.gain({
           from: { x: r.left + r.width / 2, y: r.top + r.height / 2 },
           amount: total,
-          onFirstLand: () => {
-            const ms = countMs(total);
-            const c0 = performance.now();
-            const tick = (now) => {
-              const k = Math.min(1, (now - c0) / ms);
-              const txt = formatShort(winsStart + (winsEnd - winsStart) * eo(k));
-              if (winsN && winsN.textContent !== txt) winsN.textContent = txt;
-              winsRaf = k < 1 ? requestAnimationFrame(tick) : 0;
-            };
-            winsRaf = requestAnimationFrame(tick);
-          },
+          // ROLLING DIGITS (design research move 11): the wallet rolls to its new balance on the first landing
+          onFirstLand: () => { rolled = true; rollDigits(winsN, formatShort(winsEnd), { ms: Math.min(ROLL_MS, countMs(total)) }); },
           onLand: () => kitPlay(winsWalletRef.current, BUMP, { duration: BUMP_MS, easing: 'cubic-bezier(.2,1.4,.4,1)' }),
-          onDone: () => { if (!winsRaf) winsFinal(); },
+          onDone: () => { if (!rolled) winsFinal(); }, // a roll lands on its own; never snap it
         });
       }, tEnd + 120));
     }
-    // the count-up: one loop, text writes only when the shown figure changes
+    // ROLLING DIGITS (design research move 11, Balatro-style): every tally number starts at 0 and, at its beat, ROLLS to
+    // its figure — digit strips on translateY, staggered from the right, an overshoot stop, landed inside ROLL_MS
+    // (juice/rollDigits.js). No per-frame text writes; the card's own clock only marks the tally done.
     for (const n of nums) n.textContent = `${n.dataset.pre}${formatNum(0)}`;
-    const t0 = performance.now();
-    let raf = 0;
+    for (const n of nums) {
+      const at = Number(n.dataset.at) || 0;
+      const ms = Math.min(ROLL_MS, Number(n.dataset.ms) || T.count);
+      timers.push(setTimeout(() => rollDigits(n, `${n.dataset.pre}${formatNum(Number(n.dataset.to) || 0)}`, { ms }), at));
+    }
+    const lastLand = nums.reduce((m, n) => Math.max(m, (Number(n.dataset.at) || 0) + Math.min(ROLL_MS, Number(n.dataset.ms) || T.count)), 0);
     let finished = false;
     const finish = () => {
       if (finished) return;
@@ -255,36 +252,17 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
       for (const r of reveals) { r.classList.remove('rs2-pending'); done.add(r); }
       el.dataset.tally = 'done';
     };
-    const step = (now) => {
-      const t = now - t0;
-      let live = false;
-      for (const n of nums) {
-        const at = Number(n.dataset.at) || 0;
-        const ms = Number(n.dataset.ms) || T.count;
-        const to = Number(n.dataset.to) || 0;
-        const k = t <= at ? 0 : Math.min(1, (t - at) / ms);
-        if (k < 1) live = true;
-        const txt = `${n.dataset.pre}${formatNum(to * eo(k))}`;
-        if (n.textContent !== txt) n.textContent = txt;
-      }
-      if (live || t < tEnd) raf = requestAnimationFrame(step);
-      else finish();
-    };
-    raf = requestAnimationFrame(step);
+    timers.push(setTimeout(finish, Math.max(tEnd, lastLand) + 40));
     // TAP TO SKIP: any press on the card (not a button) lands everything now
     const skip = (e) => {
       if (e.target && e.target.closest && e.target.closest('button, a')) return;
-      cancelAnimationFrame(raf);
       for (const id of timers) clearTimeout(id);
       for (const r of [...reveals, ...el.querySelectorAll('.rs2-char-cf, .rs2-dizzy-s, .rs2-impact, .rs2-impact-burst, .rs2-hero-in')]) { if (r.__kitAnim) { try { r.__kitAnim.finish(); } catch { /* gone */ } } }
       finish();
-      cancelAnimationFrame(winsRaf);
       winsFinal();
     };
     el.addEventListener('pointerdown', skip);
     return () => {
-      cancelAnimationFrame(raf);
-      cancelAnimationFrame(winsRaf);
       for (const id of timers) clearTimeout(id);
       el.removeEventListener('pointerdown', skip);
     };
