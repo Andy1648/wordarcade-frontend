@@ -41,7 +41,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     await page.evaluate(() => {
       window.__bought = new Promise((done) => {
         const mo = new MutationObserver(() => {
-          const face = document.querySelector('.sp2-card:has([data-stock="xp25"]) .kst[aria-label="BOUGHT!"] .kst-cl--main');
+          const face = document.querySelector('.sp2-card:has([data-stock="xp25"]) .kst[aria-label="BOUGHT!"] .kst-paint img');
           if (!face) return;
           mo.disconnect();
           // measured once the 400 ms slam has landed (it starts at ×2.9), still inside the 600 ms moment

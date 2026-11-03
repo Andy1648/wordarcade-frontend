@@ -1,5 +1,6 @@
 /* RankSeal — size with --seal-k (unitless; 1 = a 40px badge); the number is laid out for 40px and scaled with it
-   (transform, so the type scale keeps bare tokens). Static at rest — the only motion here is #1's ONE shine sweep. */
+   (transform, so the type scale keeps bare tokens). Static at rest — the motion here is ONE shine sweep per seal on appear
+   (nov2: every tier, staggered by rank), a replay on its row's hover, and #1's pop on the music beat. All finite. */
 .rseal {
   --seal-k: 1;
   --nx: 0px; /* where each art's blank panel sits, from the box centre (40px units) */
@@ -37,9 +38,10 @@
 }
 .rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k15); }
 .rseal[data-digits='3'] .rseal-n { font-size: var(--fs-k13); }
-.rseal[data-tier='splat'] { --ny: -3px; }
-.rseal[data-tier='flame'] { --ny: 3.5px; }
-.rseal[data-tier='crown'] { --ny: 1px; }
+.rseal[data-tier='splat'] { --ny: -2px; }
+.rseal[data-tier='flame'] { --ny: 2.5px; }
+.rseal[data-tier='wing'] { --ny: 1px; }
+.rseal[data-tier='crown'] { --ny: 3px; }
 
 /* #1 is the one-of-one: the art runs a touch past its box, and on appear ONE white glint sweeps across it (masked to
    the art, so it never lights the row). Finite, transform/opacity only; reduced motion skips it. */
@@ -47,8 +49,8 @@
 .rseal[data-tier='crown'] .rseal-shine { transform: scale(1.14); }
 .rseal-shine {
   overflow: hidden;
-  -webkit-mask: url('/lb/seal-crown.webp') center / contain no-repeat;
-  mask: url('/lb/seal-crown.webp') center / contain no-repeat;
+  -webkit-mask: var(--seal-art, url('/lb/seal-crown.webp')) center / contain no-repeat;
+  mask: var(--seal-art, url('/lb/seal-crown.webp')) center / contain no-repeat;
 }
 .rseal-shine > i {
   position: absolute;
@@ -62,9 +64,24 @@
   animation: rseal-shine 640ms cubic-bezier(.4, 0, .2, 1) var(--shine-at, 1100ms) 1 both;
 }
 @keyframes rseal-shine {
-  0% { opacity: 0.85; transform: translateX(-150%) skewX(-20deg); }
-  100% { opacity: 0.85; transform: translateX(480%) skewX(-20deg); }
+  0% { opacity: var(--shine-o, 0.85); transform: translateX(-150%) skewX(-20deg); }
+  100% { opacity: var(--shine-o, 0.85); transform: translateX(480%) skewX(-20deg); }
 }
+/* the lower tiers glint softer - the shine climbs with the rank */
+.rseal[data-tier='splat'] .rseal-shine > i,
+.rseal[data-tier='stone'] .rseal-shine > i { --shine-o: 0.5; }
+/* HOVER replays it: a second, identical keyframes name restarts the one-shot (finite; no will-change at rest) */
+@keyframes rseal-shine-again {
+  0% { opacity: var(--shine-o, 0.85); transform: translateX(-150%) skewX(-20deg); }
+  100% { opacity: var(--shine-o, 0.85); transform: translateX(480%) skewX(-20deg); }
+}
+@media (hover: hover) {
+  .lb2-row:hover .rseal-shine > i,
+  .lb2-col:hover .rseal-shine > i { animation: rseal-shine-again 520ms cubic-bezier(.4, 0, .2, 1) 0ms 1 both; }
+}
+/* THE BEAT: the one-of-one #1 seal pops with the music (the menu title's pattern - a transform transition on html[data-beat]) */
+.rseal[data-tier='crown'] .rseal-art { transition: transform 120ms cubic-bezier(.3, 1.6, .5, 1); }
+html[data-beat] .rseal[data-tier='crown'] .rseal-art { transform: scale(1.24); }
 @media (prefers-reduced-motion: reduce) {
   .rseal-shine { display: none; }
 }

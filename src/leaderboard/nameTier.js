@@ -14,13 +14,15 @@
 //   past #100: no seal — the plain number (scarcity is the point)
 // Pure (no DOM): the board, the profile card and the tests all read it.
 
+// v3 (nov2, Andy: the badges were "static/no flavor"): repainted by hero-art as one collectible set - bevelled riveted rims,
+// a glossy central plate for the number, a highlight edge the shine sweeps across.
 export const SEAL_ART = {
-  crown: '/lb/seal-crown.webp',
-  wing: '/lb/seal-wing.webp',
-  flame: '/lb/seal-flame.webp',
-  star: '/lb/seal-star.webp',
-  splat: '/lb/seal-splat.webp',
-  stone: '/lb/seal-stone.webp',
+  crown: '/lb/seal2-crown.webp',
+  wing: '/lb/seal2-wing.webp',
+  flame: '/lb/seal2-flame.webp',
+  star: '/lb/seal2-star.webp',
+  splat: '/lb/seal2-splat.webp',
+  stone: '/lb/seal2-stone.webp',
 };
 
 // best first: a lower index is a higher tier

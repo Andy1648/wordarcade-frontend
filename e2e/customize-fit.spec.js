@@ -57,7 +57,10 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     await page.waitForTimeout(450);
     // the profile: one CUSTOMIZE, the hero big
     await expect(pf.locator('.pf-crew, .pf-change, .pf-hero-tag')).toHaveCount(0);
-    let m = await layout(page, '.pf', '.pf-head > *, .pf-kit, .pf-stat, .pf-left .hs');
+    // the BANNER (nov2 audit #14): three stat medallions, no six-tile dashboard, the name on one line with its plate
+    await expect(pf.locator('.pf-medal')).toHaveCount(3);
+    await expect(pf.locator('.pf-stat')).toHaveCount(0);
+    let m = await layout(page, '.pf', '.pf-head > *, .pf-kit, .pf-medal-disc, .pf-medal-k, .pf-nameline > *, .pc-badge, .pf-left .hs');
     expect(m.overlaps, 'profile overlaps').toEqual([]);
     expect(m.outside, 'profile: nothing past the panel').toEqual([]);
     const hero = await sizeOf(pf.locator('.pf-left .hs'));
@@ -149,3 +152,26 @@ for (const [w, h] of [[360, 640], [390, 844]]) {
     }
   });
 }
+
+// nov2 audit #14: ONE name source — a player with no name yet never shows "NO NAME YET" beside a title plate
+test('no name yet: the title plate stands alone with the claim hint — never "NO NAME YET" next to a plate', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await installBackendMock(page);
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('nn.seeded')) return;
+    sessionStorage.setItem('nn.seeded', '1');
+    for (const k of ['init', 'gems', 'power', 'gears', 'markRolls', 'rebirth', 'board', 'keyTier']) localStorage.setItem('taw.tut.' + k, '1');
+    localStorage.setItem('taw.seenMenu', '1');
+    localStorage.setItem('taw.seenMenuSpotlight', '1');
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: 40, f: 0.1, rc: 3, v: 10 }));
+  });
+  await page.goto('/?portal=1&season2=1');
+  await menuReady(page);
+  await page.locator('[data-nav="profile"]:visible').first().click();
+  const pf = page.getByTestId('profile-popup');
+  await pf.waitFor({ state: 'visible' });
+  await expect(pf).not.toContainText('NO NAME YET');
+  await expect(pf.getByTestId('profile-title')).toBeVisible();
+  await expect(pf.locator('.pf-hint')).toBeVisible();
+  await expect(pf.locator('.pf-medal')).toHaveCount(3);
+});

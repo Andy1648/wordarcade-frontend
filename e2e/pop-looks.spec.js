@@ -78,17 +78,19 @@ test('a worn look stays calm under a mash: burst every other key, small, quick; 
       return a;
     };
     window.__shards = 0;
+    window.__crits = 0; // a random CRIT can land mid-mash: its look ring (6 shards) is by design — only plain keys must stay bare
     Animation.prototype.play = function () {
       const t = this.effect && this.effect.target;
       if (t && t.classList && t.classList.contains('menu-xp-shard')) window.__shards++;
+      if (t && t.classList && t.classList.contains('menu-xp-pop') && t.classList.contains('is-crit')) window.__crits++;
       return play.call(this);
     };
   });
   for (let n = 0; n < 16; n++) { await page.keyboard.press('KeyA'); await page.waitForTimeout(90); }
   await page.waitForTimeout(200);
-  const r = await page.evaluate(() => ({ ...window.__burst, shards: window.__shards, chips: document.querySelectorAll('.menu-xp-pop:not(.is-crit) .menu-xp-pop-plus.is-kit').length }));
+  const r = await page.evaluate(() => ({ ...window.__burst, shards: window.__shards, crits: window.__crits, chips: document.querySelectorAll('.menu-xp-pop:not(.is-crit) .menu-xp-pop-plus.is-kit').length }));
   expect(r.chips, 'no textured chip on a plain key').toBe(0);
-  expect(r.shards, 'a look throws no shards').toBe(0);
+  expect(r.shards, 'a look throws no shards on a plain key (a crit throws its one ring of 6)').toBe(r.crits * 6);
   expect(r.plays, 'the burst flashes on about every other key, not every key').toBeLessThanOrEqual(9);
   expect(r.plays).toBeGreaterThanOrEqual(4);
   expect(r.maxW, 'the flash stays small (px)').toBeLessThanOrEqual(120);
