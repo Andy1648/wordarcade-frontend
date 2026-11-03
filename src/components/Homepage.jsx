@@ -70,7 +70,6 @@ const TOUR_GAP_MS = 1200;
 const TOUR_HOLD_MS = 700;
 let tourWaited = false; // the intro plays on the first menu of a page load only
 import BoostDock from '../frenzy/LazyBoostDock';
-import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
@@ -126,7 +125,7 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
-import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
@@ -1233,7 +1232,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     submitBoardStats(true) // forced: the rank check must see THIS visit's stats (the DB throttles at 5 s)
       .then(() => checkRankUp(epoch))
       .then((r) => {
-        if (live && r && r.kind === 'passed') {
+        if (live && r && (r.kind === 'passed' || r.kind === 'dropped')) {
           // extensions-spec a (dormant, flagOn('rival') inside checkRankUp): "XAVI PASSED YOU" — the rank-up
           // card's passed variant, at INFO on the same queue. No news dot / icon hold: the trophy's
           // "rank went up" wording would lie, and the icon already wears the live rank.
@@ -1488,17 +1487,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
-  // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
-  const shownRankName = (name) => {
-    const R = V3.ranks;
-    if (!R || !R.RANKS_V3) return name;
-    const at = R.RANKS_V3.findIndex((x) => x.name === name);
-    return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
-  };
   // PROFILE PLATE (Andy oct21 "switch profile to where title is … include title popup in the profile"): the XP bar's
   // lead plate is your PROFILE — your hero's face, PROFILE, and the title you wear. It opens the profile popup, whose
   // TITLE row opens ALL TITLES. (The dailies took the profile's old spots: the right column + the icon cluster.)
-  const titleName = shownRankName(rankTitle(xpProgress.level));
+  // nov2 (Andy: titles out → RANK LEAGUES): the plate names your board league (leagues.js), UNRANKED with no board place
+  const myLeague = leagueOf(boardRank);
+  const titleName = myLeague ? myLeague.name : 'UNRANKED';
   // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
   // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
   const [heroNews, setHeroNews] = useState(false);
@@ -1517,14 +1511,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
-    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
+    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — ${titleName}${myLeague ? ' league' : ''}`} data-nav="profile" data-testid="profile-plate">
       {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
       {avFrame
         ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
         : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
-        <span className="hp-rankplate-n">{titleName}</span>
+        <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>
+          {myLeague ? <img className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
+          {titleName}
+        </span>
       </span>
     </button>
   );
@@ -1591,7 +1588,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         {/* BEAT GLOW: the menu's one ambient pulse (MENU MOTION LAW) — opacity-only, under the content. */}
         <div className="homepage-beat-glow" aria-hidden="true" />
         {devReset && <Suspense fallback={null}><DevResetNotice onDone={() => setDevReset(false)} /></Suspense>}
-        {rankUp && rankUp.kind !== 'passed' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind === 'dropped' && <Suspense fallback={null}><RankUpMoment kind="dropped" from={rankUp.from} to={rankUp.to} onDone={rankDone} /></Suspense>}
+        {rankUp && rankUp.kind !== 'passed' && rankUp.kind !== 'dropped' && <Suspense fallback={null}><RankUpMoment from={rankUp.from} to={rankUp.to} onPop={rankPop} onDone={rankDone} /></Suspense>}
         {rankUp && rankUp.kind === 'passed' && <Suspense fallback={null}><RankUpMoment kind="passed" from={rankUp.from} to={rankUp.to} name={rankUp.name} levels={rankUp.levels} rebirths={rankUp.rebirths} onDone={rankDone} onTap={() => { rankDone(); handleLeaderboard(); }} /></Suspense>}
 
         {/* PHONE (<=480px): MobileMenu instead of the desktop grid below (a RENDER branch — the card

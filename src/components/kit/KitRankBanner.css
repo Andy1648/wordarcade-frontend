@@ -73,7 +73,20 @@
   white-space: nowrap;
 }
 
+/* nov3 RANK LEAGUES: #from -> the league's painted badge + its name + #to (KitRankBanner `league` slabs) */
+.krb.is-league .krb-row { top: 22px; }
+.krb-from { flex: none; font-size: var(--fs-k18); color: var(--k-dim); }
+.krb-league { display: inline-flex; align-items: center; gap: 8px; flex: none; transform-origin: 30% 50%; }
+.krb-league-art { width: 66px; height: 66px; object-fit: contain; flex: none; }
+.krb-league-t { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1; }
+.krb-league-name { font-weight: 400; font-size: var(--fs-k22); color: var(--krb-c); -webkit-text-stroke: 3px #000; paint-order: stroke fill; letter-spacing: .02em; }
+.krb-to { font-weight: 400; font-size: var(--fs-k18); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.krb.is-drop .krb-league-name { color: var(--k-dim); }
+/* the shard layer sits over the slab (it lives in the fixed host, so the blades are never clipped by the slab) */
+.krb-burst { z-index: 2; }
+
 @media (max-width: 420px) {
   .krb-row { gap: 6px; }
   .krb-arrow { width: 28px; }
+  .krb-league-art { width: 56px; height: 56px; }
 }

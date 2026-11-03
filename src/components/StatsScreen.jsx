@@ -13,7 +13,7 @@ import { loadProgress, getRebirths, need } from '../progress/xp';
 import { statBoard, boardMult } from '../progress/statBoard';
 import { getChainRuns, getFuseRuns } from '../solo/shared.js';
 import { getWins, getWinsLifetime, getRounds } from '../progress/wins';
-import { rankTitle } from '../progress/rank';
+import { leagueOf } from '../leaderboard/leagues.js';
 import { secretsProgress } from '../progress/achievements';
 import { secretsCollection } from '../secrets/secrets';
 import { bestWpmOverall, recentAvgWpm } from '../progress/wpm';
@@ -26,7 +26,7 @@ import { AchievementsBody } from './AchievementsScreen';
 import { SEASON2 } from '../progress/season';
 import { exportSaveCode, importAnySave } from '../save/saveCode';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
-import { getMyProfile } from '../leaderboard/client';
+import { getMyProfile, getLastRank } from '../leaderboard/client';
 import { resetAllProgress } from '../progress/resetAll';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { flagOn } from '../lib/featureFlags';
@@ -228,7 +228,7 @@ function StatsScreenLive({ onBack, initialTab }) {
   const me = getMyProfile();
   const card = {
     name: me && me.username ? me.username : null,
-    rank: rankTitle(level),
+    rank: (leagueOf(getLastRank()) || { name: 'UNRANKED' }).name, // nov2: your board LEAGUE (titles retired)
     level,
     rebirths,
     cells: [
