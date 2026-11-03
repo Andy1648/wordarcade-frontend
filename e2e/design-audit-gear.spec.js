@@ -1,7 +1,5 @@
-// e2e/design-audit-gear.spec.js — design audit nov2, PR A (#8 + #9), at 1366x768 and 390x844.
-//   #8  the menu's worn-gear slot and the YOUR GEAR (EQUIP) screen wear NO GearFx aura (it read as a blurred halo):
-//       rarity is a flat, hard tier frame (the slot) / a flat tier mat behind the card (EQUIP), and those mats never
-//       touch each other or leave the screen.
+// e2e/design-audit-gear.spec.js — design audit nov2, PR A (#9), at 1366x768 and 390x844. (#8, glow → flat backplate,
+// was reverted: the gear auras stay as on main — e2e/gear-aura-clip.spec.js owns them.)
 //   #9  the chrome round the gear cards is house-style: ← MENU · INDEX · AUTO · RATES · ← ROLL / ← MENU are solid kit
 //       buttons (≥ 44px, ≥ 4px outline, 8px corners, Bungee, a hard offset) and the pity meters are not hairlines —
 //       checked at rest AND after a roll has landed (the after-action state).
@@ -63,48 +61,18 @@ function expectKit(list, what) {
 for (const [w, h] of [[1366, 768], [390, 844]]) {
   const tag = `${w}x${h}`;
 
-  test(`#8 the worn-gear slot + YOUR GEAR wear a flat tier frame, no GearFx aura @ ${tag}`, async ({ page }) => {
+  test(`#9 YOUR GEAR's ← MENU is house-style; the gear auras stay as they were @ ${tag}`, async ({ page }) => {
     test.setTimeout(60_000);
     await boot(page, w, h);
     const slot = page.locator('.menu-mark').first();
     await expect(slot).toBeVisible();
-    await page.waitForTimeout(500);
-    expect(await page.locator('.menu-mark .gfx, .menu-mark2 .gfx').count(), 'no aura on the menu slot').toBe(0);
-    if (w > 480) {
-      // the LEGENDARY slot's frame: a tier ring + the hard black offset (box-shadow, static)
-      const sh = await slot.evaluate((el) => getComputedStyle(el).boxShadow);
-      expect(sh, 'tier ring + hard shadow').toMatch(/0px 0px 0px \d/);
-      expect(sh).toMatch(/rgb\(0, 0, 0\)/);
-    }
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-menu-gear-${tag}.png` });
-
     await slot.click();
     const equip = page.locator('[data-testid="equip-screen"]');
     await expect(equip.locator('.mx-tile').first()).toBeVisible();
     await page.waitForTimeout(500);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-your-gear-${tag}.png` });
-    expect(await equip.locator('.gfx').count(), 'no aura on the EQUIP screen').toBe(0);
-    const mats = await page.evaluate(() => {
-      const out = [];
-      for (const t of document.querySelectorAll('[data-testid="equip-screen"] .mx-tile')) {
-        const c = getComputedStyle(t, '::before');
-        if (c.content === 'none' || c.content === 'normal') continue;
-        const r = t.getBoundingClientRect(); const m = -parseFloat(c.left); const sh = parseFloat(c.boxShadow.split(' ').slice(-3, -2)[0]) || 0;
-        out.push({ tier: t.dataset.tier, left: r.left - m, right: r.right + m + sh, top: r.top - m, bottom: r.bottom + m + sh, border: parseFloat(c.borderTopWidth) });
-      }
-      return out;
-    });
-    expect(mats.length, 'EPIC+ cards stand on a mat').toBeGreaterThan(0);
-    for (const m of mats) {
-      expect(m.border, `${m.tier} mat outline`).toBeGreaterThanOrEqual(3);
-      expect(m.left >= 0 && m.right <= w, `${m.tier} mat on screen (${Math.round(m.left)}..${Math.round(m.right)})`).toBe(true);
-    }
-    // neighbouring mats never touch (same row)
-    for (let i = 0; i < mats.length; i++) for (let j = i + 1; j < mats.length; j++) {
-      const a = mats[i], b = mats[j];
-      const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0;
-      expect(overlap, `mats ${a.tier} / ${b.tier} overlap`).toBe(false);
-    }
+    // the auras are NOT this PR's (design audit #8 was reverted: painted auras are coming) — they still render here
+    expect(await equip.locator('.gfx').count(), 'EPIC+ tiles keep their aura').toBeGreaterThan(0);
     expectKit(await chrome(page, '[data-testid="equip-screen"] .mx-back'), 'EQUIP ← MENU');
     const d = await layoutDefects(page, { scope: '[data-testid="equip-screen"] .mx-head' });
     expect(d.overlaps, 'EQUIP head overlaps').toEqual([]);

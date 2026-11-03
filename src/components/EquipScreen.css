@@ -1,41 +1,6 @@
 /* EquipScreen.css — YOUR GEAR → the EQUIP screen (EquipScreen.jsx). It wears the INDEX's overlay / grid / tile styles
    (MarksIndex.css) — one look for both doors — and only says what differs: the title is YOUR GEAR in the tier-neutral
    yellow, so the locker never reads as the catalogue. A full screen in the MARKS overlay slot, not a new fixed control. */
-.eq-title, .mx-title.eq-title { color: #FFE94A; }
+.eq-title { color: #FFE94A; }
 .eq-head { justify-content: flex-start; gap: 28px; }
 .eq-count-k { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-panel); color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
-
-/* RARITY BACKPLATE (design audit nov2 #8 — replaces the GearFx aura on this screen, which read as a blurred halo and broke
-   the flat rule). An EPIC+ card stands on a flat MAT in its tier: the tier's dark face, a thick outline in the tier colour,
-   the hard black offset — a rectangle, so CSS, like the shop's rarity plates. MYTHIC / SECRET get a deeper mat. Static. */
-.eq-grid .mx-tile { isolation: isolate; }
-.eq-grid .mx-tile::before {
-  content: none;
-  position: absolute;
-  inset: calc(-1 * var(--eq-mat, 10px));
-  z-index: -1;
-  box-sizing: border-box;
-  border-radius: 14px;
-  background: var(--eq-fill);
-  border: var(--eq-mat-b, 5px) solid var(--eq-line);
-  box-shadow: var(--eq-mat-sh, 7px) var(--eq-mat-sh, 7px) 0 #000;
-  pointer-events: none;
-}
-.eq-grid .mx-tile:is([data-tier='epic'], [data-tier='legendary'], [data-tier='mythic'], [data-tier='secret'])::before { content: ''; }
-.eq-grid .mx-tile[data-tier='epic'] { --eq-fill: #2a0e4a; --eq-line: #6a1fb8; }
-.eq-grid .mx-tile[data-tier='legendary'] { --eq-fill: #3d2a05; --eq-line: #b07a10; }
-.eq-grid .mx-tile[data-tier='mythic'] { --eq-fill: #4a0a22; --eq-line: #a8164e; --eq-mat: 12px; --eq-mat-b: 6px; }
-.eq-grid .mx-tile[data-tier='secret'] { --eq-fill: #1c1c22; --eq-line: #8c8c9c; --eq-mat: 12px; --eq-mat-b: 6px; }
-/* the mats need their own gutter: two neighbours' mats + the offset never meet */
-.mx-grid.eq-grid { column-gap: 34px; row-gap: 40px; }
-/* phones: two cards a row — the mat narrows and the column gap opens so neighbouring mats never touch */
-@media (max-width: 560px) {
-  .eq-panel { --eq-mat: 6px; --eq-mat-b: 4px; --eq-mat-sh: 4px; }
-  .eq-grid .mx-tile:is([data-tier='mythic'], [data-tier='secret']) { --eq-mat: 7px; --eq-mat-b: 4px; }
-  .mx-grid.eq-grid { column-gap: 22px; row-gap: 26px; }
-}
-@media (max-width: 340px) {
-  .eq-panel { --eq-mat: 4px; --eq-mat-b: 3px; --eq-mat-sh: 3px; }
-  .eq-grid .mx-tile:is([data-tier='mythic'], [data-tier='secret']) { --eq-mat: 4px; --eq-mat-b: 3px; }
-  .mx-grid.eq-grid { column-gap: 12px; }
-}

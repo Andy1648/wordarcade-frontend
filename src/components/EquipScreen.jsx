@@ -7,8 +7,7 @@
 // LAZY (Homepage loads it on the tap): it mounts in the MARKS overlay slot (`showMarks === 'gear'`), so the menu's
 // overlay rules apply as they do for ROLL / INDEX. ← MENU, Esc close it (Esc closes an open sheet first).
 // Storage is snapshotted on mount (as the INDEX does); the worn id is local state so EQUIP re-pins at once.
-// Motion: the INDEX's — tiles lift on hover / press, the sheet pops in once. EPIC+ tiles stand on a flat hard tier
-// BACKPLATE (EquipScreen.css — design audit nov2 #8: the blurred-looking GearFx halo broke the flat rule here).
+// Motion: the INDEX's — tiles lift on hover / press, the sheet pops in once, EPIC+ tiles wear the GearFx glow.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markProgress, markById } from '../progress/marks';
 import { viewState, permanentOwnedIds } from '../progress/markRolls';
@@ -17,6 +16,9 @@ import { registerMarkGlyphs } from './MarkBadge';
 import { ROLLED_GLYPHS, GLYPH_FINISH } from './markGlyphsRolled.jsx';
 import MarkCard from './markCard/MarkCard';
 import GearSheet from './GearSheet';
+import GearFx from './GearFx';
+import { useIndexGlowScale } from './indexGlow';
+import { GLOW_TIERS } from './markCard/idleSheen.js';
 import { tierLabel } from './markCard/cardModel.js';
 import { buildEntries, ownsGear } from './gearEntries.js';
 import { formatNum } from '../format';
@@ -50,6 +52,7 @@ export default function EquipScreen({ slot = 1, mainId = null, equippedId = null
   const { view, owned } = snap;
   const [worn, setWorn] = useState(equippedId);
   const [sel, setSel] = useState(null);
+  const glowScale = useIndexGlowScale();
   // the equipped one PINNED first
   const list = useMemo(() => {
     const on = owned.find((e) => e.id === worn);
@@ -110,6 +113,7 @@ export default function EquipScreen({ slot = 1, mainId = null, equippedId = null
                   data-tier={e.tier}
                   onClick={() => setSel(e.id)}
                 >
+                  {GLOW_TIERS.has(e.tier) ? <GearFx tier={e.tier} scale={glowScale} /> : null}
                   <MarkCard
                     id={e.id} kind={e.kind} tier={e.tier} name={e.name} state={view} rank={rankOf(e.id)}
                     shiny={shiny} parts={TILE_PARTS}
