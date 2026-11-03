@@ -133,7 +133,9 @@ function playOnce(el, frames, opts) {
   return a;
 }
 
-export default function DailyWheel({ onClose }) {
+export default function DailyWheel({ onClose, onPaid }) {
+  const onPaidRef = useRef(onPaid);
+  onPaidRef.current = onPaid;
   const [st, setSt] = useState({ phase: 'load' }); // load | off | ready | spinning | landed | done
   const [tries, setTries] = useState(0); // RETRY (design audit nov2 #13) re-asks the server
   const [odds, setOdds] = useState(false);
@@ -212,6 +214,8 @@ export default function DailyWheel({ onClose }) {
     if (rotorRef.current) rotorRef.current.style.transform = `rotate(${rest}deg)`;
     poseIcons(rest);
     const paidNow = payLanded(s, PAY);
+    // the menu flies the gems into its GEMS pill once the wheel closes (the pill sits under this scrim)
+    if (paidNow && s.prize === 'gems' && s.amount > 0 && onPaidRef.current) onPaidRef.current(s.amount);
     if (s.kind === 'free') noteSpun(s.day, s.streak);
     if (paidNow || !s.claimed) claimWheel(s.spin);
     const big = s.prize === 'ticket' || s.prize === 'cosmetic';
