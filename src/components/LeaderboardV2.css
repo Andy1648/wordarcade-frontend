@@ -1377,6 +1377,9 @@
 .lb2-sep[data-league='silver'] { color: #D4DAE3; }
 .lb2-sep[data-league='bronze'] { color: #D98A4E; }
 /* the board's line reads at 16px+ (the badge's own --fs-label is 14px at 1366 / 390) - sized here, not in LeagueBadge.css */
-.lb2 .lb2-sep.is-league .lg-badge-name { font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--lb2-k))); }
+.lb2 .lb2-sep.is-league .lg-badge { font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--lb2-k))); } /* the badge's one size knob: the painted art and the name both follow it */
 .lb2 .lb2-sep.is-league { padding-top: calc(3px * var(--lb2-k)); padding-bottom: calc(3px * var(--lb2-k)); }
 .lb2 .lb2-sep.is-league .lg-badge-name { padding: 2px 8px 1px; }
+/* the band divider's own `.lb2-sep span` (14px) also matches the badge's spans: they follow the badge again */
+.lb2 .lb2-sep.is-league .lg-badge span { font-size: inherit; -webkit-text-stroke: 0; }
+.lb2 .lb2-sep.is-league .lg-badge b { font-size: inherit; }
