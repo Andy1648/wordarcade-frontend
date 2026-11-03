@@ -231,18 +231,21 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     // painted ribbons "look horrendous"): no ribbon art, a readable name, no taller than a third of a row
     await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
     const seps = await lb.locator('.lb2-sep').evaluateAll((els) => els.map((e) => {
-      const name = e.querySelector('.lb2-sep-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
+      const name = e.querySelector('.lb2-sep-name, .lg-badge-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
       const art = [e, ...e.querySelectorAll('*')].some((x) => ['', '::before', '::after'].some((p) => /url\(/.test(getComputedStyle(x, p || null).backgroundImage) || /url\(/.test(getComputedStyle(x, p || null).maskImage || '')));
       return { art, px: name ? parseFloat(getComputedStyle(name).fontSize) : 0, h: e.getBoundingClientRect().height, rowH: row.getBoundingClientRect().height, text: name ? name.textContent : '' };
     }));
-    expect(seps.length, 'the TOP 50 / TOP 100 cut lines are on the board').toBeGreaterThanOrEqual(2);
+    expect(seps.length, 'the league cut lines are on the board').toBeGreaterThanOrEqual(2);
+    // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js) - each sits right above the league's first row
+    const lines = await lb.locator('.lb2-sep.is-league').evaluateAll((els) => els.map((e) => ({ league: e.dataset.league, next: e.nextElementSibling && e.nextElementSibling.dataset.rank })));
+    expect(lines).toEqual([{ league: 'champion', next: '4' }, { league: 'titan', next: '11' }, { league: 'master', next: '51' }]);
     for (const sp of seps) {
       expect(sp.art, `${sp.text}: a cut line wears no ribbon art`).toBe(false);
       expect(sp.px, `${sp.text}: name size`).toBeGreaterThanOrEqual(16);
       expect(sp.h, `${sp.text}: slim (${Math.round(sp.h)}px vs a ${Math.round(sp.rowH)}px row)`).toBeLessThanOrEqual(sp.rowH * 0.75);
     }
     if (SHOTS) {
-      await lb.locator('.lb2-sep[data-band="stone"]').scrollIntoViewIfNeeded();
+      await lb.locator('.lb2-sep[data-league="master"]').scrollIntoViewIfNeeded();
       await page.waitForTimeout(300);
       await page.screenshot({ path: `${SHOTS}/lb-cutline-${vp.width}.png` });
     }
@@ -282,6 +285,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '121');
     const ghost = lb.locator('.lb2-row.is-ghost');
     await expect(ghost).toHaveAttribute('data-rank', '120');
+    // past the board YOUR league's line sits over the ghost + your row (CRYSTAL, #101-300)
+    await expect(lb.locator('.lb2-sep.is-league').last()).toHaveAttribute('data-league', 'crystal');
+    expect(await lb.locator('.lb2-sep.is-league').last().evaluate((e) => e.nextElementSibling.dataset.rank)).toBe('120');
     await expect(ghost).toHaveClass(/is-rival/);
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');

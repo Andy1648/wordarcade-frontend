@@ -18,6 +18,7 @@ import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
 import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
+import { leagueOf } from '../leaderboard/leagues.js';
 import {
   boardCaps,
   fetchBoard,
@@ -676,12 +677,20 @@ export default function LeaderboardV2({ onBack }) {
             const band = rankBand(r.rank);
             const tier = nameTier(r.rank);
             const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
-            const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
+            // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js - CHAMPION, TITAN at #11, MASTER at #51, and
+            // past the board YOUR league over your row), read from leagueOf so the dividers can never drift from the badges.
+            // THIS WEEK keeps its TOP bands (the week board's places are not league places; TOP 10 is the prize zone).
+            const league = wk ? null : leagueOf(r.rank);
+            const sep = wk
+              ? (band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null)
+              : (league && (k === 0 || leagueOf(list[k - 1].rank) !== league) ? league.name : null);
             return (
               <Fragment key={r.id}>
-              {/* the cut line: a slim flat divider - the band name, then a rule in its colour (Andy nov2: the painted ribbons
-                  "look horrendous"; the rank LEAGUES' badge set replaces this label once it lands) */}
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>}
+              {/* the cut line: a slim flat divider - the league badge (or the week's band name), then a rule in its colour
+                  (Andy nov2: the painted ribbons "look horrendous") */}
+              {sep && (league
+                ? <div className="lb2-sep is-league" data-league={league.key} aria-hidden="true"><LeagueBadge rank={r.rank} className="lb2-sep-league" /></div>
+                : <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
