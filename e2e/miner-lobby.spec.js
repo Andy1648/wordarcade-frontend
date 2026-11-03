@@ -40,11 +40,33 @@ for (const [w, h] of [[1366, 768], [1280, 600], [390, 844]]) {
     const firstSeat = await page.locator('.mn-seat').first().boundingBox();
     expect(firstSeat.y + firstSeat.height, 'the seats are on screen').toBeLessThanOrEqual(h);
 
-    // a second human arrives: the bot seats go (the server only tops up a mine with < 2 humans)
+    // design audit 10 (nov2): START / + BOT are CHUNKY primary buttons, not 28px flat ones; the empty seats are ONE
+    // inviting OPEN seat (with the room code), not a grid of dashed boxes
+    for (const name of ['+ BOT', 'START']) {
+      const b = page.getByRole('button', { name });
+      expect(await b.evaluate((el) => el.offsetHeight), `${name} is chunky`).toBeGreaterThanOrEqual(60);
+      expect(await b.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), `${name} type`).toBeGreaterThanOrEqual(20);
+    }
+    await expect(page.locator('.mn-seat.is-open')).toHaveCount(1);
+    await expect(page.locator('.mn-seat.is-open')).toContainText('MINE1');
+    expect(await page.locator('.mn-seat').evaluateAll((ls) => ls.filter((l) => getComputedStyle(l).borderStyle === 'dashed').length), 'no dashed seats').toBe(0);
+    // every miner is drawn as a hero (not the one shared miner sprite)
+    await expect(page.locator('.mn-seat:not(.is-open) .mn-seat-digger')).toHaveCount(3);
+    if (process.env.MINER_SHOTS) await page.screenshot({ path: `${process.env.MINER_SHOTS}/miner-lobby-${w}.png` });
+
+    // a second human arrives wearing their hero: their seat shows THAT hero, and the bot seats go (the server only tops
+    // up a mine with < 2 humans)
     mock.pushToClient({
       type: 'room_update',
-      payload: { code: 'MINE1', hostId: ME, gameType: 'miner', isPublic: true, players: [{ id: ME, name: 'ANNA' }, { id: 'p2', name: 'BO' }] },
+      payload: { code: 'MINE1', hostId: ME, gameType: 'miner', isPublic: true, players: [{ id: ME, name: 'ANNA' }, { id: 'p2', name: 'BO', hero: 'glitch' }] },
     });
     await expect(page.locator('.mn-seat.is-bot-fill')).toHaveCount(0);
+    await expect(page.locator('.mn-seat').nth(1).locator('.mn-seat-digger')).toHaveAttribute('data-hero', 'glitch');
+    // nothing on the lobby overlaps: seats, the open seat, the buttons
+    const boxes = await page.locator('.mn-seat, .mn-lobby-actions .mn-btn').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON()));
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i]; const b = boxes[j];
+      expect(Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1, `lobby boxes ${i} x ${j} overlap`).toBe(false);
+    }
   });
 }
