@@ -39,7 +39,7 @@ import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
-import { shardSrc, bladeFrames, bladeFlavour, clearVectors } from '../../fx/shards/shardPlan.js';
+import { shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
@@ -217,11 +217,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
     const kind = revealKind(tier, mode);
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
-    const k = kind === 'line' ? burstCount(tier, mode) : 0;
+    const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
       const v = VEC[i];
       // the painted blade shards (fx/shards): each snaps out tip-first, hangs, drifts and fades
-      anim(n[`p${i}`], bladeFrames(v, { s: v.s, ...bladeFlavour(i) }), { duration: 700 + (i % 4) * 60, easing: 'linear' });
+      anim(n[`p${i}`], bladeFrames(v, { s: v.s, ...bladeFlavour(i) }), { duration: SHARD_MS - 60 + (i % 4) * 20, easing: 'linear' });
     }
     if (kind !== 'line') {
       phase.current = 'cut';
@@ -443,13 +443,13 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
-      const k = burstCount(tier);
+      const k = Math.min(burstCount(tier), SHARD_MAX); // one strong idea: 8–14 blades, never a stacked spray
       // the blades burst from behind the card and must CLEAR it (up / down too, not only past its sides): one size read
       // per reveal (never per frame), in the card's own untransformed box — the pool sits in the same container
       const card = n.rvCard;
       const vs = clearVectors(k, card ? card.offsetWidth : 252, card ? card.offsetHeight : 420, { reach: full ? [70, 190] : [40, 130] });
       for (let i = 0; i < k; i += 1) {
-        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: (full ? 1000 : 780) + (i % 5) * 70, delay: tl.burst.at, easing: 'linear' });
+        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: SHARD_MS - 80 + (i % 5) * 20, delay: tl.burst.at, easing: 'linear' });
       }
       if (full) later(() => sndShardBurst(tier), tl.burst.at);
     }

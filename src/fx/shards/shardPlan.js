@@ -8,9 +8,12 @@
 //
 // THE FLIGHT (one finite one-shot, transform/opacity only): the blade SNAPS out tip-first (the first ~35 %, ease-out),
 // HANGS and drifts sideways with a slow turn (the Aamon float), then shrinks and fades. Snappy, never floaty: the
-// travel is over inside ~320 ms; the hang is the read.
+// travel is over inside ~200 ms; the short hang is the read.
 
 export const SHARD_PIECES = 4;
+// mission control nov2: ONE strong idea per moment — 8–14 blades, the whole flight under 600 ms (no stacked bursts)
+export const SHARD_MS = 580; // a flight's ceiling; pools stagger BELOW it, never past it
+export const SHARD_MAX = 14;
 export const SHARD_SETS = ['violet', 'gold', 'pink', 'cyan', 'prism'];
 /** Which painted set(s) a rarity throws. MYTHIC mixes its two colours (pink + cyan, like its aura). */
 export const TIER_SETS = {

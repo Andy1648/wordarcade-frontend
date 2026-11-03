@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SHARD_PIECES, SHARD_SETS, TIER_SETS, TIP_DEG, shardSrc, bladeFrames, bladeFlavour, clearVectors } from './shardPlan.js';
+import { SHARD_PIECES, SHARD_SETS, TIER_SETS, TIP_DEG, shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from './shardPlan.js';
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'public');
 
@@ -73,4 +73,9 @@ test('clear vectors leave the card: every blade ends outside the box, by reach',
   // spread all the way round: some up, some down, some left, some right
   assert.ok(vs.some((v) => v.y < -h / 2) && vs.some((v) => v.y > h / 2));
   assert.ok(vs.some((v) => v.x < -w / 2) && vs.some((v) => v.x > w / 2));
+});
+
+test('one strong idea: at most 14 blades, every flight under 600 ms', () => {
+  assert.ok(SHARD_MAX >= 8 && SHARD_MAX <= 14);
+  assert.ok(SHARD_MS < 600);
 });
