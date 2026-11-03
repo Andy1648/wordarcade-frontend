@@ -46,10 +46,9 @@
 .dd-chest-in { position: absolute; inset: 0; display: block; transform-origin: 50% 85%; }
 .dd-base,
 .dd-lid { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; }
-.dd-lid { transform-origin: 8% 46%; }
-.dd.is-claimed .dd-lid { transform: translate(-4%, -10%) rotate(-24deg); }
+.dd-lid { transform-origin: 10% 53%; } /* the painted lid's bottom-left corner = its hinge on the body's back rim (chest-lid-v2's shared canvas) */
+.dd.is-claimed .dd-lid { transform: rotate(-32deg); }
 .dd.is-claimed .dd-chest-in { transform: translateY(6px) scale(.88); } /* sits lower so the lifted lid stays on the tile */
-.dd-burst { position: absolute; left: -22px; top: -24px; width: 100px; height: 100px; opacity: 0; pointer-events: none; overflow: visible; }
 
 /* ---- the head: tier name big + what's happening ---- */
 .dd-head { grid-area: head; min-width: 0; display: flex; flex-direction: column; gap: 3px; }

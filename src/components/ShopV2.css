@@ -518,7 +518,6 @@
 }
 .sp2-pop .dd-head { align-items: center; padding-right: 0; }
 .sp2-pop .dd-chest { width: 150px; height: 150px; }
-.sp2-pop .dd-burst { left: -59px; top: -64px; width: 268px; height: 268px; }
 .sp2-pop .dd-big { font-size: var(--fs-k34); }
 .sp2-pop .dd-stamp { justify-self: center; }
 .sp2-pop .dd-reward { justify-self: center; }

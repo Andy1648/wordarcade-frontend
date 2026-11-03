@@ -64,11 +64,14 @@ export function bladeFrames(v, { s = 1, turn = 24, drift = 10, piece = 0 } = {})
  * runs to where its ray leaves the box, plus `reach` px (min..max), so a blade aimed up or down is seen too, not only
  * the ones aimed at the card's sides. Angles evenly spread with a fixed jitter; `s` = a size per slot.
  */
-export function clearVectors(n, w, h, { reach = [50, 150] } = {}) {
+export function clearVectors(n, w, h, { reach = [50, 150], arc = null } = {}) {
   const hw = Math.max(1, w / 2);
   const hh = Math.max(1, h / 2);
   return Array.from({ length: n }, (_, i) => {
-    const a = (i / Math.max(1, n)) * Math.PI * 2 + 0.3 + ((i * 7) % 5) * 0.09;
+    // `arc` = [from, to] radians (screen: -PI/2 is up) fans the blades over that arc only — a burst ABOVE text
+    const a = arc
+      ? arc[0] + ((i + 0.5) / Math.max(1, n)) * (arc[1] - arc[0]) + (((i * 7) % 5) - 2) * 0.04
+      : (i / Math.max(1, n)) * Math.PI * 2 + 0.3 + ((i * 7) % 5) * 0.09;
     const c = Math.abs(Math.cos(a)) || 1e-6;
     const sn = Math.abs(Math.sin(a)) || 1e-6;
     const exit = Math.min(hw / c, hh / sn);

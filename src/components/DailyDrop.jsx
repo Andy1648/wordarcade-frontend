@@ -17,10 +17,17 @@ import { KitIcon } from './kit/index.js';
 import { ready as sfxReady } from '../audio/gameSounds';
 import { tone, pentFreq, NOTE } from '../audio/audioCore.js';
 import { BOOST_ART } from '../progress/boostArt.js';
+import ShardBurst from './gains/ShardBurst.jsx';
 
-const BASE = '/art/drop/chest-base.svg';
-const LID = '/art/drop/chest-lid.svg';
-const BURST = '/art/drop/burst.svg#b';
+// the PAINTED chest (nov3, ChatGPT — the shop's chest-v2 look): body + lid drawn together, stacked on one square canvas
+// (the lid seated on the rim), so the lid hinges off the body exactly like the old vector pair did
+const BASE = '/art/drop/chest-base-v2.webp';
+const LID = '/art/drop/chest-lid-v2.webp';
+// THE BLADES (fx/shards): a tier step-up / the final open cracks the chest with painted crystal blades in the tier's
+// colour — COMMON stays quiet (a shake only), so the colour itself is the news
+const BLADE_SET = [null, 'cyan', 'violet', 'gold', 'pink'];
+// the blades fan UP and out — the tier name, the stamp and the reward line sit under the chest
+const UP_FAN = [-Math.PI * 0.97, -Math.PI * 0.03];
 
 // ---- Web Audio blips (the event-sound toggle + shared context; nothing plays before a gesture) ----
 function sndTap(tier, up) {
@@ -75,7 +82,7 @@ export default function DailyDrop({ now }) {
   const [odds, setOdds] = useState(false);
   const chestRef = useRef(null);
   const lidRef = useRef(null);
-  const burstRef = useRef(null);
+  const shardsRef = useRef(null);
   const bigRef = useRef(null);
   const busy = useRef(false);
   useEffect(() => {
@@ -97,15 +104,14 @@ export default function DailyDrop({ now }) {
     { transform: `rotate(${-deg / 2}deg) scale(1.02)` },
     { transform: 'rotate(0deg) scale(1)' },
   ], { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
-  const burst = (i) => {
-    const el = burstRef.current;
-    if (!el) return;
-    el.style.setProperty('--dd-burst', TIERS[i].color); // re-tint the ONE pooled node (a static write, not animated)
-    kitPlay(el, [
-      { opacity: 0, transform: 'scale(.35) rotate(0deg)' },
-      { opacity: 1, transform: 'scale(1.05) rotate(18deg)', offset: 0.45 },
-      { opacity: 0, transform: 'scale(1.3) rotate(30deg)' },
-    ], { duration: 420, easing: 'ease-out' });
+  // one read of the chest's box, on the tap (never per frame); the pool re-reads its own origin because the shop's
+  // chest popup scales in (a transformed container)
+  const burst = (i, open = false) => {
+    const set = BLADE_SET[i];
+    const el = chestRef.current;
+    if (!set || !el || !shardsRef.current) return;
+    const b = el.getBoundingClientRect();
+    shardsRef.current.burst({ x: b.left + b.width / 2, y: b.top + b.height / 2 }, { w: b.width * 0.8, h: b.height * 0.8, set, n: open ? 12 : 6, reach: open ? [50, 140] : [30, 90], arc: UP_FAN, remeasure: true });
   };
   const land = () => kitPlay(bigRef.current, [{ transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 220, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
 
@@ -149,10 +155,10 @@ export default function DailyDrop({ now }) {
     requestAnimationFrame(() => {
       kitPlay(lidRef.current, [
         { transform: 'translate(0, 0) rotate(0deg)' },
-        { transform: 'translate(-6%, -16%) rotate(-30deg)', offset: 0.6 },
-        { transform: 'translate(-4%, -12%) rotate(-24deg)' },
+        { transform: 'translate(-1%, -3%) rotate(-40deg)', offset: 0.6 },
+        { transform: 'translate(0, 0) rotate(-32deg)' },
       ], { duration: 340, easing: 'cubic-bezier(.3, 1.4, .5, 1)' });
-      burst(r.tier);
+      burst(r.tier, true);
       sndOpen(r.tier);
     });
   };
@@ -177,9 +183,6 @@ export default function DailyDrop({ now }) {
     >
       <button type="button" className="dd-tap" onClick={onTap} aria-label={odds ? 'Hide the drop odds' : label} aria-disabled={phase === 'claimed' && !odds ? 'true' : undefined}>
         <span className="dd-chest" aria-hidden="true">
-          <svg className="dd-burst" ref={burstRef} viewBox="0 0 200 200" aria-hidden="true">
-            <use href={BURST} />
-          </svg>
           <span className="dd-chest-in" ref={chestRef}>
             <img className="dd-base" src={BASE} alt="" draggable="false" />
             <img className="dd-lid" ref={lidRef} src={LID} alt="" draggable="false" />
@@ -232,6 +235,7 @@ export default function DailyDrop({ now }) {
         i
       </button>
       {reward ? <span className="dd-sr" role="status">{`${TIERS[reward.tier].name}! ${D.payText(reward.tier)}`}</span> : null}
+      <ShardBurst ref={shardsRef} set="cyan" />
     </section>
   );
 }

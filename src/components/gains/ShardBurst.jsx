@@ -6,7 +6,10 @@
 //   <div style={{ position: 'relative' }}><ShardBurst ref={s} set="gold" /></div>
 //   s.current.burst(viewportPoint, { w, h, set, n })   // w/h: the box the blades must clear (the plate); set: this burst's
 //                                                      // colours; n: how many (≤ SHARD_COUNT — a small claim throws fewer);
-//                                                      // reach: [min, max] px past the box; edge: start ON the box's rim
+//                                                      // reach: [min, max] px past the box; edge: start ON the box's rim;
+//                                                      // arc: [from, to] radians — fan over that arc only (stay above text);
+//                                                      // remeasure: re-read the layer's origin first (a host inside a
+//                                                      // transformed / animated-in container — one read, on the event)
 //
 // The layer's own origin is measured on mount / resize only; a burst() is pure writes.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
@@ -30,19 +33,22 @@ const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' },
     wanted.current = set;
     if (!flying.current) paint(set);
   }, [set]);
+  const measure = useRef(null);
   useEffect(() => {
-    const measure = () => {
+    const m = () => {
       const el = layerRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
       origin.current = { x: r.left, y: r.top };
     };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    measure.current = m;
+    m();
+    window.addEventListener('resize', m);
+    return () => window.removeEventListener('resize', m);
   }, []);
   useImperativeHandle(ref, () => ({
     burst(from, box) {
+      if (box && box.remeasure && measure.current) measure.current();
       const o = origin.current;
       if (!from || !o) return;
       const x0 = from.x - o.x - HALF;
@@ -51,7 +57,7 @@ const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' },
       const n = Math.max(1, Math.min(SHARD_COUNT, (box && box.n) || SHARD_COUNT));
       const bw = box ? box.w : 120;
       const bh = box ? box.h : 120;
-      const vs = fitInside(clearVectors(n, bw, bh, { reach: (box && box.reach) || [50, 130] }), from, window.innerWidth, window.innerHeight);
+      const vs = fitInside(clearVectors(n, bw, bh, { reach: (box && box.reach) || [50, 130], arc: (box && box.arc) || null }), from, window.innerWidth, window.innerHeight);
       // the colours of THIS burst (the `set` prop already loaded them; a src write to a cached sprite is instant); the
       // last blade to land hands the pool back to the `set` prop (its own finish event — no timer to drift from the clock)
       if (box && box.set) paint(box.set);

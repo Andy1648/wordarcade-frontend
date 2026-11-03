@@ -106,3 +106,10 @@ test('edgeStart: a blade starts where its ray leaves the box (never inside the f
   }
   assert.deepEqual(edgeStart({ x: 300, y: 0 }, 200, 280), { x: 100, y: 0 });
 });
+
+test('an arc fans the blades over that arc only (a burst that must stay ABOVE the text under it)', () => {
+  const vs = clearVectors(12, 150, 150, { reach: [40, 120], arc: [-Math.PI * 0.95, -Math.PI * 0.05] });
+  assert.equal(vs.length, 12);
+  for (const v of vs) assert.ok(v.y < 0, JSON.stringify(v)); // every blade flies upward
+  assert.ok(vs.some((v) => v.x < -60) && vs.some((v) => v.x > 60)); // still a wide fan
+});
