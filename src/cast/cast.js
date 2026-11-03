@@ -315,26 +315,26 @@ export const CAST_LAYERS = {
   },
   hype: { hero: { base: '/cast/hype-hero-base.webp', slots: [{ slot: 'hand', src: '/cast/props/foam-finger.webp', x: 11.33, y: 3.12, w: 28.52 }], act: 'shout', sprites: [
     { src: '/cast/props/shout-arcs.webp', x: 78, y: 36, w: 13, o: '0% 50%' },
-    { src: '/cast/props/confetti.webp', x: 19, y: -2, w: 20 },
+    { src: '/cast/props/confetti-v2.webp', x: 19, y: -2, w: 20 },
   ] } },
   brawl: { hero: { base: '/cast/brawl-hero-base.webp', slots: [{ slot: 'hands', src: '/cast/props/gloves.webp', x: 12.3, y: 28.91, w: 75.39 }], act: 'jab', sprites: [
-    { src: '/cast/props/impact.webp', x: 70, y: 25.5, w: 20 },
-    { src: '/cast/props/sweat.webp', x: 31, y: 20, w: 4.5 },
+    { src: '/cast/props/impact-v2.webp', x: 70, y: 25.5, w: 20 },
+    { src: '/cast/props/sweat-v2.webp', x: 31, y: 20, w: 4.5 },
   ] } },
   'riot-elite': { hero: { act: 'rock', sprites: [
-    { src: '/cast/props/note-double.webp', x: 20, y: 48, w: 15 },
-    { src: '/cast/props/note.webp', x: 38, y: 44, w: 11 },
+    { src: '/cast/props/note-double-v2.webp', x: 20, y: 48, w: 15 },
+    { src: '/cast/props/note-v2.webp', x: 38, y: 44, w: 11 },
     { src: '/cast/props/bolt.webp', x: 83, y: 24, w: 9 },
   ] } },
   'hype-elite': { hero: { act: 'mvp', sprites: [
     { src: '/cast/props/shout-arcs.webp', x: 1, y: 0, w: 13, o: '100% 50%' },
-    { src: '/cast/props/confetti.webp', x: 52, y: -3, w: 22 },
-    { src: '/cast/props/confetti.webp', x: 30, y: 2, w: 18 },
+    { src: '/cast/props/confetti-v2.webp', x: 52, y: -3, w: 22 },
+    { src: '/cast/props/confetti-v2.webp', x: 30, y: 2, w: 18 },
   ] } },
   'brawl-elite': { hero: { act: 'champ', sprites: [
-    { src: '/cast/props/flash.webp', x: 5, y: 13, w: 19 },
-    { src: '/cast/props/flash.webp', x: 74, y: 9, w: 18 },
-    { src: '/cast/props/flash.webp', x: 78, y: 55, w: 17 },
+    { src: '/cast/props/flash-v2.webp', x: 5, y: 13, w: 19 },
+    { src: '/cast/props/flash-v2.webp', x: 74, y: 9, w: 18 },
+    { src: '/cast/props/flash-v2.webp', x: 78, y: 55, w: 17 },
   ] } },
   'hex-elite': { hero: { act: 'arcane', sprites: [
     { src: '/cast/props/spark-big.webp', x: 6.8, y: 8.2, w: 10 },
@@ -364,9 +364,9 @@ export const CAST_LAYERS = {
   },
   // DUD snores: three Z's drift up off the nightcap, small to big
   dud: { hero: { act: 'snore', sprites: [
-    { src: '/cast/props/sleep-z.webp', x: 75, y: 17, w: 10 },
-    { src: '/cast/props/sleep-z.webp', x: 80, y: 5, w: 12.5 },
-    { src: '/cast/props/sleep-z.webp', x: 85, y: -8, w: 14.5 },
+    { src: '/cast/props/sleep-z-v2.webp', x: 75, y: 17, w: 10 },
+    { src: '/cast/props/sleep-z-v2.webp', x: 80, y: 5, w: 12.5 },
+    { src: '/cast/props/sleep-z-v2.webp', x: 85, y: -8, w: 14.5 },
   ] } },
   // LEXI: "well, ACTUALLY" — a lightbulb pops over the raised finger, a page flutters out of the dictionary
   lexi: { hero: { act: 'eureka', sprites: [
@@ -389,7 +389,7 @@ export const CAST_LAYERS = {
     { src: '/cast/props/flame.webp', x: 74, y: 1, w: 22, o: '50% 100%' },
     { src: '/cast/props/sauce-drop.webp', x: 13, y: 11, w: 7 },
     { src: '/cast/props/sauce-drop.webp', x: 19, y: 9, w: 6 },
-    { src: '/cast/props/steam.webp', x: 30, y: 18, w: 14 },
+    { src: '/cast/props/steam-v2.webp', x: 30, y: 18, w: 14 },
   ] } },
   // MECHA (oct19, Andy: "mecha - it just doesn't really fit … QUALITY"): a machine, idling — the fuse burns steady over
   // its painted flame, both boot thrusters flicker sideways out of their nozzles and cough exhaust, the antenna beacon
@@ -399,8 +399,8 @@ export const CAST_LAYERS = {
     { src: '/cast/props/flame.webp', x: 33.4, y: 1.8, w: 16, o: '50% 94%' },
     { src: '/cast/props/flame.webp', x: 20, y: 69.1, w: 11, o: '50% 94%' },
     { src: '/cast/props/flame.webp', x: 74.5, y: 70, w: 11, o: '50% 94%' },
-    { src: '/cast/props/steam.webp', x: 12.1, y: 74.6, w: 7 },
-    { src: '/cast/props/steam.webp', x: 86.7, y: 75.6, w: 7 },
+    { src: '/cast/props/steam-v2.webp', x: 12.1, y: 74.6, w: 7 },
+    { src: '/cast/props/steam-v2.webp', x: 86.7, y: 75.6, w: 7 },
     { src: '/cast/props/spark-sm.webp', x: 64.9, y: 9.5, w: 6 },
     { src: '/cast/props/spark-sm.webp', x: 46.5, y: 31.5, w: 5 },
     { src: '/cast/props/spark-sm.webp', x: 62.9, y: 32.2, w: 5 },

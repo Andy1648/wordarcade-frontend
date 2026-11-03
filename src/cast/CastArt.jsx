@@ -258,7 +258,7 @@ const AURAS = {
     ['/cast/props/flame.webp', 10, 48, 9], ['/cast/props/flame.webp', 80, 40, 8], ['/cast/props/flame.webp', 24, 22, 7], ['/cast/props/flame.webp', 70, 66, 7],
   ] },
   magma: { ms: 2300, f: RISE, e: 'ease-out', at: [
-    ['/cast/props/steam.webp', 14, 30, 12], ['/cast/props/flame.webp', 82, 52, 8], ['/cast/props/steam.webp', 74, 18, 11], ['/cast/props/flame.webp', 8, 62, 7],
+    ['/cast/props/steam-v2.webp', 14, 30, 12], ['/cast/props/flame.webp', 82, 52, 8], ['/cast/props/steam-v2.webp', 74, 18, 11], ['/cast/props/flame.webp', 8, 62, 7],
   ] },
   facet: { ms: 1500, f: TWINKLE, e: 'ease-in-out', at: [
     ['/cast/props/spark-big.webp', 8, 18, 10], ['/cast/props/spark-sm.webp', 86, 12, 7], ['/cast/props/spark-big.webp', 84, 52, 9],
