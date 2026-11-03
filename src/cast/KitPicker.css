@@ -2,11 +2,21 @@
    House look: flat fills, coloured outlines, hard black shadows. Nothing scrolls on a laptop. */
 .skp { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: center; }
 .skp-stage { position: relative; display: flex; justify-content: center; min-width: 0; }
-/* the round PORTRAIT try-on (AvatarFrame), tucked in the card's lower-left corner */
-.skp-stage .skp-avatar { position: absolute; left: 6px; bottom: 10px; width: 84px; height: 84px; z-index: 2; }
+/* EQUIP PREVIEW (nov3 move 12): under the framed card, a copy of YOUR menu PROFILE plate wearing the frame you're looking
+   at (Homepage.css .hp-profplate: face, PROFILE, the title). The card gives up the plate's height so nothing scrolls. */
+.skp.is-frame .skp-stage { flex-direction: column; align-items: center; gap: 16px; }
+.skp-plate {
+  display: flex; align-items: center; gap: 12px; padding: 6px 16px 8px 8px; max-width: 100%; box-sizing: border-box;
+  background: #1a0b2e; border: 4px solid #000; border-radius: 8px; box-shadow: 4px 4px 0 #000; line-height: 1; white-space: nowrap;
+}
+.skp-plate-face { flex: none; width: 54px; height: 54px; object-fit: cover; border: 3px solid #000; border-radius: 6px; background: #2a1647; box-sizing: border-box; }
+.skp-plate-face.avf { border: 0; background: none; }
+.skp-plate-t { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.skp-plate-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.12em; color: #c9b8e8; }
+.skp-plate-n { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
 .skp-stage .hs { max-width: min(400px, calc(100dvh - 230px)); }
 .skp-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.skp-stage .fc { width: min(300px, calc((100dvh - 250px) * .6)); }
+.skp-stage .fc { width: min(280px, calc((100dvh - 340px) * .6)); } /* the plate below takes ~90px */
 .skp-tabs { display: flex; gap: 10px; flex-wrap: wrap; }
 /* WIN FX try-on: the burst behind your WIN pose */
 .skp-fx { position: relative; width: min(380px, calc(100dvh - 260px)); aspect-ratio: 1; }
@@ -55,7 +65,9 @@
 .skp-locked { display: inline-flex; align-items: center; gap: 8px; font: 400 var(--fs-k18) 'Bungee', sans-serif; color: #fff; }
 .skp-gems { display: inline-flex; align-items: center; gap: 6px; font: 400 var(--fs-k22) 'Bungee', sans-serif; color: #fff; }
 @media (max-width: 760px) {
-  .skp-stage .skp-avatar { width: 56px; height: 56px; left: 2px; bottom: 4px; }
+  .skp-plate { padding: 4px 12px 6px 6px; gap: 8px; }
+  .skp-plate-face { width: 44px; height: 44px; }
+  .skp-plate-n { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
   .skp { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .skp-stage .hs { max-width: 210px; }
   .skp-stage .fc { width: 150px; }

@@ -67,9 +67,9 @@
    scroll (the shop's stage is 1280×720 scaled — so sizes are in its own px) */
 @media (min-width: 1000px) {
   .sp2-shelf-cz .skp-stage .hs { max-width: 300px; }
-  .sp2-shelf-cz .skp-stage .fc { width: 200px; }
+  .sp2-shelf-cz .skp-stage .fc { width: 170px; }
   .sp2-shelf-cz .skp-fx { width: 300px; }
-  .sp2-shelf-cz .skp-stage .skp-avatar { width: 64px; height: 64px; }
+  .sp2-shelf-cz .skp.is-frame .skp-stage { gap: 12px; }
   .sp2-shelf-cz .skp { gap: 16px; }
 }
 @media (min-width: 1000px) {
@@ -81,9 +81,10 @@
 @media (min-width: 1000px) and (max-height: 640px) {
   /* a short laptop window: the try-on and the piece's own lines tighten one more step */
   .sp2-shelf-cz .skp-stage .hs { max-width: 200px; }
-  .sp2-shelf-cz .skp-stage .fc { width: 130px; }
+  .sp2-shelf-cz .skp-stage .fc { width: 110px; }
   .sp2-shelf-cz .skp-fx { width: 200px; }
-  .sp2-shelf-cz .skp-stage .skp-avatar { width: 48px; height: 48px; }
+  .sp2-shelf-cz .skp-plate-face { width: 40px; height: 40px; }
+  .sp2-shelf-cz .skp-plate-n { font-size: var(--fs-k18); -webkit-text-stroke-width: 3px; text-shadow: 2px 2px 0 #000; }
   .sp2-shelf-cz .skp-info { gap: 2px; }
 }
 @media (min-width: 1000px) and (max-height: 640px) {

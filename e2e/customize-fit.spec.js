@@ -47,10 +47,30 @@ const layout = (page, root, sel) => page.evaluate(({ root, sel }) => {
 }, { root, sel });
 const sizeOf = (loc) => loc.evaluate((e) => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height }; });
 
+// EQUIP PREVIEW (nov3 design-research move 12): the FRAME try-on shows the frame on a copy of YOUR menu PROFILE plate —
+// ring round your face, the menu's own title — under the card (apart from it) and inside the panel / shelf.
+async function framePlate(page, scope, title) {
+  const plate = page.getByTestId('kit-plate-preview');
+  await expect(plate).toBeVisible();
+  await expect(plate.locator('.avf-ring')).toBeVisible();
+  if (title) await expect(plate.locator('.skp-plate-n')).toHaveText(title);
+  const r = await page.evaluate((sc) => {
+    const b = (s) => document.querySelector(s).getBoundingClientRect();
+    const p = b('[data-testid="kit-plate-preview"]'), c = b('.skp-stage .fc'), box = b(sc), n = b('.skp-plate-n');
+    return { gap: Math.round(p.top - c.bottom), inside: p.left >= box.left - 1 && p.right <= box.right + 1 && p.bottom <= box.bottom + 1, nameH: Math.round(n.height), nameIn: n.right <= p.right + 1 };
+  }, scope);
+  expect(r.gap, 'the plate sits under the card, apart from it').toBeGreaterThanOrEqual(8);
+  expect(r.inside, 'the plate inside its panel').toBe(true);
+  expect(r.nameIn, 'the title inside its plate').toBe(true);
+  expect(r.nameH, 'the title is not tiny').toBeGreaterThanOrEqual(16);
+}
+
 for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
   test(`${w}x${h}: PROFILE is the hero + one CUSTOMIZE; CUSTOMIZE's tabs and pickers never overlap, the content dominates`, async ({ page }) => {
     test.setTimeout(90_000);
     await boot(page, w, h);
+    const menuPlate = page.locator('[data-testid="profile-plate"]:visible .hp-rankplate-n');
+    const menuTitle = (await menuPlate.count()) ? (await menuPlate.first().textContent()).trim() : null;
     await page.locator('[data-nav="profile"]:visible').first().click();
     const pf = page.getByTestId('profile-popup');
     await pf.waitFor({ state: 'visible' });
@@ -81,6 +101,10 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(m.overlaps, `${t}: overlaps`).toEqual([]);
       expect(m.outside, `${t}: nothing past the panel`).toEqual([]);
       expect(m.small, `${t}: tap targets ≥ 44px`).toEqual([]);
+      if (t === 'frame') {
+        await framePlate(page, '.pf', menuTitle);
+        if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/plate-profile-${w}x${h}.png` });
+      }
       if ((t === 'frame' || t === 'fx') && w >= 760) {
         // the try-on is not a list: on a desktop it fits whole, the HOLD TO BUY in view, no scroll
         const sc = await page.locator('.cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
@@ -94,6 +118,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
   });
 
   test(`${w}x${h}: the shop's tabs wear their icons, never overlap or leave the row; COSMETICS is the same menu INLINE`, async ({ page }) => {
+    test.setTimeout(90_000);
     await boot(page, w, h);
     await navControl(page, 'shop').click();
     await page.locator('.sp2').waitFor({ state: 'visible' });
@@ -117,6 +142,13 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(c.overlaps, `shop COSMETICS · ${t}: overlaps`).toEqual([]);
       expect(c.outside, `shop COSMETICS · ${t}: inside the shelf`).toEqual([]);
       expect(c.small, `shop COSMETICS · ${t}: tap targets ≥ 44px`).toEqual([]);
+      if (t === 'frame') {
+        await framePlate(page, '.sp2-stock', null);
+        if (process.env.SHOTS) {
+          await page.waitForFunction(() => [...document.images].every((i) => i.complete && i.naturalWidth), null, { timeout: 6000 }).catch(() => {});
+          await page.screenshot({ path: `${process.env.SHOTS}/plate-shop-${w}x${h}.png` });
+        }
+      }
       if ((t === 'frame' || t === 'fx') && w >= 1000) {
         const sc = await page.locator('.sp2-shelf-cz .cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `shop COSMETICS · ${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
