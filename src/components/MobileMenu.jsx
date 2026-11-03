@@ -160,6 +160,7 @@ export default function MobileMenu({
   railItems,
   xpBar = null,
   markChip = null,
+  roomsChip = null, // OPEN ROOMS "N OPEN" chip (MenuRooms variant chip) — null / renders nothing at zero rooms
   wins = 0,
   gems = null,
   claimSlot = null,
@@ -195,6 +196,8 @@ export default function MobileMenu({
         {/* E5 follow-up: a live BOOST shows on the phone too, joining this row (renders nothing at rest) */}
         <BoostPill className="hp-m-boost" />
         {board && <LiveTicker className="hp-m-live" />}
+        {/* OPEN ROOMS (Andy nov2): "N OPEN" joins this row (renders nothing at zero rooms); opens JOIN ROOM */}
+        {roomsChip}
       </div>
 
       {/* 1a'. REWARDS WAITING, IN FLOW (oct3 live check): the fixed top popup covered the title row — the gold

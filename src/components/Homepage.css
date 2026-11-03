@@ -919,6 +919,22 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
 
 /* YOUR MAIN (oct16): the paged desktop's empty right column, under the icons. Only ≥ 1200px — under that the right column
    collapses to the icon cluster (above) and there is no room. */
+/* OPEN ROOMS (Andy nov2): the paged desktop's right column, row 3 — under the CONTRACTS chip (row 2), above the
+   bottom-aligned boost dock (MenuRooms drops a row per running boost) and the bottom-right extras cell (row 4).
+   A grid cell, never a fixed orphan. Elsewhere the list is the "N OPEN" chip in an existing cluster. */
+.hp-rooms { display: none; }
+@media (min-width: 1200px) {
+  .homepage-stage[data-paged] .hp-rooms {
+    display: block;
+    grid-column: 3;
+    grid-row: 3;
+    align-self: start;
+    justify-self: stretch;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+  }
+}
 .hp-main { display: none; }
 @media (min-width: 1200px) {
   .homepage-stage[data-paged] .hp-main {

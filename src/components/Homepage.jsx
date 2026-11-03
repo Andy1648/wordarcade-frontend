@@ -9,6 +9,9 @@ import { sfx, setMuted as setJuiceMuted } from '../juice';
 import GameCard from './GameCard';
 import { MenuXpFx } from './MenuXp';
 import { KitXpBar } from './kit/KitXpBar.jsx';
+import { useMenuRoomsPoll } from './menuRoomsPoll.js';
+// OPEN ROOMS (nov2): the panel / chip are a lazy chunk (payload ratchet), mounted once the first public_rooms reply lands
+const MenuRooms = lazyWithReload(() => import('./MenuRooms.jsx'), 'MenuRooms');
 import { MenuIcons, MenuUtility, MenuRail, MenuMarkChip, MenuGearSlot, MenuGearSlot2, MenuGear2Chip, focusNav } from './MenuNav';
 import { useXpCapture } from '../progress/useXpCapture';
 import { letterXpNow } from '../progress/letterXp';
@@ -178,7 +181,7 @@ let cloudBootChecked = false;
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -1514,6 +1517,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     />
   );
 
+  // OPEN ROOMS (Andy nov2): the live public-room list. The PANEL owns the paged desktop's right column (≥1200, under
+  // CONTRACTS); everywhere else an "N OPEN" CHIP joins an existing cluster (phone LV row / desktop footer links). Data is
+  // App's existing publicRooms + list_public_rooms on the one socket, polled only while this menu shows it (menuRoomsPoll.js); the panel itself is the lazy MenuRooms chunk.
+  const roomsOn = !!(rooms && onRefreshRooms && reveal.core && !titlePlay);
+  const roomsPanel = roomsOn && hasMainColumn && MENU_VARIANT !== 'slab';
+  useMenuRoomsPoll(onRefreshRooms, roomsOn && wsStatus === 'open' && !tourCovered && !navigating);
+  // "heard": the first public_rooms reply since mount (App rebuilds the array per reply; the mount run is a stale copy)
+  const [roomsHeard, setRoomsHeard] = useState(false);
+  const roomsFirstRef = useRef(true);
+  useEffect(() => {
+    if (roomsFirstRef.current) { roomsFirstRef.current = false; return; }
+    setRoomsHeard(true);
+  }, [rooms]);
+  const roomsChip = roomsOn && !roomsPanel && roomsHeard ? (
+    <Suspense fallback={null}><MenuRooms variant="chip" rooms={rooms} heard={roomsHeard} onOpenAll={handleDialogJoin} navigating={navigating} className={isPhoneMenu ? 'hp-m-rooms' : 'hp-rooms-chip'} /></Suspense>
+  ) : null;
+
   return (
     <div ref={navRootRef} className="homepage-wrap" onPointerOver={warmModeDialog} onFocusCapture={warmModeDialog} onTouchStart={warmModeDialog}>
       <div
@@ -1562,6 +1582,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               : null}
             xpBar={xpBar}
             markChip={markChip}
+            roomsChip={roomsChip}
             wins={wins}
             gems={markShown && reveal.gears ? gems : null}
           />
@@ -1591,6 +1612,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             </button>
           )}
           {LEADERBOARD_ENABLED && reveal.core && <LiveTicker className="homepage-live" />}
+          {roomsChip}
           {/* boost timers, where the paged layout has no bottom-right cell (Homepage.css .hp-dock--extras) */}
           <div className="hp-dock hp-dock--extras"><BoostDock /></div>
         </div>
@@ -1605,6 +1627,26 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             under the icons sharing their right edge (Brawl Stars / Clash Royale); ?menu=slab = the framed right-column slab
             instead (research: claude notes menu-profile-layout-research.md). Under 1200 the face sits in the icon cluster. */}
         {isPagedMenu && dailyTile && <div className={`hp-main is-${MENU_VARIANT}`}>{dailyTile}</div>}
+
+        {/* OPEN ROOMS (Andy nov2): the paged desktop's right column under CONTRACTS — a grid cell (Homepage.css .hp-rooms),
+            never a fixed orphan. Under 1200 / on a phone the "N OPEN" chip joins the footer links / the LV row instead. */}
+        {roomsPanel && (
+          <div className="hp-rooms">
+            {/* the grid slot is eager; the panel chunk loads on the first list reply (until then the slot is empty) */}
+            {roomsHeard && <Suspense fallback={null}><MenuRooms
+              variant="panel"
+              rooms={rooms}
+              heard={roomsHeard}
+              name={playerName}
+              onJoin={onJoinPublicRoom}
+              onCreate={onCreatePublic}
+              onNavigate={() => setNavigating(true)}
+              onOpenAll={handleDialogJoin}
+              navigating={navigating}
+              online={wsStatus === 'open'}
+            /></Suspense>}
+          </div>
+        )}
 
         {/* CENTRE: LV + the XP bar + the worn mark. No typed-text box (Andy oct6): what you
             type shows only as the pre-v2 letter pops (MenuXpFx below, fed by useXpCapture). */}
