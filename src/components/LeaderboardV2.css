@@ -1080,45 +1080,11 @@
 .lb2--narrow .lb2-row.is-me .lb2-who-text > .lb2-name-line { max-width: calc(100% + 40px); }
 .lb2--narrow .lb2-row .lb2-rival { display: none; }
 
-/* DESCRIPTIONS (Andy oct28 "descriptions for top accounts"): the TOP 10's bios. The podium's sits under the name, two lines
-   at most; a row's is the second line under the name (one line, its full text in the profile card). Space Mono, quiet ink -
-   the name stays the loudest thing on the row. */
-.lb2-pod-bio {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  max-width: 100%;
-  margin: 2px 0 calc(8px * var(--pk, 1));
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1.15;
-  text-align: center;
-  color: #d9c8f5;
-  overflow-wrap: anywhere;
-}
-.lb2-pod-bio::before { content: '\201C'; }
-.lb2-pod-bio::after { content: '\201D'; }
+/* (oct28's on-board DESCRIPTIONS are gone - nov2 SIMPLIFY: a bio lives in the profile card only) */
+/* the row's name cell: the face, then the text column (name line + chase) */
 .lb2 .lb2-row .lb2-who-cell { flex-direction: row; align-items: center; gap: calc(10px * var(--lb2-k)); }
 .lb2--narrow .lb2-row .lb2-who-cell { gap: 6px; }
 .lb2-who-text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; }
-.lb2-who-text.has-bio { flex-direction: column; align-items: flex-start; gap: 0; }
-.lb2-who-text.has-bio .lb2-name-line { max-width: 100%; }
-.lb2-bio {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  line-height: 1.15;
-  color: #b9a6dd;
-}
-.lb2-bio::before { content: '\201C'; }
-.lb2-bio::after { content: '\201D'; }
 
 /* ===== oct29 OVERLAP AUDIT (item 9, after #565) =====
    - a row GROWS to hold its bio / a two-line name (THIS WEEK's bios were cut at the bottom of a fixed 38-43px row);
@@ -1137,17 +1103,20 @@
   overflow-wrap: anywhere;
   text-overflow: clip;
   line-height: 1.05;
-  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc(100cqw / var(--nl, 8))));
+  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc(92cqw / var(--nl, 8))));
 }
 .lb2 .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: max(13px, min(max(var(--fs-k14), calc(var(--fs-k100) * 0.19 * var(--lb2-k))), calc((100cqw - 64px) / var(--nl, 8)))); }
 .lb2--narrow .lb2-row .lb2-name.lb2-name--wrap,
 .lb2--narrow .lb2-row.is-me .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
-/* a tag on the name's line (RIVAL, a weekly prize) takes its width out of the name's fit, so a name shrinks to the floor
-   before it ever wraps mid-word */
-.lb2 .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap {
-  font-size: max(13px, min(max(var(--fs-k18), calc(var(--fs-k20) * var(--lb2-k))), calc((100cqw - 76px) / var(--nl, 8))));
-}
-.lb2--narrow .lb2-row:not(.is-me) .lb2-name-line:has(> :not(.lb2-name)) > .lb2-name.lb2-name--wrap { font-size: var(--fs-body); }
+/* nov2 overlap audit 2: a TAG never takes the name's width (THIS WEEK's gem prize squeezed DANIEL into DANIE / L and a phone
+   name into one letter a line). The name line WRAPS: the name sits at its natural width (sized to the column, floored), and a
+   tag that does not fit beside it drops to the next line. A name breaks between letters only when it alone is wider than the
+   whole column at the floor size. */
+.lb2 .lb2-row .lb2-name-line { flex-wrap: wrap; row-gap: 2px; }
+.lb2 .lb2-row .lb2-name-line > .lb2-name.lb2-name--wrap { flex: 0 1 auto; max-width: 100%; }
+/* a run of letters - Latin or CJK - stays whole; a name breaks at its _ / - (softBreak) and only past that between letters */
+.lb2 .lb2-name.lb2-name--wrap,
+.lb2 .lb2-pod-name-t.lb2-pod-name-t--cut { word-break: keep-all; }
 /* the podium name: sized to its column down to a readable floor; past that it WRAPS (Andy oct21: a name is NEVER cut
    with an ellipsis) - at a word gap if it has one, else between letters */
 .lb2 .lb2-pod-name-t.lb2-pod-name-t--cut {
@@ -1247,3 +1216,186 @@
 .lb2--narrow .lb2-row .lb2-rk[data-len='4'], .lb2--narrow .lb2-row .lb2-rk[data-len='5'], .lb2--narrow .lb2-row .lb2-rk[data-len='6'] { font-size: var(--fs-k16); }
 /* the phone's YOUR row wears a 1.08 seal (43px) — a 30px column let it run onto the name at #10 … #100 */
 .lb2--narrow .lb2-row.is-me:has(.lb2-rk.has-seal) { --rk-col: 44px; }
+/* ===== nov2 SIMPLIFY (Andy: "the top 3 have too much room ... it gives discouraging vibes"): the board is a ladder you can
+   climb, not a trophy wall. The podium shrinks to ~60% in a narrow left column, vertically centred; the LIST - and YOUR row
+   in it - takes the width. On a phone the podium drops its title plates and shrinks again. */
+.lb2:not(.lb2--narrow) { --pk: calc(var(--lb2-k) * 0.68); } /* 0.68: a 16-letter #1 name still fits in two lines */
+.lb2:not(.lb2--narrow) .lb2-podium {
+  left: calc(22px * var(--lb2-k));
+  width: calc(460px * var(--lb2-k));
+  top: calc(130px * var(--lb2-k));
+  height: calc(460px * var(--lb2-k));
+}
+.lb2:not(.lb2--narrow) .lb2-cols,
+.lb2:not(.lb2--narrow) .lb2-list {
+  left: calc(500px * var(--lb2-k));
+  width: calc(794px * var(--lb2-k));
+}
+/* the #1 name may borrow ~30% past its (now narrow) column - the gap between the #2 and #3 heroes is clear at that height -
+   so a 16-letter name stays on two lines at the 13px floor even on a 1280x551 stage */
+.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-who > .lb2-pod-name { width: 112%; max-width: none; margin-left: -6%; margin-right: -6%; }
+/* the phone row hands the NAME more width (audit 2: at the 16px floor a 9-letter name needed ~100px and the column was 92):
+   tighter gaps and slimmer number columns - the numbers still fit (R40 / 9999) */
+.lb2--narrow .lb2-cols,
+.lb2--narrow .lb2-row { grid-template-columns: var(--rk-col, 30px) minmax(0, 1fr) 34px 62px 48px; gap: 4px; padding: 0 6px; }
+.lb2--narrow .lb2-row.is-me .lb2-chase { max-width: calc(100% + 38px); } /* the ▲▼ column + its 4px gap, never REBIRTHS */
+/* the podium's seals keep their size when the podium shrinks (they are the tier's flavor - nov2 repaint) */
+/* on the narrow podium the seal sits ABOVE the name, so the name keeps the column's whole width */
+.lb2:not(.lb2--narrow) .lb2-who > .lb2-pod-name { flex-direction: column; gap: 2px; }
+.lb2:not(.lb2--narrow) .lb2-pod-seal { --seal-k: 1; --num-k: 0.9; }
+.lb2:not(.lb2--narrow) .lb2-col--1 .lb2-pod-seal { --seal-k: 1.25; --num-k: 1; }
+.lb2--narrow { --pk: 0.36; }
+.lb2--narrow .lb2-pod-plate { display: none; }
+/* the phone podium's art is sized in px (not --pk): ~30% smaller heroes + blocks, so the list starts higher */
+.lb2--narrow .lb2-stand { width: 64px; height: 64px; margin-bottom: -6px; }
+.lb2--narrow .lb2-col--1 .lb2-stand { width: 80px; height: 80px; margin-top: 4px; }
+.lb2--narrow .lb2-block { width: 58px; }
+.lb2--narrow .lb2-col .lb2-place { font-size: var(--fs-k20); }
+.lb2--narrow .lb2-col--1 .lb2-place { font-size: var(--fs-k28); }
+.lb2--narrow .lb2-col--3 .lb2-place { font-size: var(--fs-k18); }
+
+/* ---- CLIMB (Andy nov2 picks) ------------------------------------------------------------------------------------- */
+/* 1 THE GAP BAR: the chase line's underline, filled to how much of the deciding stat you already have. Static width; the
+   arrival FILL one-shot (scaleX, .lb2-fill) grows it once. */
+.lb2-row.is-me .lb2-chase { position: relative; padding-bottom: 4px; }
+.lb2-gap { position: absolute; left: 0; top: auto; bottom: 0; height: 3px; background: #a8164e; transform-origin: 0 50%; pointer-events: none; }
+.lb2-gap::after { content: ''; position: absolute; inset: 0 auto 0 100%; width: 100vw; background: rgba(58, 33, 96, 0.22); }
+.lb2-chase { overflow: hidden; }
+.lb2-gap-n { color: #a8164e; }
+/* 2 STICKY: YOUR row stays on the list's edge when you scroll away from it (the same row, no second element) */
+/* inset by the -1deg tilt's corner lift + the hard shadow, so the stuck row sits wholly inside the list */
+.lb2-scroll .lb2-row.is-me { position: sticky; top: calc(8px * var(--lb2-k)); bottom: calc(8px * var(--lb2-k)); }
+/* = the row's own vertical margin, so at the end of the list (past #100) the row is not lifted onto the ghost above it */
+.lb2--narrow .lb2-scroll .lb2-row.is-me { top: 5px; bottom: 5px; }
+/* 3 THE GHOST: the player right above you, past the board — a real row, a step quieter than the board's own */
+.lb2-row.is-ghost { opacity: 0.78; }
+
+/* ---- THE TOP 3 AS RAISED ROWS + YOUR CLIMB (Andy nov2: big games give the top 3 a medal row, not a trophy wall) ---- */
+.lb2 .lb2-top3 {
+  position: absolute; left: calc(30px * var(--lb2-k)); top: calc(94px * var(--lb2-k)); width: calc(450px * var(--lb2-k));
+  display: flex; flex-direction: column; gap: calc(6px * var(--lb2-k));
+}
+.lb2 .lb2-top3 > .lb2-col {
+  position: relative; left: auto; top: auto; bottom: auto; width: auto; height: calc(62px * var(--lb2-k));
+  display: grid; grid-template-columns: calc(48px * var(--lb2-k)) calc(54px * var(--lb2-k)) minmax(0, 1fr) auto;
+  align-items: center; gap: calc(10px * var(--lb2-k)); padding: 0 calc(12px * var(--lb2-k)) 0 calc(6px * var(--lb2-k));
+  background: #1a0b2e; border: 4px solid #F2A900; border-radius: 8px; box-shadow: 5px 5px 0 #000;
+  container-type: normal; cursor: pointer;
+}
+.lb2 .lb2-top3 > .lb2-col--1 { height: calc(70px * var(--lb2-k)); }
+.lb2 .lb2-top3 > .lb2-col--2 { border-color: #8f8aa6; }
+.lb2 .lb2-top3 > .lb2-col--3 { border-color: #b4502a; }
+.lb2 .lb2-top3 > .lb2-col.is-me { background: #FFE94A; }
+.lb2 .lb2-top3 > .lb2-col.is-open { cursor: default; border-style: dashed; }
+@media (hover: hover) { .lb2 .lb2-top3 > .lb2-col.is-peek:hover { transform: translate(-2px, -2px); } }
+.lb2 .lb2-top3 .lb2-pod-seal { display: inline-grid; justify-self: center; --seal-k: calc(1.05 * var(--lb2-k)); --num-k: calc(0.95 * var(--lb2-k)); }
+.lb2 .lb2-top3 .lb2-col--1 .lb2-pod-seal { --seal-k: calc(1.2 * var(--lb2-k)); --num-k: calc(1.05 * var(--lb2-k)); }
+.lb2-t3-open { justify-self: center; font-family: var(--k-display); text-transform: uppercase; font-size: calc(var(--fs-k22) * var(--lb2-k)); color: #c9b8e8; }
+.lb2-t3-face { width: calc(54px * var(--lb2-k)); height: calc(54px * var(--lb2-k)); display: block; }
+.lb2-t3-face img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lb2-col--1 .lb2-t3-face { width: calc(60px * var(--lb2-k)); height: calc(60px * var(--lb2-k)); }
+.lb2-t3-who { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px * var(--lb2-k)); container-type: inline-size; }
+.lb2-t3-line { display: flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; }
+.lb2 .lb2-top3 .lb2-col .lb2-pod-name-t {
+  font-family: var(--k-display); text-transform: uppercase; font-weight: 400; line-height: 1.05; min-width: 0;
+  font-size: min(calc(var(--fs-k20) * var(--lb2-k)), max(var(--fs-k13), calc(96cqw / var(--nl, 8))));
+  color: #fff; -webkit-text-stroke: 0; text-shadow: 2px 2px 0 #000; white-space: normal; word-break: keep-all; overflow-wrap: normal;
+  overflow: visible; text-overflow: clip; padding: 0; background: none; border: 0; text-align: left;
+}
+.lb2 .lb2-top3 .lb2-col--1 .lb2-pod-name-t { color: #FFE94A; font-size: min(calc(var(--fs-k22) * var(--lb2-k)), max(var(--fs-k13), calc(96cqw / var(--nl, 8)))); }
+.lb2 .lb2-top3 .lb2-col--3 .lb2-pod-name-t { color: #FF8A4D; }
+.lb2 .lb2-top3 .lb2-col.is-me .lb2-pod-name-t { color: #000; text-shadow: none; }
+.lb2 .lb2-top3 .lb2-pod-plate.krp-fit { display: inline-flex; margin: 0; --krp-h: min(calc(26px * var(--lb2-k)), calc(150px * var(--lb2-k) / var(--krp-aspect, 4))); }
+.lb2 .lb2-top3 .lb2-pod-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 0; margin: 0; }
+.lb2 .lb2-top3 .lb2-col .lb2-pod-r {
+  font-family: var(--k-display); text-transform: uppercase; font-size: calc(var(--fs-k22) * var(--lb2-k)); line-height: 1.05;
+  color: #E6E1F5; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: none;
+}
+.lb2 .lb2-top3 .lb2-col--1 .lb2-pod-r { color: #FFE94A; font-size: calc(var(--fs-k26) * var(--lb2-k)); }
+.lb2 .lb2-top3 .lb2-col--3 .lb2-pod-r { color: #FF8A4D; }
+.lb2 .lb2-top3 .lb2-col .lb2-pod-lv { margin: 0; font-family: 'Space Mono', monospace; font-weight: 700; font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k))); color: #FFE94A; }
+.lb2 .lb2-top3 .lb2-col.is-me .lb2-pod-lv, .lb2 .lb2-top3 .lb2-col.is-me .lb2-pod-lvk { color: #000; }
+.lb2 .lb2-top3 .lb2-new-tier.is-pod { position: static; transform: none; }
+
+/* YOUR CLIMB: the left column's lower panel */
+.lb2-climb {
+  position: absolute; left: calc(30px * var(--lb2-k)); top: calc(316px * var(--lb2-k)); width: calc(450px * var(--lb2-k)); bottom: calc(17px * var(--lb2-k));
+  display: flex; flex-direction: column; gap: calc(8px * var(--lb2-k)); padding: calc(12px * var(--lb2-k)) calc(16px * var(--lb2-k));
+  background: #1a0b2e; border: 4px solid #3a2160; border-radius: 8px; box-shadow: 5px 5px 0 #000;
+}
+.lb2-climb-k { font-family: var(--k-display); text-transform: uppercase; font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k))); color: #2EFFE0; letter-spacing: 1px; }
+.lb2-climb-me { display: flex; align-items: center; gap: calc(16px * var(--lb2-k)); }
+.lb2-climb-hero { flex: none; width: calc(104px * var(--lb2-k)); height: calc(104px * var(--lb2-k)); display: block; }
+.lb2-climb-hero .lb2-climb-cast { width: 100%; height: 100%; }
+.lb2-climb-rank { display: flex; flex-direction: column; align-items: flex-start; gap: calc(4px * var(--lb2-k)); }
+.lb2-climb-n { font-family: var(--k-display); text-transform: uppercase; font-weight: 400; font-size: calc(var(--fs-k44) * var(--lb2-k)); line-height: 1; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.lb2-climb-seal { --seal-k: calc(1.7 * var(--lb2-k)); }
+.lb2-climb-pct, .lb2-climb-band, .lb2-climb-next, .lb2-climb-none, .lb2-climb-prizes {
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; color: #c9b8e8; margin: 0;
+}
+.lb2-climb-pct { font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--lb2-k))); color: #2EFFE0; }
+.lb2-climb-none { font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--lb2-k))); color: #fff; }
+.lb2-climb-next { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: calc(8px * var(--lb2-k)); row-gap: calc(6px * var(--lb2-k)); font-size: max(var(--fs-k14), calc(var(--fs-k16) * var(--lb2-k))); color: #fff; }
+.lb2-climb-pass { min-width: 0; word-break: keep-all; }
+.lb2-climb-pass b { color: #FFE94A; font-weight: 700; }
+.lb2-climb-gap { font-family: var(--k-display); text-transform: uppercase; font-size: calc(var(--fs-k20) * var(--lb2-k)); color: #FF4FA3; -webkit-text-stroke: 2px #000; paint-order: stroke fill; }
+.lb2-climb-bar { flex: 1 0 100%; position: relative; height: calc(10px * var(--lb2-k)); background: #3a2160; border: 2px solid #000; border-radius: 8px; overflow: hidden; }
+.lb2-climb-bar .lb2-fill { background: #FF4FA3; }
+.lb2-climb-band { font-size: max(var(--fs-k14), calc(var(--fs-k15) * var(--lb2-k))); }
+.lb2-climb-band b { color: #2EFFE0; }
+.lb2-climb-prizes { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(14px * var(--lb2-k)); row-gap: calc(2px * var(--lb2-k)); font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--lb2-k))); color: #fff; }
+.lb2-climb-prizes li { display: flex; align-items: center; gap: 6px; }
+.lb2-climb-prizes li > span { min-width: 2.6em; color: #c9b8e8; }
+.lb2-climb-prizes li.is-me { color: #FFE94A; }
+
+/* the PHONE: the three medal rows sit above the list in the stacked flow, 44px tap rows; no plate, no panel */
+.lb2--narrow .lb2-top3 { position: relative; left: auto; top: auto; width: auto; margin: 4px 8px 6px; gap: 3px; flex: none; }
+.lb2--narrow .lb2-top3 > .lb2-col, .lb2--narrow .lb2-top3 > .lb2-col--1 {
+  height: 44px; grid-template-columns: 34px 36px minmax(0, 1fr) auto; gap: 6px; padding: 0 8px 0 6px; border-width: 3px; box-shadow: 3px 3px 0 #000;
+}
+.lb2--narrow .lb2-top3 .lb2-pod-seal, .lb2--narrow .lb2-top3 .lb2-col--1 .lb2-pod-seal { --seal-k: 0.82; --num-k: 0.78; }
+.lb2--narrow .lb2-t3-face, .lb2--narrow .lb2-col--1 .lb2-t3-face { width: 36px; height: 36px; }
+.lb2--narrow .lb2-top3 .lb2-pod-plate.krp-fit { display: none; }
+.lb2--narrow .lb2-top3 .lb2-col .lb2-pod-name-t, .lb2--narrow .lb2-top3 .lb2-col--1 .lb2-pod-name-t { font-size: var(--fs-k16); -webkit-text-stroke: 0; }
+.lb2--narrow .lb2-top3 .lb2-pod-stats { flex-direction: row; align-items: baseline; gap: 6px; }
+.lb2--narrow .lb2-top3 .lb2-col .lb2-pod-r, .lb2--narrow .lb2-top3 .lb2-col--1 .lb2-pod-r { font-size: var(--fs-k16); -webkit-text-stroke-width: 3px; }
+.lb2--narrow .lb2-top3 .lb2-col .lb2-pod-lv { font-size: var(--fs-k15); }
+.lb2--narrow .lb2-top3 .lb2-pod-lvk { display: none; }
+
+/* the list opens on a whole row: no sliver of a cut row at its top edge (the open-on-your-row scroll snaps to a row start,
+   and a hand scroll settles on one) */
+.lb2-scroll { scroll-snap-type: y proximity; }
+.lb2-scroll > .lb2-row, .lb2-scroll > .lb2-sep { scroll-snap-align: start; }
+.lb2-scroll > .lb2-row.is-me { scroll-snap-align: none; }
+
+.lb2-t3-sub { display: flex; align-items: center; gap: calc(8px * var(--lb2-k)); min-width: 0; }
+.lb2 .lb2-top3 .lb2-prize.is-pod { position: static; transform: none; margin: 0; font-size: max(var(--fs-k14), calc(var(--fs-k14) * var(--lb2-k))); }
+.lb2--narrow .lb2-t3-sub { display: none; }
+.lb2-climb.is-week { gap: calc(6px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-hero { width: calc(80px * var(--lb2-k)); height: calc(80px * var(--lb2-k)); }
+
+/* YOUR CLIMB FILLS ITS PANEL (Andy nov2 via mission control: "bottom half is empty, text small"): a bigger hero + rank, a
+   thick gap bar, every line 16px+; the content spreads down the panel instead of hugging its top */
+.lb2-climb { justify-content: space-between; gap: calc(10px * var(--lb2-k)); padding: calc(14px * var(--lb2-k)) calc(18px * var(--lb2-k)) calc(18px * var(--lb2-k)); }
+.lb2-climb-k { font-size: max(var(--fs-k16), calc(var(--fs-k18) * var(--lb2-k))); }
+.lb2-climb-hero { width: calc(150px * var(--lb2-k)); height: calc(150px * var(--lb2-k)); }
+.lb2-climb-n { font-size: calc(var(--fs-k60) * var(--lb2-k)); }
+.lb2-climb-seal { --seal-k: calc(2.3 * var(--lb2-k)); }
+.lb2-climb-pct { font-size: max(var(--fs-k16), calc(var(--fs-k20) * var(--lb2-k))); }
+.lb2-climb-none { font-size: max(var(--fs-k16), calc(var(--fs-k20) * var(--lb2-k))); }
+.lb2-climb-next { font-size: max(var(--fs-k16), calc(var(--fs-k20) * var(--lb2-k))); }
+.lb2-climb-gap { font-size: max(var(--fs-k18), calc(var(--fs-k28) * var(--lb2-k))); -webkit-text-stroke-width: 3px; }
+.lb2-climb-bar { height: calc(18px * var(--lb2-k)); border-width: 3px; }
+.lb2-climb-band { font-size: max(var(--fs-k16), calc(var(--fs-k20) * var(--lb2-k))); }
+.lb2-climb-prizes { font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--lb2-k))); row-gap: 0; }
+.lb2-climb.is-week { justify-content: flex-start; gap: calc(6px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-hero { width: calc(84px * var(--lb2-k)); height: calc(84px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-seal { --seal-k: calc(1.6 * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-n { font-size: calc(var(--fs-k38) * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-bar { height: calc(12px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-hero { width: calc(64px * var(--lb2-k)); height: calc(64px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-seal { --seal-k: calc(1.3 * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-gap { font-size: max(var(--fs-k18), calc(var(--fs-k22) * var(--lb2-k))); }
+/* THIS WEEK: the gem prize is the medal row's news - the title plate steps aside so the pill never meets the numbers
+   (it collided at 1280x551) */
+.lb2 .lb2-top3 .lb2-t3-sub:has(.lb2-prize) .lb2-pod-plate { display: none; }

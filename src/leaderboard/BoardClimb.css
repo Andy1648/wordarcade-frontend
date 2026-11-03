@@ -1,0 +1,52 @@
+/* BoardClimb — the end screen's board climb strip (house look: flat panel, thick coloured outline, hard black shadow) */
+.bc {
+  position: relative;
+  z-index: 4; /* the end cards' copy layer: CHAIN / FUSE shade their card at z 3 (theme/arcane.css) */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin: 10px auto 0;
+  max-width: 520px;
+  padding: 10px 14px;
+  background: #1a0b2e;
+  border: 4px solid #1fa898;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+}
+.bc-k {
+  font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase;
+  font-size: var(--fs-k16);
+  color: #2EFFE0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.bc-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bc-row {
+  display: grid; grid-template-columns: 2.8em 32px minmax(0, 1fr); align-items: center; gap: 8px;
+  min-height: 40px; padding: 2px 10px; border-radius: 8px;
+  background: #2a1648; border: 3px solid #3a2160;
+  font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-k16); color: #fff;
+}
+.bc-row b { font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase; font-weight: 400; color: #c9b8e8; }
+.bc-row img { width: 32px; height: 32px; object-fit: contain; }
+.bc-name { min-width: 0; text-align: left; overflow-wrap: normal; word-break: keep-all; }
+.bc-row.is-me { grid-template-columns: 2.8em 32px minmax(0, 1fr) auto; position: relative; z-index: 1; background: #FFE94A; border-color: #b8a520; color: #000; }
+.bc-row.is-me b { color: #000; }
+.bc-up {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px 2px 6px;
+  font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase;
+  font-size: var(--fs-k24); line-height: 1;
+  color: #fff; background: #FF4FA3; border: 4px solid #a8164e; border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  transform: rotate(-6deg);
+  -webkit-text-stroke: 2px #000; paint-order: stroke fill;
+}
+.bc-up img { width: 22px; height: 22px; }
+@media (max-width: 480px) {
+  .bc { grid-template-columns: minmax(0, 1fr); padding: 8px 10px; }
+  .bc-k { display: none; } /* a phone gives the label's width to the names */
+  .bc-row { padding: 2px 8px; gap: 6px; }
+  .bc-up { font-size: var(--fs-k20); }
+}
