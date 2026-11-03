@@ -13,17 +13,17 @@ import './KitIcon.css';
 // body — same <svg> box, size, data-icon and hard drop, so every host and animation keeps working. The art is already
 // tilted and its extras are painted in, so `rot` and the extras switch don't apply.
 export const ICON_ART = Object.freeze({
-  shop: '/icons/upgrades.webp',
+  shop: '/icons/upgrades-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
   wins: '/icons/wins.webp',
-  stats: '/icons/stats.webp',
-  rebirth: '/icons/rebirth.webp',
+  stats: '/icons/stats-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
+  rebirth: '/icons/rebirth-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
   gears: '/icons/gears-v2.webp', // nov2: the badass painted cog (ChatGPT Plus, best of 8)
   gems: '/icons/gems.webp',
-  leaderboard: '/icons/leaderboard.webp',
-  achievements: '/icons/achievements.webp',
-  settings: '/icons/settings.webp',
+  leaderboard: '/icons/leaderboard-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
+  achievements: '/icons/achievements-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
+  settings: '/icons/settings-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
   lock: '/icons/lock.webp',
-  news: '/icons/news.webp',
+  news: '/icons/news-v2.webp', // nov3: repainted at the GEARS cog's bar (face + attitude, ChatGPT, best of 4)
   roll: '/rolls/vessel-icon.webp', // the COG-LOCKED GEAR CANISTER (Andy oct24: no dice) — the painted epic parts, pre-composed (claude/rolls-art/compose-icon.py)
 });
 
