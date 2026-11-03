@@ -71,17 +71,23 @@ test('fragment bag: first pool.length draws never repeat', () => {
 // ---- the fragment pools (require src/solo/fragmentPools.json) ----
 const POOLS_URL = new URL('./fragmentPools.json', import.meta.url);
 const POOLS_PATH = fileURLToPath(POOLS_URL);
-const EXPECT_SIZES = { e: 113, m: 190, h: 318, b: 405 };
+// The pools Andy pasted were 113/190/318/405 (do NOT regenerate them). Nov4 (Andy: "they need more combo variations …
+// fuse can feel too repetitive"): the pools GROW by appending fragments whose coverage sits inside the tier's own
+// inter-quartile band (scripts/fuseCoverage.mjs) — never by removing or reshuffling one. ORIGINAL holds the pasted
+// fragments; every one of them must still be in its tier.
+const ORIGINAL_SIZES = { e: 113, m: 190, h: 318, b: 405 };
 
 test('fragmentPools.json exists (data asset committed)', () => {
   assert.ok(existsSync(POOLS_PATH), `missing ${POOLS_PATH} — the fitted fragment pools`);
 });
 
-test('fragment pools are exactly 113/190/318/405, 2-3 lowercase a-z, no dupes', () => {
+test('fragment pools only GROW: the pasted 113/190/318/405 lead each tier unchanged; 2-3 lowercase a-z, no dupes', () => {
   const pools = JSON.parse(readFileSync(POOLS_URL, 'utf8'));
+  const all = new Set();
   for (const tier of FUSE_TIERS) {
     const frags = pools[tier].trim().split(/\s+/);
-    assert.equal(frags.length, EXPECT_SIZES[tier], `${tier} size`);
+    assert.ok(frags.length >= ORIGINAL_SIZES[tier], `${tier} shrank below the pasted ${ORIGINAL_SIZES[tier]}`);
+    for (const f of frags) { assert.ok(!all.has(f) || tier === 'b', `${f} is in two of e/m/h`); if (tier !== 'b') all.add(f); }
     assert.equal(new Set(frags).size, frags.length, `${tier} has duplicates`);
     for (const f of frags) {
       assert.ok(/^[a-z]{2,3}$/.test(f), `${tier} fragment "${f}" is not 2-3 lowercase a-z`);
