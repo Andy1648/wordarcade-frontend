@@ -5,9 +5,13 @@
 import { useEffect, useState } from 'react';
 import { MINER_MAX } from './config';
 import FitText from '../components/kit/FitText.jsx';
+import CastArt from '../cast/CastArt.jsx';
+import { castFor, heroById } from '../cast/cast.js';
 import './Miner.css';
 
-const HERO = '/cards/miner-hero.webp';
+// EACH MINER IS THEIR HERO (design audit 10: every seat wore the same miner sprite): the hero the player has on (the
+// room carries it, as in every other mode), else the cast member their id gives them - YOU get your own pick
+const heroOf = (p, me) => (p && heroById(p.hero) ? p.hero : castFor(p ? p.id : '', me).id);
 const BOT_FILL_TO = 3; // mirrors the backend minerMode.js BOT_FILL_TO
 
 export default function MinerLobby({ room, myId, miner, audioSlot, serverError, startPending, botPending, onStart, onAddBot, onLeave }) {
@@ -43,23 +47,28 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
 
       <img className="mn-lobby-wall" src="/cards/miner-bg.webp" alt="" aria-hidden="true" draggable="false" />
 
-      <ol className="mn-seats" aria-label="Miners">
-        {Array.from({ length: MINER_MAX }, (_, i) => {
-          const p = players[i];
-          return p ? (
-            <li key={p.id} className={`mn-seat${p.id === myId ? ' is-me' : ''}`}>
-              <img className="mn-seat-digger" src={HERO} alt="" draggable="false" />
-              <FitText className="mn-seat-name">{p.id === myId ? 'YOU' : p.name}</FitText>
-            </li>
-          ) : i < players.length + botFill ? (
-            <li key={`bot-${i}`} className="mn-seat is-bot-fill" aria-label="A bot joins at start">
-              <img className="mn-seat-digger" src={HERO} alt="" draggable="false" />
-              <span className="mn-seat-name">BOT</span>
-            </li>
-          ) : (
-            <li key={`open-${i}`} className="mn-seat is-open" aria-label="Open seat" />
-          );
-        })}
+      {/* the seats that matter: the miners, the bots START adds, and ONE open seat to invite into (not a grid of dashed
+          boxes - design audit 10) */}
+      <ol className="mn-seats" aria-label="Miners" style={{ '--mn-seat-n': Math.min(4, players.length + botFill + (full ? 0 : 1)) }}>
+        {players.map((p) => (
+          <li key={p.id} className={`mn-seat${p.id === myId ? ' is-me' : ''}`}>
+            <span className="mn-seat-hero"><CastArt className="mn-seat-digger" id={heroOf(p, p.id === myId)} data-hero={heroOf(p, p.id === myId)} live /></span>
+            <FitText className="mn-seat-name">{p.id === myId ? 'YOU' : p.name}</FitText>
+          </li>
+        ))}
+        {Array.from({ length: botFill }, (_, i) => (
+          <li key={`bot-${i}`} className="mn-seat is-bot-fill" aria-label="A bot joins at start">
+            <span className="mn-seat-hero"><CastArt className="mn-seat-digger" id={castFor(`${room.code}-bot-${i}`).id} live={false} /></span>
+            <span className="mn-seat-name">BOT</span>
+          </li>
+        ))}
+        {!full && (
+          <li className="mn-seat is-open" aria-label={`Open seat. Room code ${room.code}`}>
+            <span className="mn-seat-plus" aria-hidden="true">+</span>
+            <span className="mn-seat-name">OPEN</span>
+            <span className="mn-seat-code">{room.code}</span>
+          </li>
+        )}
       </ol>
 
       {queue ? (
@@ -68,10 +77,10 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
         </p>
       ) : isHost ? (
         <div className="mn-lobby-actions">
-          <button type="button" className="mn-btn mn-btn-ghost" onClick={onAddBot} disabled={full || botPending}>
+          <button type="button" className="mn-btn mn-btn-ghost mn-btn-big" onClick={onAddBot} disabled={full || botPending}>
             + BOT
           </button>
-          <button type="button" className="mn-btn mn-btn-go" onClick={onStart} disabled={startPending}>
+          <button type="button" className="mn-btn mn-btn-go mn-btn-big mn-btn-start" onClick={onStart} disabled={startPending}>
             START
           </button>
         </div>
