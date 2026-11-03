@@ -16,6 +16,8 @@ import FitText from '../components/kit/FitText.jsx';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
+import { loadProgress } from '../progress/xp';
+import { menuTitleName } from '../progress/menuTitle';
 import './KitPicker.css';
 
 const TABS = [['frame', 'FRAME', FRAMES], ['fx', 'WIN FX', WIN_FX]];
@@ -46,6 +48,7 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
   const own = ownsKit(s.id);
   const prog = own ? null : kitProgress(s.id);
   const h = heroById(hero) || CAST[0];
+  const [title] = useState(() => menuTitleName(loadProgress().level)); // the menu plate's title (read once)
   const wear = (id) => { if (wearKit(slot, id)) onKit(slot, id); };
   const buy = () => {
     const r = buyKit(s.id);
@@ -77,8 +80,19 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
       <div className="skp-stage">
         {slot === 'fx' ? <FxStage hero={hero} fx={s.id} />
           : frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
-        {/* oct26: the same frame as your round PORTRAIT (menu profile plate, your results row) */}
-        {slot === 'frame' ? <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-avatar" /> : null}
+        {/* EQUIP PREVIEW (nov3 design-research move 12): the frame on YOUR menu PROFILE plate — your face in its round
+            ring, PROFILE, the title you wear — exactly as the menu will draw it, before you buy or wear it */}
+        {slot === 'frame' ? (
+          <span className="skp-plate" data-testid="kit-plate-preview" aria-label={`Your menu profile plate wearing ${s.name}`}>
+            <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-plate-face">
+              <img className="skp-plate-face" src={castSrc(h.id, 'hero')} alt="" aria-hidden="true" draggable="false" />
+            </AvatarFrame>
+            <span className="skp-plate-t" aria-hidden="true">
+              <span className="skp-plate-k">PROFILE</span>
+              <span className="skp-plate-n">{title}</span>
+            </span>
+          </span>
+        ) : null}
       </div>
       <div className="skp-side">
         {bare ? null : <div className="skp-tabs" role="tablist" aria-label="Customize">

@@ -70,7 +70,6 @@ const TOUR_GAP_MS = 1200;
 const TOUR_HOLD_MS = 700;
 let tourWaited = false; // the intro plays on the first menu of a page load only
 import BoostDock from '../frenzy/LazyBoostDock';
-import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
@@ -124,7 +123,7 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
-import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import { menuTitleName } from '../progress/menuTitle'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
@@ -1449,17 +1448,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
-  // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
-  const shownRankName = (name) => {
-    const R = V3.ranks;
-    if (!R || !R.RANKS_V3) return name;
-    const at = R.RANKS_V3.findIndex((x) => x.name === name);
-    return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
-  };
   // PROFILE PLATE (Andy oct21 "switch profile to where title is … include title popup in the profile"): the XP bar's
   // lead plate is your PROFILE — your hero's face, PROFILE, and the title you wear. It opens the profile popup, whose
   // TITLE row opens ALL TITLES. (The dailies took the profile's old spots: the right column + the icon cluster.)
-  const titleName = shownRankName(rankTitle(xpProgress.level));
+  const titleName = menuTitleName(xpProgress.level); // the plate you picked in SETTINGS (Andy oct8), else your highest
   // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
   // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
   const [heroNews, setHeroNews] = useState(false);
