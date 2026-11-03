@@ -49,7 +49,7 @@ const POP_MS = 1150; // the prize's burst-out + drop
 const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
 
 // THE WEEK ROW (nov3 design-research move 18): the 7 days of this streak week — spun days stamped, today lit, the HOT
-// days in orange, and DAY 7's SUPER SPIN as the painted wheel with its ×2 (what day 7 pays: gems ×2, boosts 20 MIN, a
+// days in orange, and DAY 7's SUPER SPIN as its painted prize (hero-art day7-super-v1: a gold wheel bursting from a gift) with its ×2 (what day 7 pays: gems ×2, boosts 20 MIN, a
 // ticket one tier up — 067). Static at rest; today's pip pops once when the panel opens.
 const TODAY_POP = [{ transform: 'scale(.6)' }, { transform: 'scale(1.18)', offset: 0.6 }, { transform: 'scale(1)' }];
 function StreakWeek({ today, spun, bonus }) {
@@ -61,7 +61,7 @@ function StreakWeek({ today, spun, bonus }) {
       aria-label={`Spin streak day ${Math.max(1, today)}${bonus ? ` · ${bonusText(bonus)}` : ''} · day ${row[6].day} is a super spin`}>
       {row.map((c) => (c.day % 7 === 0 ? (
         <span key={c.day} ref={c.now ? todayRef : null} className={`dw-day7 is-${c.state}`} data-day={c.day} data-state={c.state}>
-          <img src={artSrc('icon')} alt="" draggable="false" />
+          <img src={artSrc('day7-super-v1')} alt="" draggable="false" />
           <b className="dw-day7-x">×2</b>
         </span>
       ) : (
@@ -123,7 +123,7 @@ const decodeSrc = (src) => {
   return im.decode ? im.decode().catch(() => {}) : Promise.resolve();
 };
 const BURST_SRC = '/fx/burst-win.webp';
-const WHEEL_ART = [...['title-v1', 'face', 'rim-v2', 'rim-v2-lit-a', 'rim-v2-lit-b', 'wedge-hi', 'hub', 'pointer-v2', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
+const WHEEL_ART = [...['title-v1', 'face', 'rim-v2', 'rim-v2-lit-a', 'rim-v2-lit-b', 'wedge-hi', 'hub', 'pointer-v2', 'day7-super-v1', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
 
 // THE CHASE LIGHTS: one lit set's opacity, flipped at every peg tick of the spin (held between — steps), so the bulbs
 // race at launch and crawl into the landing with the wheel
