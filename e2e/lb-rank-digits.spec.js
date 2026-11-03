@@ -74,11 +74,12 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
         await row.click();
         const card = page.locator('.pc-head');
         await expect(card).toBeVisible();
-        const pc = await card.evaluate((el) => {
+        // the SETTLED card: FitText measures after layout, so its first frame can still show the long name at full width
+        // (CI's slower runner caught that frame) - poll until it has fitted, and fail if the overlap stays
+        await expect.poll(() => card.evaluate((el) => {
           const a = el.querySelector('.pc-rank').getBoundingClientRect(); const b = el.querySelector('.pc-name').getBoundingClientRect();
           return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
-        });
-        expect(pc, 'the profile card rank runs into the name').toBe(false);
+        }), { message: 'the profile card rank runs into the name', timeout: 3000 }).toBe(false);
       }
     });
   }
