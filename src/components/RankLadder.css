@@ -44,7 +44,9 @@
 .rl-show { container-type: inline-size; } /* a fixed-width column: the stage plate sizes off it */
 .rl-show-plate { --krp-h: min(84px, calc(86cqw / var(--krp-aspect, 4))); animation: rl-slam 300ms cubic-bezier(0.2, 1.5, 0.4, 1) 1 both; }
 .rl-show.is-locked .rl-show-plate { opacity: 0.6; }
-.rl-show.is-hidden .rl-show-plate .krp-art { filter: brightness(0) drop-shadow(3px 3px 0 #000); }
+/* nov2 audit #15: a locked title is a SILHOUETTE of its real plate — black, with a crisp lilac outline (four 2px static
+   drop-shadows) so its shape reads on the dark panel instead of a black blob; never animated */
+.rl-show.is-hidden .rl-show-plate .krp-art { filter: brightness(0) drop-shadow(2px 0 0 #8d7fb0) drop-shadow(-2px 0 0 #8d7fb0) drop-shadow(0 2px 0 #8d7fb0) drop-shadow(0 -2px 0 #8d7fb0) drop-shadow(3px 3px 0 #000); }
 .rl-show-quip {
   min-height: 2.4em; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; font-style: italic; text-transform: none;
   font-size: var(--fs-k16); line-height: 1.2; color: #e6dcff;
@@ -99,7 +101,7 @@
 .rl-item.is-locked .rl-plate { opacity: 0.5; }
 /* past NEXT: a silhouette — the format's outline in solid ink, its name ??? (a static filter, never animated) */
 .rl-item.is-hidden .rl-plate { opacity: 1; }
-.rl-item.is-hidden .krp-art { filter: brightness(0) drop-shadow(3px 3px 0 #000); }
+.rl-item.is-hidden .krp-art { filter: brightness(0) drop-shadow(2px 0 0 #8d7fb0) drop-shadow(-2px 0 0 #8d7fb0) drop-shadow(0 2px 0 #8d7fb0) drop-shadow(0 -2px 0 #8d7fb0) drop-shadow(3px 3px 0 #000); }
 .rl-item.is-hidden .krp-name { color: #5a3a8a; -webkit-text-stroke: 0; }
 .rl-item.is-next { border-color: #2EFFE0; }
 .rl-item.is-next .rl-plate { opacity: 0.85; }
