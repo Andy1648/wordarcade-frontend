@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SHARD_PIECES, SHARD_SETS, TIER_SETS, TIP_DEG, shardSrc, setSrc, bladeFrames, bladeFlavour, clearVectors, fitInside, SHARD_MS, SHARD_MAX } from './shardPlan.js';
+import { SHARD_PIECES, SHARD_SETS, TIER_SETS, TIP_DEG, shardSrc, setSrc, bladeFrames, bladeFlavour, clearVectors, fitInside, edgeStart, SHARD_MS, SHARD_MAX } from './shardPlan.js';
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'public');
 
@@ -94,4 +94,15 @@ test('fitInside keeps every blade on screen (direction kept, reach shortened)', 
     assert.ok(from.y + v.y >= 20 - 0.5 && from.y + v.y <= 824 + 0.5, JSON.stringify(v));
   }
   assert.ok(vs[0].x < 0 && vs[0].y === 0); // still flies left
+});
+
+test('edgeStart: a blade starts where its ray leaves the box (never inside the face), before its end', () => {
+  const [w, h] = [200, 280];
+  for (const v of clearVectors(10, w, h, { reach: [30, 100] })) {
+    const e = edgeStart(v, w, h);
+    const onRim = Math.abs(Math.abs(e.x) - w / 2) <= 1 || Math.abs(Math.abs(e.y) - h / 2) <= 1;
+    assert.ok(onRim, JSON.stringify({ v, e }));
+    assert.ok(Math.hypot(e.x, e.y) < Math.hypot(v.x, v.y));
+  }
+  assert.deepEqual(edgeStart({ x: 300, y: 0 }, 200, 280), { x: 100, y: 0 });
 });

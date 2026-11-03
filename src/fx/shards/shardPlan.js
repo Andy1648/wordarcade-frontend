@@ -78,6 +78,18 @@ export function clearVectors(n, w, h, { reach = [50, 150] } = {}) {
 }
 
 /**
+ * Where the ray along `v` leaves a w×h box centred on the burst — an EDGE burst starts each blade there, so it cracks
+ * OUT of the box's rim and never crosses its face (the shop's SOLD! stamp, a price).
+ */
+export function edgeStart(v, w, h) {
+  const d = Math.hypot(v.x, v.y) || 1;
+  const c = Math.abs(v.x / d) || 1e-6;
+  const sn = Math.abs(v.y / d) || 1e-6;
+  const exit = Math.min(Math.max(1, w / 2) / c, Math.max(1, h / 2) / sn, d);
+  return { x: Math.round((v.x / d) * exit), y: Math.round((v.y / d) * exit) };
+}
+
+/**
  * Shortens any vector that would carry a blade (burst at `from`, viewport px) past the viewport edge (minus `pad`), so
  * no blade is cut off by the screen — the direction is kept, only the reach shrinks (never below `min` px).
  */

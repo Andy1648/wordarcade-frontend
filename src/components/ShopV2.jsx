@@ -35,6 +35,7 @@ import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
 import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
+import ShardBurst from './gains/ShardBurst.jsx';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
@@ -232,6 +233,7 @@ export default function ShopV2({ onBack }) {
     fx(shines.current[id], SWEEP);
   };
   const cards = useRef({});
+  const shardsRef = useRef(null);
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   useStageScale(rootRef);
@@ -326,6 +328,16 @@ export default function ShopV2({ onBack }) {
     setSealed(r.ticket);
   };
 
+  // THE BUY MOMENT's blades (nov2): the bought card cracks open from its RIM — painted gold crystal blades (fx/shards)
+  // start on the card's edge and fly out, so they never cross the SOLD! stamp face or the price. One read of the card's
+  // box, in the click handler; the pool is ShardBurst's (no node per buy).
+  const buyBlades = (id) => {
+    const el = cards.current[id];
+    if (!el || !shardsRef.current) return;
+    const b = el.getBoundingClientRect();
+    shardsRef.current.burst({ x: b.left + b.width / 2, y: b.top + b.height / 2 }, { w: b.width, h: b.height, set: 'gold', n: 10, reach: [30, 100], edge: true });
+  };
+
   // ---- STOCK: gems ----
   const onBuy = (it) => {
     if (it.ticket) { onBuyTicket(it); return; }
@@ -340,6 +352,7 @@ export default function ShopV2({ onBack }) {
     sndPurchase();
     evItemPurchased(`stock_${it.id}`);
     if ((r.left[it.id] || 0) > 0) stampBought(it.id); // the last unit: its SOLD OUT stamp slams instead
+    buyBlades(it.id);
   };
 
   return (
@@ -462,6 +475,7 @@ export default function ShopV2({ onBack }) {
         </section>
       </div>
       </div>
+      <ShardBurst ref={shardsRef} set="gold" />
     </div>
   );
 }

@@ -5,13 +5,14 @@
 //
 //   <div style={{ position: 'relative' }}><ShardBurst ref={s} set="gold" /></div>
 //   s.current.burst(viewportPoint, { w, h, set, n })   // w/h: the box the blades must clear (the plate); set: this burst's
-//                                                      // colours; n: how many (≤ SHARD_COUNT — a small claim throws fewer)
+//                                                      // colours; n: how many (≤ SHARD_COUNT — a small claim throws fewer);
+//                                                      // reach: [min, max] px past the box; edge: start ON the box's rim
 //
 // The layer's own origin is measured on mount / resize only; a burst() is pure writes.
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { kitPlay } from '../kit/motion.js';
 import { SHARD_COUNT } from './gainPlan.js';
-import { SHARD_MS, bladeFrames, bladeFlavour, clearVectors, fitInside, setSrc } from '../../fx/shards/shardPlan.js';
+import { SHARD_MS, bladeFrames, bladeFlavour, clearVectors, edgeStart, fitInside, setSrc } from '../../fx/shards/shardPlan.js';
 import './gains.css';
 
 const HALF = 28; // half the sprite box (.gsb-s 56px)
@@ -48,7 +49,9 @@ const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' },
       const y0 = from.y - o.y - HALF;
       // the blades clear the slammed box, and never fly off the screen (innerWidth/Height: no layout read)
       const n = Math.max(1, Math.min(SHARD_COUNT, (box && box.n) || SHARD_COUNT));
-      const vs = fitInside(clearVectors(n, box ? box.w : 120, box ? box.h : 120, { reach: [50, 130] }), from, window.innerWidth, window.innerHeight);
+      const bw = box ? box.w : 120;
+      const bh = box ? box.h : 120;
+      const vs = fitInside(clearVectors(n, bw, bh, { reach: (box && box.reach) || [50, 130] }), from, window.innerWidth, window.innerHeight);
       // the colours of THIS burst (the `set` prop already loaded them; a src write to a cached sprite is instant); the
       // last blade to land hands the pool back to the `set` prop (its own finish event — no timer to drift from the clock)
       if (box && box.set) paint(box.set);
@@ -56,8 +59,11 @@ const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' },
       vs.forEach((v, i) => {
         const el = nodes.current[i];
         if (!el) return;
-        // the blade flight is relative to the burst point: the pool node sits at the layer's origin, so offset it there
-        const frames = bladeFrames(v, { s: v.s * 0.85, ...bladeFlavour(i) }).map((f) => ({ ...f, transform: `translate(${x0}px, ${y0}px) ${f.transform}` }));
+        // the blade flight is relative to its start: the burst point, or (edge) where its ray leaves the box — the pool
+        // node sits at the layer's origin, so offset it there
+        const s0 = box && box.edge ? edgeStart(v, bw, bh) : { x: 0, y: 0 };
+        const rel = { x: v.x - s0.x, y: v.y - s0.y };
+        const frames = bladeFrames(rel, { s: v.s * 0.85, ...bladeFlavour(i) }).map((f) => ({ ...f, transform: `translate(${x0 + s0.x}px, ${y0 + s0.y}px) ${f.transform}` }));
         const a = kitPlay(el, frames, { duration: SHARD_MS - 80 + (i % 5) * 20, easing: 'linear' });
         if (a) {
           flying.current += 1;
