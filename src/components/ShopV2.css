@@ -410,8 +410,8 @@
   .sp2-price .kit-icon { width: 16px; height: 16px; }
   .sp2-float { font-size: var(--fs-k18); }
   .sp2-note { bottom: -24px; font-size: var(--fs-k14); }
-  /* the new SEALED ROLLS own the phone's first stock row (Andy: the new thing is SEEN, never below a scroll): tabs in
-     ONE row (the chip drops under them), the two rolls lead, the chest follows */
+  /* the SEALED ROLL shares the phone's first stock row with the FREE chest (Andy: the new thing is SEEN, never below a
+     scroll; move 8: FREE first): tabs in ONE row (the chip drops under them) */
   .sp2-stock-head { flex-wrap: wrap; row-gap: 8px; }
   .sp2-shelf-sub { display: none; } /* the shelf line is desktop flavour; on a phone the page scrolls and the tabs say it */
   .sp2-cell.is-chest { order: 1; }
@@ -837,7 +837,15 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 @media (min-width: 1000px) {
   .sp2-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-.sp2-cell.is-ticket { grid-column: 1; grid-row: 1 / span 2; }
+.sp2-cell.is-ticket { grid-column: 2; grid-row: 1 / span 2; }
+/* FIXED SHOP RHYTHM (nov3 design-research move 8): the FREE tile is ALWAYS first — the DAILY chest top-left, FREE or its
+   countdown to the next one — then the ONE featured tile (the tall SEALED ROLL), then the boosts fill the rest under the
+   shelf's single RESTOCK timer. Both placements are explicit, so a stock change can never reshuffle the first view.
+   e2e/shop-rhythm.spec.js. */
+.sp2-cell.is-chest { grid-column: 1; grid-row: 1; }
+/* the chest's FREE dot moves to its outer (top-left) corner: on the top-right it met the featured roll's rarity gem
+   across the cell gap */
+.sp2-chest .sp2-dot { right: auto; left: -8px; }
 .sp2-cell.is-ticket .sp2-card-in { container-type: size; justify-content: center; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-band { position: absolute; top: 0; left: 0; }
 .sp2-cell.is-ticket .sp2-card-in > .sp2-art.sp2-vessel {
@@ -933,12 +941,11 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
 
 /* ===== CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and design)"): what you can buy
-   right now reads lit — the cyan price tag; what you can't goes quiet — the art desaturates (a static filter, never
-   animated), the tag turns to dark ink and says how many gems short you are ("NEED 45"). Same gem balance the menu's
-   dot reads. e2e/shop-can-afford.spec.js. ===== */
-.sp2-card.is-short .sp2-card-in > :is(.sp2-art, .sp2-ico) { filter: saturate(.35) brightness(.7) drop-shadow(3px 3px 0 #000); }
-.sp2-card.is-short .sp2-card-in > .sp2-art.sp2-vessel { filter: saturate(.45) brightness(.75); }
-.sp2-card.is-short .sp2-price { background: #2a1648; color: #c9b8e8; border-color: #000; }
+   right now wears the cyan price tag; what you can't keeps its art LIT (nov3 design-research move 9 — dimming turned a
+   short wallet's whole shelf grey, so the shop stopped selling) and only its TAG changes: red ink, "NEED 45". A tap
+   still answers with the deny shake + the gems pill, and the note says where gems come from (ShopV2.jsx NOTE.gems).
+   e2e/shop-can-afford.spec.js. ===== */
+.sp2-card.is-short .sp2-price { background: #E8262E; color: #fff; border-color: #7A0A10; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 .sp2-short { font-family: var(--k-display); text-transform: uppercase; white-space: nowrap; }
 
 /* ===== DEAL OF THE HOUR (oct29): the painted ribbon (hero-art, deal-ribbon-v1) WHOLE — its notched ends never cut — hung
@@ -1021,3 +1028,26 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    centred lines in the room left of the sash (names never ellipsize), the band growing to hold them */
 .sp2-card.is-deal .sp2-band { height: auto; min-height: 30px; padding-top: 3px; padding-bottom: 3px; }
 .sp2-card.is-deal .sp2-name { white-space: normal; text-align: center; line-height: 1; overflow: visible; }
+
+/* ===== POP STYLE RARITY (nov2 design audit #15): the frame is the tier — the shop's rarity line colour, a thick border and
+   a tier fill; RARE / EPIC swatches stand on their painted backplate (the shop's own, big enough here: the swatch is ~96px);
+   EPIC and up pin the gold-set gem to the top-left corner; GOLD and up wear gold. Static — the hover pop is the only
+   motion. CLASSIC (free) stays plain. e2e/customize-fit.spec.js ===== */
+.sp2-look { position: relative; }
+.sp2-look.is-t-rare { border-color: #3D8BFF; background: #0f2350; }
+.sp2-look.is-t-epic { border-color: #B04BFF; background: #2a0e4a; }
+.sp2-look.is-t-legendary { border-color: #FFC23D; background: #3d2a05; }
+.sp2-look:is(.is-t-rare, .is-t-epic) .sp2-look-stage { background: url(/shop/backplate-rare-v1.webp) center / 118% 118% no-repeat; border-radius: 8px; }
+.sp2-look.is-t-epic .sp2-look-stage { background-image: url(/shop/backplate-epic-v1.webp); }
+.sp2-look:is(.is-t-rare, .is-t-epic) .sp2-look-burst { opacity: 0; } /* the plate is the burst behind the swatch now */
+.sp2-look.is-t-legendary .sp2-look-name { color: #FFE94A; }
+.sp2-look.is-on { border-color: #2EFFE0; } /* equipped reads over any tier */
+.sp2-look-gem { position: absolute; z-index: 2; left: -12px; top: -12px; width: 36px; height: 36px; transform: rotate(-10deg); pointer-events: none; }
+@media (max-width: 760px) { .sp2-look-gem { width: 28px; height: 28px; left: -8px; top: -8px; } }
+/* nov3: the DEAL card's sticker steps DOWN below the sash — into the rows where the WHAT lines sit (OVERDRIVE at 1366,
+   EVERYTHING at 1280x551: "×N LEFT on .sp2-what", failing CI by whichever hour it ran). On the deal card the WHAT keeps
+   the sticker's column clear at every size, beating the short-desktop rule that hands it back. e2e/shop-badges.spec.js
+   pins every deal hour. */
+.sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-what { padding-right: calc(var(--sp2-stk) + 4px); }
+/* …and on a very short desktop the deal hour's bottom-left gem (OVERDRIVE) sits 4px lower, clear of the two-line TIME */
+@media (min-width: 1000px) and (max-height: 580px) { .sp2-card.is-epic.is-deal .sp2-gem { bottom: -16px; } }

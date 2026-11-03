@@ -29,14 +29,16 @@ async function popDress(page, kit = false) {
   await expect.poll(async () => {
     await page.keyboard.type('qwer', { delay: 90 });
     dress = await page.evaluate((kit) => {
-      // kit: only a pop the worn look flashed its burst under (the look's data loads at idle — a pop typed before it is plain)
-      const flashed = (e) => { const a = e.parentElement.querySelector('.menu-xp-pop-art'); return !!a && a.style.display === 'block'; };
+      // kit: only a pop the worn look has dressed with its burst (the look's data loads at idle — a pop typed before it is
+      // plain). The burst's SRC stays on the pooled node once set; its display only lasts the 360 ms flash, so waiting on the
+      // display raced the poll under load
+      const flashed = (e) => { const a = e.parentElement.querySelector('.menu-xp-pop-art'); return !!a && /\/burst-/.test(a.getAttribute('src') || ''); };
       const els = [...document.querySelectorAll('.menu-xp-pop:is(.is-tap, .is-key) .menu-xp-pop-plus')].filter((e) => /XP/.test(e.textContent) && (kit ? flashed(e) : !!e.style.color));
       const e = els[els.length - 1];
       if (!e) return null;
       const c = getComputedStyle(e);
       const art = e.parentElement.querySelector('.menu-xp-pop-art');
-      return { color: c.color, stroke: c.webkitTextStrokeColor, shadow: c.textShadow, chip: e.classList.contains('is-kit') ? e.style.backgroundImage : null, art: art && art.style.display === 'block' ? art.getAttribute('src') : null };
+      return { color: c.color, stroke: c.webkitTextStrokeColor, shadow: c.textShadow, chip: e.classList.contains('is-kit') ? e.style.backgroundImage : null, art: art && art.getAttribute('src') ? art.getAttribute('src') : null };
     }, kit);
     return !!dress;
   }, { timeout: 10_000 }).toBe(true);
@@ -69,6 +71,10 @@ test('a worn look stays calm under a mash: burst every other key, small, quick; 
     const animate = Element.prototype.animate;
     Element.prototype.animate = function (kf, opts) {
       const a = animate.call(this, kf, opts);
+      // a random CRIT can land mid-mash: its big painted burst (260 px) is the crit's own dress — these stats are the
+      // PLAIN key's flash, so an art play on a crit pop is not counted (critPop sets .is-crit before it dresses the art)
+      const pop = this.closest && this.closest('.menu-xp-pop');
+      if (pop && pop.classList.contains('is-crit')) return a;
       if (this.classList && this.classList.contains('menu-xp-pop-art')) {
         window.__burst.plays++;
         window.__burst.maxMs = Math.max(window.__burst.maxMs, (opts && opts.duration) || 0);
@@ -78,17 +84,19 @@ test('a worn look stays calm under a mash: burst every other key, small, quick; 
       return a;
     };
     window.__shards = 0;
+    window.__crits = 0; // a random CRIT can land mid-mash: its look ring (6 shards) is by design — only plain keys must stay bare
     Animation.prototype.play = function () {
       const t = this.effect && this.effect.target;
       if (t && t.classList && t.classList.contains('menu-xp-shard')) window.__shards++;
+      if (t && t.classList && t.classList.contains('menu-xp-pop') && t.classList.contains('is-crit')) window.__crits++;
       return play.call(this);
     };
   });
   for (let n = 0; n < 16; n++) { await page.keyboard.press('KeyA'); await page.waitForTimeout(90); }
   await page.waitForTimeout(200);
-  const r = await page.evaluate(() => ({ ...window.__burst, shards: window.__shards, chips: document.querySelectorAll('.menu-xp-pop:not(.is-crit) .menu-xp-pop-plus.is-kit').length }));
+  const r = await page.evaluate(() => ({ ...window.__burst, shards: window.__shards, crits: window.__crits, chips: document.querySelectorAll('.menu-xp-pop:not(.is-crit) .menu-xp-pop-plus.is-kit').length }));
   expect(r.chips, 'no textured chip on a plain key').toBe(0);
-  expect(r.shards, 'a look throws no shards').toBe(0);
+  expect(r.shards, 'a look throws no shards on a plain key (a crit throws its one ring of 6)').toBe(r.crits * 6);
   expect(r.plays, 'the burst flashes on about every other key, not every key').toBeLessThanOrEqual(9);
   expect(r.plays).toBeGreaterThanOrEqual(4);
   expect(r.maxW, 'the flash stays small (px)').toBeLessThanOrEqual(120);

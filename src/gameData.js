@@ -70,6 +70,10 @@ const BASE_GAMES = [
 const SAT_RUSH_GAME = {
   id: 'sat-rush',
   artKey: 'SatRushArt',
+  // nov2 (design audit: SAT was drawn in CSS boxes next to fully painted siblings): the painted 3-layer card, kept IN the
+  // manga sub-style (cream paper, black ink, halftone, violet the one spot colour) — the rooftop with its WANTED posters,
+  // the dictionary bounty hunter (a paper-white knockout rim keeps it off the ink), torn posters + pages on hover
+  artLayers: { bg: '/cards/sat-bg-v2.webp', hero: '/cards/sat-hero-v2.webp' }, // nov2 v2: flash-cartoon test panic (Andy: v1 read as AI slop, the hero floated)
   name: 'SAT\nRUSH',
   description: 'SAT VOCAB, ARCADE SPEED. SOLO.',
   baseColor: '#F2EFE7', // off-white paper (not pure white — that reads disabled)
@@ -159,6 +163,9 @@ const FUSE_GAME = {
 const WORD_RACE_GAME = {
   id: 'word-race',
   artKey: 'WordRaceArt',
+  // nov2 (design audit: RACE was the one neon card still drawn in CSS / SVG): the painted 3-layer card like MINER —
+  // the neon starting-line stadium, the sprinting keycap racer, and flying keycaps + checkered scraps on hover
+  artLayers: { bg: '/cards/race-bg-v2.webp', hero: '/cards/race-hero-v2.webp' }, // nov2 v2: a letter tile sprinting the track (v1 cut its feet off)
   name: 'WORD\nRACE',
   cardName: 'RACE',
   description: 'SAME WORDS FOR EVERYONE. FIRST TO 25.', // H6: not "25 WINS" (the currency)

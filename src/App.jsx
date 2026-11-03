@@ -2881,6 +2881,13 @@ function App() {
         onFuse={goToFuse}
         onCreateRoom={() => goToLobby('solo')}
         onJoinRoom={handleOpenBrowser}
+        // OPEN ROOMS on the menu (nov2): props only — the existing publicRooms state, list request and join/create
+        // handlers the JOIN ROOM screen already uses. No drain / queue / socket change.
+        rooms={publicRooms}
+        onRefreshRooms={handleRefreshPublicRooms}
+        onJoinPublicRoom={handleJoinPublicRoom}
+        onCreatePublic={handleCreatePublicFromBrowser}
+        playerName={playerName}
         onCredits={goToCredits}
         onStats={goToStats}
         onLeaderboard={goToLeaderboard}

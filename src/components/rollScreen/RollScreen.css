@@ -231,6 +231,17 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-ptr-tri { position: absolute; left: 0; display: block; }
 .rs-ptr-tri.is-top { top: -2px; }
 .rs-ptr-tri.is-bot { bottom: -2px; }
+/* PARKED (design audit nov2: the bar ran through the landed card's name + stats, "EGG T|MER"): at rest the bar and the
+   bottom triangle fade out and the top triangle rises until its tip sits at the card's top edge (never past the
+   panel's frame: --rs-up). Finite transitions, transform/opacity only; a spin (is-parked off) brings them back. */
+/* is-ptr-live (Reel.jsx): the transition is on only once this Reel has spun — a mount (first open, back from the INDEX)
+   sits parked at once instead of sliding in when the mount measure sets --rs-up */
+.rs-win.is-ptr-live .rs-ptr-bar, .rs-win.is-ptr-live .rs-ptr-tri { transition: opacity 200ms ease-out, transform 240ms cubic-bezier(.2, 1.3, .4, 1); }
+.rs-win.is-parked .rs-ptr-bar,
+.rs-win.is-parked .rs-ptr-tri.is-bot { opacity: 0; }
+.rs-win.is-parked .rs-ptr-tri.is-top {
+  transform: translateY(max(calc(-1 * var(--rs-up, 0px)), calc((var(--band) - var(--cw) * 1.6667) / 2 - 3px - 28px)));
+}
 /* THE TELL (R4): a flat tier-colour plate over the band's whole panel (a rectangle, frame to frame) whose opacity pulses in the last cells of an
    EPIC+ spin, and a second pointer in the tier colour that fades in over the yellow one — the colour says WHICH
    rarity before the card is shown. Both rest at opacity 0; Reel.jsx animates them (finite, opacity only). */
@@ -258,9 +269,16 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 /* the burst: OUTSIDE the band's clip, centred on the landing card */
 .rs-parts { position: absolute; z-index: 3; left: 50%; top: calc(var(--band) / 2); width: 0; height: 0; pointer-events: none; }
-.rs-part { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; opacity: 0; }
+/* the painted blade shards (fx/shards/shardPlan.js): a square box, the sprite contained (its tip drawn up-right) */
+.rs-part { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; object-fit: contain; opacity: 0; }
 
 /* ---- the result LINE: NAME · ×1.5 · WINS · ★ — pops in once ---- */
+/* Andy nov2 "the cover that dims the left and right side after rolling also covers the words under the cards": the
+   shades + edge fades live in .rs-win (z-index 1) and reach --rs-up BELOW the band, so on a tall stage (1920) or a
+   narrow one (390) they ran over the result line. The line (and the FOUND row) stack ABOVE the band (z-index 2) —
+   the dim only darkens the cards beside the landing slot, never text. The burst (.rs-parts, z 3) stays on top. */
+.rs-result-slot,
+.rsx-coll { position: relative; z-index: 2; }
 .rs-result-slot { min-height: 44px; display: grid; place-items: center; padding: 0 var(--gut); max-width: 100%; box-sizing: border-box; }
 .rs-result {
   display: flex;
@@ -533,15 +551,60 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut.is-full .rs-cut-stamp { font-size: min(11cqw, 92px); -webkit-text-stroke: 8px #000; }
 .rs-cut-mark { display: grid; justify-items: center; }
 .rs-cut-keep { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; opacity: 0; }
-.rs-parts.is-cut { top: 50%; }
-.rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
+.rs-parts.is-cut { top: 50%; z-index: 0; } /* inside .rs-cut-mark: centred on the card, painted under it */
+.rs-cut .rs-part { width: 84px; height: 84px; left: -42px; top: -42px; }
 
 /* ---- ROLL REVEAL v2 (Reel.jsx + revealPlan.js): the flip, its escalating layers, the stats extension ----
    Every piece of art is an asset in /public/fx (card-back, card-back-edge as a mask, sheen, sparkle, burst-ring as a
    mask); CSS only places them and the WAAPI one-shots move them (transform / opacity). Nothing loops; will-change is
    set by the animation helper while a node plays and cleared when it stops. LITE (RARE) is a lighter
    backdrop that closes by itself. */
-.rs-cut.is-lite { background: rgba(5, 2, 10, 0.9); }
+/* design audit nov2: the reveal backdrop is SOLID on every kind — a 90% plate let a ghost of the landed reel card (and
+   the ROLL slab) read through, so the stats showed THREE times and ROLL's halves stuck out beside the stats plate */
+/* …but never a dead black void: an OPAQUE tier-tinted panel colour (the SealedRollReveal scrims) wearing the overlay's
+   own hard-stop stripe texture in the tier colour. Flat colours + hard stops — no soft gradient, nothing shows through. */
+.rs-cut, .rs-cut.is-lite, .rs-cut.is-dim, .rs-cut.is-full {
+  background-color: #12082a;
+  background-image: repeating-linear-gradient(-28deg, transparent 0 46px, color-mix(in srgb, var(--rs-tier, #9A1AFF) 16%, transparent) 46px 50px);
+}
+.rs-cut.is-rare { background-color: #08122e; }
+.rs-cut.is-epic { background-color: #16062c; }
+.rs-cut.is-legendary { background-color: #261604; }
+.rs-cut.is-mythic { background-color: #2e061e; }
+.rs-cut.is-secret { background-color: #04080c; }
+/* ONE stat block: the reveal CARD carries the MAIN stat + substats (hiding them left blank plates on the art), so the
+   side plate (RevealStats) now only says what the card can't — perks, a duplicate's gems — and is gone when there is
+   neither. THE CARD DOMINATES: Reel.jsx sizes it from the viewport (reelPlan.revealCardW — ~65% of the height on
+   desktop, ~75% of the width on a phone) by inline --mc-w / --mc-s; these are the fallbacks before that runs. */
+.rs-cut { --mc-w: 252px; --mc-s: 1.4; }
+.rs-cut.is-full { --mc-w: 288px; --mc-s: 1.6; }
+/* the oct14 "larger stat reveals" HIT lives on the card now: on the reveal card the MAIN stat is drawn at display size
+   (36 card-px — 60px rendered at 1366×768), its label a touch smaller so both still fit the 44-px hero plate */
+/* the big card's EPIC+ aura reaches the stamp + TAP on a phone (they stack tight): the words stay ON TOP of it */
+.rs-cut-double, .rs-cut-tier, .rs-cut-stamp, .rs-cut-keep { position: relative; z-index: 2; }
+/* the reveal card's BACKPLATE (replaces the soft GearFx aura — no blur, no glow): a flat tier-colour plate, outlined in
+   its darker shade, with the house hard ink shadow, tilted -3deg so it peeks out unevenly behind the card */
+.rv-plate {
+  position: absolute;
+  left: -3.5%;
+  top: -2.5%;
+  width: 107%;
+  height: 105%;
+  box-sizing: border-box;
+  background: var(--rs-tier, #9A1AFF);
+  border: 5px solid color-mix(in srgb, var(--rs-tier, #9A1AFF) 55%, #000);
+  border-radius: 14px;
+  box-shadow: 8px 8px 0 #000;
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+/* only REAL stats on the reveal: the empty substat slots ("—") are hidden; the plate centres what is left */
+.rs-cut-card .mc-sub.is-none { display: none; }
+.rs-cut-card .mc-hero { gap: 0; padding-top: 0; }
+.rs-cut-card .mc-num { font-size: calc(var(--mc-u) * 36); line-height: 0.9; }
+.rs-cut-card .mc-hero.is-l .mc-num { font-size: calc(var(--mc-u) * 34); }
+.rs-cut-card .mc-hero.is-xl .mc-num { font-size: calc(var(--mc-u) * 26); }
+.rs-cut-card .mc-kind { font-size: calc(var(--mc-u) * 9.8); -webkit-text-stroke: 2.5px #000; }
 .rs-cut.is-lite .rs-cut-rays,
 .rs-cut.is-lite .rs-cut-tier { display: none; }
 .rs-cut.is-lite .rs-cut-stamp { font-size: min(7cqw, 40px); -webkit-text-stroke: 5px #000; }
@@ -655,8 +718,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* ---- tall desktops (1920x1080): the 200px card sat in a 800px panel — the reel scales up to fill it (LAYOUT PASS R4b) ---- */
 @media (min-width: 1200px) and (min-height: 900px) {
   .rs-overlay { --cw: 250px; --cs: 1.3889; --band: calc(var(--cw) * 1.6667 + 48px); }
-  .rs-cut { --mc-w: 270px; --mc-s: 1.5; } /* the reveal card stays a step above the reel's */
-  .rs-cut.is-full { --mc-w: 324px; --mc-s: 1.8; }
+  .rs-cut { --mc-w: 306px; --mc-s: 1.7; } /* the reveal card stays a step above the reel's */
+  .rs-cut.is-full { --mc-w: 342px; --mc-s: 1.9; }
 }
 
 /* ---- shorter laptops (1366x657, 1280x551) ---- */
@@ -777,7 +840,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    odds, a 200px card, the stats plate, TAP TO CONTINUE — is ~890px tall, so on a 390x844 phone the plate ran off the
    bottom of the screen. Every phone up to 960 tall gets the compact reveal (it was only ≤700 tall). */
 @media (max-width: 480px) and (max-height: 960px) {
-  .rs-cut, .rs-cut.is-full { --mc-w: 162px; --mc-s: 0.9; }
+  .rs-cut, .rs-cut.is-full { --mc-w: 200px; --mc-s: 1.1111; }
   .rv-body { gap: 8px; }
   .rv-stats { gap: 4px; }
   .rv-stats.is-glow, .rv-stats.is-plated { padding: 8px 14px 10px; }
@@ -790,7 +853,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* SHORT phones (360x640): even the compact reveal measured 818px tall in a 640 screen — the plate's last lines and TAP TO
    CONTINUE were off the bottom. A smaller card (the plate below it repeats every stat) and tighter plate type. */
 @media (max-width: 480px) and (max-height: 700px) {
-  .rs-cut, .rs-cut.is-full { --mc-w: 108px; --mc-s: 0.6; }
+  .rs-cut, .rs-cut.is-full { --mc-w: 150px; --mc-s: 0.8333; }
   .rs-cut-shake { gap: 6px; padding: 10px 12px; }
   .rv-stats.is-glow, .rv-stats.is-plated { padding: 6px 12px 8px; }
   .rv-main-num { font-size: var(--fs-k34); }
