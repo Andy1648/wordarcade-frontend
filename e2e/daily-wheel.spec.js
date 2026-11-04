@@ -141,7 +141,7 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
 }
 
 // the wheel-only cosmetics: the painted piece shows on the result card, lands in the save, and wears where its slot is worn
-for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame'], ['confetti', 'PRIZE SHOWER', 'WIN FX', 'fx']]) {
+for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']]) { // CONFETTI (a WIN FX) retired nov2
   for (const [vn, vp] of [['1366x768', { width: 1366, height: 768 }], ['390x844', { width: 390, height: 844 }]]) {
     test(`cosmetic ${id} ${vn}: the result card shows its art, it is owned, WEAR equips it`, async ({ page }) => {
       await page.setViewportSize(vp);

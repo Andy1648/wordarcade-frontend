@@ -156,7 +156,7 @@ const magnet = (() => {
  * clicked. The "more soon" card has `enabled: false` and renders without
  * a click handler or hover-lift, matching its disabled visual state.
  */
-export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0 }) {
+export default function GameCard({ game, onSelect, onHover, topper, locked = false, difficulty, onLockedSelect, playerLevel = 0, priority = false }) {
   const ArtComponent = GAME_ART_COMPONENTS[game.artKey];
 
   // The wrapper element + its magnet state. The card object is shared with the
@@ -392,7 +392,7 @@ export default function GameCard({ game, onSelect, onHover, topper, locked = fal
           // PAINTED CARD (Andy oct14 "the biggest images out there"): BACKDROP + HERO (+ an FX burst on hover), all one
           // 2:3 frame so they line up; CHAIN / FUSE add PARTS that perform the card's ACT now and then
           // (cardLayers/cardActs.js — finite WAAPI one-shots, transform/opacity only, nothing at rest).
-          <CardLayers layers={game.artLayers} fxOn={fxOn} locked={locked} />
+          <CardLayers layers={game.artLayers} fxOn={fxOn} locked={locked} priority={priority} />
         ) : ArtComponent && (
           <div className="game-card-art">
             <ArtComponent />
