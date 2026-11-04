@@ -1478,7 +1478,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
   // (DAILY BLITZ was retired for MINER, Andy oct26 — its chip/icon/row left this cluster; MINER is a game card.)
-  const dailyTile = reveal.core ? <DailyTile onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  // the worn look's bar kit (set by the effect further down); declared here so the DAILY chip's track can wear it too
+  const [barSkin, setBarSkin] = useState(null);
+  const dailyTile = reveal.core ? <DailyTile kit={barSkin} onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
@@ -1533,7 +1535,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  const [barSkin, setBarSkin] = useState(null);
   useEffect(() => {
     let live = true;
     const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
