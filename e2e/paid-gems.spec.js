@@ -145,11 +145,11 @@ test('back from Stripe (?paid=1): polls until the webhook lands, grants once, ac
   const calls = await boot(page, {
     query: '&payments=1&paid=1',
     gems: 40,
-    pending: (n) => ({ rows: n >= 2 ? [{ id: 41, delta: 800, reason: 'purchase' }] : [], spent_cents: n >= 2 ? 499 : 0, cap_cents: 2000, flagged: false, profile: true }),
+    pending: (n) => ({ rows: n >= 2 ? [{ id: 41, delta: 1700, reason: 'purchase' }] : [], spent_cents: n >= 2 ? 499 : 0, cap_cents: 2000, flagged: false, profile: true }),
   });
-  await expect.poll(() => gemsBal(page), { timeout: 15000 }).toBe(840);
+  await expect.poll(() => gemsBal(page), { timeout: 15000 }).toBe(1740);
   await expect.poll(() => calls.ack.length).toBeGreaterThanOrEqual(1);
   expect(calls.ack[0]).toEqual({ p_secret: SECRET, p_ids: [41] });
   expect(await page.evaluate(() => new URLSearchParams(location.search).get('paid'))).toBeNull(); // a reload won't poll again
-  await expect(page.locator('.menu-gems-chip').first()).toContainText('840', { timeout: 5000 }); // the fly lands, the pill counts it in
+  await expect(page.locator('.menu-gems-chip').first()).toContainText('1,740', { timeout: 5000 }); // the fly lands, the pill counts it in
 });

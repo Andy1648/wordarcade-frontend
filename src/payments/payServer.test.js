@@ -90,7 +90,7 @@ const completed = (over = {}, meta = {}) => ({
   data: {
     object: {
       id: 'cs_test_1', object: 'checkout.session', mode: 'payment', payment_status: 'paid', amount_total: 199, currency: 'usd',
-      payment_intent: 'pi_1', metadata: { taw: '1', profile_id: PID, pack: 'pouch', gems: '300', reservation: 'res-1', ...meta }, ...over,
+      payment_intent: 'pi_1', metadata: { taw: '1', profile_id: PID, pack: 'pouch', gems: '600', reservation: 'res-1', ...meta }, ...over,
     },
   },
 });
@@ -261,14 +261,14 @@ test('webhook: a completed session grants the pack table\'s gems ONCE — a rede
   // async_payment_succeeded for the same session is the same purchase
   const late = await handleWebhook(signedReq({ ...completed(), type: 'checkout.session.async_payment_succeeded' }), { stripe, rpc: db.rpc, env: ENV });
   assert.deepEqual(await late.json(), { granted: false, duplicate: true });
-  assert.equal(db.net(), 300);
+  assert.equal(db.net(), 600);
   assert.equal(db.purchases.size, 1);
   const grant = db.calls.find((c) => c[0] === 'pay_grant')[1];
-  assert.deepEqual(grant, { p_session: 'cs_test_1', p_reservation: 'res-1', p_profile: PID, p_pack: 'pouch', p_gems: 300, p_cents: 199, p_currency: 'usd', p_payment_intent: 'pi_1' });
+  assert.deepEqual(grant, { p_session: 'cs_test_1', p_reservation: 'res-1', p_profile: PID, p_pack: 'pouch', p_gems: 600, p_cents: 199, p_currency: 'usd', p_payment_intent: 'pi_1' });
 });
 
 test('webhook: gems come from the pack table, never the metadata; a mismatched amount / unpaid / foreign session grants nothing', () => {
-  assert.equal(grantArgs(completed({}, { gems: '999999' }).data.object).p_gems, 300);
+  assert.equal(grantArgs(completed({}, { gems: '999999' }).data.object).p_gems, 600);
   assert.equal(grantArgs(completed({ amount_total: 1 }).data.object), null, 'paid less than the pack');
   assert.equal(grantArgs(completed({ currency: 'eur' }).data.object), null);
   assert.equal(grantArgs(completed({ payment_status: 'unpaid' }).data.object), null);
@@ -277,7 +277,7 @@ test('webhook: gems come from the pack table, never the metadata; a mismatched a
   assert.equal(grantArgs(completed({}, { pack: 'hoard' }).data.object), null, 'metadata pack ≠ amount');
   // Adaptive Pricing: the payer saw EUR, the source amount is still the pack's USD price
   const ap = grantArgs(completed({ currency: 'eur', amount_total: 185, currency_conversion: { amount_total: 199, source_currency: 'usd', fx_rate: '0.93' } }).data.object);
-  assert.equal(ap && ap.p_gems, 300);
+  assert.equal(ap && ap.p_gems, 600);
 });
 
 test('webhook: a db failure is a 500 (Stripe retries); the retry still grants exactly once', async () => {
@@ -288,19 +288,19 @@ test('webhook: a db failure is a 500 (Stripe retries); the retry still grants ex
   down = false;
   assert.equal((await handleWebhook(signedReq(completed()), { stripe, rpc: flaky, env: ENV })).status, 200);
   assert.equal((await handleWebhook(signedReq(completed()), { stripe, rpc: flaky, env: ENV })).status, 200);
-  assert.equal(db.net(), 300);
+  assert.equal(db.net(), 600);
 });
 
 // ============================================================================================================== CLAWS
 test('refund / dispute: claw the gems back pro rata, never twice; a dispute takes them all and flags the account', async () => {
   const db = fakeDb();
   await routeEvent(completed(), db.rpc);
-  assert.equal(db.net(), 300);
+  assert.equal(db.net(), 600);
   const refund = (amount_refunded) => ({ type: 'charge.refunded', data: { object: { id: 'ch_1', payment_intent: 'pi_1', amount: 199, amount_refunded, metadata: { taw: '1' } } } });
-  await routeEvent(refund(100), db.rpc); // ~half → ceil(300 × 100/199) = 151
-  assert.equal(db.net(), 300 - 151);
+  await routeEvent(refund(100), db.rpc); // ~half → ceil(600 × 100/199) = 302
+  assert.equal(db.net(), 600 - 302);
   await routeEvent(refund(100), db.rpc); // the same event again: nothing new owed
-  assert.equal(db.net(), 300 - 151);
+  assert.equal(db.net(), 600 - 302);
   await routeEvent(refund(199), db.rpc); // the rest
   assert.equal(db.net(), 0);
   await routeEvent(refund(199), db.rpc);
@@ -308,7 +308,7 @@ test('refund / dispute: claw the gems back pro rata, never twice; a dispute take
   // dispute on a second purchase
   await routeEvent({ type: 'checkout.session.completed', data: { object: { ...completed().data.object, id: 'cs_test_2', payment_intent: 'pi_2' } } }, db.rpc);
   const out = await routeEvent({ type: 'charge.dispute.created', data: { object: { id: 'dp_1', charge: 'ch_2', payment_intent: 'pi_2', amount: 199 } } }, db.rpc);
-  assert.deepEqual(out, { status: 200, body: { clawed: 300 } });
+  assert.deepEqual(out, { status: 200, body: { clawed: 600 } });
   assert.equal(db.net(), 0);
   assert.ok(db.flags.has(PID));
   // and the flagged account can't check out again
