@@ -531,6 +531,19 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   margin: -62vmax 0 0 -62vmax;
   opacity: 0;
 }
+/* LEGENDARY's painted sunburst crest (Reel.jsx): a halo centred on the card, under it — its spears fan out round it */
+.rs-cut-crest {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--mc-w, 252px) * 2.7);
+  height: calc(var(--mc-w, 252px) * 2.7);
+  margin: calc(var(--mc-w, 252px) * -1.35) 0 0 calc(var(--mc-w, 252px) * -1.35);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
 .rs-cut.is-dim .rs-cut-rays,
 .rs-cut.is-dim .rs-cut-tier { display: none; }
 .rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
