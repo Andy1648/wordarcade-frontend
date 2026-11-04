@@ -26,6 +26,7 @@ const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlo
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
+import { OVERDRIVE_MULT } from '../progress/overdrive.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -861,8 +862,8 @@ export async function redeemCode(raw) {
   if (res.kind === 'tester') return { ok: true, code: res.code, kind: 'tester', wins: 0, label: res.label || res.code };
   if (res.kind === 'overdrive') {
     const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 5;
-    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: 5, min } }); // OVERDRIVE ×5 (Andy oct11; overdrive.js OVERDRIVE_MULT)
-    return { ok: true, code: res.code, kind: 'overdrive', mult: 5, min, wins: 0, label: res.label || res.code };
+    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: OVERDRIVE_MULT, min } }); // OVERDRIVE ×15 (nov4; overdrive.js OVERDRIVE_MULT)
+    return { ok: true, code: res.code, kind: 'overdrive', mult: OVERDRIVE_MULT, min, wins: 0, label: res.label || res.code };
   }
   if (res.kind === 'boost') {
     const mult = Number(res.boost_mult) > 1 ? Math.floor(Number(res.boost_mult)) : 3;

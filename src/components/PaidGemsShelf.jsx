@@ -139,7 +139,7 @@ export default function PaidGemsShelf() {
         <span className="pg-cap" data-testid="pay-cap">
           $20 A MONTH LIMIT<span className="pg-cap-sep"> · </span><b>{formatUsd(left)} LEFT</b>
         </span>
-        <RatesPop label="ODDS" portal className="pg-odds" />
+        <RatesPop label="ODDS" className="pg-odds" />
       </div>
       <p className="pg-fine" data-testid="pay-refund">
         Bought gems work like earned gems, at the same roll odds. Bought by mistake? Reply to the Stripe receipt
