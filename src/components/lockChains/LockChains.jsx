@@ -12,6 +12,9 @@ export default function LockChains({ wide = false, className = '' }) {
       alt=""
       aria-hidden="true"
       draggable="false"
+      decoding="async"
+      // an FX dressing over a locked box: it waits behind the menu's game-card art (Andy nov4 "the cards take a while")
+      fetchpriority="low"
     />
   );
 }

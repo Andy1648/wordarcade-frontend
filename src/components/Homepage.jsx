@@ -1707,10 +1707,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 style={{ '--card-count': GAMES.length }}
                 data-page={isPagedMenu ? shownPage : undefined}
               >
-                {GAMES.map((game) => (
+                {GAMES.map((game, i) => (
                   <GameCard
                     key={game.id}
                     game={game}
+                    // the FIRST PAGE's art loads first and shows together; later cards wait (lazy) — Andy nov4
+                    priority={i < CARDS_PER_PAGE}
                     onSelect={handleOpenDialog}
                     onLockedSelect={handleLockedSelect}
                     onHover={handleHover}
