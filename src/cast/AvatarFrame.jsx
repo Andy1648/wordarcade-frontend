@@ -1,9 +1,11 @@
 // AvatarFrame.jsx — your hero's PORTRAIT in the square frame you wear (avatarFrame.js). Wear none and it renders its
 // children untouched (the portrait as it always was). Wear one and it takes the portrait's slot (`className` = the
 // portrait's own sizing class): the face becomes a rounded square in the frame's window and the painted frame sits on
-// top, a little bigger than the slot (`grow`) so its crystals / flames / brackets break the box. Static: no motion of its own.
+// top, a little bigger than the slot (`grow`) so its crystals / flames / brackets break the box. Its motion is FrameFx's
+// (the tier's painted components, on one shared scheduler).
 import { useEffect, useState } from 'react';
 import { AVATAR_WIN, KIT_CHANGE, avatarFrameSrc, wornAvatarFrame } from './avatarFrame.js';
+import FrameFx from './FrameFx.jsx';
 import './AvatarFrame.css';
 
 const pct = (n) => `${Math.round(n * 100) / 100}%`;
@@ -27,6 +29,8 @@ export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow 
     <span className={`avf ${className}`} data-avf={frame} aria-hidden="true">
       <span className="avf-face" style={face}><img src={src} alt="" draggable="false" /></span>
       <img className="avf-ring" src={avatarFrameSrc(frame)} style={ring} width="256" height="256" alt="" draggable="false" />
+      {/* the frame's painted COMPONENTS (Andy nov4): motes / corner crystals / a blade orbit by tier — FrameFx.jsx */}
+      <FrameFx key={frame} frame={frame} box={ring} />
     </span>
   );
 }

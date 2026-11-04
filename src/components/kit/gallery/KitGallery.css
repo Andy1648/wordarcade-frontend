@@ -385,3 +385,9 @@ html.kg-page #root { height: auto; overflow: visible; }
 .kg-lu-pcode { padding: 0 5px; background: #000; font-family: 'Bungee', sans-serif; text-transform: uppercase; }
 @media (max-width: 760px) { .kg-lu-grid { grid-template-columns: 1fr; } }
 .kg-lu-toasthost .ket-host { top: 0; }
+
+/* FRAME FX sheet (?sheet=frames) */
+.kg-frames { display: grid; grid-template-columns: repeat(5, 180px); gap: 56px 48px; padding: 48px; justify-content: center; }
+.kg-frame { margin: 0; display: grid; justify-items: center; gap: 28px; }
+.kg-frame-av { width: 140px; height: 140px; }
+.kg-frame figcaption { color: #fff; font-size: var(--fs-body); text-transform: uppercase; }

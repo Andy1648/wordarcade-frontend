@@ -44,6 +44,8 @@ import { UNLOCK_TOAST } from '../../../progress/v3/notify.js';
 import { useReduceMotion } from '../../../lib/useReduceMotion.js';
 import { setReduceMotion } from '../../../lib/reduceMotion.js';
 import { formatNum } from '../../../format.js';
+import AvatarFrame from '../../../cast/AvatarFrame.jsx';
+import { FRAME_TIER } from '../../../cast/frameFx.js';
 import './KitGallery.css';
 
 const cap = (s) => <div className="kg-cap">{s}</div>;
@@ -804,6 +806,26 @@ const ONLY = (() => {
 })();
 const show = (id) => !ONLY || ONLY === id;
 
+// ======================================================================== FRAME FX (nov4)
+// every avatar frame on a hero face with its painted components (cast/FrameFx.jsx) — `?kit=1&sheet=frames`
+const FRAME_IDS = ['frost', 'graffiti', 'flame', 'bomb', 'bolt', 'scholar', 'chain', 'defuser', 'arcade', 'jackpot'];
+const FACES = ['riot', 'brawl', 'glitch', 'hype', 'hex'];
+function FramesSheet() {
+  return (
+    <section className="kg-sheet" id="frames">
+      <SheetHead title="FRAME FX" tone="cyan" tag="T1 MOTES · T2 CORNERS · T3 CORNERS + ORBIT" />
+      <div className="kg-frames">
+        {FRAME_IDS.map((id, i) => (
+          <figure key={id} className="kg-frame" data-frame={id}>
+            <AvatarFrame preview={id} src={`/cast/${FACES[i % FACES.length]}-hero.webp`} className="kg-frame-av" />
+            <figcaption>{id.toUpperCase()} · T{FRAME_TIER[id]}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function KitGallery() {
   const rm = useReduceMotion();
   useEffect(() => {
@@ -827,6 +849,7 @@ export default function KitGallery() {
       {show('bars') && <BarsSheet />}
       {show('icons') && <IconsSheet />}
       {show('levelup') && <LevelUpSheet />}
+      {ONLY === 'frames' && <FramesSheet />}
     </main>
   );
 }
