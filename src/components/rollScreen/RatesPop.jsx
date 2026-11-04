@@ -3,6 +3,8 @@
 // ("1 IN 98"), read from the SAME table the roll uses (markRolls.rollTable with your luck, pity and bonus roll) — so the
 // popup can never claim odds the roll does not have. A pity-forced roll adds an "EPIC+ GUARANTEED" line.
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import './RatesPop.css';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js'; // registers the LUCK icon (the menu's core set does not carry it)
 import { rollTable, loadRollState, freshState, permanentOwnedCount, ROLL_MARKS, ROLLABLE_TIERS } from '../../progress/markRolls.js';
@@ -27,10 +29,13 @@ export function nextRollRates(state = loadRollState() || freshState(), ctx = { p
   return { rows, forced: t.forced || null };
 }
 
-export default function RatesPop() {
+/** label: the button's word (the shop's GEMS shelf says ODDS). portal: render the popup on <body> (a scaled /
+ *  transformed parent would otherwise trap the fixed scrim — the shop's stage). */
+export default function RatesPop({ label = 'RATES', portal = false, className = '' } = {}) {
   const [open, setOpen] = useState(false);
   const [rates, setRates] = useState({ rows: [], forced: null });
   const closeRef = useRef(null);
+  const wrap = (node) => (portal && typeof document !== 'undefined' ? createPortal(node, document.body) : node);
   useEffect(() => {
     if (!open) return undefined;
     setRates(nextRollRates());
@@ -41,12 +46,12 @@ export default function RatesPop() {
   }, [open]);
   return (
     <>
-      <button type="button" className="rs-rates-btn" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Roll rates" data-testid="roll-rates">
+      <button type="button" className={`rs-rates-btn${className ? ` ${className}` : ''}`} onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={label === 'RATES' ? 'Roll rates' : 'Roll odds'} data-testid="roll-rates">
         <KitIcon name="luck" size={26} shadow={1} extras={false} />
-        <span className="rs-rates-k">RATES</span>
+        <span className="rs-rates-k">{label}</span>
       </button>
-      {open ? (
-        <div className="rs-rates-scrim" role="presentation" onClick={() => setOpen(false)}>
+      {open ? wrap(
+        <div className={`rs-rates-scrim${portal ? ' is-portal' : ''}`} role="presentation" onClick={() => setOpen(false)}>
           <div className="rs-rates" role="dialog" aria-modal="true" aria-label="Your next roll's odds" data-testid="roll-rates-pop" onClick={(e) => e.stopPropagation()}>
             <button ref={closeRef} type="button" className="rs-rates-x" onClick={() => setOpen(false)} aria-label="Close rates">✕</button>
             <div className="rs-rates-head">
@@ -66,7 +71,7 @@ export default function RatesPop() {
             </ul>
             {rates.forced ? <div className="rs-rates-pity" style={{ '--rs-tier': CARD_RAR[cardTier(rates.forced)].line }}>{(MARK_TIERS[rates.forced] || { name: rates.forced }).name}+ GUARANTEED</div> : null}
           </div>
-        </div>
+        </div>,
       ) : null}
     </>
   );
