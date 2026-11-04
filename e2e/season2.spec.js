@@ -6,7 +6,8 @@
 //   * REBIRTHS on the v2 REBIRTH screen (HOLD TO REBIRTH) through the mocked lb_rebirth (season 2: LV ≥ 15 → LV 1, ×3)
 //     — one request, +25 gems (25 × R, Andy oct11), R1, LV15 → LV1;
 //   * BUYS KEY with wins (150 wins, ×2 XP a key — a key pops +6 at T1 R1);
-//   * sees the v3 RANKS (INKLING → TYPO — by rebirths, not by level);
+//   * sees its LEAGUE on the profile plate (nov3 #614: titles retired → leagues by board place; the mocked board's one
+//     row is this player, #1 = LEGEND, before and after the rebirth);
 //   * sees NO menu claim popup / REWARDS count, even with a season-1 claim waiting in storage;
 //   * CLAIMS an ACHIEVEMENT for GEMS (TYPE WORDS I → +40) — gems come from games / achievements, never a rebirth.
 // The season-1 save (taw.*) is never touched: season 2 lives under taw.s2.*.
@@ -28,6 +29,9 @@ async function boot(page) {
     sessionStorage.setItem('s2.seeded', '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
+    // the menu spotlights are not this loop's subject (e2e/unlock-tutorials covers them): seen, so an idle beat (the
+    // profile plate waiting on the board for its league) can never put the POWER tip over the REBIRTH tile
+    for (const t of ['gems', 'power', 'gears', 'rebirth', 'board', 'keyTier']) localStorage.setItem(`taw.tut.${t}`, '1');
     localStorage.setItem('taw.lb.profile', JSON.stringify({ id, username: 'Season2' }));
     localStorage.setItem('taw.lb.secret', secret);
     localStorage.setItem('taw.econ', '12');
@@ -69,7 +73,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     const phone = isPhoneMenu(page);
     await navControl(page, 'stats').waitFor({ state: 'visible' });
     await noClaimPopups(page);
-    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('INKLING');
+    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveAttribute('aria-label', /LEGEND league/);
 
     // NO RATE LINE under the bar (Andy oct9) — what a key pays shows as its pop (+1 at T0 R0, below)
     await expect(page.locator('.hp-per, .hp-rate')).toHaveCount(0);
@@ -109,7 +113,7 @@ for (const vp of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
     await rb.locator('.rb2-back').click();
     await expect(rb).toHaveCount(0);
     await noClaimPopups(page);
-    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toContainText('TYPO');
+    if (!phone) await expect(page.locator('.menu-xp-rank').first()).toHaveAttribute('aria-label', /LEGEND league/); // a rebirth keeps the board place
 
     // KEY: wins buy only KEY (150 × 5^0 = 150 wins) — the v2 SHOP (P3): HOLD TO BUY, 1 s
     await navControl(page, 'shop').click();
