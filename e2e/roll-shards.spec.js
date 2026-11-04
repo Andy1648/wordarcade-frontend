@@ -107,4 +107,10 @@ test('LEGENDARY: ONE idea — its rays + slam, NO blade shards stacked on the re
   const until = Date.now() + 3000;
   while (Date.now() < until) { most = Math.max(most, (await shardState(page)).playing); await page.waitForTimeout(40); }
   expect(most).toBe(0);
+  // its own idea instead: the painted gold sunburst crest haloes the card — finite, fully in at rest
+  const crest = page.locator('.rs-cut-crest');
+  await expect(crest).toHaveAttribute('src', /\/fx\/lance\/sunburst-gold-v\d+\.webp$/);
+  const c = await crest.evaluate((el) => ({ inf: el.getAnimations().some((a) => a.effect.getTiming().iterations === Infinity), o: Number(getComputedStyle(el).opacity) }));
+  expect(c.inf).toBe(false);
+  expect(c.o).toBeGreaterThan(0.9);
 });

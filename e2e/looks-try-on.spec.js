@@ -73,7 +73,7 @@ test('leaving the POP STYLE tab ends the try', async ({ page }) => {
   await boot(page);
   await page.locator('.sp2-look[data-look="void"] .sp2-look-stage').click();
   await expect(page.getByTestId('sp2-try')).toBeVisible();
-  await page.locator('.cz-tab[data-cz="sound"]').click();
+  await page.locator('.cz-tab[data-cz="frame"]').click(); // nov4: SOUND is retired (#592) — any other tab ends the try
   await page.locator('.cz-tab[data-cz="pop"]').click();
   await expect(page.getByTestId('sp2-try')).toHaveCount(0);
 });
