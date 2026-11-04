@@ -211,7 +211,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
 
   // ---- Solo bot opponent (Word Bomb / Category Blitz) ----
   const humanCount = room.players.filter((p) => !p.isBot).length;
-  const bot = room.players.find((p) => p.isBot);
+  // the SOLO bot the host added (its difficulty / remove controls); LOBBY bots are drawn as players (backend #43)
+  const bot = room.players.find((p) => p.isBot && !p.lobbyBot);
   // The host can add ONE bot when they're alone in a bot-capable mode. (The
   // server enforces the same; this just shows/hides the control.)
   const canAddBot =
@@ -342,12 +343,12 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   )}
                   {player.id === room.hostId && !(player.id === myId && onRename) && <span className="room-host-badge">HOST</span>}
                   {SEASON2 && player.id === myId ? <span className="room-you-badge">YOU</span> : null}
-                  {player.isBot && (
+                  {player.isBot && !player.lobbyBot && (
                     <span className="room-bot-badge">
                       BOT · {botDifficultyLabel(player.botDifficulty)}
                     </span>
                   )}
-                  {player.isBot && isHost && (
+                  {player.isBot && !player.lobbyBot && isHost && (
                     <button
                       className="room-bot-remove"
                       disabled={botPending}

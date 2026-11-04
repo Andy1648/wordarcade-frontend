@@ -39,7 +39,7 @@ import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
-import { shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
+import { shardSrc, bladeFrames, bladeFlavour, orbitLashFrames, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
@@ -449,15 +449,18 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
-      const k = Math.min(burstCount(tier), SHARD_MAX); // one strong idea: 8–14 blades, never a stacked spray
-      // the blades burst from behind the card and must CLEAR it (up / down too, not only past its sides): one size read
-      // per reveal (never per frame), in the card's own untransformed box — the pool sits in the same container
+      // ONE strong idea per tier (Andy nov3): LEGENDARY's moment is its rays + slam, so it throws NO blades; EPIC / MYTHIC /
+      // SECRET throw them as an Aamon ORBIT — a ring that laps the card tip-first, then lashes out (shardPlan.orbitLashFrames).
+      // One size read per reveal (never per frame), in the card's own untransformed box — the pool sits in its container.
+      const k = Math.min(burstCount(tier), SHARD_MAX);
       const card = n.rvCard;
-      const vs = clearVectors(k, card ? card.offsetWidth : 252, card ? card.offsetHeight : 420, { reach: full ? [70, 190] : [40, 130] });
+      const cw = card ? card.offsetWidth : 252;
+      const ch = card ? card.offsetHeight : 420;
       for (let i = 0; i < k; i += 1) {
-        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: SHARD_MS - 80 + (i % 5) * 20, delay: tl.burst.at, easing: 'linear' });
+        const f = orbitLashFrames(i, k, cw, ch, { s: full ? 1.05 : 0.9, reach: full ? 150 : 100, sweep: full ? 230 : 190, lashAt: 0.58 + (i % 3) * 0.03 });
+        anim(n[`q${i}`], f, { duration: SHARD_MS - 20, delay: tl.burst.at, easing: 'linear' });
       }
-      if (full) later(() => sndShardBurst(tier), tl.burst.at);
+      if (full && k) later(() => sndShardBurst(tier), tl.burst.at);
     }
     if (tl.ring2) anim(n.rvRing1, [{ transform: 'scale(0.4) rotate(0deg)', opacity: 1 }, { transform: 'scale(1.35) rotate(10deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }], { duration: tl.ring2.ms, delay: tl.ring2.at, easing: ease.out });
     // RARE+: ONE sheen pass — the wide band asset swept across the clipped face (transform only)
