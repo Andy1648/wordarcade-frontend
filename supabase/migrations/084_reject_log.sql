@@ -1,4 +1,4 @@
--- 082_reject_log.sql — THE REJECT LOG (nov4, Andy: "they need more … accepted words"). Which words FUSE / CHAIN reject as
+-- 084_reject_log.sql — THE REJECT LOG (nov4, Andy: "they need more … accepted words"). Which words FUSE / CHAIN reject as
 -- "not in our word list", counted per (word, mode, day), so the accept lists grow from evidence (src/telemetry/rejectLog.js).
 -- ANONYMOUS: no player id, name, secret or session is stored — only the word, the mode and the day.
 -- Writes only through log_rejects (security definer); the table has RLS on and NO policies, so the anon key can neither

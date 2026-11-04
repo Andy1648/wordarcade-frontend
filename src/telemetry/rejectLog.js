@@ -3,7 +3,7 @@
 // only the word and the mode go out — no player id, no name, no session, no timestamp beyond the server's day bucket.
 // Tiny and polite: deduped per mode, batched (one call per BATCH_MS, at most BATCH_MAX words), at most MAX_FLUSHES calls
 // a page session, a–z words of 2–15 letters only. Fire-and-forget: a failure is dropped, never retried, never shown.
-// Server side: supabase/migrations/082_reject_log.sql (log_rejects RPC — capped again there).
+// Server side: supabase/migrations/084_reject_log.sql (log_rejects RPC — capped again there).
 
 export const REJECT_MODES = ['fuse', 'chain'];
 export const BATCH_MS = 60 * 1000;
