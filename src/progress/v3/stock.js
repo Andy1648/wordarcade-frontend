@@ -22,6 +22,7 @@
 import { SEASON2 } from '../season.js';
 import { S2_PREFIX } from './store.js';
 import { announceTimers } from '../boost.js';
+import { OVERDRIVE_MULT } from '../overdrive.js';
 import { loadGemState, saveGemState, tellBalance } from '../gemsCore.js';
 
 export const STOCK_KEY = `${S2_PREFIX}stock`; // { w: window index, left: { id: n } }
@@ -38,7 +39,7 @@ export const STOCK = [
   { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+50%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50% (id kept: saves)
   { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+50%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50%
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: '×5', what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: 5, min: 5 } } /* Andy oct11: ×5 (overdrive.js OVERDRIVE_MULT) */,
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: `×${OVERDRIVE_MULT}`, what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: OVERDRIVE_MULT, min: 5 } } /* nov4: ×15 (overdrive.js OVERDRIVE_MULT) */,
   // Andy oct12: EVERYTHING BOOST — was TIME BOOST (+5 MIN on a running boost, useless with none). Now it STARTS the XP,
   // WINS and LUCK boosts together for 5 min (a running one gains 5 min). Never OVERDRIVE. id kept (saves' stock counts).
   { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
@@ -164,7 +165,7 @@ function startOverdrive(mult, min, now) {
 }
 
 /** The OVERDRIVE grant itself — the SAME path a STOCK buy takes (the DAILY FREE DROP's MYTHIC pays through it). */
-export function grantOverdrive(mult = 5, min = 5, now = Date.now()) {
+export function grantOverdrive(mult = OVERDRIVE_MULT, min = 5, now = Date.now()) {
   return startOverdrive(mult, min, now);
 }
 
