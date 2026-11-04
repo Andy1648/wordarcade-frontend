@@ -3493,7 +3493,8 @@ export default function GameScreen({
                     // oct15: the live letters moved INTO the prompt (ComboLive) — only the bot's word reveal
                     // and the opponent status line stay under the seat.
                     if (isMe) return null;
-                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot);
+                    // a LOBBY bot reads like a person here ('turn', then its word reveals as typed) - only the solo bot 'thinks'
+                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot && !p.lobbyBot);
                     const typed = typingText[player.id] || '';
                     const status = revealing ? 'typing' : isBot ? 'thinking' : typed ? 'typing' : 'turn';
                     return (

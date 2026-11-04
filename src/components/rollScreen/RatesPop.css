@@ -1,6 +1,7 @@
-/* RatesPop.css — the RATES button + popup (RatesPop.jsx): moved out of RollScreen.css so the shop's GEMS shelf (paid
-   gems, PaidGemsShelf.jsx) can show the SAME odds popup without loading the roll screen's stylesheet. The roll screen's
-   own placement tweaks (.rs-opts .rs-rates-btn, the phone's icon-only button) stay in RollScreen.css. */
+/* RatesPop.css — the ODDS button + popup (RatesPop.jsx): out of RollScreen.css so the shop's GEMS shelf (paid gems,
+   PaidGemsShelf.jsx) shows the SAME odds popup without the roll screen's stylesheet. The roll screen's own placement
+   tweaks (.rs-opts .rs-rates-btn, the phone's disc-only button) stay in RollScreen.css. nov4 merge: main's #647 block
+   (the i disc, the pity guarantees, the popup always portaled to the body above every layer). */
 .rs-rates-btn {
   min-height: 56px;
   min-width: 56px;
@@ -19,7 +20,14 @@
 }
 .rs-rates-btn:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
 .rs-rates-k { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.rs-rates-scrim { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5, 2, 10, 0.8); }
+/* the ⓘ: a lowercase i on a cyan disc (a circle, not drawn art — Bungee has no ⓘ glyph) */
+.rs-rates-i {
+  display: inline-grid; place-items: center; flex: none; width: 1.6em; height: 1.6em; border-radius: 50%;
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: var(--fs-k17); line-height: 1; text-transform: none;
+  color: #0d0618; background: #2EFFE0; border: 3px solid #13a48f;
+}
+/* portaled to the body (RatesPop): above the reel panel and every roll-screen layer */
+.rs-rates-scrim { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; background: rgba(5, 2, 10, 0.8); }
 .rs-rates {
   position: relative;
   width: min(380px, 100%);
@@ -53,5 +61,8 @@
   margin-top: 10px; text-align: center; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k17);
   color: var(--rs-tier); -webkit-text-stroke: 3px #000; paint-order: stroke fill;
 }
-/* portalled (the shop's GEMS shelf): above the shop overlay (z 120), out of the scaled stage */
-.rs-rates-scrim.is-portal { z-index: 130; }
+/* the pity guarantees, under the odds (design research move 6) */
+.rs-rates-guar { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 3px dashed #3a2160; }
+.rs-rates-guar-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); letter-spacing: .12em; color: #c9b8e8; }
+.rs-rates-guar-row { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k17); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-rates-guar-row b { font-weight: 400; color: var(--rs-tier); }
