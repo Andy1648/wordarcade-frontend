@@ -80,7 +80,7 @@
 }
 
 /* ---- HOVER CONCEPTS (Andy oct12) — rest INVISIBLE; GearFx.jsx chains finite runs only while the card is hovered ----
-   LEGENDARY: light STREAKS (flat bars — rectangles, not drawn art) rising through the glow band on both sides, behind
+   LEGENDARY: painted gold LANCES (public/fx/lance — the old flat bars were replaced nov3) rising through the glow band on both sides, behind
    the card (this layer is z-index -2), so they never cross the stats. MYTHIC: SHOCKWAVES — copies of its own baked aura
    (the asset) pulsing out from the card edge. */
 /* the streaks rise INSIDE the glow box (audit oct25: they start 320% of their own height below it, so on a focused EQUIP
@@ -88,13 +88,14 @@
 .gfx-streaks { position: absolute; inset: 0; overflow: hidden; }
 .gfx-streak {
   position: absolute;
-  top: 0;
+  bottom: 0;
+  width: auto;
   opacity: 0;
-  border-radius: 2px;
-  box-shadow: 0 0 0 2px #7A4A00; /* a coloured outline (house rule) so a pale streak reads over the hot aura rim */
+  pointer-events: none;
+  user-select: none;
 }
-.gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
-.gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
+.gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5) - 14px); }
+.gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5) - 14px); }
 .gfx-wave {
   position: absolute;
   inset: 0;
