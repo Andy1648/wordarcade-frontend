@@ -1,13 +1,15 @@
 // e2e/google-signin.spec.js — SIGN IN WITH GOOGLE (Andy nov4 "progress is never lost and purchases are secure"; 085,
 // leaderboard/auth.js). Two browser contexts share one mocked database (boardMock's shared rows / secrets / cloud
 // saves) and a mocked Supabase Auth (Google's consent screen is skipped: /auth/v1/authorize redirects straight back
-// with the session in the URL fragment, as Supabase does after Google):
-//   1. device A (named, real save) signs in from SETTINGS → its board row links to the Google account (stamp);
+// with a PKCE ?code=, as Supabase does after Google; /auth/v1/token?grant_type=pkce only trades it for the verifier
+// that hashes to the challenge the sign-in sent — security review nov4):
+//   1. device A (named, real save) signs in from SETTINGS → LINK GOOGLEKID? → LINK → its board row links (stamp);
 //   2. device B (a fresh browser) signs in with the same account → no confirm (nothing of its own) → it gets its OWN
 //      device secret on A's row, loads A's cloud save and reloads as A's name, level and wins;
 //   3. a device with progress of its own is ASKED first (LOAD <NAME> / NOT NOW); NOT NOW changes nothing and signs out;
 //   4. signing out keeps every bit of progress, the name and the secret.
 import { test, expect } from '@playwright/test';
+import { createHash } from 'node:crypto';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
 import { menuReady } from './support/menu.js';
@@ -28,18 +30,33 @@ const sharedDb = () => ({
   saves: new Map(),
   grants: new Map(),
   links: new Map(), // 085 auth_links: uid -> profile id
+  codes: new Map(), // PKCE: code -> the challenge it was minted for
 });
 
 /** The mocked Supabase Auth + 085 RPCs on one page, over the shared db. */
-async function mockAuth(page, shared, calls) {
+const s256 = (v) => createHash('sha256').update(v).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function mockAuth(page, shared, calls, seen) {
   await page.route('**/auth/v1/authorize**', (route) => {
     const u = new URL(route.request().url());
-    const back = new URL(u.searchParams.get('redirect_to'));
+    const q = Object.fromEntries(u.searchParams);
+    seen.authorize.push(q);
+    const back = new URL(q.redirect_to);
+    const code = `code-${seen.authorize.length}-${Math.random().toString(36).slice(2)}`;
+    shared.codes.set(code, q.code_challenge);
     back.searchParams.set('portal', '1');
     back.searchParams.set('season2', '1');
     back.searchParams.set('google', '1'); // the e2e build's flag (googleFlag.js), as the page that left had it
-    back.hash = `access_token=${TOKEN}&refresh_token=r1&expires_in=3600&token_type=bearer`;
+    back.searchParams.set('code', code);
     return route.fulfill({ status: 302, headers: { location: back.toString() } });
+  });
+  await page.route('**/auth/v1/token?grant_type=pkce', async (route) => {
+    const b = JSON.parse(route.request().postData() || '{}');
+    const want = shared.codes.get(b.auth_code);
+    const ok = !!want && typeof b.code_verifier === 'string' && s256(b.code_verifier) === want;
+    seen.tokenCalls.push({ ok });
+    if (!ok) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'invalid_grant' }) });
+    shared.codes.delete(b.auth_code);
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ access_token: TOKEN, refresh_token: 'r1', expires_in: 3600, token_type: 'bearer' }) });
   });
   await page.route('**/auth/v1/logout', (route) => route.fulfill({ status: 204 }));
   const uidOf = (req) => ((req.headers().authorization || '') === `Bearer ${TOKEN}` ? UID : null);
@@ -75,10 +92,11 @@ async function device(browser, shared, { save, own = false, google = true, viewp
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
   const calls = [];
+  const seen = { authorize: [], tokenCalls: [] };
   await installBackendMock(page);
   await page.addInitScript(() => { window.__TAW_NO_ACHIEVEMENT_GRANT = true; });
   await mockBoard(page, [], { caps: true, shared, econ: true, boardEcon: true, rebirth: { delayMs: 0 }, season2: true, season2Reset: true });
-  await mockAuth(page, shared, calls);
+  await mockAuth(page, shared, calls, seen);
   await page.addInitScript(({ secret, id, save: s, own: o }) => {
     if (sessionStorage.getItem('gs.seeded')) return;
     sessionStorage.setItem('gs.seeded', '1');
@@ -100,7 +118,7 @@ async function device(browser, shared, { save, own = false, google = true, viewp
   }, { secret: SECRET, id: ID, save, own });
   await page.goto(`/?portal=1&season2=1${google ? '&google=1' : ''}`);
   await menuReady(page);
-  return { ctx, page, calls };
+  return { ctx, page, calls, authorize: seen.authorize, tokenCalls: seen.tokenCalls };
 }
 const raw = (page, k) => page.evaluate((key) => localStorage[key] ?? null, k).catch(() => null);
 async function signInFromSettings(page) {
@@ -117,9 +135,16 @@ test('device A links its board row; device B signs in, gets its own secret on th
   const a = await device(browser, shared, { save: true });
   await expect.poll(() => shared.saves.size, { timeout: 15_000 }).toBe(1); // A's save is in the cloud
   await signInFromSettings(a.page);
+  // nothing links without the player's OK (security review HIGH 2)
+  const ask = a.page.getByTestId('auth-confirm-link');
+  await expect(ask).toBeVisible({ timeout: 15_000 });
+  await expect(ask).toContainText('GoogleKid');
+  expect(shared.links.size).toBe(0);
+  if (SHOTS) await a.page.screenshot({ path: `${SHOTS}/signin-link-confirm-1280.png` });
+  await a.page.getByTestId('auth-link').click();
   await expect(a.page.getByTestId('auth-stamp')).toContainText('SAVED TO YOUR GOOGLE ACCOUNT', { timeout: 15_000 });
   expect(shared.links.get(UID)).toBe(ID);
-  expect(await a.page.evaluate(() => location.hash)).toBe(''); // the token never stays in the address bar
+  expect(await a.page.evaluate(() => location.search)).not.toContain('code='); // the code never stays in the address bar
   expect(JSON.parse(await raw(a.page, 'taw.auth')).email).toBe('kid@example.com');
   if (SHOTS) await a.page.screenshot({ path: `${SHOTS}/signin-linked-1280.png` });
 
@@ -189,6 +214,7 @@ test('signing out keeps the progress, the name and the device secret; Settings s
   const shared = sharedDb();
   const a = await device(browser, shared, { save: true });
   await signInFromSettings(a.page);
+  await a.page.getByTestId('auth-link').click();
   await expect(a.page.getByTestId('auth-stamp')).toBeVisible({ timeout: 15_000 });
   await a.page.locator('[data-nav="settings"]:visible').first().click();
   const acct = a.page.getByTestId('sp-account');
@@ -212,12 +238,64 @@ test('VITE_GOOGLE_ON off (no ?google=1 in the e2e build, as production ships unt
   await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
   await expect(a.page.getByTestId('sp-account')).toHaveCount(0);
   await expect(a.page.getByTestId('google-signin')).toHaveCount(0);
-  // a stray token in the URL is not picked up either
-  await a.page.goto('/?portal=1&season2=1#access_token=x.y.z&expires_in=3600');
+  // a stray token / code in the URL is not picked up either
+  await a.page.goto('/?portal=1&season2=1&signin=1&code=zz#access_token=x.y.z&expires_in=3600');
   await menuReady(a.page);
   await a.page.waitForTimeout(800);
   expect(await raw(a.page, 'taw.auth')).toBeNull();
   await expect(a.page.getByTestId('auth-stamp')).toHaveCount(0);
   expect(a.calls).toEqual([]);
+  await a.ctx.close();
+});
+
+// ===================================================================== the security review's two HIGH exploits (nov4)
+test('HIGH 2: a #access_token someone else made is NEVER used — wiped from the bar, nothing stored, nothing linked', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  const a = await device(browser, shared, { save: true });
+  // an attacker's link: their own Google session in the fragment (the old implicit-flow landing)
+  await a.page.goto(`/?portal=1&season2=1&google=1&signin=1#access_token=${TOKEN}&refresh_token=r1&expires_in=3600&token_type=bearer`);
+  await menuReady(a.page);
+  await a.page.waitForTimeout(1200);
+  expect(await a.page.evaluate(() => location.hash)).toBe('');
+  expect(await raw(a.page, 'taw.auth')).toBeNull();
+  await expect(a.page.getByTestId('auth-stamp')).toHaveCount(0);
+  await expect(a.page.getByTestId('auth-confirm-link')).toHaveCount(0);
+  expect(a.calls).toEqual([]); // no lb_auth_* call at all
+  expect(shared.links.size).toBe(0);
+  await a.ctx.close();
+});
+
+test('HIGH 2: a ?code= landing this tab did not start (no PKCE verifier here) is dropped — no token trade, nothing stored', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  const a = await device(browser, shared, { save: true });
+  // a code minted for the attacker's own sign-in (they hold its verifier), sent to the victim
+  shared.codes.set('attacker-code', 'attacker-challenge');
+  await a.page.goto('/?portal=1&season2=1&google=1&signin=1&code=attacker-code');
+  await menuReady(a.page);
+  await a.page.waitForTimeout(1200);
+  expect(await a.page.evaluate(() => location.search)).not.toContain('code='); // index.html lifted it out at once
+  expect(a.tokenCalls.length).toBe(0); // never traded: there is no verifier in this tab
+  expect(await raw(a.page, 'taw.auth')).toBeNull();
+  expect(a.calls).toEqual([]);
+  expect(shared.links.size).toBe(0);
+  await a.ctx.close();
+});
+
+test('HIGH 1: sign-in only ever asks to come back to THIS origin, with a PKCE S256 challenge (no implicit tokens)', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  const a = await device(browser, shared, { save: true });
+  await signInFromSettings(a.page);
+  await expect(a.page.getByTestId('auth-confirm-link')).toBeVisible({ timeout: 15_000 });
+  const asked = a.authorize[0];
+  const origin = new URL(a.page.url()).origin;
+  expect(new URL(asked.redirect_to).origin).toBe(origin);
+  expect(asked.code_challenge_method).toBe('s256');
+  expect(asked.code_challenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  // and the trade used the verifier that hashes to that challenge (the mock refuses anything else)
+  expect(a.tokenCalls.length).toBe(1);
+  expect(a.tokenCalls[0].ok).toBe(true);
   await a.ctx.close();
 });

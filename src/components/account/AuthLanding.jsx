@@ -1,5 +1,7 @@
 // AuthLanding.jsx — back from Google (085): the menu mounts this (lazy) once, on a sign-in landing or while a restore
 // waits on the player. It runs auth.finishSignIn and says what happened in ONE place:
+//   confirm_link   this device has a name and the account none yet: LINK <NAME> TO <email>? — LINK / NOT NOW (signs out).
+//              Nothing links a board row without this (security review nov4, HIGH 2)
 //   linked     a short stamp — "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT" (it leaves on its own)
 //   no_name    "SIGNED IN · PICK A NAME TO SAVE YOUR PROGRESS" (claiming a name links it)
 //   confirm    the account has another board row and this device has progress of its own: LOAD <NAME> (LV · R) replaces
@@ -8,7 +10,7 @@
 // A modal only while it needs an answer; the stamp is pointer-events:none. Motion: one finite pop in.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { finishSignIn, restoreAccount, declineRestore, pendingRestore } from '../../leaderboard/auth.js';
+import { finishSignIn, restoreAccount, declineRestore, pendingRestore, linkThisDevice } from '../../leaderboard/auth.js';
 import { kitPlay } from '../kit/motion.js';
 import { formatNum } from '../../format';
 import './AuthLanding.css';
@@ -18,6 +20,9 @@ const LINE = {
   linked: 'SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT',
   no_name: 'SIGNED IN · PICK A NAME TO SAVE YOUR PROGRESS',
   profile_taken: 'THIS NAME IS ALREADY ON ANOTHER GOOGLE ACCOUNT',
+  account_taken: 'THIS GOOGLE ACCOUNT IS ALREADY ON ANOTHER NAME',
+  relink_wait: 'UNLINKED RECENTLY · LINKING AGAIN OPENS IN 30 DAYS',
+  google_only: 'ONLY A GOOGLE SIGN-IN CAN BE USED HERE',
   error: 'COULD NOT SIGN IN · TRY AGAIN FROM SETTINGS',
 };
 
@@ -30,13 +35,17 @@ export default function AuthLanding({ landing, onDone }) {
   useEffect(() => {
     if (st.state !== 'busy') return undefined;
     let live = true;
-    Promise.resolve(landing).then(() => finishSignIn()).then((r) => {
-      if (!live) return;
+    Promise.resolve(landing).then((ok) => {
+      // a landing that did not trade (no verifier in this tab, stale, refused): nothing was stored — say nothing
+      if (ok === false) { if (live && onDone) onDone(); return null; }
+      return finishSignIn();
+    }).then((r) => {
+      if (!live || !r) return;
       if (r.state === 'restored') { location.reload(); return; }
       setSt(r);
     });
     return () => { live = false; };
-  }, [st.state, landing]);
+  }, [st.state, landing, onDone]);
   useEffect(() => { kitPlay(boxRef.current, POP, { duration: 280, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }, [st.state]);
   // a stamp leaves on its own
   useEffect(() => {
@@ -46,6 +55,25 @@ export default function AuthLanding({ landing, onDone }) {
   }, [st.state, onDone]);
 
   if (typeof document === 'undefined' || st.state === 'busy') return null;
+  if (st.state === 'confirm_link') {
+    const w = st.who || {};
+    const link = async () => { setSt({ state: 'busy-restore' }); setSt(await linkThisDevice()); };
+    const no = async () => { await declineRestore(); onDone && onDone(); };
+    return createPortal(
+      <div className="al-scrim" role="dialog" aria-modal="true" aria-label="Link this name to your Google account" data-testid="auth-confirm-link">
+        <div ref={boxRef} className="al-box">
+          <h2 className="al-h">LINK YOUR NAME?</h2>
+          <p className="al-who"><b className="al-name">{w.username}</b>{w.email ? <> → {w.email}</> : null}</p>
+          <p className="al-note is-calm">SIGN IN ON ANY DEVICE TO PLAY AS {w.username}</p>
+          <div className="al-acts">
+            <button type="button" className="al-btn is-go" onClick={link} data-testid="auth-link">LINK {w.username}</button>
+            <button type="button" className="al-btn" onClick={no} data-testid="auth-link-not-now">NOT NOW</button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    );
+  }
   if (st.state === 'confirm') {
     const w = st.who || {};
     const load = async () => {

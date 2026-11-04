@@ -1,11 +1,21 @@
 // auth.js — SIGN IN WITH GOOGLE (Andy nov4: "progress is never lost and purchases are secure"; 085_google_signin.sql).
 // Supabase Auth's Google provider over plain fetch (no supabase-js — the same choice as client.js), lazy: nothing here
-// rides the menu's first load; main.jsx only imports it when a sign-in redirect lands (#access_token=…).
+// rides the menu's first load; main.jsx only imports it when a sign-in landing this tab STARTED comes back.
 //
-//   signInWithGoogle()   → Supabase /auth/v1/authorize?provider=google → Google → back to /?signin=1#access_token=…
-//   pickUpRedirect()     the landing: the session out of the URL fragment into taw.auth (the fragment is wiped at once)
-//   finishSignIn()       what the account says: LINK this device's board row, or RESTORE the account's row onto this
-//                        device (a confirm first when this device has progress of its own), or wait for a name
+// PKCE (security review nov4, HIGH 2 — no more #access_token landings): signInWithGoogle keeps a random code VERIFIER in
+// this tab's sessionStorage and sends Supabase only its SHA-256 CHALLENGE; Google comes back to /?code=…, and the code is
+// worth nothing without the verifier, which never left this tab. index.html's first (inline, minified) script runs before
+// ANY other script, analytics included: it lifts a ?signin=1&code= into sessionStorage (PKCE_CODE_KEY) and wipes any
+// #access_token / #refresh_token from the address bar unread. A landing this tab did not start (no verifier — a link
+// someone else made) is dropped unread; a #access_token in the URL is never read at all (index.html scrubs it before
+// any script, analytics included, can see it). And nothing links a board row without the player saying LINK.
+//
+//   signInWithGoogle()   verifier → /auth/v1/authorize?provider=google&code_challenge=…&code_challenge_method=s256 →
+//                        Google → back to THIS origin's /?signin=1&code=… (Supabase's redirect allow-list: our origins only)
+//   pickUpCode()         the landing: index.html already moved the code into sessionStorage; trade code + verifier for
+//                        the session (/auth/v1/token?grant_type=pkce) into taw.auth
+//   finishSignIn()       what the account says: offer to LINK this device's board row (confirm), RESTORE the account's row
+//                        onto this device (a confirm first when this device has progress of its own), or wait for a name
 //   signOut()            drops the Google session only — the device secret, the name and every bit of progress stay
 //
 // OPTIONAL TO PLAY, REQUIRED TO BUY GEMS (api/checkout.js sends this session's access token; 085 pay_reserve checks the
@@ -53,26 +63,56 @@ function emailOf(jwt) {
   }
 }
 
-/** Off to Google. `back` = the page to land on (default: this origin's menu). */
-export function signInWithGoogle(back = `${location.origin}/?signin=1`) {
+export const PKCE_KEY = 'taw.pkce'; // sessionStorage (this tab only): { v: the code verifier, at }
+export const PKCE_CODE_KEY = 'taw.pkce.code'; // sessionStorage: the ?code= index.html lifted out of the address bar
+const PKCE_MAX_AGE = 15 * 60_000; // a sign-in left half-done for longer than this is stale
+const ss = {
+  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* blocked */ } },
+  del(k) { try { sessionStorage.removeItem(k); } catch { /* blocked */ } },
+};
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+/** The PKCE pair: a 64-char verifier (RFC 7636 alphabet) and its S256 challenge. */
+export async function pkcePair() {
+  const raw = new Uint8Array(48);
+  crypto.getRandomValues(raw);
+  const v = b64url(raw);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)));
+  return { verifier: v, challenge: b64url(digest) };
+}
+
+/** Off to Google — back to THIS origin only (the redirect is never taken from a caller or a URL). */
+export async function signInWithGoogle() {
   if (!authAvailable()) return false;
-  location.assign(`${BASE}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(back)}`);
+  const { verifier, challenge } = await pkcePair();
+  ss.set(PKCE_KEY, JSON.stringify({ v: verifier, at: Date.now() }));
+  const back = `${location.origin}/?signin=1`;
+  location.assign(`${BASE}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(back)}&code_challenge=${encodeURIComponent(challenge)}&code_challenge_method=s256`);
   return true;
 }
 
-/** The redirect landed: keep the session, wipe the tokens out of the address bar. Returns true when one was there. */
-export function pickUpRedirect(loc = location) {
-  const h = String(loc.hash || '');
-  if (!/access_token=/.test(h)) return false;
-  const q = new URLSearchParams(h.replace(/^#/, ''));
-  const access = q.get('access_token');
-  const refresh = q.get('refresh_token') || '';
-  const ttl = Number(q.get('expires_in')) || 3600;
-  try { history.replaceState(null, '', loc.pathname + loc.search.replace(/([?&])signin=1(&|$)/, '$1').replace(/[?&]$/, '')); } catch { /* old browser */ }
-  if (!access) return false;
-  writeJson(AUTH_KEY, { access, refresh, exp: Date.now() + ttl * 1000, email: emailOf(access) });
-  tell();
-  return true;
+/** The landing: trade the code index.html kept for the session, with THIS tab's verifier. A code with no verifier
+ *  here (a landing this tab did not start), a stale one, or a refused trade is dropped — nothing is stored. */
+export async function pickUpCode() {
+  const code = ss.get(PKCE_CODE_KEY);
+  ss.del(PKCE_CODE_KEY);
+  let pk = null;
+  try { pk = JSON.parse(ss.get(PKCE_KEY) || 'null'); } catch { pk = null; }
+  ss.del(PKCE_KEY);
+  if (!code || !pk || typeof pk.v !== 'string' || !(Date.now() - pk.at < PKCE_MAX_AGE)) return false;
+  try {
+    const r = await fetch(`${BASE}/auth/v1/token?grant_type=pkce`, {
+      method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ auth_code: code, code_verifier: pk.v }),
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    if (!d || typeof d.access_token !== 'string') return false;
+    writeJson(AUTH_KEY, { access: d.access_token, refresh: d.refresh_token || '', exp: Date.now() + (Number(d.expires_in) || 3600) * 1000, email: emailOf(d.access_token) });
+    tell();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** A live access token, renewed with the refresh token when it is (nearly) out. null = signed out / can't renew. */
@@ -152,7 +192,8 @@ export async function finishSignIn() {
     return restoreAccount();
   }
   if (!me || !secret) return { state: 'no_name' };
-  return linkThisDevice();
+  // never link without the player saying so (review HIGH 2): the landing asks LINK <NAME>? first
+  return { state: 'confirm_link', who: { username: me.username, email: (readSession() || {}).email || '' } };
 }
 
 /** Link this device's board row to the signed-in account (also run after a name is claimed while signed in). */

@@ -25,14 +25,18 @@ const json = (status, body) =>
  *  out). Asked of Supabase itself, never decoded locally, so a token is only as good as Supabase says it is. */
 export function verifyAuthUser(env = process.env, fetchImpl = globalThis.fetch) {
   const raw = env.SUPABASE_URL || env.VITE_SUPABASE_URL || '';
-  const key = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '';
+  // the ANON key only (086 review LOW 4): this call needs nothing more, and a service key never rides beside a user token
+  const key = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '';
   const base = raw.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
   return async (access) => {
     if (!base || !key || typeof access !== 'string' || access.length < 20 || access.length > 4096) return null;
     const r = await fetchImpl(`${base}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${access}` } });
     if (!r.ok) return null;
     const u = await r.json().catch(() => null);
-    return u && typeof u.id === 'string' ? { id: u.id } : null;
+    if (!u || typeof u.id !== 'string') return null;
+    // 086: a real Google sign-in only — an email / anonymous Supabase session can't buy
+    const provider = (u.app_metadata && u.app_metadata.provider) || '';
+    return { id: u.id, google: provider === 'google' && u.is_anonymous !== true };
   };
 }
 
@@ -90,6 +94,7 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
   let user = null;
   try { user = await authUser(access); } catch { return json(502, { error: 'auth' }); }
   if (!user || !user.id) return json(401, { error: 'sign_in' });
+  if (!user.google) return json(403, { error: 'google_only' });
 
   // THE CAP + the profile, in one locked step (082 pay_reserve): this month's purchases + open checkouts + this one
   let res;
@@ -113,6 +118,8 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
     const session = await stripe.checkout.sessions.create(
       {
         mode: 'payment',
+        // 086 review: cards only — a delayed method (bank debit, voucher) would settle after the 35-min reservation
+        payment_method_types: ['card'],
         line_items: [lineItem],
         // Stripe Checkout always asks the PAYER for their email (the parent's); we never ask the player for one
         client_reference_id: String(res.profile_id),
@@ -194,13 +201,17 @@ export async function routeEvent(event, rpc) {
     case 'charge.refunded': {
       const pi = piOf(o.payment_intent);
       if (!pi) return { status: 200, body: { ignored: 'no_payment_intent' } };
-      const r = await rpc('pay_claw', { p_payment_intent: pi, p_refunded_cents: Math.max(0, Math.floor(Number(o.amount_refunded) || 0)), p_reason: 'refund' });
+      // 086 (Adaptive Pricing): amount / amount_refunded are in the PAYER's currency — send the refunded SHARE (that
+      // currency cancels out); pay_claw2 scales it onto the purchase's USD amount. A fully refunded charge is 1.
+      const amt = Number(o.amount) || 0;
+      const ratio = o.refunded === true ? 1 : amt > 0 ? Math.min(1, Math.max(0, (Number(o.amount_refunded) || 0) / amt)) : 0;
+      const r = await rpc('pay_claw2', { p_payment_intent: pi, p_ratio: ratio, p_reason: 'refund' });
       return notFoundOr(r, o);
     }
     case 'charge.dispute.created': {
       const pi = piOf(o.payment_intent);
       if (!pi) return { status: 200, body: { ignored: 'no_payment_intent' } };
-      const r = await rpc('pay_claw', { p_payment_intent: pi, p_refunded_cents: null, p_reason: 'dispute' });
+      const r = await rpc('pay_claw2', { p_payment_intent: pi, p_ratio: null, p_reason: 'dispute' }); // 086: also flags the Google account
       return notFoundOr(r, o);
     }
     default:
