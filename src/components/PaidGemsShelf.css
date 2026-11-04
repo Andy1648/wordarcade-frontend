@@ -166,3 +166,11 @@
   .pg-confirm { animation: none; }
   .pg-pack, .pg-btn { transition: none; }
 }
+
+/* SIGN IN WITH GOOGLE (085): buying needs a Google account — until then the packs' space holds the one sign-in panel */
+.pg-signin {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 18px; text-align: center;
+  background: #1a0b2e; border: 4px solid #000; border-radius: 8px; box-shadow: 6px 6px 0 #000;
+}
+.pg-signin-h { font: 400 var(--fs-k24) 'Bungee', cursive; text-transform: uppercase; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.pg-signin-t { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #fff; max-width: 34ch; }

@@ -136,6 +136,15 @@ export function getMyProfile() {
 function saveMyProfile(p) {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify({ id: p.id, username: p.username })); } catch { /* ignore */ }
 }
+/** SIGN IN WITH GOOGLE's restore (auth.js, 085): this device now holds `secret` — a NEW device secret the server added
+ *  to the signed-in account's board row — and that row's name. Every later call proves the row with it. */
+export function adoptSecret(secret, profile) {
+  try { localStorage.setItem(SECRET_KEY, secret); } catch { /* blocked */ }
+  writeSecretCookie(secret);
+  if (profile && profile.id) saveMyProfile(profile);
+  boardChecked = false;
+  lastSubmit = 0;
+}
 
 // ---- what the board shows about me -----------------------------------------------------------
 // PV10: the AUTHORITATIVE level (xp.js resolves the v10 shape, converts a legacy one, and ignores a
@@ -191,6 +200,8 @@ export async function claimName(username) {
   if (!LEADERBOARD_ENABLED || !secret) throw Object.assign(new Error('unavailable'), { code: 'unavailable' });
   const row = await rpc('lb_claim', { p_secret: secret, p_username: username });
   saveMyProfile(row);
+  // SIGN IN WITH GOOGLE (085): signed in before there was a name to link — the new name links now (lazy, never awaited)
+  try { if (localStorage.getItem('taw.auth')) import('./auth.js').then((m) => m.linkThisDevice()).catch(() => {}); } catch { /* blocked */ }
   lastSubmit = 0;
   const pushed = await submitStats(true);
   // Seed the rank-up baseline with where the claim landed — but only if my stats actually reached

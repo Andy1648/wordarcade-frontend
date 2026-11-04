@@ -3,7 +3,8 @@
 // the two handlers here. Everything is INJECTED (stripe, the Supabase RPC caller, env, clock), so the unit tests
 // (src/payments/payServer.test.js) drive the real logic with a mocked Stripe and a fake database.
 //
-// TRUST: the client sends { pack, secret } and nothing else. The price comes from src/payments/packs.js; the board
+// TRUST: the client sends { pack, secret, access } and nothing else (access = its SIGN IN WITH GOOGLE session; 085 — a
+// purchase needs a Google account linked to the secret's board row, checked here against /auth/v1/user and in SQL). The price comes from src/payments/packs.js; the board
 // profile comes from the secret (082 pay_reserve, service role). Gems are granted ONLY by the signature-verified
 // webhook, once per checkout session (082 pay_grant: purchases.stripe_session_id is the primary key).
 import { packById, PAY_CURRENCY } from '../../src/payments/packs.js';
@@ -19,6 +20,21 @@ export function paymentsEnabled(env = process.env) {
 
 const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+
+/** SIGN IN WITH GOOGLE (085): the Supabase Auth user behind an access token -> { id } | null (expired / forged / signed
+ *  out). Asked of Supabase itself, never decoded locally, so a token is only as good as Supabase says it is. */
+export function verifyAuthUser(env = process.env, fetchImpl = globalThis.fetch) {
+  const raw = env.SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+  const key = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const base = raw.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+  return async (access) => {
+    if (!base || !key || typeof access !== 'string' || access.length < 20 || access.length > 4096) return null;
+    const r = await fetchImpl(`${base}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${access}` } });
+    if (!r.ok) return null;
+    const u = await r.json().catch(() => null);
+    return u && typeof u.id === 'string' ? { id: u.id } : null;
+  };
+}
 
 /** A service-role PostgREST RPC caller: (fn, body) -> parsed JSON; throws on a non-2xx (the webhook then 500s and
  *  Stripe retries). Works with the legacy service_role JWT and the new sb_secret_ keys (apikey header). */
@@ -53,9 +69,10 @@ export function siteOrigin(request, env = process.env) {
 // ------------------------------------------------------------------------------------------------- POST /api/checkout
 /**
  * Body { pack, secret } -> { url } (the Stripe Checkout page) | { error }.
- *   404 off · 400 bad_pack / bad_secret / bad_body · 403 no_profile / flagged · 409 cap · 502 stripe/db trouble
+ *   404 off · 400 bad_pack / bad_secret / bad_body · 401 sign_in · 403 no_profile / not_linked / flagged · 409 cap ·
+ *   502 stripe/db/auth trouble
  */
-export async function handleCheckout(request, { stripe, rpc, env = process.env, now = Date.now } = {}) {
+export async function handleCheckout(request, { stripe, rpc, env = process.env, now = Date.now, authUser = verifyAuthUser(env) } = {}) {
   if (!paymentsEnabled(env) || !stripe || !rpc) return json(404, { error: 'off' });
   let body;
   try {
@@ -67,17 +84,23 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
   if (!pack) return json(400, { error: 'bad_pack' });
   const secret = body && typeof body.secret === 'string' ? body.secret.toLowerCase() : '';
   if (!SECRET_RE.test(secret)) return json(400, { error: 'bad_secret' });
+  // 085: REQUIRED TO BUY — a live Google session, its user linked to this board row (pay_reserve checks the link)
+  const access = body && typeof body.access === 'string' ? body.access : '';
+  if (!access) return json(401, { error: 'sign_in' });
+  let user = null;
+  try { user = await authUser(access); } catch { return json(502, { error: 'auth' }); }
+  if (!user || !user.id) return json(401, { error: 'sign_in' });
 
   // THE CAP + the profile, in one locked step (082 pay_reserve): this month's purchases + open checkouts + this one
   let res;
   try {
-    res = await rpc('pay_reserve', { p_secret: secret, p_pack: pack.id, p_cents: pack.cents });
+    res = await rpc('pay_reserve', { p_secret: secret, p_pack: pack.id, p_cents: pack.cents, p_auth_uid: user.id });
   } catch {
     return json(502, { error: 'db' });
   }
   if (!res || !res.ok) {
     const reason = (res && res.reason) || 'db';
-    const status = reason === 'cap' ? 409 : reason === 'no_profile' || reason === 'flagged' ? 403 : 502;
+    const status = reason === 'cap' ? 409 : reason === 'sign_in' ? 401 : reason === 'no_profile' || reason === 'flagged' || reason === 'not_linked' ? 403 : 502;
     return json(status, { error: reason, spent_cents: res && res.spent_cents, cap_cents: res && res.cap_cents });
   }
 

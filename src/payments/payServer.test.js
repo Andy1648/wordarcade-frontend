@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Stripe from 'stripe';
-import { handleCheckout, handleWebhook, verifyEvent, grantArgs, routeEvent, paymentsEnabled, serviceRpc } from '../../api/_lib/pay.js';
+import { handleCheckout, handleWebhook, verifyEvent, grantArgs, routeEvent, paymentsEnabled, serviceRpc, verifyAuthUser } from '../../api/_lib/pay.js';
 import { PACKS, MONTHLY_CAP_CENTS, packById } from './packs.js';
 
 const WHSEC = 'whsec_test_secret_for_unit_tests';
@@ -13,6 +13,8 @@ const stripe = new Stripe('sk_test_unit_tests_only');
 const ENV = { VITE_PAYMENTS_ON: '1', STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBHOOK_SECRET: WHSEC };
 const SECRET = 'a'.repeat(48);
 const PID = '11111111-2222-3333-4444-555555555555';
+const UID = '99999999-8888-7777-6666-555555555555'; // the Google account (085) linked to PID
+const AUTH = async (t) => (t === 'tok_good' ? { id: UID } : null);
 
 // ---- a fake 082 database ----------------------------------------------------------------------------------------------
 function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
@@ -25,6 +27,8 @@ function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
     if (fn === 'pay_reserve') {
       const pid = profiles[body.p_secret];
       if (!pid) return { ok: false, reason: 'no_profile' };
+      if (!body.p_auth_uid) return { ok: false, reason: 'sign_in' };
+      if (body.p_auth_uid !== UID) return { ok: false, reason: 'not_linked' }; // 085: the link
       if (db.flags.has(pid)) return { ok: false, reason: 'flagged' };
       const spent = monthCents(pid);
       if (spent + body.p_cents > MONTHLY_CAP_CENTS) return { ok: false, reason: 'cap', spent_cents: spent, cap_cents: MONTHLY_CAP_CENTS };
@@ -78,7 +82,7 @@ function mockStripe({ fail = false } = {}) {
     },
   };
 }
-const checkoutReq = (body) => new Request('https://typeaword.com/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const checkoutReq = (body0) => { const body = { access: 'tok_good', ...body0 }; return new Request('https://typeaword.com/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); };
 const signedReq = (event, secret = WHSEC) => {
   const payload = JSON.stringify(event);
   const header = stripe.webhooks.generateTestHeaderString({ payload, secret });
@@ -135,7 +139,7 @@ test('checkout: off (no flag / no key) is a 404 and never touches Stripe or the 
   for (const env of [{}, { VITE_PAYMENTS_ON: '1' }, { STRIPE_SECRET_KEY: 'sk_test_x' }, { VITE_PAYMENTS_ON: '0', STRIPE_SECRET_KEY: 'sk_test_x' }]) {
     const db = fakeDb();
     const s = mockStripe();
-    const r = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: db.rpc, env });
+    const r = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: db.rpc, env, authUser: AUTH });
     assert.equal(r.status, 404);
     assert.equal(paymentsEnabled(env), false);
     assert.equal(s.created.length + db.calls.length, 0);
@@ -145,7 +149,7 @@ test('checkout: off (no flag / no key) is a 404 and never touches Stripe or the 
 test('checkout: the PRICE comes from the pack table — a client amount / gems is ignored; the profile id rides in metadata', async () => {
   const db = fakeDb();
   const s = mockStripe();
-  const r = await handleCheckout(checkoutReq({ pack: 'chest', secret: SECRET, amount: 1, cents: 1, gems: 999999, price: 1 }), { stripe: s, rpc: db.rpc, env: ENV, now: () => 1_700_000_000_000 });
+  const r = await handleCheckout(checkoutReq({ pack: 'chest', secret: SECRET, amount: 1, cents: 1, gems: 999999, price: 1 }), { stripe: s, rpc: db.rpc, env: ENV, now: () => 1_700_000_000_000, authUser: AUTH });
   assert.equal(r.status, 200);
   assert.equal((await r.json()).url, 'https://checkout.stripe.com/c/pay/cs_test_1');
   const { params, opts } = s.created[0];
@@ -163,7 +167,7 @@ test('checkout: the PRICE comes from the pack table — a client amount / gems i
   assert.equal(params.expires_at, 1_700_000_000 + 30 * 60);
   assert.equal(params.allow_promotion_codes, undefined);
   assert.equal(opts.idempotencyKey, 'taw-checkout-res-1');
-  assert.deepEqual(db.calls[0], ['pay_reserve', { p_secret: SECRET, p_pack: 'chest', p_cents: chest.cents }]);
+  assert.deepEqual(db.calls[0], ['pay_reserve', { p_secret: SECRET, p_pack: 'chest', p_cents: chest.cents, p_auth_uid: UID }]);
 });
 
 test('checkout: unknown pack / bad secret / bad body are 400s before the db', async () => {
@@ -171,19 +175,19 @@ test('checkout: unknown pack / bad secret / bad body are 400s before the db', as
   const s = mockStripe();
   const cases = [[{ pack: 'free', secret: SECRET }, 'bad_pack'], [{ pack: '__proto__', secret: SECRET }, 'bad_pack'], [{ pack: 'pouch', secret: 'short' }, 'bad_secret'], [{ pack: 'pouch' }, 'bad_secret']];
   for (const [body, err] of cases) {
-    const r = await handleCheckout(checkoutReq(body), { stripe: s, rpc: db.rpc, env: ENV });
+    const r = await handleCheckout(checkoutReq(body), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
     assert.equal(r.status, 400);
     assert.equal((await r.json()).error, err);
   }
   const raw = new Request('https://typeaword.com/api/checkout', { method: 'POST', body: '{not json' });
-  assert.equal((await handleCheckout(raw, { stripe: s, rpc: db.rpc, env: ENV })).status, 400);
+  assert.equal((await handleCheckout(raw, { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH })).status, 400);
   assert.equal(db.calls.length + s.created.length, 0);
 });
 
 test('checkout: THE CAP — $20 a month, open checkouts count, a refused buy never reaches Stripe', async () => {
   const db = fakeDb();
   const s = mockStripe();
-  const buy = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV });
+  const buy = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
   assert.equal((await buy('chest')).status, 200); // $9.99 open
   assert.equal((await buy('pile')).status, 200); //  $4.99 open → $14.98
   const over = await buy('chest'); //                 +$9.99 = $24.97 > $20
@@ -195,7 +199,7 @@ test('checkout: THE CAP — $20 a month, open checkouts count, a refused buy nev
 test('checkout: the cap arithmetic exactly — 1498 + 499 fits (1997), then even the $1.99 pouch does not', async () => {
   const db = fakeDb();
   const s = mockStripe();
-  const buy = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV });
+  const buy = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
   assert.equal((await buy('chest')).status, 200);
   assert.equal((await buy('pile')).status, 200);
   assert.equal((await buy('pile')).status, 200); // 1997
@@ -203,22 +207,22 @@ test('checkout: the cap arithmetic exactly — 1498 + 499 fits (1997), then even
   assert.equal(s.created.length, 3);
   // the $19.99 hoard alone fills a month
   const db2 = fakeDb();
-  const buy2 = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db2.rpc, env: ENV });
+  const buy2 = (pack) => handleCheckout(checkoutReq({ pack, secret: SECRET }), { stripe: s, rpc: db2.rpc, env: ENV, authUser: AUTH });
   assert.equal((await buy2('hoard')).status, 200);
   assert.equal((await buy2('pouch')).status, 409);
 });
 
 test('checkout: a released / failed checkout frees its share of the cap; no profile and flagged accounts are 403s', async () => {
   const db = fakeDb();
-  const r = await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe({ fail: true }), rpc: db.rpc, env: ENV });
+  const r = await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe({ fail: true }), rpc: db.rpc, env: ENV, authUser: AUTH });
   assert.equal(r.status, 502);
   assert.deepEqual(db.calls.map((c) => c[0]), ['pay_reserve', 'pay_release']);
-  assert.equal((await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV })).status, 200);
+  assert.equal((await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV, authUser: AUTH })).status, 200);
 
-  const nobody = await handleCheckout(checkoutReq({ pack: 'pouch', secret: 'b'.repeat(40) }), { stripe: mockStripe(), rpc: fakeDb().rpc, env: ENV });
+  const nobody = await handleCheckout(checkoutReq({ pack: 'pouch', secret: 'b'.repeat(40) }), { stripe: mockStripe(), rpc: fakeDb().rpc, env: ENV, authUser: AUTH });
   assert.equal(nobody.status, 403);
   assert.equal((await nobody.json()).error, 'no_profile');
-  const flagged = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: fakeDb({ flagged: new Set([PID]) }).rpc, env: ENV });
+  const flagged = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: fakeDb({ flagged: new Set([PID]) }).rpc, env: ENV, authUser: AUTH });
   assert.equal(flagged.status, 403);
   assert.equal((await flagged.json()).error, 'flagged');
 });
@@ -312,7 +316,7 @@ test('refund / dispute: claw the gems back pro rata, never twice; a dispute take
   assert.equal(db.net(), 0);
   assert.ok(db.flags.has(PID));
   // and the flagged account can't check out again
-  const again = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV });
+  const again = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV, authUser: AUTH });
   assert.equal(again.status, 403);
 });
 
@@ -326,10 +330,10 @@ test('refund for a purchase not recorded yet: ours → 500 (retry until the gran
 
 test('an expired checkout releases its reservation', async () => {
   const db = fakeDb();
-  await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV });
+  await handleCheckout(checkoutReq({ pack: 'hoard', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV, authUser: AUTH });
   await routeEvent({ type: 'checkout.session.expired', data: { object: { id: 'cs_x', metadata: { taw: '1', reservation: 'res-1' } } } }, db.rpc);
   assert.equal(db.reservations.get('res-1').state, 'released');
-  assert.equal((await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV })).status, 200);
+  assert.equal((await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: mockStripe(), rpc: db.rpc, env: ENV, authUser: AUTH })).status, 200);
 });
 
 test('serviceRpc: the service key rides on apikey (+ Bearer for a legacy JWT key); missing env → null', async () => {
@@ -345,4 +349,34 @@ test('serviceRpc: the service key rides on apikey (+ Bearer for a legacy JWT key
   assert.equal(seen[1][1].headers.Authorization, 'Bearer eyJhbGciOi.x.y');
   const failing = async () => new Response('{"message":"permission denied"}', { status: 401 });
   await assert.rejects(serviceRpc({ SUPABASE_URL: 'https://x', SUPABASE_SERVICE_ROLE_KEY: 'k' }, failing)('pay_grant', {}), /401/);
+});
+
+// ======================================================================================================= SIGN IN (085)
+test('checkout: REQUIRED TO BUY — no Google session / a forged one is 401, another Google account is 403, never Stripe', async () => {
+  const s = mockStripe();
+  const db = fakeDb();
+  const buy = (access) => handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET, access }), { stripe: s, rpc: db.rpc, env: ENV, authUser: async (t) => (t === 'tok_good' ? { id: UID } : t === 'tok_other' ? { id: 'aaaaaaaa-0000-0000-0000-000000000000' } : null) });
+  const none = await handleCheckout(new Request('https://typeaword.com/api/checkout', { method: 'POST', body: JSON.stringify({ pack: 'pouch', secret: SECRET }) }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+  assert.equal(none.status, 401);
+  assert.equal((await none.json()).error, 'sign_in');
+  const forged = await buy('tok_forged');
+  assert.equal(forged.status, 401);
+  const other = await buy('tok_other');
+  assert.equal(other.status, 403);
+  assert.equal((await other.json()).error, 'not_linked');
+  assert.equal(s.created.length, 0, 'nothing reached Stripe');
+  assert.equal((await buy('tok_good')).status, 200);
+});
+
+test('verifyAuthUser: asks Supabase /auth/v1/user with the token; a non-2xx or no id is null', async () => {
+  const seen = [];
+  const ok = verifyAuthUser({ VITE_SUPABASE_URL: 'https://x.supabase.co/rest/v1/', VITE_SUPABASE_ANON_KEY: 'anon' }, async (url, init) => {
+    seen.push([url, init.headers.Authorization]);
+    return new Response(JSON.stringify({ id: UID, email: 'kid@example.com' }), { status: 200 });
+  });
+  assert.deepEqual(await ok('t'.repeat(40)), { id: UID }, 'only the id comes back — never the email');
+  assert.deepEqual(seen[0], ['https://x.supabase.co/auth/v1/user', `Bearer ${'t'.repeat(40)}`]);
+  const bad = verifyAuthUser({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_ANON_KEY: 'anon' }, async () => new Response('{}', { status: 401 }));
+  assert.equal(await bad('t'.repeat(40)), null);
+  assert.equal(await ok('short'), null);
 });
