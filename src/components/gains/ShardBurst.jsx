@@ -1,23 +1,33 @@
-// gains/ShardBurst.jsx — the REBIRTH ×3 moment's shard burst (NIGHT oct8 #3): SHARD_COUNT pooled vector shards fly out
-// of a point and fade in one 600 ms one-shot (transform/opacity only; nothing loops; REDUCE MOTION plays nothing).
+// gains/ShardBurst.jsx — the REBIRTH ×3 moment's shard burst (NIGHT oct8 #3; painted nov2): SHARD_COUNT pooled PAINTED
+// crystal blades (fx/shards — the roll reveal's art) snap out of the slammed plate tip-first, hang, drift and fade in
+// one finite one-shot (transform/opacity only; nothing loops; REDUCE MOTION plays nothing). `set` picks the colours —
+// violet for a rebirth, gold for a JACKPOT — and is set at render, so the sprites are loaded before the burst.
 //
-//   <div style={{ position: 'relative' }}><ShardBurst ref={s} /></div>
-//   s.current.burst(viewportPoint)
+//   <div style={{ position: 'relative' }}><ShardBurst ref={s} set="gold" /></div>
+//   s.current.burst(viewportPoint, { w, h, set })   // w/h: the box the blades must clear (the plate); set: this burst's colours
 //
 // The layer's own origin is measured on mount / resize only; a burst() is pure writes.
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { kitPlay } from '../kit/motion.js';
-import { SHARD_COUNT, SHARD_MS, planShards } from './gainPlan.js';
+import { SHARD_COUNT } from './gainPlan.js';
+import { SHARD_MS, bladeFrames, bladeFlavour, clearVectors, fitInside, setSrc } from '../../fx/shards/shardPlan.js';
 import './gains.css';
 
-// two shard cuts (asymmetric — never a regular triangle) in the house purple / white with an ink outline
-const CUTS = ['M2 20 L12 1 L24 15 L10 24 Z', 'M1 8 L20 2 L23 22 L6 17 Z'];
-const FILLS = ['#B04BFF', '#FFFFFF', '#D88BFF', '#FFE94A'];
+const HALF = 28; // half the sprite box (.gsb-s 56px)
 
-const ShardBurst = forwardRef(function ShardBurst({ className }, ref) {
+const ShardBurst = forwardRef(function ShardBurst({ className, set = 'violet' }, ref) {
   const layerRef = useRef(null);
   const nodes = useRef([]);
   const origin = useRef(null);
+  const flying = useRef(0); // blades still in flight: a burst keeps ITS colours (the screen re-renders the next set mid-burst)
+  const wanted = useRef(set);
+  // the sprites' src is written here, not rendered: it follows `set` (so the next burst's art is loaded ahead) except
+  // while a burst flies — then it is applied when that burst lands
+  const paint = (name) => nodes.current.forEach((el, i) => { if (el) { const src = setSrc(name, i); if (el.getAttribute('src') !== src) el.setAttribute('src', src); } });
+  useLayoutEffect(() => {
+    wanted.current = set;
+    if (!flying.current) paint(set);
+  }, [set]);
   useEffect(() => {
     const measure = () => {
       const el = layerRef.current;
@@ -30,32 +40,36 @@ const ShardBurst = forwardRef(function ShardBurst({ className }, ref) {
     return () => window.removeEventListener('resize', measure);
   }, []);
   useImperativeHandle(ref, () => ({
-    burst(from) {
+    burst(from, box) {
       const o = origin.current;
       if (!from || !o) return;
-      const x0 = from.x - o.x - 13;
-      const y0 = from.y - o.y - 13;
-      planShards().forEach((p, i) => {
+      const x0 = from.x - o.x - HALF;
+      const y0 = from.y - o.y - HALF;
+      // the blades clear the slammed box, and never fly off the screen (innerWidth/Height: no layout read)
+      const vs = fitInside(clearVectors(SHARD_COUNT, box ? box.w : 120, box ? box.h : 120, { reach: [50, 130] }), from, window.innerWidth, window.innerHeight);
+      // the colours of THIS burst (the `set` prop already loaded them; a src write to a cached sprite is instant); the
+      // last blade to land hands the pool back to the `set` prop (its own finish event — no timer to drift from the clock)
+      if (box && box.set) paint(box.set);
+      const landed = () => { flying.current -= 1; if (flying.current <= 0) { flying.current = 0; paint(wanted.current); } };
+      vs.forEach((v, i) => {
         const el = nodes.current[i];
         if (!el) return;
-        const dx = Math.cos(p.ang) * p.r;
-        const dy = Math.sin(p.ang) * p.r;
-        kitPlay(el, [
-          { transform: `translate(${x0}px, ${y0}px) rotate(0deg) scale(${p.s})`, opacity: 1 },
-          { transform: `translate(${x0 + dx * 0.8}px, ${y0 + dy * 0.8}px) rotate(${p.spin * 0.8}deg) scale(${p.s})`, opacity: 1, offset: 0.55 },
-          { transform: `translate(${x0 + dx}px, ${y0 + dy}px) rotate(${p.spin}deg) scale(${p.s * 0.4})`, opacity: 0 },
-        ], { duration: SHARD_MS, easing: 'cubic-bezier(.1,.8,.3,1)' });
+        // the blade flight is relative to the burst point: the pool node sits at the layer's origin, so offset it there
+        const frames = bladeFrames(v, { s: v.s * 0.85, ...bladeFlavour(i) }).map((f) => ({ ...f, transform: `translate(${x0}px, ${y0}px) ${f.transform}` }));
+        const a = kitPlay(el, frames, { duration: SHARD_MS - 80 + (i % 5) * 20, easing: 'linear' });
+        if (a) {
+          flying.current += 1;
+          a.addEventListener('finish', landed, { once: true });
+          a.addEventListener('cancel', landed, { once: true });
+        }
       });
+      if (!flying.current) paint(wanted.current); // REDUCE MOTION: nothing flew
     },
   }));
   return (
     <div ref={layerRef} className={`gsb${className ? ` ${className}` : ''}`} aria-hidden="true">
       {Array.from({ length: SHARD_COUNT }, (_, i) => (
-        <div key={i} ref={(el) => { nodes.current[i] = el; }} className="gsb-s">
-          <svg viewBox="0 0 26 26" focusable="false">
-            <path d={CUTS[i % CUTS.length]} fill={FILLS[i % FILLS.length]} stroke="#0d0618" strokeWidth="3" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <img key={i} ref={(el) => { nodes.current[i] = el; }} className="gsb-s" alt="" draggable="false" />
       ))}
     </div>
   );
