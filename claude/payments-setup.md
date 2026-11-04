@@ -39,12 +39,21 @@ server, and the same account restores the progress on any new device. Playing ne
    * Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase shows the exact one
      on the Google provider page). Copy the **Client ID** and **Client secret**.
 3. **Supabase → Authentication → Sign In / Providers → Google**: turn it ON, paste the Client ID + Client secret, save.
-   (Leave email sign-up as it is; the game only ever sends people to Google.)
+   **Turn OFF the other ways in** (security review nov4): Authentication → Sign In / Providers → **Email**: disable it
+   (or at least "Allow new users to sign up" off), and **Allow anonymous sign-ins: OFF**. An email or anonymous
+   session would be an `authenticated` user too; 086 + the checkout refuse anything that isn't Google, but there is no
+   reason to let one exist. PKCE needs no setting — the game sends the challenge itself.
 4. **Supabase → Authentication → URL Configuration**:
    * Site URL: `https://typeaword.com`
-   * Redirect URLs (add each): `https://typeaword.com/**`, `https://*.vercel.app/**` (previews),
-     `http://localhost:5173/**` and `http://localhost:4173/**` (local testing)
-5. Run **085_google_signin.sql** after 082 / 084 (step 2 below lists the order), then `notify pgrst, 'reload schema';`
+   * Redirect URLs (add EXACTLY these, nothing broader): `https://typeaword.com/**`, `http://localhost:5173/**`,
+     `http://localhost:4173/**`, and — only if you want to sign in on previews — THIS project's preview pattern
+     `https://wordarcade-frontend-*-beenchilling.vercel.app/**`.
+   * **NEVER `https://*.vercel.app/**`** (security review nov4, HIGH 1): anyone can deploy `something.vercel.app`; with
+     that on the list, a sign-in link crafted to land there hands that site the player's Google session, and with it
+     their board row. The `-beenchilling` suffix is our Vercel team's own, so nobody else can mint a preview under it.
+5. Run **085_google_signin.sql** after 082 / 084, then **086_pay_auth_hardening.sql** (the security review's server
+   fixes: Google-only, unlink revokes devices, cap + dispute flag per Google account, refunds by share), then
+   `notify pgrst, 'reload schema';`
 6. Check: Settings → SAVE CODE → **SIGN IN WITH GOOGLE** → pick an account → back on the menu a stamp says
    "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT". On a second browser, sign in with the same account → it asks
    "LOAD YOUR PROGRESS?" (or loads straight away on a fresh browser) and comes back as the same name and level.
@@ -60,7 +69,7 @@ their own device. No new env var is needed — the checkout function checks the 
 
 ## 2. Run the SQL (Supabase SQL editor)
 
-Run `claude/082_paid_gems.sql` once, after every earlier migration, THEN `claude/085_google_signin.sql` (section 1b — buying needs
+Run `claude/082_paid_gems.sql` once, after every earlier migration, THEN `claude/085_google_signin.sql` and `claude/086_pay_auth_hardening.sql` (section 1b — buying needs
 it: until 085 runs, every checkout is refused). Each ends with `notify pgrst, 'reload schema';` (run it once more after 085).
 It creates the purchases table (one row per Stripe checkout session — the idempotency key), the paid-gems ledger,
 reservations (the monthly cap), flags (disputed accounts), the service-role-only `pay_reserve / pay_release / pay_grant /

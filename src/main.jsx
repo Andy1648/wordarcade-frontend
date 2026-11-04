@@ -15,10 +15,12 @@ try {
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
 import { GOOGLE_ON } from './leaderboard/googleFlag.js'
-// SIGN IN WITH GOOGLE (085, leaderboard/auth.js): a landing from Google carries #access_token=… — the session is taken
-// out of the address bar before anything else reads it; the menu's AuthLanding finishes the job (link / restore)
-if (GOOGLE_ON && typeof window !== 'undefined' && /access_token=/.test(window.location.hash)) {
-  window.__TAW_SIGNIN = import('./leaderboard/auth.js').then((a) => a.pickUpRedirect()).catch(() => false)
+// SIGN IN WITH GOOGLE (085/086, leaderboard/auth.js): index.html already lifted a landing's ?code= out of the address bar
+// into sessionStorage; auth.pickUpCode trades it (PKCE, with this tab's verifier) and the menu's AuthLanding finishes
+if (GOOGLE_ON && typeof window !== 'undefined') {
+  let landed = false
+  try { landed = !!sessionStorage.getItem('taw.pkce.code') } catch { landed = false }
+  if (landed) window.__TAW_SIGNIN = import('./leaderboard/auth.js').then((a) => a.pickUpCode()).catch(() => false)
 }
 import './index.css'
 import './theme/type.css'

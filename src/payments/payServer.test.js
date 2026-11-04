@@ -14,11 +14,11 @@ const ENV = { VITE_PAYMENTS_ON: '1', STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_WEBH
 const SECRET = 'a'.repeat(48);
 const PID = '11111111-2222-3333-4444-555555555555';
 const UID = '99999999-8888-7777-6666-555555555555'; // the Google account (085) linked to PID
-const AUTH = async (t) => (t === 'tok_good' ? { id: UID } : null);
+const AUTH = async (t) => (t === 'tok_good' ? { id: UID, google: true } : null);
 
 // ---- a fake 082 database ----------------------------------------------------------------------------------------------
 function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
-  const db = { reservations: new Map(), purchases: new Map(), ledger: [], flags: flagged, calls: [], seq: 0 };
+  const db = { reservations: new Map(), purchases: new Map(), ledger: [], flags: flagged, authFlags: new Set(), calls: [], seq: 0 };
   const monthCents = (pid) =>
     [...db.purchases.values()].filter((p) => p.profile_id === pid).reduce((s, p) => s + p.amount_cents, 0) +
     [...db.reservations.values()].filter((r) => r.profile_id === pid && r.state === 'open').reduce((s, r) => s + r.amount_cents, 0);
@@ -49,10 +49,13 @@ function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
       if (r) r.state = 'paid';
       return { granted: true, duplicate: false, gems: body.p_gems };
     }
-    if (fn === 'pay_claw') {
+    if (fn === 'pay_claw' || fn === 'pay_claw2') {
       const pur = [...db.purchases.values()].find((p) => p.pi === body.p_payment_intent);
       if (!pur) return { found: false };
-      const target = body.p_reason === 'dispute' ? pur.gems : Math.min(pur.gems, Math.ceil((pur.gems * Math.min(body.p_refunded_cents, pur.amount_cents)) / pur.amount_cents));
+      // 086 pay_claw2: the refunded SHARE scaled onto the purchase's USD amount, then 082's claw
+      const refunded = fn === 'pay_claw2' ? Math.ceil(Math.min(1, Math.max(0, body.p_ratio || 0)) * pur.amount_cents) : body.p_refunded_cents;
+      if (fn === 'pay_claw2' && body.p_reason === 'dispute') db.authFlags.add(UID);
+      const target = body.p_reason === 'dispute' ? pur.gems : Math.min(pur.gems, Math.ceil((pur.gems * Math.min(refunded, pur.amount_cents)) / pur.amount_cents));
       const owed = Math.max(0, target - pur.clawed);
       if (owed) db.ledger.push({ profile_id: pur.profile_id, delta: -owed });
       pur.clawed = Math.max(pur.clawed, target);
@@ -355,7 +358,7 @@ test('serviceRpc: the service key rides on apikey (+ Bearer for a legacy JWT key
 test('checkout: REQUIRED TO BUY — no Google session / a forged one is 401, another Google account is 403, never Stripe', async () => {
   const s = mockStripe();
   const db = fakeDb();
-  const buy = (access) => handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET, access }), { stripe: s, rpc: db.rpc, env: ENV, authUser: async (t) => (t === 'tok_good' ? { id: UID } : t === 'tok_other' ? { id: 'aaaaaaaa-0000-0000-0000-000000000000' } : null) });
+  const buy = (access) => handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET, access }), { stripe: s, rpc: db.rpc, env: ENV, authUser: async (t) => (t === 'tok_good' ? { id: UID, google: true } : t === 'tok_other' ? { id: 'aaaaaaaa-0000-0000-0000-000000000000', google: true } : null) });
   const none = await handleCheckout(new Request('https://typeaword.com/api/checkout', { method: 'POST', body: JSON.stringify({ pack: 'pouch', secret: SECRET }) }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
   assert.equal(none.status, 401);
   assert.equal((await none.json()).error, 'sign_in');
@@ -374,9 +377,72 @@ test('verifyAuthUser: asks Supabase /auth/v1/user with the token; a non-2xx or n
     seen.push([url, init.headers.Authorization]);
     return new Response(JSON.stringify({ id: UID, email: 'kid@example.com' }), { status: 200 });
   });
-  assert.deepEqual(await ok('t'.repeat(40)), { id: UID }, 'only the id comes back — never the email');
+  assert.deepEqual(await ok('t'.repeat(40)), { id: UID, google: false }, 'only the id (+ is it Google) comes back — never the email');
   assert.deepEqual(seen[0], ['https://x.supabase.co/auth/v1/user', `Bearer ${'t'.repeat(40)}`]);
   const bad = verifyAuthUser({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_ANON_KEY: 'anon' }, async () => new Response('{}', { status: 401 }));
   assert.equal(await bad('t'.repeat(40)), null);
   assert.equal(await ok('short'), null);
+});
+
+// ============================================================================================ 086 SECURITY REVIEW FIXES
+test('086: an email / anonymous Supabase session (not Google) cannot buy — 403 google_only, never Stripe', async () => {
+  const s = mockStripe();
+  const r = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET, access: 'tok_email' }), { stripe: s, rpc: fakeDb().rpc, env: ENV, authUser: async (t) => (t === 'tok_email' ? { id: UID, google: false } : null) });
+  assert.equal(r.status, 403);
+  assert.equal((await r.json()).error, 'google_only');
+  assert.equal(s.created.length, 0);
+  const g = verifyAuthUser({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_ANON_KEY: 'anon' }, async () => new Response(JSON.stringify({ id: UID, app_metadata: { provider: 'google' } }), { status: 200 }));
+  assert.deepEqual(await g('t'.repeat(40)), { id: UID, google: true });
+  const anon = verifyAuthUser({ VITE_SUPABASE_URL: 'https://x.supabase.co', VITE_SUPABASE_ANON_KEY: 'anon' }, async () => new Response(JSON.stringify({ id: UID, is_anonymous: true, app_metadata: { provider: 'google' } }), { status: 200 }));
+  assert.equal((await anon('t'.repeat(40))).google, false);
+});
+
+test('086: verifyAuthUser uses the ANON key only — no anon key, no call (never the service key beside a user token)', async () => {
+  let calls = 0;
+  const v = verifyAuthUser({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_x' }, async () => { calls += 1; return new Response('{}'); });
+  assert.equal(await v('t'.repeat(40)), null);
+  assert.equal(calls, 0);
+});
+
+test('086: checkout is CARDS ONLY (a delayed method would outlive the 35-min reservation)', async () => {
+  const s = mockStripe();
+  assert.equal((await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: fakeDb().rpc, env: ENV, authUser: AUTH })).status, 200);
+  assert.deepEqual(s.created[0].params.payment_method_types, ['card']);
+});
+
+test('086: a refund under Adaptive Pricing claws by the refunded SHARE (EUR charge, half refunded = half the gems)', async () => {
+  const db = fakeDb();
+  await routeEvent(completed(), db.rpc); // $1.99 pouch, 600 gems
+  // the payer paid 1.85 EUR (185 cents); 0.93 EUR refunded — about half, whatever the USD numbers are
+  await routeEvent({ type: 'charge.refunded', data: { object: { id: 'ch_e', payment_intent: 'pi_1', amount: 185, amount_refunded: 93, currency: 'eur', metadata: { taw: '1' } } } }, db.rpc);
+  const call = db.calls.find((c) => c[0] === 'pay_claw2');
+  assert.ok(Math.abs(call[1].p_ratio - 93 / 185) < 1e-9, 'the share, not the EUR cents');
+  assert.equal(db.net(), 600 - Math.ceil((600 * Math.ceil((93 / 185) * 199)) / 199));
+  // a charge flagged fully refunded is the whole purchase, whatever the amounts say
+  await routeEvent({ type: 'charge.refunded', data: { object: { id: 'ch_e', payment_intent: 'pi_1', amount: 185, amount_refunded: 184, refunded: true, metadata: { taw: '1' } } } }, db.rpc);
+  assert.equal(db.net(), 0);
+});
+
+test('086: a dispute flags the Google account too (pay_claw2), not only the profile', async () => {
+  const db = fakeDb();
+  await routeEvent(completed(), db.rpc);
+  await routeEvent({ type: 'charge.dispute.created', data: { object: { id: 'dp_1', charge: 'ch_1', payment_intent: 'pi_1', amount: 199 } } }, db.rpc);
+  assert.ok(db.authFlags.has(UID));
+  assert.ok(db.flags.has(PID));
+});
+
+test('086 SQL: Google-only RPCs, unlink revokes devices, relink wait, cap + flags by auth uid, claw by ratio', async () => {
+  const fs = await import('node:fs');
+  const sql = fs.readFileSync(new URL('../../supabase/migrations/086_pay_auth_hardening.sql', import.meta.url), 'utf8');
+  assert.equal([...sql].some((ch) => ch.charCodeAt(0) > 127), false, 'ASCII only');
+  for (const fn of ['lb_auth_status', 'lb_auth_link', 'lb_auth_restore', 'lb_auth_unlink']) {
+    const body = sql.split(`create or replace function public.${fn}(`)[1].split('end $$;')[0];
+    assert.match(body, /private\.auth_is_google\(\)/, `${fn} is Google-only`);
+  }
+  assert.match(sql, /delete from private\.profile_device_secrets where profile_id = pid and secret_hash <> mine/);
+  assert.match(sql, /relink_wait\(uid, pid\)/);
+  assert.match(sql, /profile_id = pid or auth_uid = p_auth_uid/);
+  assert.match(sql, /private\.pay_auth_flags where auth_uid = p_auth_uid/);
+  assert.match(sql, /grant execute on function public\.pay_claw2\(text, numeric, text\) to service_role;/);
+  assert.doesNotMatch(sql, /grant execute on function public\.pay_[a-z0-9_]+\([^)]*\) to [^;]*anon/);
 });

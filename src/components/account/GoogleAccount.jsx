@@ -23,7 +23,7 @@ export function useAuthSession() {
 export function GoogleButton({ label = 'SIGN IN WITH GOOGLE', className = '' }) {
   if (!authAvailable()) return null;
   return (
-    <button type="button" className={`gsi-btn ${className}`} onClick={() => signInWithGoogle()} data-testid="google-signin">
+    <button type="button" className={`gsi-btn ${className}`} onClick={() => { signInWithGoogle(); }} data-testid="google-signin">
       <img className="gsi-g" src="/brand/google-g.svg" width="20" height="20" alt="" aria-hidden="true" draggable="false" />
       <span className="gsi-t">{label}</span>
     </button>
