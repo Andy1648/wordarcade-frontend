@@ -25,11 +25,15 @@ export const TIER_SETS = {
 // the tip's direction in each sprite as drawn (degrees, screen coords: 0 = right, -90 = up)
 export const TIP_DEG = [-50, -48, -72, -40];
 
+/** The sprite URL for pool slot `i` of a burst in one painted colour set (unknown set → violet). */
+export function setSrc(set, i) {
+  return `/fx/shards/${SHARD_SETS.includes(set) ? set : 'violet'}-${i % SHARD_PIECES}.webp`;
+}
+
 /** The sprite URL for pool slot `i` of a burst in `tier`'s colours. */
 export function shardSrc(tier, i) {
   const sets = TIER_SETS[tier] || TIER_SETS.epic;
-  const set = sets[i % sets.length];
-  return `/fx/shards/${set}-${i % SHARD_PIECES}.webp`;
+  return setSrc(sets[i % sets.length], i);
 }
 
 const r1 = (n) => Math.round(n * 10) / 10;
@@ -70,6 +74,24 @@ export function clearVectors(n, w, h, { reach = [50, 150] } = {}) {
     const exit = Math.min(hw / c, hh / sn);
     const d = exit + reach[0] + (((i * 37) % 11) / 10) * (reach[1] - reach[0]);
     return { x: Math.round(Math.cos(a) * d), y: Math.round(Math.sin(a) * d), s: (8 + ((i * 17) % 5)) / 10 };
+  });
+}
+
+/**
+ * Shortens any vector that would carry a blade (burst at `from`, viewport px) past the viewport edge (minus `pad`), so
+ * no blade is cut off by the screen — the direction is kept, only the reach shrinks (never below `min` px).
+ */
+export function fitInside(vs, from, vw, vh, { pad = 36, min = 40 } = {}) {
+  return vs.map((v) => {
+    const d = Math.hypot(v.x, v.y) || 1;
+    const ux = v.x / d;
+    const uy = v.y / d;
+    const room = Math.min(
+      ux > 0 ? (vw - pad - from.x) / ux : ux < 0 ? (from.x - pad) / -ux : Infinity,
+      uy > 0 ? (vh - pad - from.y) / uy : uy < 0 ? (from.y - pad) / -uy : Infinity,
+    );
+    const k = Math.max(min, Math.min(d, room)) / d;
+    return k === 1 ? v : { ...v, x: Math.round(v.x * k), y: Math.round(v.y * k) };
   });
 }
 

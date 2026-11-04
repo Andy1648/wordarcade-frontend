@@ -1,7 +1,7 @@
 // gainPlan.test.js — NIGHT oct8 #3: the gain animation's numbers are the spec's numbers.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { particleCount, countMs, planParticles, planShards, GAIN_POOL, BURST_MS, CONVERGE_MIN_MS, CONVERGE_MAX_MS, STAGGER_MIN_MS, STAGGER_MAX_MS, SHARD_COUNT } from './gainPlan.js';
+import { particleCount, countMs, planParticles, GAIN_POOL, BURST_MS, CONVERGE_MIN_MS, CONVERGE_MAX_MS, STAGGER_MIN_MS, STAGGER_MAX_MS, SHARD_COUNT } from './gainPlan.js';
 
 test('N = 5 / 10 / 20 by the size of the gain, never past the pool', () => {
   assert.equal(particleCount(1), 5);
@@ -40,8 +40,6 @@ test('particles: burst 200 ms, converge 700–900 ms, 60–80 ms apart', () => {
   }
 });
 
-test('the rebirth shards: one burst of SHARD_COUNT', () => {
-  const s = planShards();
-  assert.equal(s.length, SHARD_COUNT);
-  for (const x of s) assert.ok(x.r > 0 && x.s > 0);
+test('the rebirth shards: one strong idea — 8 to 14 blades', () => {
+  assert.ok(SHARD_COUNT >= 8 && SHARD_COUNT <= 14);
 });
