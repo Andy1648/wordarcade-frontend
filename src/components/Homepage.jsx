@@ -129,6 +129,7 @@ import { V3, SEASON2 } from '../progress/season';
 import { takeRefundNote } from '../progress/cosmeticsRetire';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
+import { PAYMENTS_ON } from '../payments/flag.js'; // PAID GEMS (default OFF): the lazy pick-up below
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -183,6 +184,8 @@ let cloudBootChecked = false;
 
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
+
+let paidAsked = false; // PAID GEMS: the pick-up runs once a page load
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -757,6 +760,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const t = setTimeout(() => { setGemsInFlight(0); setGemFly(null); }, 3000);
     return () => clearTimeout(t);
   }, [gemFly]);
+  // PAID GEMS (payments flag, default OFF; migration 082): once a page load the menu picks up paid-gem ledger rows —
+  // polling when back from Stripe (?paid=1) — and flies them into the pill (payments/payReturn.js; zero bytes when off)
+  useEffect(() => {
+    if (!PAYMENTS_ON || paidAsked) return;
+    paidAsked = true;
+    import('../payments/payReturn.js').then((m) => m.default(setGemsInFlight, setGemFly)).catch(() => {});
+  }, []);
   const shownGems = Math.max(0, gems - gemsInFlight);
   // the lazy fly layer's ref: called once it has mounted — fly, then unmount it when every gem has landed
   const gemFlyMounted = useCallback((api) => {
