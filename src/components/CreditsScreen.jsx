@@ -32,6 +32,13 @@ export default function CreditsScreen({ onBack }) {
           </a>
           <div className="credits-detail">CC BY-SA 4.0</div>
         </div>
+
+        {/* nov4: the privacy policy + terms (static pages in public/ — Google's OAuth review needs them reachable): one quiet
+            row under the boxes, not a third box (a box made the panel scroll on a 1280x600 laptop) */}
+        <nav className="credits-legal" aria-label="Legal">
+          <a className="credits-legal-link" href="/privacy" data-testid="credits-privacy">PRIVACY</a>
+          <a className="credits-legal-link" href="/terms" data-testid="credits-terms">TERMS</a>
+        </nav>
       </div>
     </div>
   );
