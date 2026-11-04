@@ -269,8 +269,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 /* the burst: OUTSIDE the band's clip, centred on the landing card */
 .rs-parts { position: absolute; z-index: 3; left: 50%; top: calc(var(--band) / 2); width: 0; height: 0; pointer-events: none; }
-/* the painted blade shards (fx/shards/shardPlan.js): a square box, the sprite contained (its tip drawn up-right) */
-.rs-part { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; object-fit: contain; opacity: 0; }
+.rs-part { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; opacity: 0; }
 
 /* ---- the result LINE: NAME · ×1.5 · WINS · ★ — pops in once ---- */
 /* Andy nov2 "the cover that dims the left and right side after rolling also covers the words under the cards": the
@@ -531,19 +530,6 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   margin: -62vmax 0 0 -62vmax;
   opacity: 0;
 }
-/* LEGENDARY's painted sunburst crest (Reel.jsx): a halo centred on the card, under it — its spears fan out round it */
-.rs-cut-crest {
-  position: absolute;
-  z-index: 0;
-  left: 50%;
-  top: 50%;
-  width: calc(var(--mc-w, 252px) * 2.7);
-  height: calc(var(--mc-w, 252px) * 2.7);
-  margin: calc(var(--mc-w, 252px) * -1.35) 0 0 calc(var(--mc-w, 252px) * -1.35);
-  opacity: 0;
-  pointer-events: none;
-  user-select: none;
-}
 .rs-cut.is-dim .rs-cut-rays,
 .rs-cut.is-dim .rs-cut-tier { display: none; }
 .rs-cut-shake { position: relative; display: grid; justify-items: center; gap: 14px; padding: 16px; text-align: center; }
@@ -565,7 +551,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cut-mark { display: grid; justify-items: center; }
 .rs-cut-keep { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k22); color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; opacity: 0; }
 .rs-parts.is-cut { top: 50%; z-index: 0; } /* inside .rs-cut-mark: centred on the card, painted under it */
-.rs-cut .rs-part { width: 84px; height: 84px; left: -42px; top: -42px; }
+.rs-cut .rs-part { width: 34px; height: 34px; left: -17px; top: -17px; }
 
 /* ---- ROLL REVEAL v2 (Reel.jsx + revealPlan.js): the flip, its escalating layers, the stats extension ----
    Every piece of art is an asset in /public/fx (card-back, card-back-edge as a mask, sheen, sparkle, burst-ring as a
@@ -596,7 +582,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* the big card's EPIC+ aura reaches the stamp + TAP on a phone (they stack tight): the words stay ON TOP of it */
 .rs-cut-double, .rs-cut-tier, .rs-cut-stamp, .rs-cut-keep { position: relative; z-index: 2; }
 /* the reveal card's BACKPLATE (replaces the soft GearFx aura — no blur, no glow): a flat tier-colour plate, outlined in
-   its darker shade, with the house hard ink shadow, tilted -3deg so it peeks out unevenly behind the card */
+   its darker shade, with the house hard ink shadow. SQUARE to the card (nov4): tilted, the card's border sliced across
+   the plate's and read as one card cut by another — now its border shows whole, a mat round the card */
 .rv-plate {
   position: absolute;
   left: -3.5%;
@@ -608,9 +595,11 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   border: 5px solid color-mix(in srgb, var(--rs-tier, #9A1AFF) 55%, #000);
   border-radius: 14px;
   box-shadow: 8px 8px 0 #000;
-  transform: rotate(-3deg);
   pointer-events: none;
 }
+/* MYTHIC / SECRET wear their frame variant (horns / glitch brackets) round the card — that IS their border; a plate
+   under it had the horns sliced across its edge, two borders fighting. One frame, no plate. */
+.rs-cut.is-mythic .rv-plate, .rs-cut.is-secret .rv-plate { display: none; }
 /* only REAL stats on the reveal: the empty substat slots ("—") are hidden; the plate centres what is left */
 .rs-cut-card .mc-sub.is-none { display: none; }
 .rs-cut-card .mc-hero { gap: 0; padding-top: 0; }
