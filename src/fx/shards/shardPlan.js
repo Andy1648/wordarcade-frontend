@@ -115,3 +115,54 @@ export function bladeFlavour(i) {
   const side = i % 2 ? 1 : -1;
   return { piece: i % SHARD_PIECES, turn: side * (14 + ((i * 29) % 22)), drift: -side * (6 + ((i * 13) % 10)) };
 }
+
+// THE AAMON ORBIT (Andy nov3: "aamon spins them around"): the blades form a RING round the card, LAP it tip-first
+// (spinning up), then LASH outward tip-first. The ring path is a superellipse (p = 6) just outside the w×h card, so it
+// hugs the corners instead of cutting through them. All blades share one ring and one direction: it reads as ONE
+// spinning crown, never a spray.
+const SE_P = 6;
+function ringPoint(a, rx, ry) {
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { x: Math.sign(c) * Math.abs(c) ** (2 / SE_P) * rx, y: Math.sign(s) * Math.abs(s) ** (2 / SE_P) * ry };
+}
+const deg = (x, y) => (Math.atan2(y, x) * 180) / Math.PI;
+const near = (a, prev) => a + 360 * Math.round((prev - a) / 360); // unwrap onto the previous angle
+
+/**
+ * The keyframes for ring slot `i` of `n` round a w×h card: appear on the ring, lap `sweep` degrees (clockwise on
+ * screen, spinning up), then lash out `reach` px past the ring tip-first and fade. Transform/opacity only; `lashAt`
+ * (0..1) is when the lap ends — pools nudge it per slot so the ring lets go as a ripple, not one pop.
+ */
+export function orbitLashFrames(i, n, w, h, { pad = 26, sweep = 210, reach = 120, s = 1, piece = i % SHARD_PIECES, lashAt = 0.6 } = {}) {
+  const rx = Math.max(1, w / 2) + pad;
+  const ry = Math.max(1, h / 2) + pad;
+  const a0 = (i / Math.max(1, n)) * Math.PI * 2 - Math.PI / 2;
+  const sw = (sweep * Math.PI) / 180;
+  const tip = TIP_DEG[piece % SHARD_PIECES];
+  const STEPS = 6; // keyframes along the lap — enough that the chords read as a curve
+  const frames = [];
+  let rot = null;
+  for (let k = 0; k <= STEPS; k += 1) {
+    const t = k / STEPS;
+    const a = a0 + sw * t ** 1.6; // spin UP: slow out of the form, whipping by the lash
+    const p = ringPoint(a, rx, ry);
+    const q = ringPoint(a + 0.02, rx, ry);
+    const r = near(deg(q.x - p.x, q.y - p.y) - tip, rot == null ? 0 : rot);
+    rot = r;
+    const sc = k === 0 ? s * 0.3 : s * (0.78 + 0.12 * t);
+    frames.push({ offset: r1(t * lashAt * 1000) / 1000, opacity: k === 0 ? 0 : 1, transform: `translate3d(${r1(p.x)}px,${r1(p.y)}px,0) rotate(${r1(r)}deg) scale(${r1(sc * 100) / 100})`, easing: 'linear' });
+  }
+  frames[1].offset = Math.max(frames[1].offset, 0.06);
+  // the LASH: turn onto the outward line and snap out (most of the travel in the first third), then fade
+  const end = ringPoint(a0 + sw, rx, ry);
+  const len = Math.hypot(end.x, end.y) || 1;
+  const ux = end.x / len;
+  const uy = end.y / len;
+  const out = near(deg(ux, uy) - tip, rot);
+  const at = (d, sc) => `translate3d(${r1(end.x + ux * d)}px,${r1(end.y + uy * d)}px,0) rotate(${r1(out)}deg) scale(${r1(sc * 100) / 100})`;
+  frames[frames.length - 1].easing = 'cubic-bezier(.1,.8,.25,1)';
+  frames.push({ offset: r1((lashAt + (1 - lashAt) * 0.45) * 1000) / 1000, opacity: 1, transform: at(reach * 0.85, s * 1.08), easing: 'cubic-bezier(.4,0,.9,.6)' });
+  frames.push({ offset: 1, opacity: 0, transform: at(reach, s * 0.6) });
+  return frames;
+}

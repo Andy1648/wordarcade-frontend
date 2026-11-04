@@ -44,15 +44,15 @@ test('ARCADE waits for REBIRTH 2, then costs gems', () => withStorage({ 'taw.s2.
   assert.equal(buyKit('arcade').reason, 'locked');
 }));
 
-test('a WIN FX: earned at its wins, only fits the fx slot', () => withStorage({ 'taw.s2.count': JSON.stringify({ mp: 30 }) }, () => {
-  assert.equal(ownsKit('firework'), true);
-  assert.equal(wearKit('frame', 'firework'), false);
-  assert.equal(wearKit('fx', 'firework'), true);
-  assert.equal(readKit().fx, 'firework');
+test('WIN FX are retired (nov2): no id is a piece any more, the fx slot never holds one', () => withStorage({ 'taw.s2.count': JSON.stringify({ mp: 300 }), [KIT_KEY]: JSON.stringify({ own: ['firework'], fx: 'firework' }) }, () => {
+  assert.equal(ownsKit('firework'), false);
+  assert.equal(wearKit('fx', 'firework'), false);
+  assert.equal(readKit().fx, null);
+  assert.deepEqual(readKit().own, []);
 }));
 
 test('every component id is unique across the slots (one id, one piece)', async () => {
-  const { FRAMES, WIN_FX } = await import('./kit.js');
-  const ids = [...FRAMES, ...WIN_FX].map((k) => k.id);
+  const { FRAMES } = await import('./kit.js');
+  const ids = FRAMES.map((k) => k.id);
   assert.equal(new Set(ids).size, ids.length);
 });

@@ -44,7 +44,13 @@ import { UNLOCK_TOAST } from '../../../progress/v3/notify.js';
 import { useReduceMotion } from '../../../lib/useReduceMotion.js';
 import { setReduceMotion } from '../../../lib/reduceMotion.js';
 import { formatNum } from '../../../format.js';
+import GearFx from '../../GearFx.jsx';
+import MarkCard from '../../markCard/MarkCard';
+import { registerMarkGlyphs } from '../../MarkBadge';
+import { ROLLED_GLYPHS, GLYPH_FINISH } from '../../markGlyphsRolled.jsx';
 import './KitGallery.css';
+
+registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
 const cap = (s) => <div className="kg-cap">{s}</div>;
 
@@ -793,6 +799,24 @@ function IconsSheet() {
   );
 }
 
+// ======================================================================== GEAR FX (hover concepts)
+// ?kit=1&sheet=gearfx — LEGENDARY's painted LANCES vs MYTHIC's shockwaves on real cards (hover a card to play them)
+function GearFxSheet() {
+  return (
+    <section className="kg-sheet" id="gearfx" data-testid="kit-gearfx">
+      <h2 className="kg-h">GEAR FX — HOVER</h2>
+      <div style={{ display: 'flex', gap: 120, padding: '40px 60px', flexWrap: 'wrap' }}>
+        {[['mk-eclipse', 'legendary', 'ECLIPSE'], ['mk-singularity', 'mythic', 'SINGULARITY']].map(([id, tier, name]) => (
+          <div key={id} className="kg-gfx-card" data-tier={tier} style={{ position: 'relative', isolation: 'isolate', display: 'inline-block', lineHeight: 0 }}>
+            <GearFx tier={tier} />
+            <MarkCard id={id} tier={tier} name={name} fx />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ======================================================================== PAGE
 // ?kit=1&sheet=bars renders one sheet alone (perf measurement, focused screenshots)
 const ONLY = (() => {
@@ -827,6 +851,7 @@ export default function KitGallery() {
       {show('bars') && <BarsSheet />}
       {show('icons') && <IconsSheet />}
       {show('levelup') && <LevelUpSheet />}
+      {ONLY === 'gearfx' && <GearFxSheet />}
     </main>
   );
 }

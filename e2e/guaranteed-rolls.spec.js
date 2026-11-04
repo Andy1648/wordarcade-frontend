@@ -84,7 +84,7 @@ test('OPEN LEGENDARY+ ROLL: the sealed vessel opens on the server pick, free, pi
   expect(st.sinceLegendary).toBe(20); // pity untouched
   await page.getByTestId('sealed-roll-done').click();
   await expect(sealed).toHaveCount(0);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 40'); // 60 − 20 (hard pity 60, oct22)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 40'); // 60 − 20 (hard pity 60, oct22)
   await expect(btn).toHaveCount(0); // spent: the server no longer lists it
 });
 
