@@ -36,7 +36,7 @@ import './GearFx.css';
 const RAINBOW = ['#FF3D7F', '#FFC23D', '#2EFFE0', '#3D8BFF', '#B04BFF'];
 const FX = {
   epic: { lo: 0.8, out: 26, motes: 2 },
-  legendary: { lo: 0.86, out: 34, motes: 4, streaks: 8 },
+  legendary: { lo: 0.86, out: 34, motes: 4, streaks: 6 },
   mythic: { two: true, lo: 0.9, out: 42, motes: 8, big: 1.35, waves: 2 },
   secret: { swap: 3, glitch: true, orbit: 8, lo: 0.9, out: 42, motes: 4, big: 1.15 },
 };
@@ -53,16 +53,17 @@ export const GLITCH_MS = 420;
 // FINITE run to the next (no Infinity, like the SECRET orbit); leaving lets the current run finish and stops.
 export const STREAK_MS = 900;
 export const WAVE_MS = 1150;
-// a streak per slot: side, x across the glow band (0 = outer edge, 1 = the card), width px, height % of the host, colour
+// a LANCE per slot (Andy nov3: the old flat bars → painted art at MYTHIC's level): side, x across the glow band
+// (0 = outer edge, 1 = the card), height % of the host. One painted gold sceptre-lance (public/fx/lance/), its width
+// follows its own aspect — never stretched into a bar.
+export const LANCE_SRC = '/fx/lance/lance-gold-v1.webp';
 const STREAKS = [
-  { side: 'left', x: 0.5, w: 7, h: 42, c: '#FFF3A6' },
-  { side: 'right', x: 0.4, w: 9, h: 34, c: '#FFFFFF' },
-  { side: 'left', x: 0.2, w: 5, h: 28, c: '#FFFFFF' },
-  { side: 'right', x: 0.65, w: 5, h: 46, c: '#FFC23D' },
-  { side: 'left', x: 0.75, w: 8, h: 36, c: '#FFC23D' },
-  { side: 'right', x: 0.15, w: 6, h: 26, c: '#FFF3A6' },
-  { side: 'left', x: 0.35, w: 4, h: 50, c: '#FFF3A6' },
-  { side: 'right', x: 0.85, w: 4, h: 38, c: '#FFFFFF' },
+  { side: 'left', x: 0.45, h: 40 },
+  { side: 'right', x: 0.4, h: 34 },
+  { side: 'left', x: 0.1, h: 28 },
+  { side: 'right', x: 0.7, h: 44 },
+  { side: 'left', x: 0.75, h: 32 },
+  { side: 'right', x: 0.1, h: 26 },
 ];
 // rim spots (round the frame, staggered sides) — a mote rises from its spot
 const SPOTS = [
@@ -292,11 +293,12 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       if (hov2) return;
       hov2 = true;
       streaks.forEach((n, k) => chain(n, [
-        { opacity: 0, transform: 'translateY(320%) scaleY(0.5)' },
-        { opacity: 1, transform: 'translateY(220%) scaleY(1)', offset: 0.22 },
-        { opacity: 1, transform: 'translateY(40%) scaleY(1)', offset: 0.72 },
-        { opacity: 0, transform: 'translateY(-60%) scaleY(0.6)' },
-      ], { duration: STREAK_MS + (k % 3) * 160, delay: k * 110, easing: 'cubic-bezier(.45,.05,.55,.95)' }, 80 + (k % 4) * 90));
+        // a lance THRUSTS up out of the band's floor tip-first (snap), glides, and fades as it clears the card's shoulder
+        { opacity: 0, transform: 'translateY(40%) scale(0.8)' },
+        { opacity: 1, transform: 'translateY(-25%) scale(1.04)', offset: 0.2, easing: 'cubic-bezier(.2,.7,.4,1)' },
+        { opacity: 1, transform: 'translateY(-95%) scale(1)', offset: 0.7 },
+        { opacity: 0, transform: 'translateY(-140%) scale(0.9)' },
+      ], { duration: STREAK_MS + (k % 3) * 160, delay: k * 140, easing: 'cubic-bezier(.3,.1,.5,1)' }, 160 + (k % 4) * 110));
       waves.forEach((n, k) => chain(n, [
         { opacity: 0, transform: 'scale(0.9)' },
         { opacity: 1, transform: 'scale(1.02)', offset: 0.22 },
@@ -361,7 +363,7 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       {fx.streaks && !still ? (
         <span className="gfx-streaks">
           {STREAKS.slice(0, fx.streaks).map((s, k) => (
-            <span key={`s${k}`} className={`gfx-streak is-${s.side}`} style={{ '--gfx-sx': s.x, width: `${s.w}px`, height: `${s.h}%`, background: s.c }} />
+            <img key={`s${k}`} className={`gfx-streak is-${s.side}`} src={LANCE_SRC} alt="" draggable="false" style={{ '--gfx-sx': s.x, height: `${s.h}%` }} />
           ))}
         </span>
       ) : null}

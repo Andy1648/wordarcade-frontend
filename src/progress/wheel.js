@@ -36,10 +36,10 @@ export const WHEEL_SLOTS = [
 export const SLICE_DEG = 360 / WHEEL_SLOTS.length;
 /** The wheel-only cosmetics (kit.js wheel ids — the server picks one you have not won; both won → an EPIC+ ROLL).
  *  068_wheel_no_sidekick.sql dropped LUCKY (the SIDEKICK slot is gone). */
-export const WHEEL_COSMETICS = ['jackpot', 'confetti'];
+export const WHEEL_COSMETICS = ['jackpot'];
 /** Retired wheel cosmetics a server still on 067 can hand out: paid as the slot's best gem prize instead (never a
  *  broken image, never a piece you can't wear). */
-export const RETIRED_COSMETICS = ['lucky'];
+export const RETIRED_COSMETICS = ['lucky', 'confetti']; // confetti = the WIN FX PRIZE SHOWER (WIN FX retired nov2)
 export const RETIRED_COSMETIC_GEMS = 120;
 // the FACE is face.svg: 8 exact 45° flat wedges in code-true geometry (the hero-art session: wedges can't be painted to
 // register); rim / hub / pointer / prize icons are painted webps on top

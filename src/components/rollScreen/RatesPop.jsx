@@ -2,7 +2,11 @@
 // rate icon … popup)"). A small RATES button in the options cluster; tapping it opens the odds of YOUR NEXT ROLL per tier
 // ("1 IN 98"), read from the SAME table the roll uses (markRolls.rollTable with your luck, pity and bonus roll) — so the
 // popup can never claim odds the roll does not have. A pity-forced roll adds an "EPIC+ GUARANTEED" line.
+// nov3 (design research move 6, "odds and pity in plain sight"): the button reads ⓘ ODDS; the popup is PORTALED to the
+// body (inside the roll screen it stacked BEHIND the reel panel — the odds were effectively hidden) and closes on the
+// pity guarantees ("EPIC+ GUARANTEED WITHIN 10 ROLLS").
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js'; // registers the LUCK icon (the menu's core set does not carry it)
 import { rollTable, loadRollState, freshState, permanentOwnedCount, ROLL_MARKS, ROLLABLE_TIERS } from '../../progress/markRolls.js';
@@ -27,7 +31,8 @@ export function nextRollRates(state = loadRollState() || freshState(), ctx = { p
   return { rows, forced: t.forced || null };
 }
 
-export default function RatesPop() {
+/** @param pity { epic, legendary } rolls left until each is GUARANTEED (the roll screen's own pity ladder) */
+export default function RatesPop({ pity = null }) {
   const [open, setOpen] = useState(false);
   const [rates, setRates] = useState({ rows: [], forced: null });
   const closeRef = useRef(null);
@@ -41,11 +46,11 @@ export default function RatesPop() {
   }, [open]);
   return (
     <>
-      <button type="button" className="rs-rates-btn" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Roll rates" data-testid="roll-rates">
-        <KitIcon name="luck" size={26} shadow={1} extras={false} />
-        <span className="rs-rates-k">RATES</span>
+      <button type="button" className="rs-rates-btn" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Odds of your next roll" data-testid="roll-rates">
+        <span className="rs-rates-i" aria-hidden="true">i</span>
+        <span className="rs-rates-k">ODDS</span>
       </button>
-      {open ? (
+      {open ? createPortal(
         <div className="rs-rates-scrim" role="presentation" onClick={() => setOpen(false)}>
           <div className="rs-rates" role="dialog" aria-modal="true" aria-label="Your next roll's odds" data-testid="roll-rates-pop" onClick={(e) => e.stopPropagation()}>
             <button ref={closeRef} type="button" className="rs-rates-x" onClick={() => setOpen(false)} aria-label="Close rates">✕</button>
@@ -65,8 +70,16 @@ export default function RatesPop() {
               ))}
             </ul>
             {rates.forced ? <div className="rs-rates-pity" style={{ '--rs-tier': CARD_RAR[cardTier(rates.forced)].line }}>{(MARK_TIERS[rates.forced] || { name: rates.forced }).name}+ GUARANTEED</div> : null}
+            {pity ? (
+              <div className="rs-rates-guar" data-testid="roll-rates-pity">
+                <span className="rs-rates-guar-k">GUARANTEED</span>
+                <span className="rs-rates-guar-row" style={{ '--rs-tier': CARD_RAR[cardTier('epic')].line }}><b>EPIC+</b> WITHIN {formatNum(pity.epic)} {pity.epic === 1 ? 'ROLL' : 'ROLLS'}</span>
+                <span className="rs-rates-guar-row" style={{ '--rs-tier': CARD_RAR[cardTier('legendary')].line }}><b>LEGENDARY+</b> WITHIN {formatNum(pity.legendary)} {pity.legendary === 1 ? 'ROLL' : 'ROLLS'}</span>
+              </div>
+            ) : null}
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </>
   );
