@@ -149,3 +149,6 @@
   .credits-title { font-size: var(--fs-panel); }
   .credits-link { font-size: var(--fs-body) /* floor: tappable text is never below 16px */; }
 }
+/* the LEGAL links: two real tap targets side by side */
+.credits-legal { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.credits-legal .credits-link { display: inline-flex; align-items: center; min-height: 44px; }
