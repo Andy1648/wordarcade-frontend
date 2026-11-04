@@ -41,7 +41,7 @@ import { useReduceMotion } from '../../lib/useReduceMotion';
 import './MarkCard.css';
 
 const NONE = {};
-const FRAME_X = { mythic: '/fx/frame-mythic.svg', secret: '/fx/frame-secret.svg' };
+const FRAME_X = { rare: '/fx/frame-rare-v1.webp', epic: '/fx/frame-epic-v1.webp', legendary: '/fx/frame-legendary-v1.webp', mythic: '/fx/frame-mythic.svg', secret: '/fx/frame-secret.svg' };
 const cls = (base, extra) => (extra ? `${base} ${extra}` : base);
 
 const Lock = () => (
@@ -116,7 +116,7 @@ function MarkCard({
         <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} />
         {/* MYTHIC / SECRET: the frame VARIANT asset over the whole card (horns + crest / off-register glitch brackets +
             crown) — a different class of card, owned or locked */}
-        {FRAME_X[c.tier] ? <img className="mc-frame-x" src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
+        {FRAME_X[c.tier] ? <img className={FRAME_X[c.tier].endsWith('.webp') ? 'mc-frame-x mc-frame-x--paint' : 'mc-frame-x'} src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
         <div className={cls('mc-head', parts.head)}>
           <span className={cls('mc-tier', parts.tier)}>{c.rarityName}</span>
         </div>
