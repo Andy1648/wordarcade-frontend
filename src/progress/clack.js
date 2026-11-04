@@ -8,7 +8,6 @@
 // no-immediate-repeat rule and an ODD count so it never lines up with typing rhythm — timbre
 // variation is what actually kills the machine-gun feel. The existing pitch (0.94–1.06) and gain
 // (±12%) jitter are kept EXACTLY (already tasteful — not widened). DEFAULT OFF (school-lab audience).
-import { getEquippedSoundPack } from './shop.js';
 import { ensureCtx, audioCtx, masterNode, registerVoice } from '../audio/audioCore.js';
 
 // Sound params keyed by the equipped SOUND PACK. `silent` is null — plays nothing (its shop
@@ -125,17 +124,7 @@ function voice(ctx, when, cfg, rate, gainJitter, gainScale, cutoffMul) {
 // position (capped +24 semitones). Non-blocking; no-op if disabled. NEVER blocks the keydown handler.
 export function playClack(step = 0) {
   if (!enabled) return;
-  press(PARAMS[getEquippedSoundPack()], step);
-}
-
-/** HEAR BEFORE YOU BUY (oct29, CUSTOMIZE → SOUND): a tapped pack plays a short three-key riff in ITS timbre — any pack,
- *  owned or not, equipped or not. A tap is the player asking to hear it, so it plays even with key clicks off. Returns
- *  false for SILENT (nothing to hear). */
-export function previewClack(packId) {
-  const cfg = PARAMS[packId];
-  if (!cfg) return false;
-  [0, 2, 4].forEach((step, i) => setTimeout(() => press(cfg, step), i * 120));
-  return true;
+  press(PARAMS.thock, step); // the one click (SOUND PACKS retired nov2 — no pack to pick)
 }
 
 // one keypress (+ its scheduled release) in the timbre `cfg`, `step` up the pentatonic ladder

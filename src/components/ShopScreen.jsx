@@ -128,7 +128,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
   const keyTut = view === 'shop' && !keyTutDone && !autoMode
     ? dueHosted('shop', { keyAffordable: wins >= kpCost, keyTier, rebirths }, hasSeenTutorial)
     : null;
-  const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
+  const cheapestUnowned = [...POP_STYLES]
     .filter((i) => !owned.has(i.id))
     .sort((a, b) => itemPrice(a.id) - itemPrice(b.id))[0] || null;
 
@@ -342,23 +342,6 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                   key={item.id}
                   item={SEASON2 ? { ...item, price: itemPrice(item.id) } : item}
                   type="popStyle"
-                  owned={owned}
-                  equipped={equipped}
-                  wins={shelfBalance}
-                  cheapestUnowned={cheapestUnowned}
-                  onBuy={onBuy}
-                  onEquip={onEquip}
-                />
-              ))}
-            </div>
-
-            <h3 className="shop-subtitle">SOUND PACKS</h3>
-            <div className="shop-grid shop-grid--compact">
-              {SOUND_PACKS.map((item) => (
-                <Card
-                  key={item.id}
-                  item={SEASON2 ? { ...item, price: itemPrice(item.id) } : item}
-                  type="soundPack"
                   owned={owned}
                   equipped={equipped}
                   wins={shelfBalance}

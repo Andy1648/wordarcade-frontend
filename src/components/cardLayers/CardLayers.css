@@ -29,3 +29,9 @@
 @media (prefers-reduced-motion: reduce) {
   .game-card:hover .gc-heroframe { rotate: none; }
 }
+
+/* LOAD TOGETHER (Andy nov4): the first page's painted art fades in as ONE once every priority card has decoded
+   (cardsReady.js sets html[data-cards-ready]; capped at 3 s so it can never stay blank). Opacity only. */
+.gc-layers.is-prio { opacity: 0; transition: opacity 180ms ease-out; }
+html[data-cards-ready] .gc-layers.is-prio { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .gc-layers.is-prio { transition: none; } }
