@@ -41,6 +41,7 @@ import { forgeMigrateMomentum } from './progress/forge'
 import { migrateGems } from './progress/gemsMigrate'
 import { SEASON2 } from './progress/season'
 import { migrateRollSave } from './progress/markRollsCore'
+import { retireCosmetics } from './progress/cosmeticsRetire'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
@@ -215,7 +216,8 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // installed BEFORE the first render, so every season-2 read finds them. The live game never downloads it.
   // GEAR POOL v2 (Andy oct9): retire COMMON once per save — owned commons deleted + refunded in gems, a worn one taken
   // off — AFTER the season install (its gem key mapping) and BEFORE the first render reads a gear. Never blocks startup.
-  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } renderApp() }
+  // nov2 (Andy: "dont want win fx or sound"): WIN FX + SOUND PACKS retired once per save — paid ones refunded in gems
+  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } try { retireCosmetics() } catch { /* never block startup */ } renderApp() }
   if (SEASON2) import('./progress/v3/installUi.jsx').then(boot, boot)
   else boot()
 }

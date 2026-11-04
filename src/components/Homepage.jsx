@@ -133,6 +133,7 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
+import { takeRefundNote } from '../progress/cosmeticsRetire';
 import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import { PAYMENTS_ON } from '../payments/flag.js'; // PAID GEMS (default OFF): the lazy pick-up below
@@ -1005,6 +1006,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     } catch {
       /* blocked */
     }
+  }, []);
+  // WIN FX + SOUND PACKS retired (nov2, cosmeticsRetire.js runs at boot): the gems refunded for paid ones are said ONCE,
+  // as one small edge toast on a settled menu — never a silent change to the balance
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const n = takeRefundNote();
+      if (n > 0 && typeof V3.toast === 'function') V3.toast({ head: `+${formatNum(n)} GEMS BACK`, label: 'WIN FX + SOUND PACKS RETIRED', icon: 'gems', tile: '#9A1AFF' });
+    }, 900);
+    return () => clearTimeout(t);
   }, []);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
