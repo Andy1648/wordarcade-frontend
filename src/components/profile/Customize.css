@@ -42,7 +42,6 @@
 @media (min-width: 761px) {
   .cz .skp-stage .hs { max-width: min(400px, calc(100dvh - 300px)); }
   .cz .skp-stage .fc { width: min(300px, calc((100dvh - 320px) * .6)); }
-  .cz .skp-fx { width: min(380px, calc(100dvh - 330px)); }
 }
 @media (min-width: 761px) {
   .cz .skp-grid.is-frames { grid-template-columns: repeat(7, minmax(0, 1fr)); } /* 10 frames in two shorter rows */
@@ -68,7 +67,6 @@
 @media (min-width: 1000px) {
   .sp2-shelf-cz .skp-stage .hs { max-width: 300px; }
   .sp2-shelf-cz .skp-stage .fc { width: 200px; }
-  .sp2-shelf-cz .skp-fx { width: 300px; }
   .sp2-shelf-cz .skp-stage .skp-avatar { width: 64px; height: 64px; }
   .sp2-shelf-cz .skp { gap: 16px; }
 }
@@ -82,7 +80,6 @@
   /* a short laptop window: the try-on and the piece's own lines tighten one more step */
   .sp2-shelf-cz .skp-stage .hs { max-width: 200px; }
   .sp2-shelf-cz .skp-stage .fc { width: 130px; }
-  .sp2-shelf-cz .skp-fx { width: 200px; }
   .sp2-shelf-cz .skp-stage .skp-avatar { width: 48px; height: 48px; }
   .sp2-shelf-cz .skp-info { gap: 2px; }
 }
