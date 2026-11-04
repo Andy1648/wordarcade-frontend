@@ -40,7 +40,7 @@ import {
 } from '../juice';
 import { useCachedCenter } from '../juice/useCachedCenter';
 import { reduced as reducedMotion } from '../juice/settings';
-import { heatTier, ladderFor, particleCount, PUNCH_MS } from '../juice/ladder';
+import { heatTier, ladderFor, particleCount, tierCrossed, PUNCH_MS } from '../juice/ladder';
 import { pickEffect, tagLabel } from '../juice/effectSlot';
 import { TierSlam, LuckyBurst, SlotTags, useLatched } from './FeelLadder';
 import { LUCKY_WINS_MULT } from '../progress/luck';
@@ -1144,7 +1144,7 @@ function KillFeed({ events, playerColors = {}, maxRows }) {
                       </>
                     )}
                     {ev.type === 'timeout' && (
-                      <span className="kill-feed-action">TIMED OUT 💀</span>
+                      <span className="kill-feed-action">TIMED OUT <span className="kill-feed-skull" aria-hidden="true" /></span>
                     )}
                     {ev.type === 'skip' && (
                       <span className="kill-feed-action">SKIPPED</span>
@@ -1262,6 +1262,7 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
           speed: JUICE.VALID.particleSpeed,
           life: JUICE.VALID.particleLife,
           colors: JUICE.VALID.colors,
+          painted: tierCrossed(next - 1, next) > 0, // a combo TIER-UP word throws painted shards (same count); others squares
         });
         ring(r.x, r.y, {
           radius: rung.ring,
@@ -3098,7 +3099,7 @@ export default function GameScreen({
           }}
           aria-hidden="true"
         >
-          <span className="bomb-flight-icon">💣</span>
+          <span className="bomb-flight-icon" />
         </div>
       )}
       {/* Color-temperature wash: deepens with eliminations (subliminal). */}
@@ -3492,7 +3493,8 @@ export default function GameScreen({
                     // oct15: the live letters moved INTO the prompt (ComboLive) — only the bot's word reveal
                     // and the opponent status line stay under the seat.
                     if (isMe) return null;
-                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot);
+                    // a LOBBY bot reads like a person here ('turn', then its word reveals as typed) - only the solo bot 'thinks'
+                    const isBot = !!(roomPlayers || []).find((p) => p.id === player.id && p.isBot && !p.lobbyBot);
                     const typed = typingText[player.id] || '';
                     const status = revealing ? 'typing' : isBot ? 'thinking' : typed ? 'typing' : 'turn';
                     return (

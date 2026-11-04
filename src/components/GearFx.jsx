@@ -30,20 +30,21 @@
 // ellipse is measured ONCE on mount (offsetWidth / offsetHeight — never in a frame or a breath).
 import { useEffect, useRef } from 'react';
 import { useReduceMotion } from '../lib/useReduceMotion';
+import { shardSrc, TIP_DEG } from '../fx/shards/shardPlan.js';
 import './GearFx.css';
 
 const RAINBOW = ['#FF3D7F', '#FFC23D', '#2EFFE0', '#3D8BFF', '#B04BFF'];
 const FX = {
-  epic: { lo: 0.8, out: 26, motes: 2, m: ['#F3D2FF'] },
-  legendary: { lo: 0.86, out: 34, motes: 4, m: ['#FFF3A6', '#FFFFFF'], streaks: 8 },
-  mythic: { two: true, lo: 0.9, out: 42, motes: 8, big: 1.35, m: ['#FFFFFF', '#2EFFE0', '#FF3D7F'], waves: 2 },
-  secret: { swap: 3, glitch: true, orbit: 8, lo: 0.9, out: 42, motes: 4, big: 1.15, m: RAINBOW },
+  epic: { lo: 0.8, out: 26, motes: 2 },
+  legendary: { lo: 0.86, out: 34, motes: 4, streaks: 6 },
+  mythic: { two: true, lo: 0.9, out: 42, motes: 8, big: 1.35, waves: 2 },
+  secret: { swap: 3, glitch: true, orbit: 8, lo: 0.9, out: 42, motes: 4, big: 1.15 },
 };
 export const TICK_MS = 700;
 export const PER_TICK = 1;
 export const BREATHE_EVERY_MS = 4200;
 export const BREATHE_MS = 2600;
-export const MOTE_MS = 1700;
+export const MOTE_MS = 1300; // the FLOATING BLADES' breath (nov2): the rise is up front, the hang is the read
 export const SWAP_MS = 3900; // SECRET: one full trip through its three colourings
 export const ORBIT_MS = 3400; // SECRET: one lap of the mote ring
 export const GLITCH_MS = 420;
@@ -52,16 +53,17 @@ export const GLITCH_MS = 420;
 // FINITE run to the next (no Infinity, like the SECRET orbit); leaving lets the current run finish and stops.
 export const STREAK_MS = 900;
 export const WAVE_MS = 1150;
-// a streak per slot: side, x across the glow band (0 = outer edge, 1 = the card), width px, height % of the host, colour
+// a LANCE per slot (Andy nov3: the old flat bars → painted art at MYTHIC's level): side, x across the glow band
+// (0 = outer edge, 1 = the card), height % of the host. One painted gold sceptre-lance (public/fx/lance/), its width
+// follows its own aspect — never stretched into a bar.
+export const LANCE_SRC = '/fx/lance/lance-gold-v1.webp';
 const STREAKS = [
-  { side: 'left', x: 0.5, w: 7, h: 42, c: '#FFF3A6' },
-  { side: 'right', x: 0.4, w: 9, h: 34, c: '#FFFFFF' },
-  { side: 'left', x: 0.2, w: 5, h: 28, c: '#FFFFFF' },
-  { side: 'right', x: 0.65, w: 5, h: 46, c: '#FFC23D' },
-  { side: 'left', x: 0.75, w: 8, h: 36, c: '#FFC23D' },
-  { side: 'right', x: 0.15, w: 6, h: 26, c: '#FFF3A6' },
-  { side: 'left', x: 0.35, w: 4, h: 50, c: '#FFF3A6' },
-  { side: 'right', x: 0.85, w: 4, h: 38, c: '#FFFFFF' },
+  { side: 'left', x: 0.45, h: 40 },
+  { side: 'right', x: 0.4, h: 34 },
+  { side: 'left', x: 0.1, h: 28 },
+  { side: 'right', x: 0.7, h: 44 },
+  { side: 'left', x: 0.75, h: 32 },
+  { side: 'right', x: 0.1, h: 26 },
 ];
 // rim spots (round the frame, staggered sides) — a mote rises from its spot
 const SPOTS = [
@@ -103,6 +105,37 @@ function subscribe(fn) {
     if (cursor > subs.length) cursor = 0;
     if (!subs.length && timer) { clearTimeout(timer); timer = null; }
   };
+}
+
+// a blade's resting pose: its painted tip (TIP_DEG, drawn up-right) turned to point up-and-OUT on its side, a few
+// degrees different per slot so a row of blades never reads as stamped copies
+const bladePose = (dir, k) => {
+  const tip = TIP_DEG[k % TIP_DEG.length];
+  const want = dir > 0 ? -62 + (k % 3) * 9 : -118 - (k % 3) * 9; // up-right on the right side, up-left on the left
+  return Math.round(want - tip);
+};
+/** A breath: the blade rises from behind the card's side, snaps up (the first third), hangs with a slow turn and a
+ *  small outward lean, then fades — it stays IN the glow band (never drifts onto the text beside a card, e.g. the
+ *  gear sheet's stats). Transform + opacity only. */
+export function floatBlade(dir, k) {
+  const r = bladePose(dir, k);
+  const t = dir * (6 + (k % 3) * 3);
+  return [
+    { opacity: 0, transform: `translate(${-dir * 4}px, 12px) rotate(${r - t}deg) scale(0.45)`, easing: 'cubic-bezier(.1,.75,.25,1)' },
+    { opacity: 1, transform: `translate(${dir * 4}px, -16px) rotate(${r}deg) scale(1)`, offset: 0.32, easing: 'cubic-bezier(.4,0,.6,1)' },
+    { opacity: 1, transform: `translate(${dir * 7}px, -30px) rotate(${r + t}deg) scale(0.96)`, offset: 0.72, easing: 'cubic-bezier(.5,0,.9,.6)' },
+    { opacity: 0, transform: `translate(${dir * 10}px, -44px) rotate(${r + t * 1.6}deg) scale(0.6)` },
+  ];
+}
+/** A flare (the YOUR GEAR showcase): the blade is thrown out sideways, tip first, and fades — still inside the glow
+ *  band (the menu slot sits next to the mode cards; a blade must never land on their text). */
+export function flareBlade(dir, k) {
+  const r = bladePose(dir, k) + dir * 30; // flatter: pointing out more than up
+  return [
+    { opacity: 0, transform: `translate(0, 0) rotate(${r - dir * 20}deg) scale(0.4)`, easing: 'cubic-bezier(.05,.7,.2,1)' },
+    { opacity: 1, transform: `translate(${dir * 12}px, -14px) rotate(${r}deg) scale(1.1)`, offset: 0.3, easing: 'cubic-bezier(.4,0,.8,.6)' },
+    { opacity: 0, transform: `translate(${dir * 28}px, -34px) rotate(${r + dir * 25}deg) scale(0.6)` },
+  ];
 }
 
 /** The SECRET swap: aura k of n holds the light for its third of the trip; the first rests at `lo` at both ends. */
@@ -175,20 +208,12 @@ export default function GearFx({ tier, scale = 1, live = true }) {
         ], { duration: ORBIT_MS, delay: burst ? 0 : 200, easing: 'cubic-bezier(.35,.1,.45,.9)' }, 'transform, opacity');
       }
       motes.forEach((n, k) => {
-        // a FLARE bursts the motes out from the rim (sideways, away from the card); a breath lets them rise
+        // THE FLOATING BLADES (nov2, Andy: "shards … mobile legends aamon"): each mote is a PAINTED crystal blade in the
+        // tier's colours (fx/shards). A breath lifts it out from behind the card's side, tip up-and-out, to HANG in the
+        // glow and drift away; a FLARE throws it sideways, tip first.
         const dir = n.classList.contains('is-left') ? -1 : 1;
-        const frames = burst
-          ? [
-            { opacity: 0, transform: 'translate(0, 0) scale(0.3) rotate(0deg)' },
-            { opacity: 1, transform: `translate(${dir * 14}px, -10px) scale(1.3) rotate(45deg)`, offset: 0.25 },
-            { opacity: 0, transform: `translate(${dir * 44}px, -34px) scale(0.5) rotate(120deg)` },
-          ]
-          : [
-            { opacity: 0, transform: 'translateY(0) scale(0.4) rotate(0deg)' },
-            { opacity: 1, transform: 'translateY(-16px) scale(1.15) rotate(35deg)', offset: 0.3 },
-            { opacity: 0, transform: 'translateY(-52px) scale(0.6) rotate(80deg)' },
-          ];
-        play(n, frames, { duration: burst ? 900 : MOTE_MS, delay: burst ? k * 40 : 250 + k * 230, easing: 'cubic-bezier(.2,.7,.4,1)' }, 'transform, opacity');
+        const frames = burst ? flareBlade(dir, k) : floatBlade(dir, k);
+        play(n, frames, { duration: burst ? 820 : MOTE_MS, delay: burst ? k * 40 : 250 + k * 230, easing: 'linear' }, 'transform, opacity');
       });
     };
     const unsub = subscribe((now) => {
@@ -268,11 +293,12 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       if (hov2) return;
       hov2 = true;
       streaks.forEach((n, k) => chain(n, [
-        { opacity: 0, transform: 'translateY(320%) scaleY(0.5)' },
-        { opacity: 1, transform: 'translateY(220%) scaleY(1)', offset: 0.22 },
-        { opacity: 1, transform: 'translateY(40%) scaleY(1)', offset: 0.72 },
-        { opacity: 0, transform: 'translateY(-60%) scaleY(0.6)' },
-      ], { duration: STREAK_MS + (k % 3) * 160, delay: k * 110, easing: 'cubic-bezier(.45,.05,.55,.95)' }, 80 + (k % 4) * 90));
+        // a lance THRUSTS up out of the band's floor tip-first (snap), glides, and fades as it clears the card's shoulder
+        { opacity: 0, transform: 'translateY(40%) scale(0.8)' },
+        { opacity: 1, transform: 'translateY(-25%) scale(1.04)', offset: 0.2, easing: 'cubic-bezier(.2,.7,.4,1)' },
+        { opacity: 1, transform: 'translateY(-95%) scale(1)', offset: 0.7 },
+        { opacity: 0, transform: 'translateY(-140%) scale(0.9)' },
+      ], { duration: STREAK_MS + (k % 3) * 160, delay: k * 140, easing: 'cubic-bezier(.3,.1,.5,1)' }, 160 + (k % 4) * 110));
       waves.forEach((n, k) => chain(n, [
         { opacity: 0, transform: 'scale(0.9)' },
         { opacity: 1, transform: 'scale(1.02)', offset: 0.22 },
@@ -337,12 +363,12 @@ export default function GearFx({ tier, scale = 1, live = true }) {
       {fx.streaks && !still ? (
         <span className="gfx-streaks">
           {STREAKS.slice(0, fx.streaks).map((s, k) => (
-            <span key={`s${k}`} className={`gfx-streak is-${s.side}`} style={{ '--gfx-sx': s.x, width: `${s.w}px`, height: `${s.h}%`, background: s.c }} />
+            <img key={`s${k}`} className={`gfx-streak is-${s.side}`} src={LANCE_SRC} alt="" draggable="false" style={{ '--gfx-sx': s.x, height: `${s.h}%` }} />
           ))}
         </span>
       ) : null}
       {!still && SPOTS.slice(0, fx.motes).map((s, k) => (
-        <span key={k} className={`gfx-mote is-${s.side}`} style={{ top: s.top, background: fx.m[k % fx.m.length] }} />
+        <img key={k} className={`gfx-mote is-${s.side}`} style={{ top: s.top }} src={shardSrc(tier, k)} alt="" draggable="false" />
       ))}
     </span>
   );

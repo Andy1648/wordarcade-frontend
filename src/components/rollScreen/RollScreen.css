@@ -234,7 +234,9 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* PARKED (design audit nov2: the bar ran through the landed card's name + stats, "EGG T|MER"): at rest the bar and the
    bottom triangle fade out and the top triangle rises until its tip sits at the card's top edge (never past the
    panel's frame: --rs-up). Finite transitions, transform/opacity only; a spin (is-parked off) brings them back. */
-.rs-ptr-bar, .rs-ptr-tri { transition: opacity 200ms ease-out, transform 240ms cubic-bezier(.2, 1.3, .4, 1); }
+/* is-ptr-live (Reel.jsx): the transition is on only once this Reel has spun — a mount (first open, back from the INDEX)
+   sits parked at once instead of sliding in when the mount measure sets --rs-up */
+.rs-win.is-ptr-live .rs-ptr-bar, .rs-win.is-ptr-live .rs-ptr-tri { transition: opacity 200ms ease-out, transform 240ms cubic-bezier(.2, 1.3, .4, 1); }
 .rs-win.is-parked .rs-ptr-bar,
 .rs-win.is-parked .rs-ptr-tri.is-bot { opacity: 0; }
 .rs-win.is-parked .rs-ptr-tri.is-top {
@@ -528,6 +530,19 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   height: 124vmax;
   margin: -62vmax 0 0 -62vmax;
   opacity: 0;
+}
+/* LEGENDARY's painted sunburst crest (Reel.jsx): a halo centred on the card, under it — its spears fan out round it */
+.rs-cut-crest {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--mc-w, 252px) * 2.7);
+  height: calc(var(--mc-w, 252px) * 2.7);
+  margin: calc(var(--mc-w, 252px) * -1.35) 0 0 calc(var(--mc-w, 252px) * -1.35);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
 }
 .rs-cut.is-dim .rs-cut-rays,
 .rs-cut.is-dim .rs-cut-tier { display: none; }
@@ -900,7 +915,14 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 }
 .rs-rates-btn:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
 .rs-rates-k { -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
-.rs-rates-scrim { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5, 2, 10, 0.8); }
+/* the ⓘ: a lowercase i on a cyan disc (a circle, not drawn art — Bungee has no ⓘ glyph) */
+.rs-rates-i {
+  display: inline-grid; place-items: center; flex: none; width: 1.6em; height: 1.6em; border-radius: 50%;
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: var(--fs-k17); line-height: 1; text-transform: none;
+  color: #0d0618; background: #2EFFE0; border: 3px solid #13a48f;
+}
+/* portaled to the body (RatesPop): above the reel panel and every roll-screen layer */
+.rs-rates-scrim { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; background: rgba(5, 2, 10, 0.8); }
 .rs-rates {
   position: relative;
   width: min(380px, 100%);
@@ -934,9 +956,14 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
   margin-top: 10px; text-align: center; font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k17);
   color: var(--rs-tier); -webkit-text-stroke: 3px #000; paint-order: stroke fill;
 }
+/* the pity guarantees, under the odds (design research move 6) */
+.rs-rates-guar { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 3px dashed #3a2160; }
+.rs-rates-guar-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); letter-spacing: .12em; color: #c9b8e8; }
+.rs-rates-guar-row { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-size: var(--fs-k17); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs-rates-guar-row b { font-weight: 400; color: var(--rs-tier); }
 @media (max-width: 520px) {
   .rs-rates-btn { padding: 0 8px; }
-  .rs-rates-k { display: none; } /* the luck icon carries it on a phone top bar */
+  .rs-rates-k { display: none; } /* the ⓘ disc carries it on a phone */
 }
 
 /* ===== THE SHOWCASE (oct15 night — RollShowcase.jsx): the stage's empty band above / below the reel ===== */

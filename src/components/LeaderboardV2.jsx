@@ -45,6 +45,7 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
 import { CAST, castFor, castSrc, heroById } from '../cast/cast.js';
+import { headImgStyle } from '../cast/faceBox.js';
 import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
@@ -202,14 +203,9 @@ const DROP = [
 // NAME PRESTIGE (Andy oct21 "make people feel even better for being top"): every top-50 name wears a painted NUMBERED
 // seal (nameTier.js). On arrival each seal STAMPS down once (rows stagger top-down); the climb INTO a better tier since
 // your last look gets the big slam + a NEW · TOP 10 tag on your own row. One-shots on existing nodes; nothing loops.
-const STAMP = [
-  { transform: 'scale(1.9) rotate(-14deg)', opacity: 0 },
-  { transform: 'scale(.86) rotate(3deg)', opacity: 1, offset: 0.6 },
-  { transform: 'scale(1.06) rotate(-1deg)', opacity: 1, offset: 0.82 },
-  { transform: 'scale(1) rotate(0)', opacity: 1 },
-];
-// the top-3 rows' seals sit at the board's left edge (a phone's screen edge): a smaller stamp keeps frame 0 on screen
-const STAMP_T3 = [
+// every board seal sits at the board's left edge (a phone's screen edge): a gentle 1.4x stamp keeps every frame on screen
+// (a 1.9x stamp put a phone row's seal off-screen mid-flight - CI's slower runner caught it: v2-leaderboard @390, nov3)
+const STAMP_EDGE = [
   { transform: 'scale(1.4) rotate(-10deg)', opacity: 0 },
   { transform: 'scale(.9) rotate(3deg)', opacity: 1, offset: 0.6 },
   { transform: 'scale(1) rotate(0)', opacity: 1 },
@@ -483,10 +479,10 @@ export default function LeaderboardV2({ onBack }) {
     root.querySelectorAll('.lb2-mv.is-down .lb2-mv-ico').forEach((el) => kitPlay(el, SINK, { duration: 1300, delay: 400, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-row.is-me').forEach((el) => kitPlay(el, pulse('rotate(-1deg)'), { duration: 750, iterations: 2, delay: 500, easing: 'ease-in-out' }));
     root.querySelectorAll('.lb2-col.is-me .lb2-who').forEach((el) => kitPlay(el, pulse(''), { duration: 750, iterations: 2, delay: 600, easing: 'ease-in-out' }));
-    root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
+    root.querySelectorAll('.lb2-row .lb2-seal').forEach((el, i) => kitPlay(el, STAMP_EDGE, { duration: 300, delay: 380 + Math.min(i, 9) * 55, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
     root.querySelectorAll('.lb2-col').forEach((col) => {
       const land = (BLOCK_AT[Number(col.dataset.place) || 0] || 0) + 420;
-      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_T3, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
+      kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_EDGE, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
     });
     if (newTier) {
       const mySeal = root.querySelector('.lb2-row.is-me .lb2-seal, .lb2-col.is-me .lb2-pod-seal');
@@ -676,6 +672,8 @@ export default function LeaderboardV2({ onBack }) {
             const isRival = !!(rival && r.id === rival.id);
             const gap = mine && rival ? gapTo(r, rival, tab, gains) : null;
             const n = nums(r, tab, gains);
+            // the row's head: the hero they wear, else the cast member their id gives them, cropped to ITS head (faceBox.js)
+            const faceId = heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id;
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
             const band = rankBand(r.rank);
@@ -684,8 +682,9 @@ export default function LeaderboardV2({ onBack }) {
             const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
             return (
               <Fragment key={r.id}>
-              {/* the cut line: the painted ribbon (hero-art oct29, one neutral strip tinted per band) carries the band name */}
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-rib"><b>{sep}</b></span></div>}
+              {/* the cut line: a slim flat divider - the band name, then a rule in its colour (Andy nov2: the painted ribbons
+                  "look horrendous"; the rank LEAGUES' badge set replaces this label once it lands) */}
+              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
@@ -693,7 +692,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-who-cell">
                   {/* A FACE ON EVERY ROW (oct28: rows read as people, not plain text): the hero they wear, else the cast
                       member their seat colour gives them (the podium's rule) */}
-                  <span className="lb2-face" aria-hidden="true"><img src={castSrc(heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
+                  <span className="lb2-face" aria-hidden="true" data-hero={faceId}><img src={castSrc(faceId)} style={headImgStyle(faceId)} alt="" draggable="false" decoding="async" loading="lazy" /></span>
                   <span className="lb2-who-text">
                   <span className="lb2-name-line">
                     {mine && <span className="lb2-you">YOU</span>}

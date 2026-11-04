@@ -39,7 +39,7 @@ import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
-import { shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
+import { shardSrc, bladeFrames, bladeFlavour, orbitLashFrames, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
@@ -113,6 +113,8 @@ const rattle = (px) => [
   { transform: 'translate3d(0,0,0)' },
 ];
 
+const CREST_SRC = '/fx/lance/sunburst-gold-v2.webp';
+
 export default function Reel({ spin, idle = null, view = null, auto = false, coverHost, ctl, played, onLand, onDone, children }) {
   const nodes = useRef({});
   const anims = useRef([]);
@@ -124,6 +126,11 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // AT REST (Andy oct11 "i want the animations to show on the roll screen as well (when its stopped)"): once the reel
   // has stopped, the landed card runs its live gear turn + shine like every other card; spinning, every cell is still
   const [atRest, setAtRest] = useState(true);
+  // PARK MOTION only after a spin (e2e mark-rolls "coming back from the INDEX"): the parked triangle's spot reads
+  // --rs-up, which the mount measure sets AFTER a forced style read — with the transition always on, every mount (the
+  // first open, and every return from the INDEX) slid + overshot the pointer into its park spot. Off until this Reel
+  // plays a spin, so a mount sits parked and only a spin's unpark / re-park animates.
+  const [ptrLive, setPtrLive] = useState(false);
   // FIRST PAINT FAST (Andy oct16 "lag … as people press buttons like gear … IT CANT DELAY"): the pool is REEL_LEN (44)
   // full MarkCards, but only ~7 are in the window at rest. Mounting all 44 on open was the GEARS button's 914 ms freeze
   // (4x CPU). The first frame now renders the cards within VISIBLE_CELLS of the landing cell; the rest fill in right
@@ -274,6 +281,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     }
     if (played) played.current = spin.seq;
     stopAll();
+    setPtrLive(true);
     setAtRest(false);
     setCut((c) => (c ? { ...c, res: null } : c));
     shade(0);
@@ -287,6 +295,12 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       return undefined;
     }
     const dur = spinMs(res.tier, mode);
+    // a LEGENDARY lands on the crest: decode its art DURING the spin, never on the reveal's first frame
+    if (res.tier === 'legendary' && mode === 'full' && typeof Image === 'function') {
+      const im = new Image();
+      im.src = CREST_SRC;
+      if (im.decode) im.decode().catch(() => {});
+    }
     const pow = easePow(res.tier, mode);
     const from = spinFrom(mode);
     const goal = LAND_AT + rest;
@@ -370,11 +384,21 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     anim(n.cut, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     anim(n.dim, [{ opacity: dimFor(tier) }, { opacity: 0 }], { duration: 250 }); // the reveal brings its own backdrop
     if (full) {
+      const rayO = tier === 'legendary' ? 0.16 : 0.32; // under LEGENDARY's crest the rays step back to a texture
       anim(n.cutRays, [
         { transform: 'rotate(0deg) scale(0.6)', opacity: 0 },
-        { transform: 'rotate(8deg) scale(1)', opacity: 0.32, offset: 0.1 },
-        { transform: 'rotate(60deg) scale(1)', opacity: 0.32 },
+        { transform: 'rotate(8deg) scale(1)', opacity: rayO, offset: 0.1 },
+        { transform: 'rotate(60deg) scale(1)', opacity: rayO },
       ], { duration: RAYS_MS, easing: 'cubic-bezier(.2,.6,.3,1)' });
+    }
+    // LEGENDARY: the crest SLAMS in with the card (overshoot + counter-turn), then keeps turning slowly and rests (finite)
+    if (tier === 'legendary' && full) {
+      anim(n.cutCrest, [
+        { transform: 'rotate(-28deg) scale(0.35)', opacity: 0 },
+        { transform: 'rotate(3deg) scale(1.07)', opacity: 1, offset: 0.09, easing: 'cubic-bezier(.3,1.3,.5,1)' },
+        { transform: 'rotate(0deg) scale(1)', opacity: 1, offset: 0.15, easing: 'cubic-bezier(.2,.5,.3,1)' },
+        { transform: 'rotate(24deg) scale(1)', opacity: 1 },
+      ], { duration: RAYS_MS, delay: Math.max(0, tl.land - 160) });
     }
     // SECRET: the lights go down first (over the rays), stay down through the spin-up, and come back up on the flash
     if (tl.dim) {
@@ -443,15 +467,18 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
-      const k = Math.min(burstCount(tier), SHARD_MAX); // one strong idea: 8–14 blades, never a stacked spray
-      // the blades burst from behind the card and must CLEAR it (up / down too, not only past its sides): one size read
-      // per reveal (never per frame), in the card's own untransformed box — the pool sits in the same container
+      // ONE strong idea per tier (Andy nov3): LEGENDARY's moment is its rays + slam, so it throws NO blades; EPIC / MYTHIC /
+      // SECRET throw them as an Aamon ORBIT — a ring that laps the card tip-first, then lashes out (shardPlan.orbitLashFrames).
+      // One size read per reveal (never per frame), in the card's own untransformed box — the pool sits in its container.
+      const k = Math.min(burstCount(tier), SHARD_MAX);
       const card = n.rvCard;
-      const vs = clearVectors(k, card ? card.offsetWidth : 252, card ? card.offsetHeight : 420, { reach: full ? [70, 190] : [40, 130] });
+      const cw = card ? card.offsetWidth : 252;
+      const ch = card ? card.offsetHeight : 420;
       for (let i = 0; i < k; i += 1) {
-        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: SHARD_MS - 80 + (i % 5) * 20, delay: tl.burst.at, easing: 'linear' });
+        const f = orbitLashFrames(i, k, cw, ch, { s: full ? 1.05 : 0.9, reach: full ? 150 : 100, sweep: full ? 230 : 190, lashAt: 0.58 + (i % 3) * 0.03 });
+        anim(n[`q${i}`], f, { duration: SHARD_MS - 20, delay: tl.burst.at, easing: 'linear' });
       }
-      if (full) later(() => sndShardBurst(tier), tl.burst.at);
+      if (full && k) later(() => sndShardBurst(tier), tl.burst.at);
     }
     if (tl.ring2) anim(n.rvRing1, [{ transform: 'scale(0.4) rotate(0deg)', opacity: 1 }, { transform: 'scale(1.35) rotate(10deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }], { duration: tl.ring2.ms, delay: tl.ring2.at, easing: ease.out });
     // RARE+: ONE sheen pass — the wide band asset swept across the clipped face (transform only)
@@ -562,6 +589,9 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
               {/* the burst rings: the jagged ring asset as a mask, tinted the rarity (EPIC+ one, MYTHIC+ two) */}
               <span className="rv-ring" ref={reg('rvRing0')} />
               <span className="rv-ring is-2" ref={reg('rvRing1')} />
+              {/* LEGENDARY's own idea (Andy nov3 "mythic recoloured" → its own look): a painted royal-gold SUNBURST CREST slams in
+                  behind the card (a halo its spears fan out of) and turns a little — mounted only on a LEGENDARY reveal, so its art loads only then */}
+              {cr && cr.tier === 'legendary' ? <img className="rs-cut-crest" ref={reg('cutCrest')} src={CREST_SRC} alt="" draggable="false" /> : null}
               {/* the painted blade shards burst from BEHIND the card (centred on it, under the rattle in paint order) */}
               <div className="rs-parts is-cut">
                 {PARTS.map((i) => (
@@ -615,7 +645,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         <div className="rs-light" ref={reg('light')} style={{ '--rs-tier': lineOf(tier) }}><div className="rs-rays-ink" /></div>
         {/* is-parked (design audit nov2: "EGG T|MER"): at rest the pointer's bar leaves the landed card and its top
             triangle parks ABOVE it, so the name + stats read clean; a spin brings the bar back (CSS, opacity/transform) */}
-        <div className={`rs-win${atRest ? ' is-parked' : ''}`} ref={reg('win')} data-testid="roll-band">
+        <div className={`rs-win${atRest ? ' is-parked' : ''}${ptrLive ? ' is-ptr-live' : ''}`} ref={reg('win')} data-testid="roll-band">
           <div className="rs-track" ref={reg('track')} style={{ transform: reelTransform(LAND_AT) }}>
             {CELLS.map((i) => {
               const id = strip ? strip[i] : null;

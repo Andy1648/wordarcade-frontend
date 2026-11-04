@@ -52,6 +52,16 @@ const rollUiAnims = (page) => page.evaluate(() => document.getAnimations().filte
   return el && el.closest && el.closest('.rs-overlay') && a.playState === 'running'
     && !(/^(mc-spin|mc-bob|mc-rock)$/.test(a.animationName || '') && a.effect.getTiming().iterations === Infinity);
 }).length);
+// AUTO's other honest stops: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target — or the
+// roll DROPPED a chase hero (cast.js rollChaseDrop stops AUTO). A gems-ran-out stop is neither.
+const stoppedOnHit = (page) => page.evaluate(() => {
+  const top = ['legendary', 'mythic', 'secret'];
+  const tiers = [...document.querySelectorAll('[data-testid="mark-roll-result"], [data-testid="mark-roll-extra"] [data-tier]')]
+    .map((el) => el.getAttribute('data-tier'));
+  let heroes = [];
+  try { heroes = JSON.parse(localStorage.getItem('taw.s2.heroes') || '[]'); } catch { heroes = []; }
+  return tiers.some((t) => top.includes(t)) || ['drake', 'magma', 'facet'].some((h) => heroes.includes(h));
+});
 const SPUN = 4600; // past the full spin (2.4 s every tier, NIGHT oct8) + its land beat, with room
 // ROLL v1 (#209): an EPIC+ DIM / FULL reveal stays up ("TAP TO KEEP") and its overlay takes every click until tapped.
 // A roll's tier is random, so any test that clicks after a roll taps through whatever reveal is still up (a no-op when
@@ -84,8 +94,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(page.locator('.rs-overlay')).toBeVisible(); // the tap closed the spotlight, not the ROLL screen
 
   await expect(page.getByTestId('mark-roll-10')).toHaveCount(0);
-  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN [\d,]+/);
-  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN ≤ [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN ≤ [\d,]+/);
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveText(/FREE ROLL/);
   const pityBefore = await pity(page);
@@ -147,7 +157,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
     'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 59, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 1');
   await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: SPUN });
@@ -162,7 +172,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
@@ -203,7 +213,9 @@ test('AUTO ROLL spends GEMS and stops when they run out (never touches wins)', a
   // top target). A duplicate also pays gems back (gear v4 DUPE_GEMS: rare 5), so the end balance varies with the draw.
   // What must ALWAYS hold: never negative, never wins — and when it stopped short, the shortfall shown is the real one.
   expect(after.gems).toBeGreaterThanOrEqual(0);
-  if (after.gems < 10) {
+  // main 8ef41de3 (#596) failed here on a LEGENDARY (MONSOON) landing with 5 gems left: AUTO stopped on its target, so no
+  // shortfall is shown — only a stop with NO top-target hit (and no chase drop) owes the −X
+  if (after.gems < 10 && !(await stoppedOnHit(page))) {
     const need = String(10 - after.gems);
     await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', need);
     await expect(page.locator('.rs-need')).toHaveText(`−${need}`);
@@ -434,6 +446,12 @@ test('RATES opens your next roll\'s odds per tier; Esc closes it and leaves the 
   await expect(pop.locator('.rs-rates-row')).toHaveCount(5);
   await expect(pop.locator('.rs-rates-row[data-tier="secret"] .rs-rates-odds')).toHaveText(/^1 IN [\d,.KM]+$/);
   await expect(pop.locator('.rs-rates-row[data-tier="rare"] .rs-rates-odds')).toHaveText(/^[\d.]+%$/); // never "1 IN 1"
+  // nov3 (design research move 6): the popup sits ON TOP — it used to render behind the reel panel, "visible" yet unseen
+  const onTop = await pop.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && e.contains(t); });
+  expect(onTop, 'nothing covers the odds').toBe(true);
+  // …and it states the pity guarantees
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/EPIC\+ WITHIN \d+ ROLLS?/);
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/LEGENDARY\+ WITHIN \d+ ROLLS?/);
   const box = await pop.locator('.rs-rates-x').boundingBox();
   expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
   await page.keyboard.press('Escape');

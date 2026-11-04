@@ -85,8 +85,7 @@
 }
 .rb2-now-after { display: flex; align-items: center; gap: 22px; }
 .rb2-hex { position: relative; width: 104px; height: 96px; flex: 0 0 auto; transform: rotate(-4deg); }
-.rb2-hex-plate { position: absolute; inset: 0; }
-.rb2-hex-icon { position: absolute; left: 31px; top: 26px; width: 42px; height: 42px; }
+.rb2-hex-art { position: absolute; inset: -14%; width: 128%; height: 128%; object-fit: contain; pointer-events: none; user-select: none; }
 .rb2-r { display: flex; flex-direction: column; align-items: center; }
 .rb2-cap { font-size: var(--fs-k15); color: var(--k-dim); }
 .rb2-r-now,
@@ -273,8 +272,6 @@
   .rb2-title { font-size: var(--fs-k44); }
   .rb2-left { gap: 6px; }
   .rb2-hex { width: 84px; height: 78px; }
-  .rb2-hex-plate { width: 84px; height: 78px; }
-  .rb2-hex-icon { left: 25px; top: 21px; width: 34px; height: 34px; }
   .rb2-r-now { font-size: var(--fs-k60); }
   .rb2-r-after { font-size: var(--fs-k76); }
   .rb2-actions { margin-top: 2px; }
@@ -312,8 +309,6 @@
   .rb2-left { gap: 6px; }
   .rb2-now-after { gap: 12px; }
   .rb2-hex { width: 60px; height: 56px; }
-  .rb2-hex-plate { width: 60px; height: 56px; }
-  .rb2-hex-icon { left: 15px; top: 12px; width: 30px; height: 30px; }
   .rb2-r-now { font-size: var(--fs-k44); }
   .rb2-r-after { font-size: var(--fs-k60); -webkit-text-stroke-width: 6px; text-shadow: 5px 5px 0 var(--k-ink); }
   .rb2-arrow { width: 44px; height: 28px; }
@@ -356,6 +351,8 @@
 .rb2-r--after { position: relative; }
 .rb2-ms.is-jackpot .rb2-ms-r { color: #FFE94A; }
 /* the stamp: invisible at rest, ONE finite slam on a jackpot rebirth (RebirthV2 JACKPOT_SLAM) */
+/* the painted blade burst (gains/ShardBurst) flies UNDER the JACKPOT stamp — the stamp is the read, the blades frame it */
+.rb2 > .gsb { z-index: 29; }
 .rb2-jack {
   position: fixed;
   left: 50%;
