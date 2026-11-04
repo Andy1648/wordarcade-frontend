@@ -434,7 +434,7 @@ test('086: a dispute flags the Google account too (pay_claw2), not only the prof
 test('086 SQL: Google-only RPCs, unlink revokes devices, relink wait, cap + flags by auth uid, claw by ratio', async () => {
   const fs = await import('node:fs');
   const sql = fs.readFileSync(new URL('../../supabase/migrations/086_pay_auth_hardening.sql', import.meta.url), 'utf8');
-  assert.equal(/[^\x00-\x7F]/.test(sql), false, 'ASCII only');
+  assert.equal([...sql].some((ch) => ch.charCodeAt(0) > 127), false, 'ASCII only');
   for (const fn of ['lb_auth_status', 'lb_auth_link', 'lb_auth_restore', 'lb_auth_unlink']) {
     const body = sql.split(`create or replace function public.${fn}(`)[1].split('end $$;')[0];
     assert.match(body, /private\.auth_is_google\(\)/, `${fn} is Google-only`);
