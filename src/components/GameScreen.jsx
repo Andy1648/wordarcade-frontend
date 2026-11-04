@@ -1511,6 +1511,8 @@ export default function GameScreen({
   payoutLedger = null,
   winnerPay = null,
   lastLanding = null,
+  // SPECTATE (nov4): watching a public game from the room list - never a player; no input, no rematch
+  watchOnly = false,
 }) {
   // YOUR seat shows YOUR equipped hero (oct18, Andy: cosmetics should show "in game as well so people get the full
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
@@ -2805,6 +2807,7 @@ export default function GameScreen({
         payoutLedger={payoutLedger}
         winnerPay={winnerPay}
         lastLanding={lastLanding}
+        watchOnly={watchOnly}
       />
     );
   }
@@ -3242,6 +3245,10 @@ export default function GameScreen({
                   because the fixed corner version sat on top of SKIP at phone widths. */}
               {/* STEP 54: the room code stays on screen during the game, so a friend can join
                   mid-round (they watch, then get dealt in at the next turn). */}
+              {/* SPECTATE: a watcher's badge joins this cluster (never a fixed orphan, never over the prompt) */}
+              {watchOnly && (
+                <span className="game-watch-pill" role="status" data-testid="watch-chip">SPECTATING</span>
+              )}
               {roomCode && (
                 <span className="game-room-code" title="Friends can join with this code — they're dealt in next turn">
                   ROOM <b>{roomCode}</b>
@@ -3688,7 +3695,10 @@ export default function GameScreen({
         <div className="wb-bottombar" ref={wbBarRef}>
         {/* PAUSE TO LEARN (P9c): an edge card in the bottom cluster (absolute, pointer-events:none), never centre. */}
         {learn ? <div className="wb-learn-anchor"><LearnCard key={learn.key} word={learn.word} combo={learn.combo} ms={learn.ms} onDone={() => setLearn(null)} /></div> : null}
-        {isSpectating ? (
+        {watchOnly ? (
+          /* SPECTATE: a watcher has no seat - one static line where the input would be */
+          <div className="game-watch-bar" data-testid="watch-bar">YOU&apos;RE WATCHING · A SEAT OPENS IF THEY PLAY AGAIN</div>
+        ) : isSpectating ? (
           /* Spectators get quick-react buttons where the input used to be. */
           <div className="spectator-reactions">
             {['💀', '🔥', '😂', '👏'].map((emoji) => (
@@ -4003,7 +4013,7 @@ export default function GameScreen({
                   <>
                     <RebirthReadyButton onGo={onLeave} className="is-compact" />
                     <ClaimPrompt />
-                    <NearMiss mode="word-bomb" onPlay={onRematch} disabled={rematchPending} />
+                    {watchOnly ? null : <NearMiss mode="word-bomb" onPlay={onRematch} disabled={rematchPending} />}
                     <TryModeRow current="word-bomb" />
                   </>
                 )}
@@ -4021,10 +4031,15 @@ export default function GameScreen({
                         MENU
                       </button>
                     )}
-                    {/* any remaining player can restart (mp-audit MEDIUM #3); a second press is a server no-op */}
-                    <button type="button" className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
-                      {rematchPending ? 'STARTING...' : 'PLAY AGAIN'}
-                    </button>
+                    {/* any remaining player can restart (mp-audit MEDIUM #3); a second press is a server no-op.
+                        A WATCHER has no seat to restart from: if they play again, it is seated in the lobby. */}
+                    {watchOnly ? (
+                      <p className="game-watch-note">WATCHING · IF THEY PLAY AGAIN YOU GET A SEAT</p>
+                    ) : (
+                      <button type="button" className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                        {rematchPending ? 'STARTING...' : 'PLAY AGAIN'}
+                      </button>
+                    )}
                   </div>
                 )}
               />
@@ -4384,6 +4399,7 @@ function CategoryBlitzScreen({
   payoutLedger = null,
   winnerPay = null,
   lastLanding = null,
+  watchOnly = false, // SPECTATE: see GameScreen's prop
 }) {
   // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
   // state is not in scope here, and referencing it compiled fine while being undefined at runtime.
@@ -4562,7 +4578,8 @@ function CategoryBlitzScreen({
   useEffect(() => {
     if (roundNumber != null && roundNumber !== prevRoundRef.current) {
       prevRoundRef.current = roundNumber;
-      setShowCountdown(true);
+      // SPECTATE: a watcher's snapshot lands MID-round (round_start { spectate }) - no 3-2-1 over a live round
+      if (!(categoryRound && categoryRound.spectate)) setShowCountdown(true);
       streak.reset();
     }
     // streak.reset is stable; we only react to the round number changing.
@@ -4881,9 +4898,13 @@ function CategoryBlitzScreen({
                   rematch from any seat), so a non-host is never stranded at game-over with
                   no way to play again — the dead "WAITING FOR HOST" cue is gone. Both
                   players hitting REMATCH is safe (the second reset is a no-op). */}
-              <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
-                {rematchPending ? 'REMATCHING...' : 'REMATCH'}
-              </button>
+              {watchOnly ? (
+                <p className="game-watch-note">WATCHING · IF THEY REMATCH YOU GET A SEAT</p>
+              ) : (
+                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                  {rematchPending ? 'REMATCHING...' : 'REMATCH'}
+                </button>
+              )}
               {offerMenu ? null : (
                 <button
                   className="game-over-leave secondary"
@@ -4905,7 +4926,7 @@ function CategoryBlitzScreen({
                 mode — the one played least — so game-over is a fork, not a loop back into the same
                 mode. Renders nothing when everything else is still locked. */}
             <ClaimPrompt />
-            <NearMiss mode="category-blitz" onPlay={onRematch} disabled={rematchPending} />
+            {watchOnly ? null : <NearMiss mode="category-blitz" onPlay={onRematch} disabled={rematchPending} />}
             <TryModeRow current="category-blitz" />
           </div>
         </div>
@@ -5141,35 +5162,42 @@ function CategoryBlitzScreen({
                 mode={cbSubmitLetters.mode}
               />
             )}
-            <input
-              ref={inputRef}
-              className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
-              type="text"
-              value={draft}
-              onChange={(event) => {
-                const value = event.target.value;
-                noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
-                // Soft key tick on actual character entry (parity with Word Bomb).
-                if (value.length > draft.length) sound.keystroke();
-                setDraft(value);
-              }}
-              onKeyDown={handleKeyDown}
-              disabled={showCountdown}
-              aria-label="Type an answer for the category"
-              placeholder="NAME ONE…"
-              maxLength={32}
-              autoComplete="off"
-              spellCheck="false"
-            />
-            <button className="game-send-btn" onClick={submit}>
-              SEND
-            </button>
+            {watchOnly ? (
+              /* SPECTATE: a watcher has no seat - one static line where the answer field would be */
+              <div className="game-watch-bar" data-testid="watch-bar">YOU&apos;RE WATCHING · A SEAT OPENS IF THEY REMATCH</div>
+            ) : (
+              <>
+                <input
+                  ref={inputRef}
+                  className={`game-input${checkingAnswer ? ' cb-checking' : ''}`}
+                  type="text"
+                  value={draft}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    noteTypedLetters(draft, value, 'category-blitz'); // v11: LETTERS fill the bar (batched)
+                    // Soft key tick on actual character entry (parity with Word Bomb).
+                    if (value.length > draft.length) sound.keystroke();
+                    setDraft(value);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  disabled={showCountdown}
+                  aria-label="Type an answer for the category"
+                  placeholder="NAME ONE…"
+                  maxLength={32}
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+                <button className="game-send-btn" onClick={submit}>
+                  SEND
+                </button>
+              </>
+            )}
             {/* Stable wrapper: mount the keyed "+1" once per accept (see above). */}
             <div style={{ display: 'contents' }}>
               {hypeKey > 0 && <FloatingScore key={hypeKey} />}
             </div>
             {/* ONE-TIME first-game spotlight — only once the countdown is done and you can type. */}
-            {gameSpot && !showCountdown && (
+            {gameSpot && !showCountdown && !watchOnly && (
               <Spotlight
                 targetSelector=".game-input"
                 caption="NAME SOMETHING IN THE CATEGORY"

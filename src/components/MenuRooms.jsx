@@ -15,6 +15,8 @@
 //    Hidden at zero rooms (Andy nov2).
 // LAZY (payload ratchet): Homepage loads this chunk only after the first public_rooms reply; the poll lives in
 // menuRoomsPoll.js (eager, tiny).
+// SPECTATE (nov4): a live public game stays listed (list_public_rooms { withLive }) as PLAYING → SPECTATE (App's
+// handleWatchPublicRoom, the read-only watch); a waiting room is IN LOBBY → JOIN. Lobbies first, then live games.
 // Motion: static at rest; a row's one-shot enter (transform/opacity) and hover/press only — no loops.
 import { useEffect, useState } from 'react';
 import { GAMES } from '../gameData';
@@ -29,12 +31,16 @@ const MODE = GAMES.reduce((acc, g) => {
 }, {});
 const modeOf = (type) => MODE[type] || { label: String(type || 'GAME').replace(/-/g, ' ').toUpperCase(), color: '#2EFFE0', art: null };
 
-/** Fullest first (the same order Quick Play fills in), then the server's order. Pure. */
+/** A live game (watch it) rather than a lobby (join it). Pure. */
+export const isLive = (r) => !!r && r.status === 'playing';
+
+/** Lobbies first, fullest first (the same order Quick Play fills in), then live games; ties keep the server's order.
+ *  A full LOBBY is dropped (the server never lists one; belt and braces); a live game is listed full or not. Pure. */
 export function sortRooms(rooms) {
   return (Array.isArray(rooms) ? rooms : [])
-    .filter((r) => r && r.code && !(r.maxPlayers && r.playerCount >= r.maxPlayers)) // the server never lists a full room; belt and braces
+    .filter((r) => r && r.code && (isLive(r) || !(r.maxPlayers && r.playerCount >= r.maxPlayers)))
     .map((r, i) => ({ r, i }))
-    .sort((a, b) => (b.r.playerCount || 0) - (a.r.playerCount || 0) || a.i - b.i)
+    .sort((a, b) => (isLive(a.r) - isLive(b.r)) || (b.r.playerCount || 0) - (a.r.playerCount || 0) || a.i - b.i)
     .map((x) => x.r);
 }
 
@@ -43,8 +49,10 @@ function RoomRow({ room, joining, onJoin, delay }) {
   const hero = room.hostHero && isHeroId(room.hostHero) ? room.hostHero : null;
   const who = room.hostName || mode.label;
   const busy = joining === room.code;
+  const live = isLive(room);
+  const action = live ? 'SPECTATE' : 'JOIN';
   return (
-    <li className="mr-row" style={{ '--mr-accent': mode.color, '--mr-delay': `${delay}ms` }} data-testid="menu-room-row" data-code={room.code}>
+    <li className={`mr-row${live ? ' is-live' : ''}`} style={{ '--mr-accent': mode.color, '--mr-delay': `${delay}ms` }} data-testid="menu-room-row" data-code={room.code}>
       <span className={`mr-face${hero ? ' is-hero' : ' is-mode'}`} aria-hidden="true">
         {hero
           ? <img src={`/cast/${hero}-hero.webp`} alt="" width="512" height="512" decoding="async" draggable="false" />
@@ -61,16 +69,19 @@ function RoomRow({ room, joining, onJoin, delay }) {
           {hero && mode.art ? <img className="mr-modeico" src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" /> : null}
           <span className="mr-mode">{mode.label}</span>
         </span>
-        <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
+        <span className="mr-right">
+          <span className={`mr-status${live ? ' is-live' : ''}`} data-testid="menu-room-status">{live ? 'PLAYING' : 'IN LOBBY'}</span>
+          <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
+        </span>
       </span>
       <button
         type="button"
-        className="mr-join"
-        disabled={!!joining}
-        onClick={() => onJoin(room.code)}
-        aria-label={`Join ${who}'s ${mode.label} room, ${room.playerCount} of ${room.maxPlayers} players`}
+        className={`mr-join${live ? ' is-watch' : ''}`}
+        disabled={!!joining || (live && room.canSpectate === false)}
+        onClick={() => onJoin(room)}
+        aria-label={`${live ? 'Spectate' : 'Join'} ${who}'s ${mode.label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players`}
       >
-        {busy ? '…' : 'JOIN'}
+        {busy ? '…' : action}
       </button>
     </li>
   );
@@ -83,6 +94,7 @@ export default function MenuRooms({
   maxRows = null, // null = by screen height (below); a number pins it (tests)
   name,
   onJoin,
+  onWatch,
   onCreate,
   onNavigate,
   onOpenAll,
@@ -119,13 +131,17 @@ export default function MenuRooms({
   }
 
   // only App's EXISTING handlers (the ones JOIN ROOM uses); App owns every view change
-  const handleJoin = (code) => {
-    if (joining || navigating || !onJoin) return;
+  const handleJoin = (room) => {
+    const live = isLive(room);
+    const go = live ? onWatch : onJoin;
+    if (joining || navigating || !go) return;
     const n = (name || '').trim();
     if (!n) { if (onOpenAll) onOpenAll(); return; } // no name yet: the JOIN ROOM screen asks for one
     sound.click();
-    setJoining(code);
-    onJoin(code, n); // join_room → App's room_update path (functional setView) / failure → JOIN ROOM screen
+    setJoining(room.code);
+    // join_room → App's room_update path (functional setView) / spectate_room → App's watch path; a failure of
+    // either lands on the JOIN ROOM screen
+    go(room.code, n);
   };
   const handleCreate = () => {
     if (navigating || !onCreate) return;
