@@ -26,9 +26,42 @@ client), `src/components/PaidGemsShelf.jsx`, SQL `claude/082_paid_gems.sql` (= `
 5. Note: Stripe lists in-game currency as a restricted business unless you operate the game — say so plainly in the
    description. If Stripe asks, the answer is: we run the game, gems never leave it, no cash-out.
 
+## 1b. SIGN IN WITH GOOGLE (required to buy; optional to play) — do this BEFORE step 2
+
+Buying gems needs a Google account linked to the player's board name (085): the purchase is tied to that account on the
+server, and the same account restores the progress on any new device. Playing never needs it.
+
+1. **Google Cloud Console** (console.cloud.google.com) → create a project (e.g. "Type A Word") →
+   **APIs & Services → OAuth consent screen**: External, app name **Type A Word**, support email, logo optional,
+   scopes: the default `openid`, `email`, `profile` only. Publish the app (Testing mode only lets listed test users in).
+2. **APIs & Services → Credentials → Create credentials → OAuth client ID** → type **Web application**:
+   * Authorized JavaScript origins: `https://typeaword.com`
+   * Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase shows the exact one
+     on the Google provider page). Copy the **Client ID** and **Client secret**.
+3. **Supabase → Authentication → Sign In / Providers → Google**: turn it ON, paste the Client ID + Client secret, save.
+   (Leave email sign-up as it is; the game only ever sends people to Google.)
+4. **Supabase → Authentication → URL Configuration**:
+   * Site URL: `https://typeaword.com`
+   * Redirect URLs (add each): `https://typeaword.com/**`, `https://*.vercel.app/**` (previews),
+     `http://localhost:5173/**` and `http://localhost:4173/**` (local testing)
+5. Run **085_google_signin.sql** after 082 / 084 (step 2 below lists the order), then `notify pgrst, 'reload schema';`
+6. Check: Settings → SAVE CODE → **SIGN IN WITH GOOGLE** → pick an account → back on the menu a stamp says
+   "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT". On a second browser, sign in with the same account → it asks
+   "LOAD YOUR PROGRESS?" (or loads straight away on a fresh browser) and comes back as the same name and level.
+
+7. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_ON` = `1` (Production +
+   Preview), then redeploy. Until then the game shows no sign-in button anywhere and ignores a sign-in landing, so it can
+   ship dark before steps 1–5 are done. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
+
+What is stored: only the Supabase auth user id and which board name it is linked to (`private.auth_links`). The email
+Google returns stays inside Supabase Auth; the game shows it only to the signed-in player, in their own Settings, on
+their own device. No new env var is needed — the checkout function checks the session with the existing
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (set them for **Production + Preview** if they aren't already).
+
 ## 2. Run the SQL (Supabase SQL editor)
 
-Run `claude/082_paid_gems.sql` once, after every earlier migration. It ends with `notify pgrst, 'reload schema';`.
+Run `claude/082_paid_gems.sql` once, after every earlier migration, THEN `claude/085_google_signin.sql` (section 1b — buying needs
+it: until 085 runs, every checkout is refused). Each ends with `notify pgrst, 'reload schema';` (run it once more after 085).
 It creates the purchases table (one row per Stripe checkout session — the idempotency key), the paid-gems ledger,
 reservations (the monthly cap), flags (disputed accounts), the service-role-only `pay_reserve / pay_release / pay_grant /
 pay_claw`, the player's `pay_gems_pending / pay_gems_ack`, and re-declares `private.gem_budget` (036, unchanged) **+ net

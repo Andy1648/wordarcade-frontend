@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import './PaidGemsShelf.css';
 import KitIcon from './kit/KitIcon.jsx';
 import RatesPop from './rollScreen/RatesPop.jsx';
+import { useAuthSession, GoogleButton } from './account/GoogleAccount.jsx';
 import { PACKS, MONTHLY_CAP_CENTS, formatUsd, capLeft, fitsCap, packById } from '../payments/packs.js';
 import { fetchPaid, applyPaid, startCheckout, hasProfile } from '../payments/payClient.js';
 import { formatNum } from '../format';
@@ -29,6 +30,8 @@ const NOTE = {
   flagged: 'BUYING IS OFF FOR THIS ACCOUNT — A PARENT CAN REPLY TO THE RECEIPT',
   off: 'BUYING GEMS IS NOT OPEN YET',
   offline: 'CAN’T REACH CHECKOUT — TRY AGAIN',
+  sign_in: 'SIGN IN WITH GOOGLE TO BUY GEMS',
+  not_linked: 'THIS GOOGLE ACCOUNT IS ON A DIFFERENT NAME — CHECK SETTINGS → ACCOUNT',
 };
 
 export default function PaidGemsShelf() {
@@ -37,6 +40,7 @@ export default function PaidGemsShelf() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState(null);
   const goRef = useRef(null);
+  const signed = useAuthSession(); // 085: REQUIRED TO BUY — the packs show once a Google account is signed in
 
   useEffect(() => {
     let live = true;
@@ -84,7 +88,13 @@ export default function PaidGemsShelf() {
         <span className="pg-parent-t">Gems cost real money. A parent or guardian pays on the next page.</span>
       </div>
 
-      {chosen ? (
+      {!signed ? (
+        <div className="pg-signin" data-testid="pay-signin">
+          <span className="pg-signin-h">SIGN IN TO BUY GEMS</span>
+          <span className="pg-signin-t">Every purchase stays on your Google account, on any device.</span>
+          <GoogleButton />
+        </div>
+      ) : chosen ? (
         <div className="pg-confirm" role="group" aria-label={`Buy ${chosen.gems} gems for ${formatUsd(chosen.cents)}`} data-testid="pay-confirm">
           <img className="pg-confirm-art" src={chosen.art} width="256" height="256" alt="" draggable="false" />
           <div className="pg-confirm-txt">

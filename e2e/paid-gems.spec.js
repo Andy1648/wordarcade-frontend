@@ -10,7 +10,8 @@ import { menuReady, navControl } from './support/menu.js';
 
 const SECRET = 'd'.repeat(48);
 
-async function boot(page, { query = '', gems = 40, pending = { rows: [], spent_cents: 0, cap_cents: 2000, flagged: false, profile: true } } = {}) {
+// signedIn: a SIGN IN WITH GOOGLE session (085 — buying needs one; the packs show only then)
+async function boot(page, { query = '', gems = 40, signedIn = true, pending = { rows: [], spent_cents: 0, cap_cents: 2000, flagged: false, profile: true } } = {}) {
   await installBackendMock(page);
   const calls = { checkout: [], pending: 0, ack: [] };
   await page.route('**/api/checkout', async (route) => {
@@ -27,9 +28,10 @@ async function boot(page, { query = '', gems = 40, pending = { rows: [], spent_c
     calls.ack.push(route.request().postDataJSON());
     await route.fulfill({ status: 200, contentType: 'application/json', body: '1' });
   });
-  await page.addInitScript(({ gems, secret }) => {
+  await page.addInitScript(({ gems, secret, signedIn }) => {
     if (sessionStorage.getItem('pg.seeded')) return;
     sessionStorage.setItem('pg.seeded', '1');
+    if (signedIn) localStorage.setItem('taw.auth', JSON.stringify({ access: 'e2e-access-token', refresh: 'r', exp: Date.now() + 3600000, email: 'parent@example.com' }));
     for (const k of ['init', 'gems', 'power', 'gears', 'markRolls', 'rebirth', 'board', 'keyTier']) localStorage.setItem('taw.tut.' + k, '1');
     localStorage.setItem('taw.seenMenu', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
@@ -41,7 +43,7 @@ async function boot(page, { query = '', gems = 40, pending = { rows: [], spent_c
     const d = new Date();
     const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     localStorage.setItem('taw.s2.drop', JSON.stringify({ day, claimed: true, tier: 'rare' }));
-  }, { gems, secret: SECRET });
+  }, { gems, secret: SECRET, signedIn });
   await page.goto(`/?portal=1&season2=1${query}`);
   await menuReady(page);
   return calls;
@@ -134,8 +136,32 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await page.screenshot({ path: `test-results/paid-gems-confirm-${vp.width}.png` });
     await page.getByTestId('pay-go').click();
     await expect.poll(() => calls.checkout.length).toBe(1);
-    expect(calls.checkout[0]).toEqual({ pack: 'pile', secret: SECRET }); // NO amount, NO gems — the server prices it
+    expect(calls.checkout[0]).toEqual({ pack: 'pile', secret: SECRET, access: 'e2e-access-token' }); // NO amount, NO gems — the server prices it; 085: the Google session
     await page.waitForURL(/[?&]paid=1/).catch(() => {}); // the mocked "Stripe" sends us straight back
+  });
+}
+
+for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+  test(`@${vp.width}: not signed in — the GEMS shelf asks for SIGN IN WITH GOOGLE instead of the packs (085), and fits`, async ({ page }) => {
+    await page.setViewportSize(vp);
+    const calls = await boot(page, { query: '&payments=1&google=1', signedIn: false });
+    await openShop(page);
+    await page.locator('.sp2-tab[data-shelf="gems"]').click();
+    const gate = page.getByTestId('pay-signin');
+    await expect(gate).toBeVisible();
+    await expect(gate.getByTestId('google-signin')).toBeVisible();
+    await expect(page.locator('.pg-pack')).toHaveCount(0);
+    await expect(page.getByTestId('pay-parent')).toBeVisible(); // ASK A PARENT still heads it
+    const m = await gate.evaluate((el) => {
+      const s = el.closest('.sp2-stock').getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const b = el.querySelector('[data-testid="google-signin"]').getBoundingClientRect();
+      return { inside: r.left >= s.left - 1 && r.right <= s.right + 1, btnH: b.height, btnIn: b.left >= r.left && b.right <= r.right };
+    });
+    expect(m.inside && m.btnIn).toBe(true);
+    expect(m.btnH).toBeGreaterThanOrEqual(44);
+    if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/gems-signin-${vp.width}.png` });
+    expect(calls.checkout.length).toBe(0);
   });
 }
 

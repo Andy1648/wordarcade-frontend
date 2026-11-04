@@ -115,6 +115,13 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
+// SIGN IN WITH GOOGLE (085): back from Google (main.jsx __TAW_SIGNIN), or a restore still waiting on the player's OK
+import { GOOGLE_ON } from '../leaderboard/googleFlag.js';
+const AuthLanding = lazyWithReload(() => import('./account/AuthLanding.jsx'), 'AuthLanding');
+const authLanding = () => {
+  if (!GOOGLE_ON) return false; // VITE_GOOGLE_ON off: no landing, ever (googleFlag.js)
+  try { return !!(window.__TAW_SIGNIN || localStorage.getItem('taw.auth.pending')); } catch { return false; }
+};
 // the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
 const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
 import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
@@ -730,6 +737,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
+  const [authLand, setAuthLand] = useState(authLanding);
   // THE WHEEL'S GEMS FLY HOME (design research move 10): a gem prize is paid under the wheel's scrim, where the menu's
   // GEMS pill can't be seen — so the pill HOLDS them (gemsInFlight) until the wheel closes, then six painted gems arc
   // from the WHEEL tile into it and it counts each one in as it lands (KitFlyLayer, pooled). Everything else that
@@ -1799,6 +1807,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {gemFly ? (
         <Suspense fallback={null}>
           <GemFly ref={gemFlyMounted} target={() => [...document.querySelectorAll('.menu-gems-chip .kp-icon')].find((el) => el.getClientRects().length)} icon="gems" />
+        </Suspense>
+      ) : null}
+      {authLand ? (
+        <Suspense fallback={null}>
+          <AuthLanding landing={window.__TAW_SIGNIN} onDone={() => { window.__TAW_SIGNIN = null; setAuthLand(false); }} />
         </Suspense>
       ) : null}
       {showWheel && (

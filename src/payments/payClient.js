@@ -1,5 +1,6 @@
 // payClient.js — the browser half of PAID GEMS (LAZY: only loaded when payments/flag.js says ON).
-//   startCheckout(packId)  POST /api/checkout { pack, secret } -> redirect to Stripe Checkout. NEVER an amount.
+//   startCheckout(packId)  POST /api/checkout { pack, secret, access } -> redirect to Stripe Checkout. NEVER an amount.
+//                          access = the SIGN IN WITH GOOGLE session (085: buying needs one; no session -> 'sign_in').
 //   fetchPaid()            082 pay_gems_pending: the paid-gem ledger rows this browser has not applied yet, plus this
 //                          month's spend and cap (the shelf's "left this month" line).
 //   applyPaid(rows)        applies each row ONCE (the ids are remembered in taw.pay.applied, so a lost ack can never pay
@@ -44,12 +45,15 @@ export function hasProfile() {
 }
 
 /** -> { ok: true } after starting the redirect, or { ok: false, reason, spent_cents?, cap_cents? }. */
-export async function startCheckout(packId, { fetchImpl = globalThis.fetch, go = (u) => window.location.assign(u) } = {}) {
+const authSession = async () => (await import('../leaderboard/auth.js')).session();
+export async function startCheckout(packId, { fetchImpl = globalThis.fetch, go = (u) => window.location.assign(u), getSession = authSession } = {}) {
   const secret = peekSecret();
   if (!secret) return { ok: false, reason: 'no_profile' };
+  const s = await getSession().catch(() => null);
+  if (!s || !s.access) return { ok: false, reason: 'sign_in' };
   let r;
   try {
-    r = await fetchImpl('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pack: packId, secret }) });
+    r = await fetchImpl('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pack: packId, secret, access: s.access }) });
   } catch {
     return { ok: false, reason: 'offline' };
   }
