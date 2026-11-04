@@ -13,6 +13,7 @@
 // (taw.auth) so Settings can say whose account is signed in — never sent anywhere, never shown publicly.
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, restoreFromCloud, adoptSecret } from './client.js';
 import { wipeProgressKeys, localScore, progressScoreFromKeys } from '../save/cloudSave.js';
+import { GOOGLE_ON } from './googleFlag.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -21,7 +22,7 @@ const BASE = RAW_URL.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
 export const AUTH_KEY = 'taw.auth'; // { access, refresh, exp (ms), email }
 export const AUTH_PENDING_KEY = 'taw.auth.pending'; // the restore waiting on the player's OK: { username, level, rebirths }
 export const AUTH_CHANGE = 'taw:auth-change';
-export const authAvailable = () => LEADERBOARD_ENABLED && !!BASE && !!KEY;
+export const authAvailable = () => GOOGLE_ON && LEADERBOARD_ENABLED && !!BASE && !!KEY; // VITE_GOOGLE_ON (googleFlag.js)
 
 const tell = () => { try { window.dispatchEvent(new Event(AUTH_CHANGE)); } catch { /* node */ } };
 function readJson(k) {

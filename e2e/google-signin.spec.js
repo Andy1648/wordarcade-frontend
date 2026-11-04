@@ -37,6 +37,7 @@ async function mockAuth(page, shared, calls) {
     const back = new URL(u.searchParams.get('redirect_to'));
     back.searchParams.set('portal', '1');
     back.searchParams.set('season2', '1');
+    back.searchParams.set('google', '1'); // the e2e build's flag (googleFlag.js), as the page that left had it
     back.hash = `access_token=${TOKEN}&refresh_token=r1&expires_in=3600&token_type=bearer`;
     return route.fulfill({ status: 302, headers: { location: back.toString() } });
   });
@@ -70,7 +71,7 @@ async function mockAuth(page, shared, calls) {
   });
 }
 
-async function device(browser, shared, { save, own = false, viewport = { width: 1280, height: 720 } }) {
+async function device(browser, shared, { save, own = false, google = true, viewport = { width: 1280, height: 720 } }) {
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
   const calls = [];
@@ -97,7 +98,7 @@ async function device(browser, shared, { save, own = false, viewport = { width: 
       localStorage.setItem('taw.s2.wins', '12');
     }
   }, { secret: SECRET, id: ID, save, own });
-  await page.goto('/?portal=1&season2=1');
+  await page.goto(`/?portal=1&season2=1${google ? '&google=1' : ''}`);
   await menuReady(page);
   return { ctx, page, calls };
 }
@@ -199,5 +200,24 @@ test('signing out keeps the progress, the name and the device secret; Settings s
   expect(await raw(a.page, 'taw.lb.secret')).toBe(SECRET);
   expect(JSON.parse(await raw(a.page, 'taw.lb.profile')).username).toBe('GoogleKid');
   expect(await raw(a.page, 'taw.s2.wins')).toBe('777');
+  await a.ctx.close();
+});
+
+test('VITE_GOOGLE_ON off (no ?google=1 in the e2e build, as production ships until the provider is set up): no button anywhere, no landing', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  const a = await device(browser, shared, { save: true, google: false });
+  await a.page.locator('[data-nav="settings"]:visible').first().click();
+  await a.page.locator('.sp-sheet').waitFor({ state: 'visible' });
+  await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
+  await expect(a.page.getByTestId('sp-account')).toHaveCount(0);
+  await expect(a.page.getByTestId('google-signin')).toHaveCount(0);
+  // a stray token in the URL is not picked up either
+  await a.page.goto('/?portal=1&season2=1#access_token=x.y.z&expires_in=3600');
+  await menuReady(a.page);
+  await a.page.waitForTimeout(800);
+  expect(await raw(a.page, 'taw.auth')).toBeNull();
+  await expect(a.page.getByTestId('auth-stamp')).toHaveCount(0);
+  expect(a.calls).toEqual([]);
   await a.ctx.close();
 });

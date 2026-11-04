@@ -87,6 +87,9 @@ export default defineConfig({
       // PAID GEMS (payments/flag.js): the e2e build honours ?payments=1, so e2e/paid-gems.spec.js can test the GEMS
       // shelf both hidden (no param — what production ships with the flag off) and shown. Production never sets it.
       VITE_PAYMENTS_E2E: '1',
+      // SIGN IN WITH GOOGLE (leaderboard/googleFlag.js): the e2e build honours ?google=1 — hidden without it, as
+      // production ships until VITE_GOOGLE_ON=1. Production never sets it.
+      VITE_GOOGLE_E2E: '1',
     },
   },
 });

@@ -144,7 +144,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   test(`@${vp.width}: not signed in — the GEMS shelf asks for SIGN IN WITH GOOGLE instead of the packs (085), and fits`, async ({ page }) => {
     await page.setViewportSize(vp);
-    const calls = await boot(page, { query: '&payments=1', signedIn: false });
+    const calls = await boot(page, { query: '&payments=1&google=1', signedIn: false });
     await openShop(page);
     await page.locator('.sp2-tab[data-shelf="gems"]').click();
     const gate = page.getByTestId('pay-signin');

@@ -49,6 +49,10 @@ server, and the same account restores the progress on any new device. Playing ne
    "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT". On a second browser, sign in with the same account → it asks
    "LOAD YOUR PROGRESS?" (or loads straight away on a fresh browser) and comes back as the same name and level.
 
+7. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_ON` = `1` (Production +
+   Preview), then redeploy. Until then the game shows no sign-in button anywhere and ignores a sign-in landing, so it can
+   ship dark before steps 1–5 are done. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
+
 What is stored: only the Supabase auth user id and which board name it is linked to (`private.auth_links`). The email
 Google returns stays inside Supabase Auth; the game shows it only to the signed-in player, in their own Settings, on
 their own device. No new env var is needed — the checkout function checks the session with the existing

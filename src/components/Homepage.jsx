@@ -116,8 +116,10 @@ const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
 // SIGN IN WITH GOOGLE (085): back from Google (main.jsx __TAW_SIGNIN), or a restore still waiting on the player's OK
+import { GOOGLE_ON } from '../leaderboard/googleFlag.js';
 const AuthLanding = lazyWithReload(() => import('./account/AuthLanding.jsx'), 'AuthLanding');
 const authLanding = () => {
+  if (!GOOGLE_ON) return false; // VITE_GOOGLE_ON off: no landing, ever (googleFlag.js)
   try { return !!(window.__TAW_SIGNIN || localStorage.getItem('taw.auth.pending')); } catch { return false; }
 };
 // the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
