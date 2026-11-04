@@ -149,6 +149,11 @@
   .credits-title { font-size: var(--fs-panel); }
   .credits-link { font-size: var(--fs-body) /* floor: tappable text is never below 16px */; }
 }
-/* the LEGAL links: two real tap targets side by side */
-.credits-legal { display: flex; flex-wrap: wrap; gap: 8px 22px; }
-.credits-legal .credits-link { display: inline-flex; align-items: center; min-height: 44px; }
+/* PRIVACY · TERMS: one quiet row under the boxes — two real 44px tap targets, no box of their own */
+.credits-legal { display: flex; justify-content: center; gap: 28px; margin-top: 12px; }
+.credits-legal-link {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px;
+  font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.1em;
+  color: #c9b8e8; text-decoration: underline; text-underline-offset: 4px;
+}
+.credits-legal-link:hover { color: #2EFFE0; }
