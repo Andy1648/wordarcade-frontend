@@ -40,6 +40,9 @@
 .mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 300px; display: block; pointer-events: none; }
 /* MYTHIC / SECRET frame variant (public/fx/frame-<tier>.svg, drawn on a 228×348 box round the 180×300 card) */
 .mc-frame-x { position: absolute; left: -24px; top: -24px; width: 228px; height: 348px; display: block; pointer-events: none; }
+/* PAINTED frame ornaments (nov4: RARE / EPIC / LEGENDARY lifted toward MYTHIC) — a 260x400 box, the card at (40,50), so the
+   crest and the drips have room; the card's own body is cleared out of the art, so it never covers the text */
+.mc-frame-x--paint { left: -40px; top: -50px; width: 260px; height: 400px; }
 
 /* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
 .mc-head {

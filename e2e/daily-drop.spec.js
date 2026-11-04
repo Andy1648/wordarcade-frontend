@@ -1,6 +1,6 @@
 // e2e/daily-drop.spec.js — THE DAILY FREE DROP (season 2; v3/dailyDrop.js + components/DailyDrop.jsx), the top tile
 // of the UPGRADES screen:
-//   1. a fresh day lights the UPGRADES dot; 4 taps open the chest, it pays the rolled tier (MYTHIC = ×5 OVERDRIVE
+//   1. a fresh day lights the UPGRADES dot; 4 taps open the chest, it pays the rolled tier (MYTHIC = ×15 OVERDRIVE
 //      through the STOCK's own path), the tile shows the reward + NEXT IN to local midnight, the dot clears;
 //   2. COMMON pays +15 gems through the gem door (the pill moves), and a claimed day never pays twice;
 //   3. the ⓘ shows the printed odds; the drop is the DAILY CHEST shelf item (Andy oct10) whose popup holds the chest;
@@ -58,7 +58,7 @@ const stored = (page) => page.evaluate(() => ({
   boost: JSON.parse(localStorage.getItem('taw.boost') || 'null'),
 }));
 
-test('a fresh day: the UPGRADES dot is on; 4 taps climb to MYTHIC and pay ×5 OVERDRIVE · 5 MIN; the dot clears', async ({ page }) => {
+test('a fresh day: the UPGRADES dot is on; 4 taps climb to MYTHIC and pay ×15 OVERDRIVE · 5 MIN; the dot clears', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 657 });
   await boot(page, { rng: 0.999, open: false });
   await expect(navDot(page, 'shop')).toHaveCount(1);
@@ -79,11 +79,11 @@ test('a fresh day: the UPGRADES dot is on; 4 taps climb to MYTHIC and pay ×5 OV
   await tap.click();
   await expect(dd).toHaveAttribute('data-phase', 'claimed');
   await expect(dd.locator('.dd-big')).toHaveText('MYTHIC');
-  await expect(dd.locator('.dd-reward')).toHaveText(/OVERDRIVE\s*×5\s*· 5 MIN/);
+  await expect(dd.locator('.dd-reward')).toHaveText(/OVERDRIVE\s*×15\s*· 5 MIN/);
   await expect(dd.getByTestId('daily-drop-next')).toHaveText('12:00:00');
   const st = await stored(page);
   expect(st.drop).toEqual({ day: TODAY, claimed: true, tier: 4 });
-  expect(st.boost).toEqual({ until: NOON + 5 * 60_000, mult: 5 });
+  expect(st.boost).toEqual({ until: NOON + 5 * 60_000, mult: 15 });
   expect(st.gems, 'MYTHIC pays no gems').toBe(100);
   await page.keyboard.press('Escape'); // Esc closes the chest popup first, not the shop
   await expect(page.locator('.sp2-pop')).toHaveCount(0);
@@ -140,7 +140,7 @@ test('the ⓘ shows the printed odds; the DAILY CHEST is the first BOOSTS card, 
   await dd.locator('.dd-info').click();
   await expect(dd.locator('.dd-odd-name')).toHaveText(['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC']);
   await expect(dd.locator('.dd-odd-p')).toHaveText(['55%', '28%', '12%', '4%', '1%']);
-  await expect(dd.locator('.dd-odd .dd-pay-n')).toHaveText(['+15', '+30', '+60', '+150', '×5']);
+  await expect(dd.locator('.dd-odd .dd-pay-n')).toHaveText(['+15', '+30', '+60', '+150', '×15']);
   await dd.locator('.dd-info').click();
   await expect(dd.locator('.dd-odds')).toHaveCount(0);
   const m = await page.evaluate(() => {

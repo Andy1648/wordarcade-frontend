@@ -48,11 +48,11 @@ const pity = (page) => page.getByTestId('roll-pity');
 
 test('the countdown is the server\'s: local EPIC+ IN 1, server 3 since → EPIC+ IN 7, then IN 6 after a RARE', async ({ page }) => {
   const calls = await boot(page);
-  await expect(pity(page)).toContainText('EPIC+ IN 7', { timeout: 5000 });
+  await expect(pity(page)).toContainText('EPIC+ IN ≤ 7', { timeout: 5000 });
   expect(calls.pity).toBeGreaterThan(0);
   await holdRoll(page);
   await expect(page.locator('[data-testid="mark-roll-result"]')).toHaveCount(1, { timeout: 6000 });
-  await expect(pity(page)).toContainText('EPIC+ IN 6');
+  await expect(pity(page)).toContainText('EPIC+ IN ≤ 6');
   const local = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.markRolls')).sinceEpic);
   expect(local).toBe(4);
 });
@@ -60,5 +60,5 @@ test('the countdown is the server\'s: local EPIC+ IN 1, server 3 since → EPIC+
 test('pre-047 (no lb_pity): the local countdown stays', async ({ page }) => {
   await boot(page, { pity047: false });
   await page.waitForTimeout(800);
-  await expect(pity(page)).toContainText('EPIC+ IN 1');
+  await expect(pity(page)).toContainText('EPIC+ IN ≤ 1');
 });

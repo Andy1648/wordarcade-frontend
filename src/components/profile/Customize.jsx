@@ -1,7 +1,7 @@
 // Customize.jsx — THE ONE CUSTOMIZE MENU (Andy oct28: "i want all cosmetics to be from profile … you'd have a menu to
 // customize all of those. be simplistic here"). Every cosmetic you wear, one tab strip: HERO (one grid — tap an owned
-// hero to wear it), FRAME + WIN FX (KitPicker: try it on your hero, wear / buy), POP STYLE + SOUND (the shop's LOOKS
-// cards, try-on included). Reached from PROFILE and from the shop's COSMETICS button — the shop has no cosmetics screen
+// hero to wear it), FRAME (KitPicker: try it on your hero, wear / buy), POP STYLE (the shop's LOOKS cards, try-on
+// included). Reached from PROFILE and from the shop's COSMETICS button — the shop has no cosmetics screen
 // of its own any more. No new cosmetic types: this only gathers the existing ones in one place.
 import { useEffect, useRef, useState } from 'react';
 import HeroPicker from '../../cast/HeroPicker.jsx';
@@ -15,7 +15,8 @@ import { V3 } from '../../progress/season';
 import '../ShopV2.css';
 import './Customize.css';
 
-export const CZ_TABS = [['hero', 'HERO'], ['frame', 'FRAME'], ['fx', 'WIN FX'], ['pop', 'POP STYLE'], ['sound', 'SOUND']];
+// WIN FX + SOUND retired nov2 (Andy: "dont want win fx or sound" — cosmeticsRetire.js refunded the paid ones)
+export const CZ_TABS = [['hero', 'HERO'], ['frame', 'FRAME'], ['pop', 'POP STYLE']];
 
 /** @param hero your MAIN · @param kit { frame, fx } worn · @param onKit(slot, id) · @param onEquip(heroId) · @param onBought(heroId)
  *  @param tab0 the tab to open on */
@@ -27,7 +28,7 @@ export default function Customize({ hero, kit, onKit, onEquip, onBought, tab0 = 
   const [tryTier] = useState(() => menuTier(loadProgress().level, getRebirths()));
   useEffect(() => subscribeGems((v) => setGems(typeof v === 'number' ? v : getGems())), []);
   useEffect(() => setNote(null), [tab]);
-  const looks = tab === 'pop' || tab === 'sound';
+  const looks = tab === 'pop';
   // the shop's COSMETICS dot (v3/shopDots.js): the looks you can now afford are SEEN once this shelf shows them
   useEffect(() => { if (looks && V3.dots) V3.dots.markLooksSeen(gems); }, [looks, gems]);
   return (
@@ -39,7 +40,7 @@ export default function Customize({ hero, kit, onKit, onEquip, onBought, tab0 = 
       </div>
       <div className="cz-body">
         {tab === 'hero' ? <HeroPicker current={hero} onEquip={onEquip} onBought={onBought} tapEquips /> : null}
-        {tab === 'frame' || tab === 'fx' ? <KitPicker key={tab} hero={hero} kit={kit} onKit={onKit} slot0={tab} bare /> : null}
+        {tab === 'frame' ? <KitPicker key={tab} hero={hero} kit={kit} onKit={onKit} slot0={tab} bare /> : null}
         {looks ? (
           <div className="cz-looks">
             {tab === 'pop' ? <div className="sp2-tryfx" aria-hidden="true"><MenuXpFx ref={tryFxRef} menuTier={tryTier} /></div> : null}
