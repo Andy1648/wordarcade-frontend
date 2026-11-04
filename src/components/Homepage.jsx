@@ -126,6 +126,7 @@ import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
 import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { takeRefundNote } from '../progress/cosmeticsRetire';
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import './wall-system.css';
 import './Homepage.css';
@@ -987,6 +988,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       /* blocked */
     }
   }, []);
+  // WIN FX + SOUND PACKS retired (nov2, cosmeticsRetire.js runs at boot): the gems refunded for paid ones are said ONCE,
+  // as one small edge toast on a settled menu — never a silent change to the balance
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const n = takeRefundNote();
+      if (n > 0 && typeof V3.toast === 'function') V3.toast({ head: `+${formatNum(n)} GEMS BACK`, label: 'WIN FX + SOUND PACKS RETIRED', icon: 'gems', tile: '#9A1AFF' });
+    }, 900);
+    return () => clearTimeout(t);
+  }, []);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
   useEffect(() => {
@@ -1707,10 +1717,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 style={{ '--card-count': GAMES.length }}
                 data-page={isPagedMenu ? shownPage : undefined}
               >
-                {GAMES.map((game) => (
+                {GAMES.map((game, i) => (
                   <GameCard
                     key={game.id}
                     game={game}
+                    // the FIRST PAGE's art loads first and shows together; later cards wait (lazy) — Andy nov4
+                    priority={i < CARDS_PER_PAGE}
                     onSelect={handleOpenDialog}
                     onLockedSelect={handleLockedSelect}
                     onHover={handleHover}
