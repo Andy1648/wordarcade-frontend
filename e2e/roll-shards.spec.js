@@ -31,11 +31,16 @@ const shardState = (page) => page.evaluate(() => {
   const inf = parts.some((p) => p.getAnimations().some((a) => a.effect && a.effect.getTiming().iterations === Infinity));
   const big = playing.map((p) => { const r = p.getBoundingClientRect(); return Math.max(r.width, r.height); }).sort((a, b) => a - b);
   const visible = parts.filter((p) => Number(getComputedStyle(p).opacity) > 0.01).length;
-  return { srcs: parts.map((p) => p.getAttribute('src')), playing: playing.length, inf, big, visible };
+  // a blade whose centre lies well inside the reveal card's box (the orbit hugs the card's outside)
+  const card = document.querySelector('.rs-cut-mark');
+  const cr = card && card.getBoundingClientRect();
+  const overFace = cr ? playing.filter((p) => { const r = p.getBoundingClientRect(); const x = r.x + r.width / 2; const y = r.y + r.height / 2; return x > cr.left + 30 && x < cr.right - 30 && y > cr.top + 30 && y < cr.bottom - 30; }).length : 0;
+  return { overFace, srcs: parts.map((p) => p.getAttribute('src')), playing: playing.length, inf, big, visible };
 });
 const infiniteCount = (page) => page.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.getTiming().iterations === Infinity).length);
 
-for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080, 'epic', 30], [390, 844, 'epic', 30], [1366, 768, 'legendary', 59]]) {
+// MYTHIC is forced by pinning the roll's Math.random (0.9996 lands a MYTHIC mark) for the press only
+for (const [w, h, tag, sinceLegendary, rnd] of [[1366, 768, 'epic', 30], [1920, 1080, 'epic', 30], [390, 844, 'epic', 30], [1366, 768, 'mythic', 30, 0.9996]]) {
   test(`${w}x${h} ${tag}+: the reveal throws painted blade shards, finite, gone at rest`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
@@ -44,12 +49,16 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
       sessionStorage.setItem('rs.seeded', '1');
       for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
     }, { ...SEED, 'taw.markRolls': ROLLS(sinceLegendary) });
+    if (rnd) await page.addInitScript((r) => { const real = Math.random; Math.random = () => (window.__rollRng ? r : real()); }, rnd);
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.locator('.hp-nav.is-gears:visible').first().click();
     await page.locator('.rs-overlay').waitFor();
+    await page.evaluate(() => { window.__rollRng = true; });
     await holdRoll(page);
     await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
+    await page.evaluate(() => { window.__rollRng = false; });
+    if (rnd) await expect(page.getByTestId('roll-cutscene')).toHaveClass(new RegExp(tag));
 
     // the burst: wait until the shard pool is in flight, then FREEZE the page clock (every animation paused) and seek
     // it forward in fixed steps — a screenshot takes longer than the burst lasts, so real-time shots miss it
@@ -66,6 +75,8 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
     }
     await page.evaluate(() => { for (const [a] of window.__fz) a.play(); });
     for (const s of mid.srcs) expect(s).toMatch(PAINTED);
+    // the Aamon ORBIT: mid-lap every blade in flight rings the card — none sits over its face
+    expect(mid.overFace).toBe(0);
     expect(mid.inf).toBe(false);
     expect(mid.big[Math.floor(mid.big.length / 2)]).toBeGreaterThan(40); // nothing tiny: a shard reads as a blade, not a speck
     const during = await infiniteCount(page);
@@ -76,3 +87,30 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
     expect(await infiniteCount(page)).toBeLessThanOrEqual(during);
   });
 }
+
+test('LEGENDARY: ONE idea — its rays + slam, NO blade shards stacked on the reveal', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await installBackendMock(page);
+  await page.addInitScript((s) => {
+    if (sessionStorage.getItem('rs.seeded')) return;
+    sessionStorage.setItem('rs.seeded', '1');
+    for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
+  }, { ...SEED, 'taw.markRolls': ROLLS(59) });
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.hp-nav.is-gears:visible').first().click();
+  await page.locator('.rs-overlay').waitFor();
+  await holdRoll(page);
+  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
+  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/legendary/);
+  let most = 0;
+  const until = Date.now() + 3000;
+  while (Date.now() < until) { most = Math.max(most, (await shardState(page)).playing); await page.waitForTimeout(40); }
+  expect(most).toBe(0);
+  // its own idea instead: the painted gold sunburst crest haloes the card — finite, fully in at rest
+  const crest = page.locator('.rs-cut-crest');
+  await expect(crest).toHaveAttribute('src', /\/fx\/lance\/sunburst-gold-v\d+\.webp$/);
+  const c = await crest.evaluate((el) => ({ inf: el.getAnimations().some((a) => a.effect.getTiming().iterations === Infinity), o: Number(getComputedStyle(el).opacity) }));
+  expect(c.inf).toBe(false);
+  expect(c.o).toBeGreaterThan(0.9);
+});

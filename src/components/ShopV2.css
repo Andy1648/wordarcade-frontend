@@ -935,11 +935,6 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    chunky can / coins / clover beside it. It draws a fifth bigger (transform: layout untouched, still its own ratio). */
 .sp2-card-in[data-stock="overdrive"] > .sp2-art { transform: scale(1.2); }
 
-/* ===== HEAR BEFORE YOU BUY (oct29, CUSTOMIZE → SOUND): the keycap is the button; its speaker badge says so. A tap plays the
-   pack's click and the keycap presses down once (one finite WAAPI transform run per tap, ShopV2Looks pressKey). ===== */
-.sp2-hear { position: relative; }
-.sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
-
 /* ===== CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and design)"): what you can buy
    right now wears the cyan price tag; what you can't keeps its art LIT (nov3 design-research move 9 — dimming turned a
    short wallet's whole shelf grey, so the shop stopped selling) and only its TAG changes: red ink, "NEED 45". A tap
