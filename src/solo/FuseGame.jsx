@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import '../frenzy/MechanicScale.css';
 import { createFuseEngine, FUSE_MAX_LIVES } from './fuse.js';
+import { readRecent, writeRecent } from './recentFrags.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleContaining } from '../progress/teachExample.js';
 import { loadGlossary, glossFor } from '../progress/glossary.js';
@@ -137,7 +138,8 @@ export default function FuseGame({ onExit, offerMenu = false }) {
   }, [data]);
 
   const createEngine = useCallback(() => {
-    const e = createFuseEngine({ accept: data.accept, pools: POOLS });
+    // cross-run memory (nov4): skip the fragments your last run served while anything else is left
+    const e = createFuseEngine({ accept: data.accept, pools: POOLS, recent: readRecent() });
     e.start(); // serve the first fragment so the shell has something to show
     return e;
   }, [data]);
@@ -291,6 +293,11 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
+  }, [g.phase]);
+  // …and remember this run's fragments for the next one (recentFrags.js)
+  useEffect(() => {
+    if (g.phase === 'over') writeRecent(s.servedFrags);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per run end; the set is the engine's own
   }, [g.phase]);
 
   // Live wins tally (item 2): what the run HAS BANKED so far — the same running total the end
