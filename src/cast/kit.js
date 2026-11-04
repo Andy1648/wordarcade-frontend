@@ -6,8 +6,7 @@
 //    reference) that turns your hero in the PROFILE into a framed card. Each frame's art + name-plate windows were
 //    measured off the cut (% of the frame). The five MODE frames are the MASTERY ROAD's frame node (masteryRoad.js
 //    ROAD_SHAPE[6]) made real: claim it on that mode's road and the frame is yours.
-//  · WIN FX — a painted burst (public/fx/win/<id>.webp, Gemini) that blasts behind your hero when you WIN (the results
-//    card's impact burst) — Rocket League's goal explosion.
+//  · (WIN FX — retired nov2; the `fx` slot reads as empty on every save)
 // Earned with WINS like the crew (gems skip the wait); the rare ones sit behind a rebirth, then gems. Looks only:
 // nothing here changes how a game plays or pays.
 import { KIT_CHANGE } from './avatarFrame.js';
@@ -32,21 +31,13 @@ export const FRAMES = [
   // DAILY WHEEL only — painted oct25; windows measured off the cut (its name plate is taller: FitText fills it)
   F('jackpot', 'JACKPOT', 'HIT THE BIG ONE', '#FFC23D', 462 / 866, [19.48, 12.14, 61.04, 52.49], [19.48, 70.52, 61.04, 18.38], { wheel: true, rare: true }),
 ];
-export const WIN_FX = [
-  { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
-  { id: 'splat', name: 'INK SPLAT', tag: 'MESSY WINNER', color: '#9A1AFF', wins: 45, price: 700 },
-  { id: 'thunder', name: 'THUNDERSTRUCK', tag: 'STRUCK BY GREATNESS', color: '#FFE94A', wins: 90, price: 900 },
-  // the rare one: a bomb game's own finish
-  { id: 'blast', name: 'KABOOM', tag: 'THE ONLY WAY TO WIN', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
-  // DAILY WHEEL only — PLACEHOLDER art (a copy of FIREWORKS)
-  { id: 'confetti', name: 'PRIZE SHOWER', tag: 'EVERYBODY WINS (MOSTLY YOU)', color: '#FFC23D', wheel: true, rare: true },
-].map((k) => ({ ...k, slot: 'fx' }));
-const ALL_KIT = [...FRAMES, ...WIN_FX];
+// WIN FX were retired nov2 (Andy: "dont want win fx or sound") — progress/cosmeticsRetire.js refunded the paid ones
+// and took them out of every save; the results card keeps its one default burst.
+const ALL_KIT = [...FRAMES];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
 export const kitSrc = (id) => {
   const k = kitById(id);
   if (k && k.slot === 'frame') return `/cards/frame-${id}.webp`;
-  if (k && k.slot === 'fx') return `/fx/win/${id}.webp`;
   return null; // an unknown / retired id has no art
 };
 
@@ -118,8 +109,6 @@ export function grantKit(id) {
 
 /** The frame you wear (null = none). */
 export const equippedFrame = () => readKit().frame;
-/** The WIN FX you wear (null = the default burst). */
-export const equippedFx = () => readKit().fx;
 /** Wear a component you own in its slot, or clear a slot ('frame' | 'fx', id null). Returns false when it isn't yours. */
 export function wearKit(slot, id) {
   if (id != null && (!SLOT_OK(slot, id) || !ownsKit(id))) return false;

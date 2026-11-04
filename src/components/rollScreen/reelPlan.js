@@ -207,7 +207,8 @@ export function hasLight(tier, mode = 'full') {
 }
 /** Pooled particle burst size on the land (EPIC+). The pool holds BURST_POOL nodes. */
 export const BURST_POOL = 18;
-export const BURST = { rare: 0, epic: 10, legendary: 14, mythic: 16, secret: 18 };
+// LEGENDARY throws none (Andy nov3: never stack blades on a tier's own reveal — its idea is the rays + the slam)
+export const BURST = { rare: 0, epic: 10, legendary: 0, mythic: 14, secret: 14 };
 export function burstCount(tier, mode = 'full') {
   return mode === 'full' ? BURST[tier] || 0 : 0;
 }

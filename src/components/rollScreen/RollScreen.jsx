@@ -536,14 +536,15 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
 
       {/* the pity numbers live in TWO places (the EPIC+ headline under ROLL, the bars on the left): the testid wraps both */}
       <div className="rs-controls" data-testid="roll-pity">
-        <div className="rs-pity" aria-label="Pity">
+        <div className="rs-pity" aria-label={`Guaranteed: EPIC or better within ${epicLeft} rolls, LEGENDARY or better within ${legLeft} rolls`}>
           <div className="rs-pity-row is-epic">
             <span className="rs-pity-lbl">EPIC+</span>
             <div className="rs-pity-bar" aria-hidden="true"><span className="rs-pity-fill" style={{ transform: `scaleX(${epicFrac})` }} /></div>
           </div>
           <div className="rs-pity-row is-leg">
-            <span className="rs-pity-lbl rs-pity-leg">LEGENDARY+ IN</span>{' '}
-            <span className="rs-pity-n">{formatNum(legLeft)}</span>{/* the count IS the read-out (Andy oct22) — no bar beside it */}
+            {/* design research move 6: the count is a GUARANTEE — "≤ N" (it can come sooner, never later) */}
+            <span className="rs-pity-lbl rs-pity-leg">LEGENDARY+ IN ≤</span>{' '}
+            <span className="rs-pity-n" data-testid="pity-legendary">{formatNum(legLeft)}</span>{/* the count IS the read-out (Andy oct22) — no bar beside it */}
           </div>
         </div>
         <div className="rs-rollcol">
@@ -564,7 +565,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
           </button>
           {/* the pity headline, BIG, right under the button it is about (NIGHT oct8 #4) */}
           <div className="rs-pity-big" aria-hidden="true">
-            EPIC+ IN <b>{formatNum(epicLeft)}</b>
+            EPIC+ IN ≤ <b data-testid="pity-epic">{formatNum(epicLeft)}</b>
           </div>
         </div>
         <div className="rs-opts">
@@ -603,7 +604,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             </button>
           ) : null}
           {/* RATES: the odds of YOUR next roll, behind a button in the options cluster (gear card v4) */}
-          <RatesPop />
+          <RatesPop pity={{ epic: epicLeft, legendary: legLeft }} />
         </div>
       </div>
 
