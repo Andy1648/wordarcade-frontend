@@ -19,7 +19,7 @@ export const EASE_BURST = 'cubic-bezier(.34,1.56,.64,1)'; // ease-out-back
 // the converge: x eases in, y eases in a touch later — the gap between the two IS the shallow arc
 export const EASE_IN_X = 'cubic-bezier(.55,0,1,.45)';
 export const EASE_IN_Y = 'cubic-bezier(.32,0,.95,.6)';
-// the rebirth SHARD burst: the pool size (the flight itself is fx/shards/shardPlan.js — painted blades, < 600 ms)
+// the rebirth SHARD burst: the pool size (the flight vectors are fx/shards/shardPlan.js, the whole burst < 600 ms)
 export const SHARD_COUNT = 12;
 
 /** How many particles a gain of `amount` flies: 5 for a small one, 10 for a medium one, 20 for a big one. */

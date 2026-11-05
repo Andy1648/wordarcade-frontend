@@ -1,6 +1,7 @@
-// e2e/rebirth-shards.spec.js — the REBIRTH moment's burst is the PAINTED blade shards (fx/shards): violet on a rebirth,
-// gold on a JACKPOT rebirth, ONE burst (the jackpot used to stack a second spray from screen centre), every blade a
-// finite transform/opacity one-shot that reads (not a speck), gone at rest, no loop left behind. Real motion.
+// e2e/rebirth-shards.spec.js — the REBIRTH moment's burst is FLAT vector shards (nov5, Andy "extra": never the painted
+// fx/shards blades): violet on a rebirth, gold on a JACKPOT rebirth, ONE burst (the jackpot used to stack a second spray
+// from screen centre), every shard a finite transform/opacity one-shot that reads (not a speck), gone at rest, no loop
+// left behind. Real motion.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { mockBoard } from './support/boardMock.js';
@@ -41,7 +42,8 @@ const state = (page) => page.evaluate(() => {
   const live = (a) => (a.playState === 'running' || a.playState === 'paused') && a.effect && (a.currentTime || 0) >= a.effect.getTiming().delay;
   const playing = parts.filter((p) => p.getAnimations().some(live));
   return {
-    srcs: playing.map((p) => p.getAttribute('src')),
+    painted: document.querySelectorAll('.gsb img').length,
+    firstFill: parts[0] && parts[0].querySelector('path') ? parts[0].querySelector('path').getAttribute('fill') : null,
     playing: playing.length,
     inf: parts.some((p) => p.getAnimations().some((a) => a.effect && a.effect.getTiming().iterations === Infinity)),
     big: playing.map((p) => { const r = p.getBoundingClientRect(); return Math.max(r.width, r.height); }).sort((a, b) => a - b),
@@ -57,7 +59,7 @@ const CASES = [
 ];
 
 for (const c of CASES) {
-  test(`${c.name}: ONE painted ${c.set} blade burst, finite, gone at rest`, async ({ page }) => {
+  test(`${c.name}: ONE flat ${c.set} shard burst, finite, gone at rest`, async ({ page }) => {
     await page.setViewportSize({ width: c.w, height: c.h });
     const row = { id: `me-${c.name.replace(/\W/g, '')}`, username: 'Holder', level: c.level, rebirths: c.rebirths, lifetime_words: 2000, lifetime_letters: 9000, wins_per_word: 0, econ: 13, submitted_at: Date.now() - 60_000 };
     const screen = await boot(page, { row, local: { level: c.level, rebirths: c.rebirths } });
@@ -77,9 +79,10 @@ for (const c of CASES) {
     await page.evaluate(() => { for (const [a] of window.__fz) a.play(); });
     // ONE burst: the whole pool flies once, never a second spray on top
     expect(mid.playing).toBe(mid.total);
-    for (const s of mid.srcs) expect(s).toMatch(new RegExp(`/fx/shards/${c.set}-[0-3]\\.webp$`));
+    expect(mid.painted).toBe(0);
+    expect(mid.firstFill).toBe(c.set === 'gold' ? '#FFE94A' : '#B04BFF');
     expect(mid.inf).toBe(false);
-    expect(mid.big[Math.floor(mid.big.length / 2)]).toBeGreaterThan(30);
+    expect(mid.big[Math.floor(mid.big.length / 2)]).toBeGreaterThan(18);
     await expect.poll(async () => (await state(page)).visible, { timeout: 4000 }).toBe(0);
   });
 }
