@@ -90,6 +90,7 @@ export default defineConfig({
       // SIGN IN WITH GOOGLE (leaderboard/googleFlag.js): the e2e build honours ?google=1 — hidden without it, as
       // production ships until VITE_GOOGLE_ON=1. Production never sets it.
       VITE_GOOGLE_E2E: '1',
+      VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com', // public by nature; the specs mock Google's script
     },
   },
 });
