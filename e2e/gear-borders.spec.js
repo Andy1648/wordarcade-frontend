@@ -197,8 +197,9 @@ for (const [w, h] of SIZES) {
     const cut = page.getByTestId('roll-cutscene');
     await expect(cut).toHaveClass(/is-on/, { timeout: 12_000 });
     await page.evaluate(() => { window.__rollRng = false; });
-    // the seeded gears carry roll luck, so the pinned MYTHIC can climb to SECRET — either is a frame-variant tier
-    await expect(cut).toHaveClass(tier === 'mythic' ? /is-(mythic|secret)/ : new RegExp(`is-${tier}`));
+    // the dice can beat what we aim for: the LEGENDARY pity means LEGENDARY OR BETTER, and the seeded gears' roll luck can
+    // climb the pinned MYTHIC to SECRET — every one of them must keep its borders clean, so any of them is a pass
+    await expect(cut).toHaveClass(tier === 'mythic' ? /is-(mythic|secret)/ : /is-(legendary|mythic|secret)/);
     // a MYTHIC / SECRET reveal holds its telegraph for seconds on a slow machine: wait for the face itself, then let it settle
     await expect.poll(async () => (await borderDefects(page)).seen, { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
     await page.waitForTimeout(1200);
