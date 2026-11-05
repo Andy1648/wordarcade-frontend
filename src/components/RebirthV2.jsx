@@ -126,7 +126,7 @@ export default function RebirthV2({ onBack }) {
     if (s.ready) warmRebirth();
   }, [s.ready, s.rebirths]);
 
-  // THE ×3 MOMENT (NIGHT oct8 #3; painted blades nov2): one one-shot under 600 ms — the hex plate SLAMS, the new rank slams and ONE burst of painted blade shards flies out of it.
+  // THE ×3 MOMENT (NIGHT oct8 #3): one one-shot under 600 ms — the hex plate SLAMS, the new rank slams and ONE burst of flat shards flies out of it.
   // No popup, no text box: the numbers on the screen are the message.
   const boom = (jackpot = false) => {
     if (jackpot && jackRef.current) {
@@ -137,7 +137,7 @@ export default function RebirthV2({ onBack }) {
     fx(afterRef.current, FX.slamBig);
     const hex = stageRef.current && stageRef.current.querySelector('.rb2-hex');
     if (hex) kitPlay(hex, HEX_SLAM, { duration: 600, easing: 'cubic-bezier(.2,1.3,.4,1)' });
-    // the painted blades burst out of the NEW rank (the payoff, slammed big above) — gold on a jackpot
+    // the shards burst out of the NEW rank (the payoff, slammed big above) — gold on a jackpot
     const at = afterRef.current;
     if (at && shardsRef.current) {
       const r = at.getBoundingClientRect(); // once, on the rebirth itself (never per frame)
@@ -356,7 +356,7 @@ export default function RebirthV2({ onBack }) {
         <span className="rb2-jack-t">JACKPOT</span>
         <span className="rb2-jack-s">{landed && econ ? `×${formatNum(econ.rebirthStep(landed))} · +${formatNum(econ.rebirthGems(landed))} GEMS` : ''}</span>
       </div>
-      <ShardBurst ref={shardsRef} set={jackpot ? 'gold' : 'violet'} />
+      <ShardBurst ref={shardsRef} />
     </div>
   );
 }

@@ -7,7 +7,6 @@
 
 import { motionFlag, reduced } from './settings';
 import { isHitStopped } from './motion';
-import { SPRITE_SETS, SPRITE_PIECES, SPRITE_SCALE, SPRITE_PX, spriteUrl, setForColor } from './shardSprites';
 
 const POOL_CAP = 300; // hard ceiling on simultaneous particles
 const PALETTE = ['#ff4fa3', '#2EFFE0', '#FFE94A', '#FF6B3D', '#9A1AFF'];
@@ -21,51 +20,6 @@ let rafId = 0;
 let lastT = 0;
 let dpr = 1;
 let resizeBound = false;
-// THE PAINTED SHARDS (nov3): in a `painted` burst (the combo tier-ups) a particle in a house colour draws as a painted
-// crystal shard (juice/shardSprites.js) —
-// pre-scaled ONCE into small canvases, loaded AFTER the first burst (off the critical path: until they land the flat
-// squares draw, so the first word never waits on art). sprites[set] = [canvas × SPRITE_PIECES] once ready.
-const sprites = {};
-let spritesAsked = false;
-// colour -> painted set, memoized (a burst on the accept path does a map lookup, not a regex + hue maths per particle)
-const setCache = new Map();
-function setOf(c) {
-  let v = setCache.get(c);
-  if (v === undefined) { v = setForColor(c); setCache.set(c, v); }
-  return v;
-}
-function loadSprites() {
-  if (spritesAsked || typeof Image === 'undefined') return;
-  spritesAsked = true;
-  const go = () => {
-    for (const set of SPRITE_SETS) {
-      const got = new Array(SPRITE_PIECES).fill(null);
-      let left = SPRITE_PIECES;
-      for (let i = 0; i < SPRITE_PIECES; i++) {
-        const img = new Image();
-        img.decoding = 'async';
-        img.src = spriteUrl(set, i);
-        const done = () => {
-          if (img.naturalWidth) {
-            const c = document.createElement('canvas');
-            c.width = SPRITE_PX;
-            c.height = SPRITE_PX;
-            const k = SPRITE_PX / Math.max(img.naturalWidth, img.naturalHeight);
-            const w = img.naturalWidth * k;
-            const h = img.naturalHeight * k;
-            c.getContext('2d').drawImage(img, (SPRITE_PX - w) / 2, (SPRITE_PX - h) / 2, w, h);
-            got[i] = c;
-          }
-          left -= 1;
-          if (!left && got.every(Boolean)) sprites[set] = got; // a set paints only when ALL its pieces are ready
-        };
-        (img.decode ? img.decode() : Promise.reject()).then(done, () => { if (img.complete) done(); else img.onload = done; });
-      }
-    }
-  };
-  if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 1500 });
-  else setTimeout(go, 200);
-}
 const marks = []; // persistent splats, kept so we can redraw on resize
 
 // Shockwave rings, a full-screen flash, and rising floating letters all share
@@ -126,7 +80,7 @@ function bindResize() {
 function makePool() {
   const arr = new Array(POOL_CAP);
   for (let i = 0; i < POOL_CAP; i++) {
-    arr[i] = { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 0, color: '#fff', rot: 0, vr: 0, set: null, piece: 0 };
+    arr[i] = { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 0, color: '#fff', rot: 0, vr: 0 };
   }
   return arr;
 }
@@ -194,15 +148,9 @@ function tick(now) {
     fxCtx.save();
     fxCtx.translate(p.x, p.y);
     fxCtx.rotate(p.rot);
+    fxCtx.fillStyle = p.color;
     const s = p.size;
-    const sp = p.set ? sprites[p.set] : null;
-    if (sp) {
-      const d = s * SPRITE_SCALE; // a painted shard, drawn from its pre-scaled canvas
-      fxCtx.drawImage(sp[p.piece], -d / 2, -d / 2, d, d);
-    } else {
-      fxCtx.fillStyle = p.color;
-      fxCtx.fillRect(-s / 2, -s / 2, s, s);
-    }
+    fxCtx.fillRect(-s / 2, -s / 2, s, s);
     fxCtx.restore();
   }
 
@@ -280,7 +228,6 @@ function kick() {
 export function burst(x, y, opts = {}) {
   if (!motionFlag()) return; // hard off switch
   ensureFx();
-  loadSprites();
   let count = opts.count ?? 14;
   if (reduced()) count = Math.max(3, Math.round(count * 0.3));
   const colors = opts.colors || PALETTE;
@@ -290,10 +237,6 @@ export function burst(x, y, opts = {}) {
   const sizeMin = opts.sizeMin ?? 3;
   const sizeMax = opts.sizeMax ?? 7;
   const life = opts.life ?? 0.55;
-  // PAINTED (nov3): only a burst that asks for it draws its house-colour particles as painted shards — the combo
-  // TIER-UP words (rare). Every other burst (each accepted word, the K.O. blast, …) stays flat squares: a painted
-  // shard covers ~6× a square's pixels, and software-rastered canvases (Chromebooks) pay per pixel.
-  const painted = !!opts.painted;
 
   let spawned = 0;
   for (let i = 0; i < pool.length && spawned < count; i++) {
@@ -310,8 +253,6 @@ export function burst(x, y, opts = {}) {
     p.life = p.maxLife;
     p.size = sizeMin + Math.random() * (sizeMax - sizeMin);
     p.color = colors[(Math.random() * colors.length) | 0];
-    p.set = painted ? setOf(p.color) : null;
-    p.piece = (Math.random() * SPRITE_PIECES) | 0;
     p.rot = Math.random() * Math.PI;
     p.vr = (Math.random() - 0.5) * 12;
     spawned++;
