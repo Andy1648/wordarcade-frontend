@@ -298,7 +298,33 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
 .sp-reset-confirm,
 .sp-load-confirm { display: flex; flex-direction: column; gap: 10px; }
 
-/* ---- DESKTOP: two columns — the switches left, SAVE CODE right with the DANGER ZONE kept apart at its foot ---- */
+/* ---- CODES: one field, one button, one answer line. A redeem is a moment: the prize line slams in like a stamp, a bad
+   code shakes no (H3; finite, transform / opacity, keyed per attempt so each one replays) ---- */
+.sp-row--codes { align-items: flex-start; }
+.sp-row--codes .sp-label { margin-top: 14px; } /* level with the box, also while the answer line sits under it */
+.sp-row--codes .sp-ctl { flex: 1 1 auto; min-width: 0; }
+.sp-codes { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.sp-codes-msg.is-ok { color: #2EFFE0; transform-origin: left center; animation: sp-codes-stamp 340ms cubic-bezier(.2, 1.4, .35, 1) both; }
+.sp-codes-msg.is-bad { color: #FF6B3D; animation: sp-codes-shake 300ms linear both; }
+@keyframes sp-codes-stamp {
+  0% { opacity: 0; transform: scale(1.9) rotate(-4deg); }
+  60% { opacity: 1; transform: scale(0.94) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes sp-codes-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+html[data-reduce-motion] .sp-codes-msg.is-ok,
+html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-codes-msg.is-ok, .sp-codes-msg.is-bad { animation: none; }
+}
+
+/* ---- DESKTOP: two columns— the switches left, SAVE CODE right with the DANGER ZONE kept apart at its foot ---- */
 .sp-col { display: flex; flex-direction: column; gap: inherit; }
 @media (min-width: 760px) {
   .sp-sheet .sp {
@@ -317,6 +343,7 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
   .sp-row--vol .sp-label { display: none; }
   .sp-row--vol .sp-ctl { flex: 1 1 auto; }
   .sp-row--vol .sp-bars { flex: 1 1 auto; justify-content: center; }
+  .sp-row--codes .sp-label { display: none; } /* the box's own ENTER CODE + REDEEM say it */
 }
 /* SHORT windows (a Chromebook at 1280x551, a laptop at 125%): every row tightens; still ≥ 44 px */
 @media (max-height: 700px) and (min-width: 481px) {
@@ -354,7 +381,7 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
   .sp-switch { width: 100px; height: 48px; }
   .sp-switch-box { height: 32px; width: 34px; }
   .sp-switch.is-on .sp-switch-box { transform: translateX(50px); }
-  .sp-row--vol .sp-label, .sp-row--vol .sp-val { display: none; } /* the SOUND card + MUTE + the bars say it */
+  .sp-row--vol .sp-label, .sp-row--vol .sp-val, .sp-row--codes .sp-label { display: none; } /* the SOUND card + MUTE + the bars, ENTER CODE + REDEEM say it */
   .sp-row--vol .sp-ctl { flex: 1 1 auto; gap: 10px; }
   .sp-mute { min-height: 48px; min-width: 84px; }
   .sp-bars { display: none; } /* 10 bars × 44 px won't fit a phone row: − / + step it instead */
@@ -368,13 +395,16 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
   /* once COPY has put the long code on screen, or a pasted code asks "load it?", the DANGER ZONE steps aside so the
      code, its message and the paste box fit (closing the sheet brings it back) */
   .sp-sheet:has(.sp-code) .sp-reset,
-  .sp-sheet:has(.sp-load-confirm) .sp-reset { display: none; }
+  .sp-sheet:has(.sp-load-confirm) .sp-reset,
+  .sp-sheet:has(.sp-codes-msg) .sp-reset { display: none; } /* …and so does a code's answer line */
+  .sp-sheet:has(.sp-reset-confirm) .sp-row--codes { display: none; } /* RESET's "are you sure" takes the CODES row's room */
 }
 /* SHORT phones (360x640): the rows tighten to the 44 px floor and drop their divider lines, so all four groups fit */
 @media (max-width: 480px) and (max-height: 760px) {
+  .sp-scrim { padding: 4px 8px; }
   .sp-sheet { gap: 8px; padding: 8px 10px 10px; }
   .sp { gap: 20px; padding-top: 4px; }
-  .sp-group { padding: 18px 10px 8px; }
+  .sp-group { padding: 18px 10px 6px; }
   .sp-row { min-height: 44px; }
   .sp-row + .sp-row { padding-top: 0; border-top: 0; }
   .sp-close, .sp-credits, .sp-mute, .sp-btn, .sp-input, .sp-short { min-height: 44px; }
@@ -414,4 +444,13 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
   .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 4px; }
   /* a sign-in problem to explain: GAMEPLAY steps aside so the line fits, like the save code's own messages (closing brings it back) */
   .sp-sheet:has(.sp-account .gsi-note) .sp-play { display: none; }
+}
+/* …and with that account row on the shortest phones the DANGER ZONE gives up its card: RESET ACCOUNT stays, red, on its own */
+@media (max-width: 480px) and (max-height: 700px) {
+  .sp-sheet:has(.sp-account) { gap: 6px; padding: 6px 8px 8px; }
+  .sp-sheet:has(.sp-account) .sp { gap: 12px; }
+  .sp-sheet:has(.sp-account) .sp-group { gap: 4px; }
+  .sp-sheet:has(.sp-account) .sp-account { padding-bottom: 2px; }
+  .sp-sheet:has(.sp-account) .sp-reset { padding: 0; background: none; border: 0; box-shadow: none; }
+  .sp-sheet:has(.sp-account) .sp-reset .sp-group-title { display: none; }
 }
