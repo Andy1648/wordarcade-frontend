@@ -409,7 +409,7 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
   .sp-account { padding-bottom: 4px; }
   .sp-save { gap: 4px; }
   /* Google's button is 40 px and can't change, so the slot gives back its reserve; the groups' feet give back the rest */
-  .sp-account .gsi-slot { min-height: 40px; }
+  .sp-account .gsi-slot { height: 40px; }
   .sp-account .gsi-load { height: 40px; }
   .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 4px; }
   /* a sign-in problem to explain: GAMEPLAY steps aside so the line fits, like the save code's own messages (closing brings it back) */

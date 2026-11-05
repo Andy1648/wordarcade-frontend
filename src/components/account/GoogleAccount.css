@@ -12,7 +12,9 @@
 }
 .gsi-out:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .gsi-wrap { position: relative; display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 400px; min-width: 0; }
-.gsi-slot { min-height: 44px; display: flex; align-items: center; color-scheme: light; }
+/* a fixed height, clipped: while its iframe loads, Google stacks a ~38 px placeholder with it, which must not move the sheet.
+   Only the height clips: the iframe's own margins bleed 10 px past the button on each side (nothing painted there) */
+.gsi-slot { height: 44px; overflow-y: clip; display: flex; align-items: flex-start; color-scheme: light; }
 .gsi-slot.is-off { display: none; }
 .gsi-load { position: absolute; left: 0; top: 0; height: 44px; display: flex; align-items: center; pointer-events: none; font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.06em; color: #c9b8e8; }
 .gsi-blocked { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

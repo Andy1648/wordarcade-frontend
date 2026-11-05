@@ -26,7 +26,13 @@ const GSI_JS = `(() => {
         window.__gsiLast = b64({ alg: 'RS256' }) + '.' + b64(claims) + '.sig';
         cfg.callback({ credential: window.__gsiLast, select_by: 'btn' });
       };
-      el.appendChild(b);
+      // the real script's wrapper: a block, with a placeholder stacked by its iframe while that loads (seen at 360x640: the sheet scrolled 38 px)
+      const wrap = document.createElement('div');
+      const hold = document.createElement('div');
+      hold.style.height = '38px';
+      wrap.append(b, hold);
+      el.appendChild(wrap);
+      setTimeout(() => hold.remove(), 1500);
     },
   } } };
 })();`;
