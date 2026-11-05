@@ -1046,3 +1046,12 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-what { padding-right: calc(var(--sp2-stk) + 4px); }
 /* …and on a very short desktop the deal hour's bottom-left gem (OVERDRIVE) sits 4px lower, clear of the two-line TIME */
 @media (min-width: 1000px) and (max-height: 580px) { .sp2-card.is-epic.is-deal .sp2-gem { bottom: -16px; } }
+/* PAID GEMS (payments flag on): a fourth shelf tab, GEMS. The phone's tab row was sized for three ("COSMETICS fits a
+   360px row") — four go two-by-two rather than shrinking the words under the type floor. */
+@media (max-width: 999px) {
+  .sp2-stock-head .sp2-tabs[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* …and on a very short desktop the deal card's WHAT keeps that sticker column, so it wraps a line taller: the art tucks
+   5px closer to it so the price stays inside the card (OVERDRIVE's hour at 1280x551 was 2px past — shop-price-fit pins
+   every deal hour now) */
+@media (min-width: 1000px) and (max-height: 580px) { .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-art { margin-bottom: -12px; } }

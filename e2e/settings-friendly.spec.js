@@ -72,7 +72,7 @@ for (const { w, h, phone } of SIZES) {
     await settled(page);
     if (SHOTS) await page.screenshot({ path: `${DIR}/settings-${w}x${h}.png` });
 
-    // the four groups, in order
+    // the four groups, in order (085: SIGN IN WITH GOOGLE is the first row of SAVE CODE)
     await expect(sheet.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
 
     const m = await sheet.evaluate((el) => {

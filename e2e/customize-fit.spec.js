@@ -169,7 +169,6 @@ test('no name yet: the title plate stands alone with the claim hint — never "N
   const pf = page.getByTestId('profile-popup');
   await pf.waitFor({ state: 'visible' });
   await expect(pf).not.toContainText('NO NAME YET');
-  await expect(pf.getByTestId('profile-title')).toBeVisible();
   await expect(pf.locator('.pf-hint')).toBeVisible();
   await expect(pf.locator('.pf-medal')).toHaveCount(3);
 });

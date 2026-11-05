@@ -179,6 +179,23 @@ test('flapperTrack: one baked keyframe list (offsets 0..1, ends at rest) + one t
   assert.ok(f.ticks.at(-1) - f.ticks.at(-2) > 6 * (f.ticks[1] - f.ticks[0]));
 });
 
+test('weekRow: the streak week today falls in, day 7 SUPER always in view, today lit until spun', async () => {
+  const { weekRow } = await import('./wheel.js');
+  const r1 = weekRow(1, false);
+  assert.deepEqual(r1.map((c) => c.day), [1, 2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(r1.map((c) => c.state), ['today', 'next', 'next', 'next', 'next', 'next', 'next']);
+  assert.deepEqual(r1.map((c) => c.bonus), [null, null, 'hot', 'hot', 'hot', 'hot', 'super']);
+  const r7 = weekRow(7, true);
+  assert.equal(r7[6].state, 'done');
+  assert.ok(r7.every((c) => c.state === 'done'));
+  const r9 = weekRow(9, false);
+  assert.deepEqual(r9.map((c) => c.day), [8, 9, 10, 11, 12, 13, 14]);
+  assert.deepEqual(r9.map((c) => c.state), ['done', 'today', 'next', 'next', 'next', 'next', 'next']);
+  assert.equal(r9[6].bonus, 'super');
+  assert.ok(r9.slice(0, 6).every((c) => c.bonus === 'hot'));
+  assert.equal(weekRow(0, false)[0].state, 'today'); // a fresh streak is DAY 1
+});
+
 test('CONFETTI (the PRIZE SHOWER WIN FX, retired nov2) from a server before 078 is paid as 120 gems', () => {
   const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'confetti' });
   assert.equal(s.prize, 'gems');
