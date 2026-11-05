@@ -21,6 +21,7 @@ import { noteLucky } from '../progress/records.js';
 // Sound only — XP is NOT credited in this hook any more (unified economy moved per-word XP into the
 // mode components), so feat/sound's xpPerInput/creditXp imports are intentionally dropped here.
 import { sndWordAccepted, sndWordRejected, sndLucky, sndRunOver } from '../audio/gameSounds.js';
+import { noteReject } from '../telemetry/rejectLog.js'; // nov4: anonymous 'not in list' words → accept-list evidence
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -229,11 +230,12 @@ export function useSoloGame({ createEngine, adapter, pbKey, onRunStart, onAccept
       // Reject: the input is NEVER cleared and there is NO shake — the sill flashes and a
       // named reason prints, so the evidence of the attempt survives.
       comboRef.current = comboBreak(comboRef.current); // a reject resets the wins combo
+      if (r.reason === 'not_in_list') noteReject(word, mode); // anonymous: the word + the mode, batched (rejectLog.js)
       sndWordRejected(); // Job 11: soft downward reject (not a buzzer)
       setReason(rejectMessage(r.reason, adapter.rejectCtx(engineRef.current)));
       setSillKey((k) => k + 1);
     }
-  }, [phase, input, adapter, startTurnClock, rerender]);
+  }, [phase, input, adapter, startTurnClock, rerender, mode]);
 
   const restart = useCallback(() => {
     if (restartTimerRef.current) clearTimeout(restartTimerRef.current);

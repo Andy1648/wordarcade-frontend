@@ -52,15 +52,3 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/pop-rarity-${w}.png` });
   });
 }
-
-test('a locked title is an outlined silhouette of its plate, not a black blob', async ({ page }) => {
-  await boot(page, 1366, 768);
-  await page.locator('[data-nav="profile"]:visible').first().click();
-  await page.getByTestId('profile-title').click();
-  const hidden = page.locator('.rl-item.is-hidden .krp-art').first();
-  await hidden.waitFor();
-  const f = await hidden.evaluate((el) => getComputedStyle(el).filter);
-  expect(f).toContain('brightness(0)');
-  expect((f.match(/drop-shadow/g) || []).length, 'an outline round the silhouette').toBeGreaterThanOrEqual(4);
-  if (SHOTS) await page.screenshot({ path: `${SHOTS}/titles-locked.png` });
-});

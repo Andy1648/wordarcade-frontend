@@ -5,9 +5,10 @@ import { activeBoosts, anyBoostRemaining } from '../progress/liveBoost.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { useTimerClock } from '../frenzy/useTimerClock.js';
 import { boostArt } from '../progress/boostArt.js';
+import { OVERDRIVE_MULT } from '../progress/overdrive.js';
 
 const WHERE = [
-  ['OVERDRIVE ×5', 'XP + WINS', 'UPGRADES → BOOSTS (BUY AGAIN = +5 MIN)'],
+  [`OVERDRIVE ×${OVERDRIVE_MULT}`, 'XP + WINS', 'UPGRADES → BOOSTS (BUY AGAIN = +5 MIN)'],
   ['XP / WINS +50%', 'XP PER KEY / WINS PER WORD', 'UPGRADES → BOOSTS'],
   ['LUCK ×2', 'ROLL LUCK', 'UPGRADES → BOOSTS'],
   ['FRENZY ×5', 'XP PER KEY', 'LIGHT ALL 26 LETTERS IN FUSE (FREE)'],

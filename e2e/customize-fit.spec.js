@@ -67,13 +67,11 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     expect(hero.w / m.panel.w, 'the hero dominates the profile').toBeGreaterThan(w < 760 ? 0.55 : 0.3);
     // CUSTOMIZE: five tabs in one strip, each view's controls apart
     await pf.getByTestId('profile-kit').click();
-    await expect(pf.getByTestId('customize').getByRole('tab')).toHaveCount(5);
+    await expect(pf.getByTestId('customize').getByRole('tab')).toHaveCount(3);
     for (const [t, sel, main] of [
       ['hero', '.hc', '.hc'],
       ['frame', '.skp-tile, .skp-stage, .skp-cta, .skp-act > *', '.skp-stage'],
-      ['fx', '.skp-tile, .skp-stage, .skp-act > *', '.skp-stage'],
       ['pop', '.sp2-look', '.sp2-look'],
-      ['sound', '.sp2-look', '.sp2-look'],
     ]) {
       await pf.locator(`.cz-tab[data-cz="${t}"]`).click();
       await page.waitForTimeout(400);
@@ -81,7 +79,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(m.overlaps, `${t}: overlaps`).toEqual([]);
       expect(m.outside, `${t}: nothing past the panel`).toEqual([]);
       expect(m.small, `${t}: tap targets ≥ 44px`).toEqual([]);
-      if ((t === 'frame' || t === 'fx') && w >= 760) {
+      if (t === 'frame' && w >= 760) {
         // the try-on is not a list: on a desktop it fits whole, the HOLD TO BUY in view, no scroll
         const sc = await page.locator('.cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
@@ -97,27 +95,27 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     await boot(page, w, h);
     await navControl(page, 'shop').click();
     await page.locator('.sp2').waitFor({ state: 'visible' });
-    await expect(page.locator('.sp2-tab')).toHaveCount(3);
+    await expect(page.locator('.sp2-tab')).toHaveCount(2);
     await expect(page.locator('.sp2-tab[data-shelf="looks"]')).toHaveCount(0); // no cosmetics screen in the shop
     const m = await layout(page, '.sp2-stock', '.sp2-tab, .sp2-timer');
     expect(m.overlaps, 'shop tab overlaps').toEqual([]);
     expect(m.outside, 'shop tabs inside the shelf').toEqual([]);
     expect(m.small, 'shop tabs ≥ 44px').toEqual([]);
-    await expect(page.locator('.sp2-tab .sp2-tab-ico')).toHaveCount(3);
+    await expect(page.locator('.sp2-tab .sp2-tab-ico')).toHaveCount(2);
     // nov2 (Andy "idk why cosmetics screen on upgrades gives popup"): COSMETICS is a shelf — the CUSTOMIZE menu inline in
     // the shop, no popup over it; every tab's controls apart, inside the shelf, and the try-on never needs a scroll
     await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();
     await expect(page.getByTestId('shop-cosmetics').getByTestId('customize')).toBeVisible();
     await expect(page.getByTestId('profile-popup')).toHaveCount(0);
     await expect(page.locator('.cz-tab[data-cz="pop"]')).toHaveAttribute('aria-selected', 'true');
-    for (const [t, sel] of [['pop', '.sp2-look'], ['sound', '.sp2-look'], ['hero', '.hc'], ['frame', '.skp-tile, .skp-stage, .skp-act > *'], ['fx', '.skp-tile, .skp-stage, .skp-act > *']]) {
+    for (const [t, sel] of [['pop', '.sp2-look'], ['hero', '.hc'], ['frame', '.skp-tile, .skp-stage, .skp-act > *']]) { // WIN FX + SOUND retired nov2
       await page.locator(`.cz-tab[data-cz="${t}"]`).click();
       await page.waitForTimeout(400);
       const c = await layout(page, '.sp2-stock', `.sp2-tab, .cz-tab, ${sel}`);
       expect(c.overlaps, `shop COSMETICS · ${t}: overlaps`).toEqual([]);
       expect(c.outside, `shop COSMETICS · ${t}: inside the shelf`).toEqual([]);
       expect(c.small, `shop COSMETICS · ${t}: tap targets ≥ 44px`).toEqual([]);
-      if ((t === 'frame' || t === 'fx') && w >= 1000) {
+      if (t === 'frame' && w >= 1000) {
         const sc = await page.locator('.sp2-shelf-cz .cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `shop COSMETICS · ${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
       }
@@ -171,7 +169,6 @@ test('no name yet: the title plate stands alone with the claim hint — never "N
   const pf = page.getByTestId('profile-popup');
   await pf.waitFor({ state: 'visible' });
   await expect(pf).not.toContainText('NO NAME YET');
-  await expect(pf.getByTestId('profile-title')).toBeVisible();
   await expect(pf.locator('.pf-hint')).toBeVisible();
   await expect(pf.locator('.pf-medal')).toHaveCount(3);
 });

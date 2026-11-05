@@ -14,6 +14,14 @@ try {
 } catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
+import { GOOGLE_ON } from './leaderboard/googleFlag.js'
+// SIGN IN WITH GOOGLE (085/086, leaderboard/auth.js): index.html already lifted a landing's ?code= out of the address bar
+// into sessionStorage; auth.pickUpCode trades it (PKCE, with this tab's verifier) and the menu's AuthLanding finishes
+if (GOOGLE_ON && typeof window !== 'undefined') {
+  let landed = false
+  try { landed = !!sessionStorage.getItem('taw.pkce.code') } catch { landed = false }
+  if (landed) window.__TAW_SIGNIN = import('./leaderboard/auth.js').then((a) => a.pickUpCode()).catch(() => false)
+}
 import './index.css'
 import './theme/type.css'
 import './theme/values.css'
@@ -35,6 +43,7 @@ import { forgeMigrateMomentum } from './progress/forge'
 import { migrateGems } from './progress/gemsMigrate'
 import { SEASON2 } from './progress/season'
 import { migrateRollSave } from './progress/markRollsCore'
+import { retireCosmetics } from './progress/cosmeticsRetire'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
@@ -209,7 +218,8 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // installed BEFORE the first render, so every season-2 read finds them. The live game never downloads it.
   // GEAR POOL v2 (Andy oct9): retire COMMON once per save — owned commons deleted + refunded in gems, a worn one taken
   // off — AFTER the season install (its gem key mapping) and BEFORE the first render reads a gear. Never blocks startup.
-  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } renderApp() }
+  // nov2 (Andy: "dont want win fx or sound"): WIN FX + SOUND PACKS retired once per save — paid ones refunded in gems
+  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } try { retireCosmetics() } catch { /* never block startup */ } renderApp() }
   if (SEASON2) import('./progress/v3/installUi.jsx').then(boot, boot)
   else boot()
 }

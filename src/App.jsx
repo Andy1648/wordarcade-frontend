@@ -2368,7 +2368,9 @@ function App() {
     } else {
       // Carry the public/private choice into create_room (defaults false server
       // side, so a missing flag stays private/code-only as before).
-      send('create_room', { name, isPublic: !!isPublic });
+      // LOBBY BOTS (backend #43): a public room opts in - seeded-persona bots drift into the lobby while it waits and
+      // play like people (drawn as players; still bots for every payout rule)
+      send('create_room', { name, isPublic: !!isPublic, ...(isPublic ? { lobbyBots: true } : {}) });
       // Analytics: the selected mode is a game-id enum ('solo' generic create, or
       // a preselected 'word-bomb' / 'category-blitz'). No PII.
       track('room_created', { mode });

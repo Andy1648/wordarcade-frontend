@@ -12,7 +12,8 @@ import { kitById } from '../cast/kit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SQL = readFileSync(join(ROOT, 'supabase', 'migrations', '067_daily_wheel.sql'), 'utf8');
-const SQL68 = readFileSync(join(ROOT, 'supabase', 'migrations', '068_wheel_no_sidekick.sql'), 'utf8'); // the live cosmetic pool
+const SQL68 = readFileSync(join(ROOT, 'supabase', 'migrations', '068_wheel_no_sidekick.sql'), 'utf8');
+const SQL78 = readFileSync(join(ROOT, 'supabase', 'migrations', '078_wheel_no_winfx.sql'), 'utf8'); // the live cosmetic pool
 const UID = '11111111-2222-4333-8444-555555555555';
 
 test('the published table: 8 equal slices, weights sum to 100, and EXACTLY the migration\'s private.wheel_pick table', () => {
@@ -79,11 +80,12 @@ test('the wheel cosmetics exist in the kit, are never sold, and the migration ha
     const k = kitById(id);
     assert.ok(k && k.wheel && !k.price, id);
   }
-  assert.match(SQL68, /unnest\(array\['jackpot', 'confetti'\]\)/);
-  assert.doesNotMatch(SQL68, /array\[[^\]]*'lucky'/);
+  assert.match(SQL78, /unnest\(array\['jackpot'\]\)/);
+  assert.doesNotMatch(SQL78, /array\[[^\]]*'(lucky|confetti)'/);
+  assert.ok(SQL68.length > 0);
 });
 
-test('a retired cosmetic (LUCKY, a server before 068) is paid as gems — never a sidekick, never a broken image', () => {
+test('a retired cosmetic (LUCKY before 068, CONFETTI before 078) is paid as gems — never a sidekick, never a broken image', () => {
   const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'lucky' });
   assert.equal(s.prize, 'gems');
   assert.equal(s.amount, 120);
@@ -175,4 +177,38 @@ test('flapperTrack: one baked keyframe list (offsets 0..1, ends at rest) + one t
   assert.ok(f.ticks.every((t, i) => t >= 0 && t <= p.ms && (i === 0 || t >= f.ticks[i - 1])));
   // ticks thin out: the last gap is far longer than the first (the wheel crawls at the end)
   assert.ok(f.ticks.at(-1) - f.ticks.at(-2) > 6 * (f.ticks[1] - f.ticks[0]));
+});
+
+test('weekRow: the streak week today falls in, day 7 SUPER always in view, today lit until spun', async () => {
+  const { weekRow } = await import('./wheel.js');
+  const r1 = weekRow(1, false);
+  assert.deepEqual(r1.map((c) => c.day), [1, 2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(r1.map((c) => c.state), ['today', 'next', 'next', 'next', 'next', 'next', 'next']);
+  assert.deepEqual(r1.map((c) => c.bonus), [null, null, 'hot', 'hot', 'hot', 'hot', 'super']);
+  const r7 = weekRow(7, true);
+  assert.equal(r7[6].state, 'done');
+  assert.ok(r7.every((c) => c.state === 'done'));
+  const r9 = weekRow(9, false);
+  assert.deepEqual(r9.map((c) => c.day), [8, 9, 10, 11, 12, 13, 14]);
+  assert.deepEqual(r9.map((c) => c.state), ['done', 'today', 'next', 'next', 'next', 'next', 'next']);
+  assert.equal(r9[6].bonus, 'super');
+  assert.ok(r9.slice(0, 6).every((c) => c.bonus === 'hot'));
+  assert.equal(weekRow(0, false)[0].state, 'today'); // a fresh streak is DAY 1
+});
+
+test('EARNED spins (083): wordsLeft counts from the higher of the board and this browser; no need = nothing to earn', async () => {
+  const { wordsLeft, WHEEL_WORDS } = await import('./wheel.js');
+  assert.equal(WHEEL_WORDS, 15);
+  assert.equal(wordsLeft(415, 400, 0), 15); // nothing played since the last spin
+  assert.equal(wordsLeft(415, 400, 409), 6); // the board lags: this browser's words count
+  assert.equal(wordsLeft(415, 420, 0), 0); // earned
+  assert.equal(wordsLeft(null, 0, 0), 0); // a pre-083 server: the spin is simply there
+  assert.equal(wordsLeft(415, 999, 999), 0); // never negative
+});
+
+test('CONFETTI (the PRIZE SHOWER WIN FX, retired nov2) from a server before 078 is paid as 120 gems', () => {
+  const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'confetti' });
+  assert.equal(s.prize, 'gems');
+  assert.equal(s.amount, 120);
+  assert.equal(s.cosmetic, null);
 });
