@@ -28,13 +28,14 @@ import { GOOGLE_ON } from './googleFlag.js';
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
 const BASE = RAW_URL.replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
-const CLIENT_ID = (import.meta.env && import.meta.env.VITE_GOOGLE_CLIENT_ID) || ''; // public: Google's button needs it in the page
+// public, not a secret: Google's button needs it in the page. The env var only overrides it (the e2e build, another project)
+const CLIENT_ID = (import.meta.env && import.meta.env.VITE_GOOGLE_CLIENT_ID) || '1049744251053-glmrnk5l02aoudbnoa4jkbn15k2elsss.apps.googleusercontent.com';
 
 export const AUTH_KEY = 'taw.auth'; // { access, refresh, exp (ms), email }
 export const AUTH_PENDING_KEY = 'taw.auth.pending'; // the restore waiting on the player's OK: { username, level, rebirths }
 export const AUTH_CHANGE = 'taw:auth-change';
 export const AUTH_FAIL = 'taw:auth-fail'; // detail: { reason } — the button says what went wrong and re-arms
-export const authAvailable = () => GOOGLE_ON && LEADERBOARD_ENABLED && !!BASE && !!KEY && !!CLIENT_ID; // VITE_GOOGLE_ON (googleFlag.js) + VITE_GOOGLE_CLIENT_ID
+export const authAvailable = () => GOOGLE_ON && LEADERBOARD_ENABLED && !!BASE && !!KEY; // VITE_GOOGLE_ON (googleFlag.js)
 
 const tell = () => { try { window.dispatchEvent(new Event(AUTH_CHANGE)); } catch { /* node */ } };
 function readJson(k) {

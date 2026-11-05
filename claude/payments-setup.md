@@ -52,9 +52,9 @@ server, and the same account restores the progress on any new device. Playing ne
 4. Run **085_google_signin.sql** after 082 / 084, then **086_pay_auth_hardening.sql** (the security review's server
    fixes: Google-only, unlink revokes devices, cap + dispute flag per Google account, refunds by share), then
    `notify pgrst, 'reload schema';`
-5. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_CLIENT_ID` = the Client ID (public,
-   not a secret) and `VITE_GOOGLE_ON` = `1`, then redeploy. Until both are set the game shows no sign-in button anywhere, so
-   it can ship dark. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
+5. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_ON` = `1`, then redeploy. The Client ID
+   is public and already in the code (`VITE_GOOGLE_CLIENT_ID` only overrides it). Until the flag is set the game shows no
+   sign-in button anywhere, so it can ship dark. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
 6. Check: Settings → SAVE CODE → Google's **Sign in with Google** button → a Google popup, on the same page → a dialog asks
    "LINK YOUR NAME?". On a second browser, sign in with the same account → it asks "LOAD YOUR PROGRESS?" (or loads straight
    away on a fresh browser) and comes back as the same name and level.
