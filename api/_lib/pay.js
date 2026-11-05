@@ -118,8 +118,8 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
     const session = await stripe.checkout.sessions.create(
       {
         mode: 'payment',
-        // 086 review: cards only — a delayed method (bank debit, voucher) would settle after the 35-min reservation
-        payment_method_types: ['card'],
+        // No payment_method_types: Stripe's API refuses it on Checkout now (methods are set in the Dashboard). Keep delayed
+        // methods OFF there: they would settle after the 35-min reservation.
         line_items: [lineItem],
         // Stripe Checkout always asks the PAYER for their email (the parent's); we never ask the player for one
         client_reference_id: String(res.profile_id),
