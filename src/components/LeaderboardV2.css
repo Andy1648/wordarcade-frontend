@@ -1230,10 +1230,9 @@
 /* 2 STICKY: YOUR row stays on the list's edge when you scroll away from it (the same row, no second element) */
 /* inset by the -1deg tilt's corner lift + the hard shadow, so the stuck row sits wholly inside the list */
 .lb2-scroll .lb2-row.is-me { position: sticky; top: calc(8px * var(--lb2-k)); bottom: calc(8px * var(--lb2-k)); }
-/* = the row's own vertical margin, so at the end of the list (past #100) the row is not lifted onto the ghost above it */
+/* = the row's own vertical margin, so at the end of the list (past #100) the row is not lifted onto the row above it */
 .lb2--narrow .lb2-scroll .lb2-row.is-me { top: 5px; bottom: 5px; }
-/* 3 THE GHOST: the player right above you, past the board — a real row, a step quieter than the board's own */
-.lb2-row.is-ghost { opacity: 0.78; }
+/* 3 YOUR NEIGHBOURHOOD past the board (nov2: 2 above, you, 2 below): plain board rows - nothing marks them but the league line */
 
 /* ---- THE TOP 3 AS RAISED ROWS + YOUR CLIMB (Andy nov2: big games give the top 3 a medal row, not a trophy wall) ---- */
 .lb2 .lb2-top3 {
@@ -1364,3 +1363,22 @@
 /* THIS WEEK: the gem prize is the medal row's news - the title plate steps aside so the pill never meets the numbers
    (it collided at 1280x551) */
 .lb2 .lb2-top3 .lb2-t3-sub:has(.lb2-prize) .lb2-pod-plate { display: none; }
+
+/* LEAGUE CUT LINES (nov2): on ALL TIME each divider is a league boundary - the LeagueBadge, then a rule in the league's
+   colour (the badge's own plate colour, LeagueBadge.css). Slim: the badge is the only thing on the line. */
+.lb2 .lb2-sep.is-league .lb2-sep-league { flex: none; }
+.lb2-sep[data-league='legend'] { color: #FFE94A; }
+.lb2-sep[data-league='champion'] { color: #FF4FA3; }
+.lb2-sep[data-league='titan'] { color: #FF6B3D; }
+.lb2-sep[data-league='master'] { color: #B04BFF; }
+.lb2-sep[data-league='crystal'] { color: #2EFFE0; }
+.lb2-sep[data-league='gold'] { color: #FFC23D; }
+.lb2-sep[data-league='silver'] { color: #D4DAE3; }
+.lb2-sep[data-league='bronze'] { color: #D98A4E; }
+/* the board's line reads at 16px+ (the badge's own --fs-label is 14px at 1366 / 390) - sized here, not in LeagueBadge.css */
+.lb2 .lb2-sep.is-league .lg-badge { font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--lb2-k))); } /* the badge's one size knob: the painted art and the name both follow it */
+.lb2 .lb2-sep.is-league { padding-top: calc(3px * var(--lb2-k)); padding-bottom: calc(3px * var(--lb2-k)); }
+.lb2 .lb2-sep.is-league .lg-badge-name { padding: 2px 8px 1px; }
+/* the band divider's own `.lb2-sep span` (14px) also matches the badge's spans: they follow the badge again */
+.lb2 .lb2-sep.is-league .lg-badge span { font-size: inherit; -webkit-text-stroke: 0; }
+.lb2 .lb2-sep.is-league .lg-badge b { font-size: inherit; }
