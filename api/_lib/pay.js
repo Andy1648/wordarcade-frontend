@@ -120,6 +120,9 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
         mode: 'payment',
         // No payment_method_types: Stripe's API refuses it on Checkout now (methods are set in the Dashboard). Keep delayed
         // methods OFF there: they would settle after the 35-min reservation.
+        // Stripe can default a Checkout to Managed Payments (+3.5%, tax added on top): the charged amount would then miss
+        // the pack table and grantArgs would refuse the gems. We are the merchant of record, on every session.
+        managed_payments: { enabled: false },
         line_items: [lineItem],
         // Stripe Checkout always asks the PAYER for their email (the parent's); we never ask the player for one
         client_reference_id: String(res.profile_id),

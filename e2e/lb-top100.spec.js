@@ -283,20 +283,33 @@ test('@1024x768 the header (YOU / CHANGE) is clickable over the smaller podium',
   expect(await overlapsIn(page)).toEqual([]);
 });
 
-// CLIMB 3 (nov2): past the TOP 100 the player right above you rides in over your row, so there is still someone to PASS
+// YOUR NEIGHBOURHOOD (Andy nov2): past the TOP 100 the list ends on the 2 players above you, you, and the 2 below - plain
+// rows in the same list under your league's line, with the player right above you as the RIVAL to PASS
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
-  test(`@${vp.width} past #100: a ghost of the player above you, with the gap to pass them`, async ({ page }) => {
+  test(`@${vp.width} past #100: your neighbourhood (2 above, you, the players below) under your league line`, async ({ page }) => {
+    // R1 LV70 sits between the R1 LV74 (#119) and R1 LV67 (#121) rows -> #120
+    const lb = await boot(page, vp, { level: 70, rebirths: 1 });
+    await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '120');
+    const tail = await lb.locator('.lb2-row').evaluateAll((els) => els.slice(-4).map((e) => e.dataset.rank));
+    expect(tail, 'the list ends on #118, #119, YOU, #121').toEqual(['118', '119', '120', '121']);
+    // YOUR league's line (CRYSTAL, #101-300) sits right over the neighbourhood
+    await expect(lb.locator('.lb2-sep.is-league').last()).toHaveAttribute('data-league', 'crystal');
+    expect(await lb.locator('.lb2-sep.is-league').last().evaluate((e) => e.nextElementSibling.dataset.rank)).toBe('118');
+    await expect(lb.locator('.lb2-row[data-rank="119"]')).toHaveClass(/is-rival/);
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+4 LV');
+    await expect(lb.locator('.lb2-row.is-near')).toHaveCount(3);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-near-${vp.width}.png` });
+    expect(await overlapsIn(page)).toEqual([]);
+  });
+
+  test(`@${vp.width} past #100 at the very bottom: 2 above you, nobody below`, async ({ page }) => {
     const lb = await boot(page, vp, { level: 10, rebirths: 0 });
     await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '121');
-    const ghost = lb.locator('.lb2-row.is-ghost');
-    await expect(ghost).toHaveAttribute('data-rank', '120');
-    // past the board YOUR league's line sits over the ghost + your row (CRYSTAL, #101-300)
-    await expect(lb.locator('.lb2-sep.is-league').last()).toHaveAttribute('data-league', 'crystal');
-    expect(await lb.locator('.lb2-sep.is-league').last().evaluate((e) => e.nextElementSibling.dataset.rank)).toBe('120');
-    await expect(ghost).toHaveClass(/is-rival/);
-    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
+    const tail = await lb.locator('.lb2-row').evaluateAll((els) => els.slice(-3).map((e) => e.dataset.rank));
+    expect(tail).toEqual(['119', '120', '121']);
+    await expect(lb.locator('.lb2-row[data-rank="120"]')).toHaveClass(/is-rival/);
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-ghost-${vp.width}.png` });
     expect(await overlapsIn(page)).toEqual([]);
   });
 }

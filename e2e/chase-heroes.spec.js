@@ -59,7 +59,7 @@ test('THE DROP: a lucky gear roll drops DRAKE — the gear reveal closes, MYTHIC
   await boot(page, { width: 1366, height: 768 }, { 'taw.markRolls': JSON.stringify({ v: 4, rolls: 20, sinceEpic: 1, sinceLegendary: 1, everEpic: true, starter: true, marks: {}, milestones: [], skipBelow: 'rare' }) });
   await page.locator('.hp-nav.is-gears:visible').first().click();
   await page.locator('.rs-overlay').waitFor();
-  await page.evaluate(() => { Math.random = () => 0.0001; }); // the luckiest roll there is
+  await page.evaluate(() => { window.__TAW_NO_CHASE_DROP = false; Math.random = () => 0.0001; }); // the luckiest roll there is (backendMock turns drops off everywhere else)
   await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: 9000 });
@@ -81,7 +81,7 @@ test('no drop on an ordinary roll: the reveal closes straight back to the roll s
   await boot(page, { width: 1366, height: 768 }, { 'taw.markRolls': JSON.stringify({ v: 4, rolls: 20, sinceEpic: 1, sinceLegendary: 1, everEpic: true, starter: true, marks: {}, milestones: [], skipBelow: 'rare' }) });
   await page.locator('.hp-nav.is-gears:visible').first().click();
   await page.locator('.rs-overlay').waitFor();
-  await page.evaluate(() => { Math.random = () => 0.6; });
+  await page.evaluate(() => { window.__TAW_NO_CHASE_DROP = false; Math.random = () => 0.6; });
   await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: 9000 });

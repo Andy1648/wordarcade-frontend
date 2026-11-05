@@ -800,7 +800,7 @@ function IconsSheet() {
 }
 
 // ======================================================================== GEAR FX (hover concepts)
-// ?kit=1&sheet=gearfx — LEGENDARY's painted LANCES vs MYTHIC's shockwaves on real cards (hover a card to play them)
+// ?kit=1&sheet=gearfx — LEGENDARY's flat light STREAKS vs MYTHIC's shockwaves on real cards (hover a card to play them)
 function GearFxSheet() {
   return (
     <section className="kg-sheet" id="gearfx" data-testid="kit-gearfx">
