@@ -1,7 +1,7 @@
 // ShopV2Looks — the season-1 shop shelves that season 2 had dropped (Andy oct8: "a lot of the features from before are
 // gone … don't delete what worked really well"): POP STYLES and SOUND PACKS (cosmetics, priced in GEMS in season 2 —
-// the v3 shop.buy swap charges gems and equips), and CODES (the redeem box). Same logic as the live shop — shop.js
-// buy / equip / getOwned / getEquipped, RedeemCodes — re-laid on the v2 kit so they sit on the UPGRADES screen.
+// the v3 shop.buy swap charges gems and equips). Same logic as the live shop — shop.js buy / equip / getOwned /
+// getEquipped — re-laid on the v2 kit. (CODES moved to SETTINGS, Andy nov4.)
 import { useEffect, useRef, useState } from 'react';
 import { kitBarOf } from '../progress/kitArt.js';
 import { POP_STYLES, getOwned, getEquipped, buy, equip, tryLooksOn, wearForSession, wornPopStyle } from '../progress/shop';
@@ -14,8 +14,6 @@ import { V3 } from '../progress/season';
 import { KitIcon } from './kit/index.js';
 import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
-import { LEADERBOARD_ENABLED } from '../leaderboard/client.js';
-import RedeemCodes from './RedeemCodes';
 
 // a pop style's XP multiplier as the card reads it (oct24: pops pay again): +5% … +95%, then ×2.2 … ×3
 const xpTag = (m) => (m >= 2 ? `×${+m.toFixed(2)} XP` : `+${Math.round((m - 1) * 100)}% XP`);
@@ -75,7 +73,7 @@ function LookCard({ it, type, owned, equipped, gems, onBuy, onEquip, onTry, tryi
 // the loadout as the cards read it: with the owner flag, the pop slot shows the session-worn style
 const loadout = (owner) => (owner ? { ...getEquipped(), popStyle: wornPopStyle() } : getEquipped());
 
-/** tab = 'looks' | 'codes'. tryFxRef = the MenuXpFx layer ShopV2 mounts over the shelf for the TRY-ON. */
+/** tab = 'looks'. tryFxRef = the MenuXpFx layer ShopV2 mounts over the shelf for the TRY-ON. */
 /** `only` ('pop' | 'sound'): one shelf section — the profile's CUSTOMIZE menu shows each under its own tab. */
 export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }) {
   const [owner] = useState(() => tryLooksOn());
@@ -156,13 +154,6 @@ export default function ShopV2Looks({ tab, gems, onNote, tryFxRef, only = null }
   const onEquip = (id) => {
     if (equip(id)) refresh();
   };
-  if (tab === 'codes') {
-    return (
-      <div className="sp2-codes">
-        {LEADERBOARD_ENABLED ? <RedeemCodes /> : <p className="sp2-codes-what">CODES NEED YOU ONLINE</p>}
-      </div>
-    );
-  }
   const tried = live ? POP_STYLES.find((x) => x.id === live.id) : null;
   const triedPrice = tried ? priceOf(tried) : 0;
   return (

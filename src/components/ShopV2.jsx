@@ -28,7 +28,6 @@ import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '..
 import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
-import ShopV2Looks from './ShopV2Looks';
 import DailyDrop from './DailyDrop';
 import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
@@ -44,8 +43,8 @@ const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollRev
 // PROFILE shows, same stores) laid inline, pop styles first. Lazy: the pickers stay out of the idle-prefetched shop chunk.
 const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx'), 'ShopCosmetics');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
-const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'], ['codes', 'CODES', '/wheel/prize-ticket-rare.webp']];
-// PAID GEMS (Andy nov3; payments/, migration 082): a fourth shelf, GEMS — real-money gem packs. It exists ONLY with the
+const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp']]; // CODES moved to SETTINGS (Andy nov4)
+// PAID GEMS (Andy nov3; payments/, migration 082): a third shelf, GEMS — real-money gem packs. It exists ONLY with the
 // payments flag on (VITE_PAYMENTS_ON=1; default OFF, so the live shop is untouched); the shelf is its own lazy chunk.
 const PaidGemsShelf = lazyWithReload(() => import('./PaidGemsShelf.jsx'), 'PaidGemsShelf');
 const SHOP_SHELVES = PAYMENTS_ON ? [...SHELVES, ['gems', 'GEMS', '/wheel/prize-gems-s.webp']] : SHELVES;
@@ -247,7 +246,7 @@ export default function ShopV2({ onBack }) {
   // affordable look, until CUSTOMIZE's POP STYLE / SOUND tab shows it
   // V3.dots, never a static import: this chunk is idle-prefetched in season 1 too, and v3/hooks.js must only ever run under
   // the v3 install (a static import here evaluated it in season 1 and doubled the gear stats — e2e/marks.spec.js caught it)
-  const tabDot = V3.dots ? { boosts: V3.dots.boostsNew(now), cosmetics: V3.dots.looksNew(gems), codes: false } : {};
+  const tabDot = V3.dots ? { boosts: V3.dots.boostsNew(now), cosmetics: V3.dots.looksNew(gems) } : {};
   useEffect(() => {
     evShopOpened();
     rootRef.current?.focus();
@@ -448,7 +447,6 @@ export default function ShopV2({ onBack }) {
           </div>
           {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
           {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
-          {shelf === 'codes' ? <div className="sp2-shelf"><ShopV2Looks tab="codes" gems={gems} onNote={setNote} /></div> : null}
           {PAYMENTS_ON && shelf === 'gems' ? <div className="sp2-shelf sp2-shelf-gems"><Suspense fallback={null}><PaidGemsShelf /></Suspense></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (

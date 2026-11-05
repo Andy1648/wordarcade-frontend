@@ -20,7 +20,6 @@ const ALLOW = [
   ['.cz.is-hero .cz-body:not(:has(.hpv))', 'CUSTOMIZE · HERO: every hero (oct28: the card stays put, the grid scrolls)'],
   ['.cz:is(.is-pop, .is-sound) .cz-body', 'CUSTOMIZE · POP STYLE / SOUND: every look'],
   ['.sp2-grid', 'the UPGRADES stock: more boosts below ("SCROLL FOR MORE")'],
-  ['.sp2-shelf', 'the CODES shelf'],
   ['.ppp-window-scroll', 'the Category Blitz pack picker (Andy\'s named exception)'],
   ['.sr-bank-list', 'the French Rush word bank'],
   ['.sr-brief-list', 'the SAT / French briefing: the words to study'],
