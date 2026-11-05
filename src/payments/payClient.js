@@ -39,6 +39,17 @@ export function clawGems(n) {
   return took;
 }
 
+// A pack waiting on a Google sign-in, for the length of the tab: LOAD YOUR PROGRESS reloads the page on the way to it.
+export const PAY_RESUME_KEY = 'taw.pay.resume';
+const RESUME_MS = 10 * 60 * 1000;
+/** The pack id waiting on a sign-in (this tab, the last few minutes), or null. */
+export function readPayResume() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(PAY_RESUME_KEY) || 'null');
+    return r && typeof r.pack === 'string' && Date.now() - r.at < RESUME_MS ? r.pack : null;
+  } catch { return null; }
+}
+
 /** Does this browser have a board profile the gems can land on? (the server re-checks: pay_reserve 'no_profile') */
 export function hasProfile() {
   return !!(peekSecret() && getMyProfile());

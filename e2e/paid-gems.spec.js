@@ -1,10 +1,11 @@
 // e2e/paid-gems.spec.js — PAID GEMS (payments/, migration 082). The "+" on every gem pill and the panel behind it are HIDDEN
 // unless the payments flag is on (production: VITE_PAYMENTS_ON=1; this e2e build also honours ?payments=1 —
 // playwright.config.js VITE_PAYMENTS_E2E). With it on, at phone and desktop sizes: four packs, a dollar price on every one,
-// ASK A PARENT, the $20 monthly line, ODDS and the refund line, all on screen with no scrolling; one tap on a pack POSTs
+// the $20 monthly line, ODDS and the refund line, all on screen with no scrolling; one tap on a pack POSTs
 // /api/checkout with { pack, secret } and NO amount, then the redirect. The return (?paid=1) picks up the paid ledger row,
 // grants it once, acks it, and flies the gems into the menu pill. Stripe and the database are mocked; nothing leaves localhost.
 import { test, expect } from '@playwright/test';
+import { mockGsi } from './support/gsiMock.js';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
 
@@ -28,6 +29,7 @@ async function boot(page, { query = '', gems = 40, signedIn = true, pending = { 
     calls.ack.push(route.request().postDataJSON());
     await route.fulfill({ status: 200, contentType: 'application/json', body: '1' });
   });
+  await mockGsi(page);
   await page.addInitScript(({ gems, secret, signedIn }) => {
     if (sessionStorage.getItem('pg.seeded')) return;
     sessionStorage.setItem('pg.seeded', '1');
@@ -69,11 +71,11 @@ async function expectPanelFits(panel) {
     const r = el.getBoundingClientRect();
     const hit = (p, q) => Math.min(p.right, q.right) - Math.max(p.left, q.left) > 1 && Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top) > 1;
     const ctl = [...el.querySelectorAll('button')].filter((b) => b.getClientRects().length).map((b) => b.getBoundingClientRect());
-    const texts = [...el.querySelectorAll('*')].filter((n) => [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()));
+    const texts = [...el.querySelectorAll('*')].filter((n) => !n.closest('[data-testid="gsi-official"]') && [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()));
     return {
       inside: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
       scrolls: el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1,
-      minH: Math.min(...[...el.querySelectorAll('button')].filter((b) => b.getClientRects().length).map((b) => b.offsetHeight)),
+      minH: Math.min(...[...el.querySelectorAll('button:not([data-testid="gsi-official"])')].filter((b) => b.getClientRects().length).map((b) => b.offsetHeight)), // Google's own button is its ~40 px
       overlaps: ctl.flatMap((a, i) => ctl.slice(i + 1).filter((b) => hit(a, b))).length,
       smallest: Math.min(...texts.map((n) => parseFloat(getComputedStyle(n).fontSize))),
       clipped: texts.filter((n) => n.scrollWidth > n.clientWidth + 1 && getComputedStyle(n).display !== 'inline').map((n) => n.textContent.slice(0, 20)),
@@ -101,7 +103,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
 }
 
 for (const vp of VIEWS) {
-  test(`@${vp.width}x${vp.height}: flag ON — the + opens the one panel: prices, ask a parent, the cap, ODDS, refunds; it fits; one tap reaches checkout with no amount`, async ({ page }) => {
+  test(`@${vp.width}x${vp.height}: flag ON — the + opens the one panel: prices, the cap, ODDS, refunds; it fits; one tap reaches checkout with no amount`, async ({ page }) => {
     await page.setViewportSize(vp);
     const calls = await boot(page, { query: '&payments=1', pending: { rows: [], spent_cents: 499, cap_cents: 2000, flagged: false, profile: true } });
     // the + is part of the pill: a full target, inside the screen, over nothing else
@@ -119,7 +121,7 @@ for (const vp of VIEWS) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-menu-${vp.width}.png` });
 
     const panel = await openPanel(page);
-    await expect(page.getByTestId('pay-parent')).toContainText('ASK A PARENT FIRST');
+    await expect(page.getByText(/parent/i)).toHaveCount(0); // Andy nov5: gone everywhere
     await expect(page.getByTestId('pay-cap')).toContainText('$20 A MONTH LIMIT');
     await expect(page.getByTestId('pay-cap')).toContainText('$15.01 LEFT'); // 2000 − 499
     await expect(page.getByTestId('pay-refund')).toContainText('refund');
@@ -153,18 +155,29 @@ for (const vp of VIEWS) {
     await page.waitForURL(/[?&]paid=1/).catch(() => {}); // the mocked "Stripe" sends us straight back
   });
 
-  test(`@${vp.width}x${vp.height}: not signed in — the panel asks for SIGN IN WITH GOOGLE instead of the packs (085), and fits`, async ({ page }) => {
+  test(`@${vp.width}x${vp.height}: not signed in — the packs still show; a tap asks for Google, BACK returns, and the script loads only then`, async ({ page }) => {
     await page.setViewportSize(vp);
+    let gsiReqs = 0;
+    page.on('request', (r) => { if (r.url().includes('accounts.google.com/gsi/client')) gsiReqs += 1; });
     const calls = await boot(page, { query: '&payments=1&google=1', signedIn: false });
     const panel = await openPanel(page);
-    const gate = page.getByTestId('pay-signin');
-    await expect(gate).toBeVisible();
-    await expect(gate.getByTestId('google-signin')).toBeVisible();
-    await expect(page.locator('.pg-pack')).toHaveCount(0);
-    await expect(page.getByTestId('pay-parent')).toBeVisible(); // ASK A PARENT still heads it
+    await expect(panel.locator('.pg-pack')).toHaveCount(4);
+    await expect(page.getByTestId('pay-signin')).toHaveCount(0);
+    expect(gsiReqs).toBe(0);
+    await expectPanelFits(panel);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-signedout-${vp.width}.png` });
+    await panel.locator('.pg-pack[data-pack="pile"]').click();
+    const ask = page.getByTestId('pay-signin');
+    await expect(ask).toContainText('SIGN IN TO GET 1,700 GEMS');
+    await expect(ask).toContainText('$4.99');
+    await expect(ask.getByTestId('gsi-official')).toBeVisible();
     await expectPanelFits(panel);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-signin-${vp.width}.png` });
     expect(calls.checkout.length).toBe(0);
+    await page.getByTestId('pay-signin-back').click();
+    await expect(panel.locator('.pg-pack')).toHaveCount(4);
+    await expect(ask).toHaveCount(0);
+    expect(await page.evaluate(() => sessionStorage.getItem('taw.pay.resume'))).toBeNull();
   });
 
   for (const [gems, shown] of [[987654321987654, '988T'], [1740, '1,740'], [12345, '12.3K']]) {

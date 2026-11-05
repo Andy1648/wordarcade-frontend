@@ -52,21 +52,6 @@
 }
 .pg-close:active { transform: translate(3px, 3px); box-shadow: none; }
 
-/* ASK A PARENT FIRST — the yellow strip that heads the panel */
-.pg-parent {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 12px;
-  padding: 6px 12px;
-  background: #FFE94A;
-  color: #0d0618;
-  border: 4px solid #F2A900;
-  border-radius: 8px;
-}
-.pg-parent-h { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k18); text-transform: uppercase; line-height: 1.1; }
-.pg-parent-t { font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k15); font-weight: 700; line-height: 1.25; }
-
 /* the packs: four in a row on a desktop, two on a phone. The whole card is the one tap; the price is its face */
 .pg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 6px 6px 0; }
 .pg-cell { min-width: 0; display: flex; }
@@ -135,7 +120,7 @@
 .pg-fine b { color: #fff; }
 .pg-note { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); line-height: 1.25; color: #FF6B3D; text-transform: uppercase; }
 
-/* SIGN IN WITH GOOGLE (085): buying needs a Google account — until then the packs' space holds the one sign-in panel */
+/* SIGN IN WITH GOOGLE (085): buying needs a Google account — a tap on a pack, signed out, asks here (BACK returns to the packs) */
 .pg-signin {
   display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px; text-align: center;
   background: #0d0618; border: 4px solid #5c0fa3; border-radius: 8px;
@@ -167,3 +152,9 @@
   .pg-pack { transition: none; }
 }
 html[data-reduce-motion] .pg { animation: none; }
+.pg-back {
+  min-height: 44px; padding: 0 18px; background: #1a0b2e; color: #fff; border: 4px solid #5c0fa3; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); text-transform: uppercase; cursor: pointer;
+}
+.pg-back:active { transform: translate(3px, 3px); box-shadow: none; }
+.pg-signin .gsi-wrap { align-items: center; }
