@@ -332,3 +332,15 @@ test('a run with `recent` never reopens on the last run\'s fragments (while the 
   }
   assert.equal(overlap, 0, `${overlap}/${total} opening fragments repeated the last run`);
 });
+
+test('a run never serves a fragment twice, even when the tier moves on (the tiers share fragments)', () => {
+  const shared = _real.pools.e.concat(_real.pools.m, _real.pools.h, _real.pools.b);
+  assert.ok(new Set(shared).size < shared.length, 'the pools still overlap: otherwise this test proves nothing');
+  const rng = mulberry32(11);
+  for (let r = 0; r < 100; r++) {
+    const eng = createFuseEngine({ ..._real, rng });
+    const frags = [eng.start().fragment];
+    for (let w = 1; w < 80; w++) { eng.state.wordsSolved = w; frags.push(eng.serve().fragment); }
+    assert.equal(new Set(frags).size, frags.length, `run ${r} repeated a fragment`);
+  }
+});
