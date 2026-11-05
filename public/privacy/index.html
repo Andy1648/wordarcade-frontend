@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" style="--acc:#2EFFE0; --acc-line:#0E8C7E; --acc-ink:#000;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0618" />
+    <title>Privacy Policy | TYPE A WORD</title>
+    <meta name="description" content="What Type a Word collects, why, who else handles it, and how to have it deleted." />
+    <link rel="canonical" href="https://typeaword.com/privacy" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/landing.css" />
+  </head>
+  <body>
+    <div class="lp-wrap">
+      <header class="lp-header">
+        <a class="lp-wordmark" href="/">TYPE A WORD</a>
+        <a class="lp-btn" href="/">PLAY</a>
+      </header>
+
+      <main>
+        <section class="lp-hero">
+          <span class="lp-badge">EFFECTIVE NOVEMBER 3, 2026</span>
+          <h1>PRIVACY</h1>
+          <p class="lp-tagline">Type a Word is a free set of word games at typeaword.com. This page says what we collect, why, and how to have it deleted.</p>
+        </section>
+
+        <section class="lp-section">
+          <h2>What we collect</h2>
+          <ul>
+            <li><strong>Your progress, on your device.</strong> Levels, wins, gems, gear and settings are kept in your browser's local storage. A random <strong>device key</strong> is also kept there and in one first-party cookie, so the game knows which board name is yours.</li>
+            <li><strong>Your board name and stats</strong>, if you pick a name. The name you choose, your level, rebirths, word counts and leaderboard place are stored on our database (Supabase) and shown on the public leaderboard. Pick a name that is not your real name. With a name, a backup copy of your save is also stored there so you can get it back on another device.</li>
+            <li><strong>Only a fingerprint of your device key.</strong> The server keeps a one-way hash of it, never the key itself.</li>
+            <li><strong>Words you play</strong> pass through our game server while you play. In Category Blitz, an answer the word list can't settle is sent to Anthropic's Claude model to be judged. In Fuse and Chain, a rejected word and the mode it was typed in may be logged, with nothing else attached, to fix the word lists.</li>
+            <li><strong>Multiplayer rooms</strong> see your board name, character and score while you are in them.</li>
+          </ul>
+        </section>
+
+        <section class="lp-section">
+          <h2>Sign in with Google (optional)</h2>
+          <p>Signing in is never needed to play. If you choose to sign in with Google, Google's sign-in and your email address are handled by Supabase Auth. Our own tables store only the account's ID and which board name it is linked to, so your progress can follow you to another device. Your email is never shown on the leaderboard or to other players. You can sign out at any time in Settings, and your progress stays.</p>
+        </section>
+
+        <section class="lp-section">
+          <h2>Buying gems</h2>
+          <p>When gem packs are available, payment is handled entirely by <strong>Stripe</strong>. A parent or guardian enters their email and card on Stripe's own page; we never see or store card numbers. We keep a record of each purchase (the pack, the amount, the date and which account bought it) so the gems can be delivered once and refunds can be honoured.</p>
+        </section>
+
+        <section class="lp-section">
+          <h2>Analytics and ads</h2>
+          <ul>
+            <li><strong>Umami</strong> and <strong>Vercel Web Analytics</strong> count page views and visits. Both are cookieless and do not build a profile of you.</li>
+            <li><strong>Google AdSense</strong> is loaded on the site. Google may use cookies or similar identifiers to serve and measure ads; see <a href="https://policies.google.com/technologies/ads">how Google uses data for ads</a>.</li>
+          </ul>
+        </section>
+
+        <section class="lp-section">
+          <h2>What we don't do</h2>
+          <ul>
+            <li>We do not sell or rent your information to anyone.</li>
+            <li>We do not ask for your real name, address, phone number or birthday.</li>
+            <li>We only share data with the services named on this page, and only so the game can run.</li>
+          </ul>
+        </section>
+
+        <section class="lp-section">
+          <h2>Kids</h2>
+          <p>Lots of players are students. If you are under 13, play without signing in, and pick a board name that isn't your real name. Buying gems is for a parent or guardian: the adult who pays on Stripe owns that purchase, and a refund goes through the Stripe receipt they receive. If you are a parent and want your child's data removed, email us (below).</p>
+        </section>
+
+        <section class="lp-section">
+          <h2>Deleting your data</h2>
+          <p>To wipe your progress on a device, use <strong>Settings &rarr; Reset account</strong>. To have your board name, cloud save, sign-in link and purchase records deleted from our servers, email <a href="mailto:andywang1648@gmail.com">andywang1648@gmail.com</a> with your board name. We'll confirm when it's done. Purchase records we are legally required to keep are kept only as long as required.</p>
+        </section>
+
+        <section class="lp-section">
+          <h2>Changes</h2>
+          <p>If this policy changes, the date at the top changes with it. Questions go to <a href="mailto:andywang1648@gmail.com">andywang1648@gmail.com</a>. See also the <a href="/terms">Terms</a>.</p>
+        </section>
+      </main>
+      <footer class="lp-footer">
+        <nav>
+          <a href="/">Play</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+        <p>TYPE A WORD &mdash; word games worth typing fast for.</p>
+      </footer>
+    </div>
+  </body>
+</html>
