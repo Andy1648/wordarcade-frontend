@@ -4,7 +4,8 @@
     "deploymentEnabled": {
       "**": false,
       "main": true,
-      "preview/**": true
+      "preview/**": true,
+      "pay-test": true
     }
   },
   "functions": {
