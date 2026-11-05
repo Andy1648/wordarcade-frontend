@@ -109,18 +109,7 @@
   /* never shrunk or ellipsized (names are max 20 chars): a long one wraps at its spaces beside JOIN */
   overflow-wrap: break-word;
 }
-.mr-meta { grid-area: meta; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 6px; min-width: 0; }
-/* the right group: IN LOBBY / PLAYING status + the x/max */
-.mr-right { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-.mr-status {
-  font-family: 'Space Mono', monospace;
-  font-size: var(--fs-mrmeta);
-  font-weight: 700;
-  line-height: 1.1;
-  white-space: nowrap;
-  color: #2EFFE0;
-}
-.mr-status.is-live { color: #FF4FA3; }
+.mr-meta { grid-area: meta; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
 /* the MODE CHIP: the mode's card art + its name in the mode colour, a full scale step (never shrunk; a long name wraps) */
 .mr-modechip {
   display: inline-flex;
@@ -175,6 +164,16 @@
   border: 3px solid #12a894;
 }
 .mr-join.is-watch { color: #0d0618; background: #FF4FA3; border-color: #b8206e; }
+/* SPECTATE (nov4): the button reads IN LOBBY over JOIN / PLAYING over SPECTATE */
+.mr-join { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.mr-status {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-mrmeta);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mr-action { line-height: 1; white-space: nowrap; }
 .mr-join:hover:not(:disabled),
 .mr-create:hover:not(:disabled),
 .mr-more:hover:not(:disabled),

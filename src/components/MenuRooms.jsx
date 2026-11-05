@@ -69,10 +69,7 @@ function RoomRow({ room, joining, onJoin, delay }) {
           {hero && mode.art ? <img className="mr-modeico" src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" /> : null}
           <span className="mr-mode">{mode.label}</span>
         </span>
-        <span className="mr-right">
-          <span className={`mr-status${live ? ' is-live' : ''}`} data-testid="menu-room-status">{live ? 'PLAYING' : 'IN LOBBY'}</span>
-          <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
-        </span>
+        <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
       </span>
       <button
         type="button"
@@ -81,7 +78,9 @@ function RoomRow({ room, joining, onJoin, delay }) {
         onClick={() => onJoin(room)}
         aria-label={`${live ? 'Spectate' : 'Join'} ${who}'s ${mode.label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players`}
       >
-        {busy ? '…' : action}
+        {/* the row's state rides in the button (no third line: the panel's height is the column's budget) */}
+        <span className="mr-status" data-testid="menu-room-status">{live ? 'PLAYING' : 'IN LOBBY'}</span>
+        <span className="mr-action">{busy ? '…' : action}</span>
       </button>
     </li>
   );

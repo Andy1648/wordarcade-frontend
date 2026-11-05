@@ -73,7 +73,7 @@ test('Word Bomb: a live public game stays listed (IN LOBBY → JOIN, then PLAYIN
   const row = viewer.locator(`.mr-row[data-code="${code}"]`);
   await expect(row).toBeVisible({ timeout: 30000 });
   await expect(row.getByTestId('menu-room-status')).toHaveText('IN LOBBY');
-  await expect(row.locator('.mr-join')).toHaveText('JOIN');
+  await expect(row.locator('.mr-action')).toHaveText('JOIN');
 
   await host.locator('.room-start-btn').click();
   await expect(host.locator('.room-wrap')).toHaveCount(0, { timeout: 30000 });
@@ -82,7 +82,7 @@ test('Word Bomb: a live public game stays listed (IN LOBBY → JOIN, then PLAYIN
 
   // ...the SAME row stays listed and flips to PLAYING → SPECTATE (the menu polls every 8 s)
   await expect(row.getByTestId('menu-room-status')).toHaveText('PLAYING', { timeout: 30000 });
-  await expect(row.locator('.mr-join')).toHaveText('SPECTATE');
+  await expect(row.locator('.mr-action')).toHaveText('SPECTATE');
   if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/spectate-menu-1366.png` });
 
   // SPECTATE: the viewer lands on the live board, read-only
