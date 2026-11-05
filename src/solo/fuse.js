@@ -227,7 +227,10 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
   function serve() {
     const tier = selectTier(state.wordsSolved, rng);
     state.tier = tier;
-    state.fragment = steerFragment(tier) || bags[tier].draw(recent);
+    // the tiers SHARE fragments (1,115 pool entries, 710 distinct) and each has its own bag: without servedFrags here a
+    // fragment came back when the tier moved on (37% of 40-word runs repeated one)
+    const avoid = recent && recent.size ? new Set([...recent, ...state.servedFrags]) : state.servedFrags;
+    state.fragment = steerFragment(tier) || bags[tier].draw(avoid);
     state.servedFrags.add(state.fragment);
     state.shortPenalty = lenFactorNext < 1.0;
     state.shortFactor = lenFactorNext; // the exact factor applied (for a truthful UI readout)
