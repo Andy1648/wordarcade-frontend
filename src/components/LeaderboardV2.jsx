@@ -6,7 +6,7 @@
 //   * THIS WEEK reads public.leaderboard_s2_weekly (024: ★ / rebirths / levels GAINED this ET week); until 024 runs it
 //     falls back to the live weekly view filtered to season-2 rows (words this week).
 //   * a WHITE PODIUM for the top 3 (vector blocks, the crown on #1), then ranks 4 … 10 in rows.
-//   * every name wears its v3 RANK plate (INKLING … ENDGAME — by rebirths, then ★; s2Board.rankPlate).
+//   * the podium wears each name's RANK LEAGUE (leagues.js — nov2: titles out, the board band is the rank).
 //   * ▲▼ = the place each player held the last time this browser looked at the same tab (a snapshot under taw.s2.).
 //   * YOUR row is lifted and pulses (a FINITE pulse when the board lands / the tab changes) — wherever you are: on the
 //     podium (top 3), in the list, or pinned under it with your real rank when you are past #10.
@@ -17,8 +17,7 @@ import { Fragment, Suspense, useCallback, useEffect, useLayoutEffect, useRef, us
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
-import { KitRankPlate } from './kit/KitRankPlate.jsx';
-import { shownPlateIndex } from '../progress/platePick';
+import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
 import {
   boardCaps,
   fetchBoard,
@@ -40,7 +39,7 @@ import {
   rankBand,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
-import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
+import { boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
@@ -112,14 +111,6 @@ function Prize({ rank, pod = false }) {
       +{fmt(g)}
     </span>
   );
-}
-
-// P9a: every name wears its SHAPED v3 plate (KitLevelUp.dc.html 03 — kit/KitRankPlate, FIT mode for a dense list).
-function Plate({ row, className = '', mine = false }) {
-  const base = rankPlate(row);
-  // YOUR row / podium spot shows the plate you picked in SETTINGS (Andy oct8) — any rank already reached
-  const p = mine ? { ...base, i: shownPlateIndex(base.i) } : base;
-  return <KitRankPlate rank={p.i} fit shine={false} className={`lb2-plate ${className}`} />;
 }
 
 function Move({ n }) {
@@ -606,7 +597,7 @@ export default function LeaderboardV2({ onBack }) {
                     <span className="lb2-pod-name-t" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
                   </span>
                   <span className="lb2-t3-sub">
-                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : null}
+                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p && !wk ? <LeagueBadge rank={place} className="lb2-pod-plate lb2-pod-league" /> : null}
                     {wk ? <Prize rank={place} pod /> : null}
                   </span>
                 </span>
@@ -631,6 +622,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-climb-rank">
                   {nameTier(meRow.rank) ? <RankSeal rank={meRow.rank} className="lb2-climb-seal" /> : <b className="lb2-climb-n">#{fmt(meRow.rank)}</b>}
                   {myPct ? <span className="lb2-climb-pct">TOP {myPct}%</span> : null}
+                  {!wk ? <LeagueBadge rank={meRow.rank} className="lb2-climb-league" data-testid="lb2-climb-league" /> : null}
                 </span>
               </div>
             ) : (
