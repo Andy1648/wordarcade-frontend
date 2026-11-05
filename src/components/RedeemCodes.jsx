@@ -1,6 +1,5 @@
-// RedeemCodes.jsx — STEP 61: the shop's CODES entry. One field + REDEEM; the answer is one line.
-// A good code does not pay here — it lands in REWARDS to claim (leaderboard/client.js redeemCode),
-// and the line says so.
+// RedeemCodes.jsx — STEP 61: the CODES box. One field + REDEEM; the answer is one line. It lives in SETTINGS only (Andy
+// nov4 "move codes to settings"; styled in SettingsPanel.css). A good code pays the moment it is redeemed.
 // H3/H5 (Andy oct3): a redeem is announced, never a quiet line — a good code STAMPS its prize with the
 // purchase chime, a bad one shakes. Both finite transform/opacity, keyed per attempt so each one replays.
 import { useRef, useState } from 'react';
@@ -54,12 +53,11 @@ export default function RedeemCodes() {
     }
   };
   return (
-    <form className="shop-codes" onSubmit={submit} noValidate>
-      <label className="shop-codes-label" htmlFor="shop-codes-input">HAVE A CODE?</label>
-      <div className="shop-codes-row">
+    <form className="sp-codes" onSubmit={submit} noValidate data-testid="sp-codes">
+      <div className="sp-restore">
         <input
-          id="shop-codes-input"
-          className="shop-codes-input"
+          className="sp-input sp-codes-input"
+          aria-label="Enter a code"
           value={value}
           onChange={(e) => setValue(normaliseCode(e.target.value))}
           placeholder="ENTER CODE"
@@ -69,12 +67,12 @@ export default function RedeemCodes() {
           maxLength={32}
           disabled={busy}
         />
-        <button type="submit" className="shop-codes-btn" disabled={busy || !value}>
+        <button type="submit" className="sp-btn sp-codes-btn" disabled={busy || !value}>
           {busy ? '…' : 'REDEEM'}
         </button>
       </div>
       {msg && (
-        <div key={msg.n} className={`shop-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
+        <div key={msg.n} className={`sp-msg sp-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
           {msg.text}
         </div>
       )}

@@ -59,7 +59,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(vp);
     const calls = await boot(page);
     await openShop(page);
-    await expect(page.locator('.sp2-tab')).toHaveCount(3);
+    await expect(page.locator('.sp2-tab')).toHaveCount(2);
     await expect(page.locator('.sp2-tab[data-shelf="gems"]')).toHaveCount(0);
     await expect(page.getByTestId('shop-gems')).toHaveCount(0);
     expect(calls.pending).toBe(0); // the menu never asks the pay ledger with the flag off
@@ -70,7 +70,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     const calls = await boot(page, { query: '&payments=1', pending: { rows: [], spent_cents: 499, cap_cents: 2000, flagged: false, profile: true } });
     await openShop(page);
     const tab = page.locator('.sp2-tab[data-shelf="gems"]');
-    await expect(page.locator('.sp2-tab')).toHaveCount(4);
+    await expect(page.locator('.sp2-tab')).toHaveCount(3);
     await tab.click();
     const shelf = page.getByTestId('shop-gems');
     await expect(shelf).toBeVisible();
