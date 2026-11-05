@@ -11,13 +11,9 @@
   z-index: -2;
   pointer-events: none;
 }
-/* HOVER (Andy oct11 "make the glow bigger when hovering over a gear"): the host's glow swells while it is hovered and
-   eases back on leave — one transform transition on the aura box, no loop, nothing at rest */
-.gfx { transition: transform 280ms cubic-bezier(0.3, 0.7, 0.3, 1); }
-@media (hover: hover) {
-  :hover > .gfx { transform: scale(1.2); }
-}
-@media (prefers-reduced-motion: reduce) { .gfx { transition: none; } :hover > .gfx { transform: none; } }
+/* HOVER: no swell (nov4, Andy "extra"). The oct11 ×1.2 swell scaled the aura's filled centre past the card into a solid
+   tier-colour SLAB (a hovered MYTHIC read as a cyan box), and without the fill its hot rim came off the card as a hard
+   ring. Hover keeps the card's own lift + the tier's one hover concept (LEGENDARY streaks, MYTHIC waves). */
 .gfx-aura {
   position: absolute;
   inset: 0;
@@ -44,17 +40,18 @@
 .gfx[data-glow='secret'] .gfx-aura.is-s2 { opacity: 0; border-image-source: url('/fx/gear-aura-secret2.png'); }
 .gfx[data-glow='secret'] .gfx-aura.is-s3 { opacity: 0; border-image-source: url('/fx/gear-aura-secret3.png'); }
 .gfx[data-glow='secret'] .gfx-aura.is-glitch { opacity: 0; border-image-source: url('/fx/gear-aura-secret-glitch.png'); }
-/* THE FLOATING BLADES (nov2): each mote is a painted crystal blade (fx/shards, the tier's colours), not a masked sparkle */
 .gfx-mote {
   position: absolute;
-  width: calc(var(--gfx-ms, 26px) * 1.5);
-  height: calc(var(--gfx-ms, 26px) * 1.5);
-  margin-top: calc(var(--gfx-ms, 26px) * -0.75);
-  object-fit: contain;
+  width: var(--gfx-ms, 26px);
+  height: var(--gfx-ms, 26px);
+  margin-top: calc(var(--gfx-ms, 26px) / -2);
   opacity: 0;
+  background: #fff;
+  -webkit-mask: url('/fx/gear-mote.svg') center / contain no-repeat;
+  mask: url('/fx/gear-mote.svg') center / contain no-repeat;
 }
-.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 1.2); }
-.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 1.2); }
+.gfx-mote.is-left { left: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
+.gfx-mote.is-right { right: calc(var(--gfx-out, 12px) - var(--gfx-ms, 26px) * 0.9); }
 /* SECRET's ORBIT: a ring of rainbow motes round the card. The ring is a square as tall as the glow minus one --gfx-out,
    squashed to the host's proportions by a STATIC scaleX (--gfx-osx, measured once on mount); the inner spin layer is
    what the breath rotates (WAAPI transform + opacity). Each mote hangs off a static arm at its angle. */
@@ -80,7 +77,7 @@
 }
 
 /* ---- HOVER CONCEPTS (Andy oct12) — rest INVISIBLE; GearFx.jsx chains finite runs only while the card is hovered ----
-   LEGENDARY: painted gold LANCES (public/fx/lance — the old flat bars were replaced nov3) rising through the glow band on both sides, behind
+   LEGENDARY: light STREAKS (flat bars — rectangles, not drawn art) rising through the glow band on both sides, behind
    the card (this layer is z-index -2), so they never cross the stats. MYTHIC: SHOCKWAVES — copies of its own baked aura
    (the asset) pulsing out from the card edge. */
 /* the streaks rise INSIDE the glow box (audit oct25: they start 320% of their own height below it, so on a focused EQUIP
@@ -88,14 +85,13 @@
 .gfx-streaks { position: absolute; inset: 0; overflow: hidden; }
 .gfx-streak {
   position: absolute;
-  bottom: 0;
-  width: auto;
+  top: 0;
   opacity: 0;
-  pointer-events: none;
-  user-select: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px #7A4A00; /* a coloured outline (house rule) so a pale streak reads over the hot aura rim */
 }
-.gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5) - 14px); }
-.gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5) - 14px); }
+.gfx-streak.is-left { left: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
+.gfx-streak.is-right { right: calc(var(--gfx-out, 12px) * var(--gfx-sx, 0.5)); }
 .gfx-wave {
   position: absolute;
   inset: 0;
