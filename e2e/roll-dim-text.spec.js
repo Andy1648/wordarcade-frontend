@@ -17,6 +17,9 @@ const SEED = {
   'taw.rollsOn': '1', 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.tut.markRolls': '1',
   'taw.xp': JSON.stringify({ lv: 12, into: 0 }), 'taw.marksRevealed': '1', 'taw.marksOwned': '[]', 'taw.marksSeen': '[]',
   'taw.wins': '50000000', 'taw.gems': gemsOf(1000), 'taw.markRolls': STARTED(),
+  // the CHASE heroes already owned: every gear roll can DROP one (cast.js rollChaseDrop, unseeded Math.random), and its
+  // NEW HERO reveal (HeroUnlock) over the landed result is a different screen - not the dim this spec measures
+  'taw.s2.heroes': JSON.stringify(['drake', 'magma', 'facet']),
 };
 
 async function openRoll(page, extra = {}) {
