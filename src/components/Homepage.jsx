@@ -22,7 +22,7 @@ import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgr
 import { careerLevel } from '../progress/popGrowth';
 import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
-import { rebirthWordsShort } from '../progress/rebirthWords';
+import { rebirthWordsShort, lifetimeGameWords } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -70,7 +70,6 @@ const TOUR_GAP_MS = 1200;
 const TOUR_HOLD_MS = 700;
 let tourWaited = false; // the intro plays on the first menu of a page load only
 import BoostDock from '../frenzy/LazyBoostDock';
-import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
@@ -115,6 +114,13 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
+// SIGN IN WITH GOOGLE (085): back from Google (main.jsx __TAW_SIGNIN), or a restore still waiting on the player's OK
+import { GOOGLE_ON } from '../leaderboard/googleFlag.js';
+const AuthLanding = lazyWithReload(() => import('./account/AuthLanding.jsx'), 'AuthLanding');
+const authLanding = () => {
+  if (!GOOGLE_ON) return false; // VITE_GOOGLE_ON off: no landing, ever (googleFlag.js)
+  try { return !!(window.__TAW_SIGNIN || localStorage.getItem('taw.auth.pending')); } catch { return false; }
+};
 // the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
 const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
 import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
@@ -126,9 +132,10 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
+import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
 import { takeRefundNote } from '../progress/cosmeticsRetire';
-import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
+import { PAYMENTS_ON } from '../payments/flag.js'; // PAID GEMS (default OFF): the lazy pick-up below
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -183,6 +190,8 @@ let cloudBootChecked = false;
 
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
+
+let paidAsked = false; // PAID GEMS: the pick-up runs once a page load
 
 export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
@@ -727,6 +736,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
   const [showWheel, setShowWheel] = useState(false);
+  const [authLand, setAuthLand] = useState(authLanding);
   // THE WHEEL'S GEMS FLY HOME (design research move 10): a gem prize is paid under the wheel's scrim, where the menu's
   // GEMS pill can't be seen — so the pill HOLDS them (gemsInFlight) until the wheel closes, then six painted gems arc
   // from the WHEEL tile into it and it counts each one in as it lands (KitFlyLayer, pooled). Everything else that
@@ -757,6 +767,13 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     const t = setTimeout(() => { setGemsInFlight(0); setGemFly(null); }, 3000);
     return () => clearTimeout(t);
   }, [gemFly]);
+  // PAID GEMS (payments flag, default OFF; migration 082): once a page load the menu picks up paid-gem ledger rows —
+  // polling when back from Stripe (?paid=1) — and flies them into the pill (payments/payReturn.js; zero bytes when off)
+  useEffect(() => {
+    if (!PAYMENTS_ON || paidAsked) return;
+    paidAsked = true;
+    import('../payments/payReturn.js').then((m) => m.default(setGemsInFlight, setGemFly)).catch(() => {});
+  }, []);
   const shownGems = Math.max(0, gems - gemsInFlight);
   // the lazy fly layer's ref: called once it has mounted — fly, then unmount it when every gem has landed
   const gemFlyMounted = useCallback((api) => {
@@ -764,10 +781,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     gemFly.flown = true;
     api.fly({ from: gemFly.from, amounts: gemFly.amounts, onLand: (a) => setGemsInFlight((n) => Math.max(0, n - a)), onDone: () => { setGemsInFlight(0); setGemFly(null); } });
   }, [gemFly]);
-  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
+  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady(Date.now(), lifetimeGameWords())); // nov4: only an EARNED spin dots
   useEffect(() => {
     if (!SEASON2) return undefined;
-    const re = () => setWheelDot(wheelReady());
+    const re = () => setWheelDot(wheelReady(Date.now(), lifetimeGameWords()));
     window.addEventListener(WHEEL_CHANGE, re);
     document.addEventListener('visibilitychange', re);
     return () => {
@@ -1498,17 +1515,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
-  // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
-  const shownRankName = (name) => {
-    const R = V3.ranks;
-    if (!R || !R.RANKS_V3) return name;
-    const at = R.RANKS_V3.findIndex((x) => x.name === name);
-    return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
-  };
   // PROFILE PLATE (Andy oct21 "switch profile to where title is … include title popup in the profile"): the XP bar's
   // lead plate is your PROFILE — your hero's face, PROFILE, and the title you wear. It opens the profile popup, whose
   // TITLE row opens ALL TITLES. (The dailies took the profile's old spots: the right column + the icon cluster.)
-  const titleName = shownRankName(rankTitle(xpProgress.level));
+  // nov2 (Andy: titles out → RANK LEAGUES): the plate names your board league (leagues.js), UNRANKED with no board place
+  const myLeague = leagueOf(boardRank);
+  const titleName = myLeague ? myLeague.name : 'UNRANKED';
   // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
   // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
   const [heroNews, setHeroNews] = useState(false);
@@ -1527,14 +1539,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
-    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
+    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — ${titleName}${myLeague ? ' league' : ''}`} data-nav="profile" data-testid="profile-plate">
       {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
       {avFrame
         ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
         : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
-        <span className="hp-rankplate-n">{titleName}</span>
+        <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>
+          {myLeague ? <img className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
+          {titleName}
+        </span>
       </span>
     </button>
   );
@@ -1789,6 +1804,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       {gemFly ? (
         <Suspense fallback={null}>
           <GemFly ref={gemFlyMounted} target={() => [...document.querySelectorAll('.menu-gems-chip .kp-icon')].find((el) => el.getClientRects().length)} icon="gems" />
+        </Suspense>
+      ) : null}
+      {authLand ? (
+        <Suspense fallback={null}>
+          <AuthLanding landing={window.__TAW_SIGNIN} onDone={() => { window.__TAW_SIGNIN = null; setAuthLand(false); }} />
         </Suspense>
       ) : null}
       {showWheel && (
