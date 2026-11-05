@@ -7,6 +7,7 @@
 // pity guarantees ("EPIC+ GUARANTEED WITHIN 10 ROLLS").
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import './RatesPop.css';
 import KitIcon from '../kit/KitIcon.jsx';
 import '../kit/kitIconData.js'; // registers the LUCK icon (the menu's core set does not carry it)
 import { rollTable, loadRollState, freshState, permanentOwnedCount, ROLL_MARKS, ROLLABLE_TIERS } from '../../progress/markRolls.js';
@@ -31,8 +32,10 @@ export function nextRollRates(state = loadRollState() || freshState(), ctx = { p
   return { rows, forced: t.forced || null };
 }
 
-/** @param pity { epic, legendary } rolls left until each is GUARANTEED (the roll screen's own pity ladder) */
-export default function RatesPop({ pity = null }) {
+/** @param pity { epic, legendary } rolls left until each is GUARANTEED (the roll screen's own pity ladder) · label: the button's
+ *  word (default ODDS) · className: the host's placement
+ *  (the popup is always portaled to <body>: a scaled / transformed parent — the shop's stage — would trap a fixed scrim) */
+export default function RatesPop({ pity = null, label = 'ODDS', className = '' } = {}) {
   const [open, setOpen] = useState(false);
   const [rates, setRates] = useState({ rows: [], forced: null });
   const closeRef = useRef(null);
@@ -46,9 +49,9 @@ export default function RatesPop({ pity = null }) {
   }, [open]);
   return (
     <>
-      <button type="button" className="rs-rates-btn" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Odds of your next roll" data-testid="roll-rates">
+      <button type="button" className={`rs-rates-btn${className ? ` ${className}` : ''}`} onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label="Odds of your next roll" data-testid="roll-rates">
         <span className="rs-rates-i" aria-hidden="true">i</span>
-        <span className="rs-rates-k">ODDS</span>
+        <span className="rs-rates-k">{label}</span>
       </button>
       {open ? createPortal(
         <div className="rs-rates-scrim" role="presentation" onClick={() => setOpen(false)}>

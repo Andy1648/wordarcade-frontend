@@ -28,6 +28,8 @@ import { resolveXpState } from '../progress/xp';
 import './kit/tokens.css';
 import './SettingsPanel.css';
 import { beatSyncOn, setBeatSync } from '../lib/beatSync';
+import AccountLine from './account/GoogleAccount.jsx';
+import { authAvailable } from '../leaderboard/auth.js';
 
 const STEPS = 10;
 
@@ -188,6 +190,9 @@ function SaveRow() {
   };
   return (
     <Group title="SAVE CODE" tone="#FF4FA3" edge="#b0206a" className="sp-save">
+      {/* SIGN IN WITH GOOGLE (085) heads the save group: the account keeps the progress on every device; the code below
+          still works without it (optional — school Google accounts often block third-party sign-in) */}
+      {authAvailable() ? <div className="sp-account" data-testid="sp-account"><AccountLine why="KEEP YOUR PROGRESS ON EVERY DEVICE" /></div> : null}
       {ask ? (
         <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
           <p className="sp-msg" data-testid="sp-load-compare">{ask.undo ? 'PUT BACK' : 'THIS CODE'}: {ask.mine.text} · THIS DEVICE: {ask.here.text}</p>
