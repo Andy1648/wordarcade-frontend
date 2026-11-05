@@ -1,0 +1,24 @@
+/* LeagueBadge — the league name on its league-coloured plate. Static: nothing loops; motion is the caller's. */
+.lg-badge {
+  --lg-bg: #8a7aa8; --lg-rim: #5b4d78; --lg-ink: #0d0618;
+  display: inline-flex; align-items: center; gap: 6px; flex: none; max-width: 100%;
+  font-size: var(--fs-k15); /* the one size knob: the art, the name and the place all scale off it */
+  font-family: 'Bungee', sans-serif; text-transform: uppercase; line-height: 1; white-space: nowrap;
+}
+.lg-badge-art { width: 2.2em; height: 2.2em; object-fit: contain; flex: none; margin: -0.3em -0.2em -0.3em 0; position: relative; z-index: 1; }
+.lg-badge-name {
+  font-size: inherit; color: var(--lg-ink);
+  background: var(--lg-bg); border: 3px solid var(--lg-rim); border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  padding: 3px 8px 2px; letter-spacing: 0.04em;
+}
+.lg-badge-n { font-size: inherit; font-weight: 400; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+
+.lg-badge[data-league='bronze'] { --lg-bg: #D98A4E; --lg-rim: #8a4f22; }
+.lg-badge[data-league='silver'] { --lg-bg: #D4DAE3; --lg-rim: #7d8796; }
+.lg-badge[data-league='gold'] { --lg-bg: #FFC23D; --lg-rim: #a8740c; }
+.lg-badge[data-league='crystal'] { --lg-bg: #2EFFE0; --lg-rim: #13a48f; }
+.lg-badge[data-league='master'] { --lg-bg: #B04BFF; --lg-rim: #6a12b3; --lg-ink: #fff; }
+.lg-badge[data-league='titan'] { --lg-bg: #FF6B3D; --lg-rim: #b33c14; }
+.lg-badge[data-league='champion'] { --lg-bg: #FF4FA3; --lg-rim: #b3226a; }
+.lg-badge[data-league='legend'] { --lg-bg: #0d0618; --lg-rim: #FFE94A; --lg-ink: #FFE94A; }
+.lg-badge[data-league='unranked'] .lg-badge-name { color: #fff; }

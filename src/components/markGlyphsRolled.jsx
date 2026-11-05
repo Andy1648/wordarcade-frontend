@@ -42,11 +42,11 @@ export const ROLLED_GLYPHS = {
   'mk-grapple': ART('paperclip-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/paperclip.svg filler)
   'mk-sparkplug': ART('usbstick-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/usbstick.svg filler)
   'mk-brainstorm': ART('quizbuzzer-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/buzzer.svg filler)
-  'mk-flashpoint': ART('flashpoint'), // Andy oct11: painted PNG (public/gear/flashpoint.webp)
-  'mk-voltage': ART('voltage'), // Andy oct11: painted PNG (public/gear/voltage.webp)
+  'mk-flashpoint': ART('flashpoint-v2'), // Andy oct11 painted; repainted nov3 (-v2, ChatGPT, the gear sheet as the style ref)
+  'mk-voltage': ART('voltage-v2'), // Andy oct11 painted; repainted nov3 (-v2, ChatGPT, the gear sheet as the style ref)
   'mk-talisman': ART('magic8ball-v2'), // oct17 night: repainted nov2 at gear quality (ChatGPT, -v2; first painted by Gemini, matched to the painted set; was the fill/eightball.svg filler)
   'mk-headmaster': ART('headmaster'), // Andy oct11: painted PNG (public/gear/headmaster.webp)
-  'mk-thunderclap': ART('thunderclap'), // Andy oct11: painted PNG (public/gear/thunderclap.webp)
+  'mk-thunderclap': ART('thunderclap-v2'), // Andy oct11 painted; repainted nov3 (-v2, ChatGPT, the gear sheet as the style ref)
   'mk-jackpot': ART('jackpot'), // Andy oct11: painted PNG (public/gear/jackpot.webp)
   // oct18: the new LEGENDARIES + CHRONOS (ChatGPT, the painted gear set attached as the style reference)
   'mk-monsoon': ART('monsoon'),
@@ -63,13 +63,13 @@ export const ROLLED_GLYPHS = {
   'mk-lavalamp': ART('lavalamp'),
   'mk-alarmclock': ART('alarmclock'),
   'mk-fortune': ART('fortunecookie'),
-  'mk-hoarder': ART('magpie'),
-  'mk-domino': ART('domino'),
-  'mk-longshot': ART('longshot'),
+  'mk-hoarder': ART('magpie-v2'), // repainted nov3 (-v2): the v1 had no face / a thin silhouette
+  'mk-domino': ART('domino-v2'), // repainted nov3 (-v2): the v1 had no face / a thin silhouette
+  'mk-longshot': ART('longshot-v2'), // repainted nov3 (-v2): the v1 had no face / a thin silhouette
   'mk-hothand': ART('hothand'),
   'mk-arcadestick': ART('arcadestick'),
   'mk-firebird': ART('firebird'),
-  'mk-trident': ART('trident'),
+  'mk-trident': ART('trident-v2'), // repainted nov3 (-v2): the v1 had no face / a thin silhouette
   'mk-paradox': ART('paradox'),
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
   'mk-ul-og': ART('unlisted/og'),

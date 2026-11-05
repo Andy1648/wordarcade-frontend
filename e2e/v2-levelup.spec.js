@@ -129,10 +129,11 @@ const BOARD = [
   row('d', 'MOXIE', { stars: 10 }), row('e', 'PIXEL', { stars: 3, rebirths: 8 }), row('f', 'RUNE', { rebirths: 10 }), row('g', 'VEX', { rebirths: 8 }),
   row('h', 'ORBIT', { rebirths: 6 }), row('i', 'JUNO', { rebirths: 5 }), row('j', 'QUILL', { rebirths: 4 }),
 ];
-const TITLE = { a: 'ENDGAME', b: 'OMNIKEY', c: 'VOIDTYPER', d: 'FINAL BOSS', e: 'ASCENDANT', f: 'LEXIBEAST', g: 'OVERCLOCK', h: 'KEYFIEND', i: 'WORDSMITH' }; // (#10 QUILL gives its row to YOU, pinned)
+// nov2 RANK LEAGUES (titles retired): the podium wears each place's league — #1 LEGEND, #2–3 CHAMPION (leagues.js)
+const LEAGUE = { a: 'LEGEND', d: 'CHAMPION', b: 'CHAMPION' };
 
 for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
-  test(`SEASON2 board @${vp.width}: the shaped plates sit on the TOP 3 (podium), rows show the full name, ≥ 13 px`, async ({ page }) => {
+  test(`SEASON2 board @${vp.width}: the league badges sit on the TOP 3 (podium), rows show the full name, ≥ 13 px`, async ({ page }) => {
     await page.setViewportSize(vp);
     await installBackendMock(page);
     const shared = { rows: [...BOARD.map((x) => ({ ...x })), row('me', 'NOBUFF', { rebirths: 3, level: 60 })], secrets: new Map([[SECRET, 'me']]), saves: new Map() };
@@ -154,14 +155,12 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 390, height: 844 }]) {
     await expect(lb.locator('.lb2-col--1')).toHaveAttribute('data-id', 'a', { timeout: 10_000 });
     // Andy oct8: only the TOP 3 wear plates (the podium); rows 4+ give that room to the full name
     await expect(lb.locator('.lb2-row .lb2-plate')).toHaveCount(0);
-    for (const id of ['a', 'd', 'b']) { const title = TITLE[id];
-      const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate`); // podium (★20, ★10, ★5)
-      await expect(where).toHaveAttribute('data-rank-title', title);
-      await expect(where).toHaveClass(/(^| )krp( |$)/);
-      await expect(where.locator('img.krp-art'), `${title} is the painted title plate`).toHaveAttribute('src', /^\/titles\//);
-      await expect(where.locator('.krp-name')).toHaveText(title);
+    for (const id of ['a', 'd', 'b']) {
+      const where = lb.locator(`.lb2-col[data-id="${id}"] .lb2-pod-plate`); // podium #1, #2, #3
+      await expect(where).toHaveAttribute('data-league', LEAGUE[id].toLowerCase());
+      await expect(where.locator('.lg-badge-name')).toHaveText(LEAGUE[id]);
     }
-    const sizes = await lb.locator('.krp-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+    const sizes = await lb.locator('.lg-badge-name').evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
     expect(Math.min(...sizes)).toBeGreaterThanOrEqual(13);
     // each row plate stays inside its row (no spill onto the neighbours)
     const spill = await lb.locator('.lb2-row').evaluateAll((rows) => rows.filter((r) => {
