@@ -404,10 +404,10 @@ test('086: verifyAuthUser uses the ANON key only — no anon key, no call (never
   assert.equal(calls, 0);
 });
 
-test('086: checkout is CARDS ONLY (a delayed method would outlive the 35-min reservation)', async () => {
+test('checkout never sends payment_method_types (Stripe rejects it; the Dashboard keeps it to cards)', async () => {
   const s = mockStripe();
   assert.equal((await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: fakeDb().rpc, env: ENV, authUser: AUTH })).status, 200);
-  assert.deepEqual(s.created[0].params.payment_method_types, ['card']);
+  assert.equal(s.created[0].params.payment_method_types, undefined); // Stripe answers 400 to it; the Dashboard sets methods
 });
 
 test('086: a refund under Adaptive Pricing claws by the refunded SHARE (EUR charge, half refunded = half the gems)', async () => {
