@@ -6,9 +6,14 @@ import { installBackendMock } from './support/backendMock.js';
 import { navControl } from './support/menu.js';
 
 const SIZES = [[1366, 768], [1280, 551], [1280, 720], [1920, 1080], [390, 844], [360, 640]];
+// every DEAL OF THE HOUR window (v3/stock.js dealOf — the pins shop-deal / shop-badges use): the deal card's ribbon + struck
+// price change its layout, so an unpinned clock let CI pass or fail by the hour it ran (nov4: OVERDRIVE ×15's hour, 1280x551)
+const DEAL_HOURS = { wins25: 1796085000000, luck2: 1796092200000, overdrive: 1796095800000, xp25: 1796103000000, extend: 1796117400000 };
 
 for (const [w, h] of SIZES) {
-  test(`${w}x${h}: every shop price sits inside its card`, async ({ page }) => {
+  for (const [deal, at] of Object.entries(DEAL_HOURS)) {
+  test(`${w}x${h} · ${deal}'s deal hour: every shop price sits inside its card`, async ({ page }) => {
+    await page.clock.setFixedTime(at);
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
     await page.addInitScript(() => {
@@ -35,4 +40,5 @@ for (const [w, h] of SIZES) {
     expect(bad, JSON.stringify(bad)).toEqual([]);
     expect(await page.locator('.sp2-grid:not([hidden]) .sp2-card').count()).toBeGreaterThan(2);
   });
+  }
 }

@@ -1,7 +1,7 @@
 // e2e/v2-leaderboard.spec.js — THE v2 LEADERBOARD (P8; claude/mockups/v2/Leaderboard.dc.html) behind ?season2=1, on
 // the season-2 board mock (022 leaderboard_s2; 024 leaderboard_s2_weekly with `s2Weekly`):
 //   1. ★ → R → level: a ★1 R0 player tops R9 players; the podium is the top 3, ranks 4 … 10 are rows; every name wears
-//      its v3 RANK plate (VOIDTYPER, GLYPHLORD, CLACKER …);
+//      its RANK LEAGUE on the podium (nov2: titles retired — #1 LEGEND, #2–10 CHAMPION, leagues.js);
 //   2. YOU IN THE TOP 3: your podium place is the one marked YOU (once on the screen — never also a list row), and the
 //      CHASE targets the place above (or says #1);
 //   3. YOU PAST #10: your row is pinned as the last row with your real rank;
@@ -70,16 +70,16 @@ async function boot(page, { me, rows = BOARD, seen = null, s2Weekly = false, wee
 const podiumIds = (lb) => Promise.all([1, 2, 3].map((p) => lb.locator(`.lb2-col--${p}`).getAttribute('data-id')));
 const rowIds = (lb) => lb.locator('.lb2-row').evaluateAll((els) => els.map((e) => e.dataset.id));
 
-test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; v3 rank plates; no season-1 rows', async ({ page }) => {
+test('★ → R → level: the podium is the top 3, ranks 4 … 10 below; league badges; no season-1 rows', async ({ page }) => {
   const { lb } = await boot(page, { me: { rebirths: 0, level: 60 } });
   expect(await podiumIds(lb)).toEqual(['a', 'b', 'c']);
   // the list: D (R2), E, F (R1), then the R0s by level — ME (R0 LV60) is #13, so pinned last with the real rank
   expect(await rowIds(lb)).toEqual(['d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'me']); // TOP 20 (oct13): #13 is on the board, not pinned
   await expect(lb.locator('.lb2-row[data-id="me"] .lb2-rk')).toHaveText('13');
   await expect(lb.locator('[data-id="s1"]')).toHaveCount(0);
-  // v3 rank plates — by rebirths, then ★ (never the level)
-  await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'VOIDTYPER');
-  await expect(lb.locator('.lb2-col--2 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
+  // the podium wears each place's league (nov2: the titles are gone)
+  await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-league', 'legend');
+  await expect(lb.locator('.lb2-col--2 .lb2-pod-plate')).toHaveAttribute('data-league', 'champion');
   // Andy oct8: only the top 3 wear plates — the rows give that room to the full name
   await expect(lb.locator('.lb2-row .lb2-plate')).toHaveCount(0);
   await expect(lb.locator('.lb2-col--1 .lb2-pod-r')).toHaveText('★1 R0');
@@ -99,7 +99,7 @@ test('YOU IN THE TOP 3: your podium place says YOU (once), no list row is yours'
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
   await expect(lb.locator('.lb2-row.is-me')).toHaveCount(0);
   expect(await rowIds(lb)).toEqual(['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']);
-  await expect(lb.locator('.lb2-col--3 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'GLYPHLORD');
+  await expect(lb.locator('.lb2-col--3 .lb2-pod-plate')).toHaveAttribute('data-league', 'champion');
 });
 
 test('YOU ARE #1: the gold place is yours', async ({ page }) => {
@@ -107,7 +107,7 @@ test('YOU ARE #1: the gold place is yours', async ({ page }) => {
   expect(await podiumIds(lb)).toEqual(['me', 'a', 'b']);
   await expect(lb.locator('.lb2-col--1')).toHaveClass(/is-me/);
   await expect(lb.locator('.lb2-you')).toHaveCount(1);
-  await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-rank-title', 'ASCENDANT');
+  await expect(lb.locator('.lb2-col--1 .lb2-pod-plate')).toHaveAttribute('data-league', 'legend');
 });
 
 test('▲▼ from the last look; the look is remembered for next time', async ({ page }) => {

@@ -1,6 +1,7 @@
-// e2e/roll-shards.spec.js — the roll reveal's PAINTED BLADE SHARDS (fx/shards, Andy nov2 "shards … mobile legends
-// aamon"): an EPIC+ reveal throws the tier's painted crystal sprites (never the old vector bits), each one a FINITE
-// transform/opacity one-shot big enough to read, adding no infinite animation, and every shard is gone at rest.
+// e2e/roll-shards.spec.js — the roll reveal's particle burst. Nov4 (Andy: the painted crystal blades were "extra" /
+// "unfitting"): an EPIC+ reveal throws the FLAT house particles (/art/rolls/{shard,spark,blob}.svg), never the painted
+// fx/shards blades; each one a FINITE transform/opacity one-shot, adding no infinite animation, gone at rest.
+// LEGENDARY throws none (its one idea is the rays + slam) and carries no painted crest.
 // Real motion (the suite default is reduced motion, which plays no burst at all).
 import { test, expect } from '@playwright/test';
 import { holdRoll } from './support/roll.js';
@@ -20,7 +21,7 @@ const SEED = {
   'taw.wins': '50000000', 'taw.gems': gemsOf(1000),
 };
 
-const PAINTED = /\/fx\/shards\/(violet|gold|pink|cyan|prism)-[0-3]\.webp$/;
+const FLAT = /\/art\/rolls\/(shard|spark|blob)\.svg$/;
 
 // what the shard pool is doing right now: the playing shards' boxes + whether any of their animations loops
 const shardState = (page) => page.evaluate(() => {
@@ -35,8 +36,9 @@ const shardState = (page) => page.evaluate(() => {
 });
 const infiniteCount = (page) => page.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.getTiming().iterations === Infinity).length);
 
-for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080, 'epic', 30], [390, 844, 'epic', 30], [1366, 768, 'legendary', 59]]) {
-  test(`${w}x${h} ${tag}+: the reveal throws painted blade shards, finite, gone at rest`, async ({ page }) => {
+// MYTHIC is forced by pinning the roll's Math.random (0.9996 lands a MYTHIC mark) for the press only
+for (const [w, h, tag, sinceLegendary, rnd] of [[1366, 768, 'epic', 30], [1920, 1080, 'epic', 30], [390, 844, 'epic', 30], [1366, 768, 'mythic', 30, 0.9996]]) {
+  test(`${w}x${h} ${tag}+: the reveal throws the flat particles, finite, gone at rest`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
     await page.addInitScript((s) => {
@@ -44,12 +46,16 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
       sessionStorage.setItem('rs.seeded', '1');
       for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
     }, { ...SEED, 'taw.markRolls': ROLLS(sinceLegendary) });
+    if (rnd) await page.addInitScript((r) => { const real = Math.random; Math.random = () => (window.__rollRng ? r : real()); }, rnd);
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.locator('.hp-nav.is-gears:visible').first().click();
     await page.locator('.rs-overlay').waitFor();
+    await page.evaluate(() => { window.__rollRng = true; });
     await holdRoll(page);
     await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
+    await page.evaluate(() => { window.__rollRng = false; });
+    if (rnd) await expect(page.getByTestId('roll-cutscene')).toHaveClass(new RegExp(tag));
 
     // the burst: wait until the shard pool is in flight, then FREEZE the page clock (every animation paused) and seek
     // it forward in fixed steps — a screenshot takes longer than the burst lasts, so real-time shots miss it
@@ -65,9 +71,9 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
       if (SHOTS) await page.screenshot({ path: `${SHOTS}/roll-shards-${tag}-${w}-${ms}.png` });
     }
     await page.evaluate(() => { for (const [a] of window.__fz) a.play(); });
-    for (const s of mid.srcs) expect(s).toMatch(PAINTED);
+    for (const s of mid.srcs) expect(s).toMatch(FLAT);
     expect(mid.inf).toBe(false);
-    expect(mid.big[Math.floor(mid.big.length / 2)]).toBeGreaterThan(40); // nothing tiny: a shard reads as a blade, not a speck
+    expect(mid.big[Math.floor(mid.big.length / 2)]).toBeGreaterThan(20); // nothing tiny: a particle reads, not a speck
     const during = await infiniteCount(page);
 
     // at rest: every shard has played out and faded, and the burst left no loop behind
@@ -76,3 +82,27 @@ for (const [w, h, tag, sinceLegendary] of [[1366, 768, 'epic', 30], [1920, 1080,
     expect(await infiniteCount(page)).toBeLessThanOrEqual(during);
   });
 }
+
+test('LEGENDARY: ONE idea — its rays + slam, NO blade shards stacked on the reveal', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await installBackendMock(page);
+  await page.addInitScript((s) => {
+    if (sessionStorage.getItem('rs.seeded')) return;
+    sessionStorage.setItem('rs.seeded', '1');
+    for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
+  }, { ...SEED, 'taw.markRolls': ROLLS(59) });
+  await page.goto('/?portal=1');
+  await menuReady(page);
+  await page.locator('.hp-nav.is-gears:visible').first().click();
+  await page.locator('.rs-overlay').waitFor();
+  await holdRoll(page);
+  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
+  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/legendary/);
+  let most = 0;
+  const until = Date.now() + 3000;
+  while (Date.now() < until) { most = Math.max(most, (await shardState(page)).playing); await page.waitForTimeout(40); }
+  expect(most).toBe(0);
+  // simple beats painted (nov4): no sunburst crest, no painted shard / lance art on the reveal
+  await expect(page.locator('.rs-cut-crest')).toHaveCount(0);
+  expect(await page.locator('.rs-cut img[src*="/fx/shards/"], .rs-cut img[src*="/fx/lance/"]').count()).toBe(0);
+});

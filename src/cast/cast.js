@@ -181,6 +181,7 @@ export const ownsHero = (id) => {
 /** THE CHASE DROP: one gear roll's chance at each CHASE hero you don't have yet (CHASE_ODDS). A hit is kept at once
  *  (HEROES_KEY) and its id returned (the roll screen plays the NEW HERO reveal); a miss returns null. */
 export function rollChaseDrop(rand = Math.random) {
+  if (typeof window !== 'undefined' && window.__TAW_NO_CHASE_DROP) return null; // e2e: an unseeded drop covered random specs (mirrors __TAW_NO_ACHIEVEMENT_GRANT)
   for (const h of CHASE) {
     if (ownsHero(h.id)) continue;
     if (rand() < 1 / CHASE_ODDS[h.id]) {
