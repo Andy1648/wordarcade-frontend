@@ -2,8 +2,8 @@
 // corner....) too ai tell"): a centred sheet over a dimmed menu, in FOUR labelled groups instead of a wall of rows —
 //
 //   SOUND        VOLUME (MUTE + a 10-step bar = the master volume, 0 = sound off) · MUSIC · GAME SFX (in a match)
-//   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music)
-//   SAVE CODE    the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
+//   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music) · CODES (redeem)
+//   SAVE CODE   the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
 //   DANGER ZONE  RESET ACCOUNT, two steps — its own red card, apart from everything else
 //
 // No one-line "what it does" taglines (every label says it). CREDITS sits in the title bar beside CLOSE. Chunky house
@@ -28,6 +28,7 @@ import { resolveXpState } from '../progress/xp';
 import './kit/tokens.css';
 import './SettingsPanel.css';
 import { beatSyncOn, setBeatSync } from '../lib/beatSync';
+import RedeemCodes from './RedeemCodes';
 import AccountLine from './account/GoogleAccount.jsx';
 import { authAvailable } from '../leaderboard/auth.js';
 
@@ -339,6 +340,13 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
         <Row label="BEAT SYNC">
           <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
         </Row>
+        {/* CODES (Andy nov4 "move codes to settings"): the one place to redeem, a row here rather than a fifth card so a
+            360x640 sheet still fits. The menu's sheet only: onToggleSfx means a match is on, and nobody redeems mid-round */}
+        {LEADERBOARD_ENABLED && !onToggleSfx ? (
+          <Row label="CODES" className="sp-row--codes">
+            <RedeemCodes />
+          </Row>
+        ) : null}
       </Group>
       </div>
       <div className="sp-col">
