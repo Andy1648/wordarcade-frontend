@@ -204,7 +204,8 @@ test('a device with progress of its own: LOAD replaces it with the account\'s', 
   await signInFromSettings(c.page);
   await c.page.getByTestId('auth-load').click();
   await expect.poll(async () => JSON.parse((await raw(c.page, 'taw.s2.xp')) || '{}').lv, { timeout: 20_000 }).toBe(40);
-  expect(JSON.parse(await raw(c.page, 'taw.lb.profile')).username).toBe('GoogleKid');
+  // polled: LOAD reloads the page, and raw() reads null mid-navigation
+  await expect.poll(async () => JSON.parse((await raw(c.page, 'taw.lb.profile')) || '{}').username, { timeout: 20_000 }).toBe('GoogleKid');
   await a.ctx.close();
   await c.ctx.close();
 });
