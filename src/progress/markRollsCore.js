@@ -196,6 +196,12 @@ const RAW_POOL = [
   { id: 'mk-fortune', name: 'FORTUNE COOKIE', tier: 'epic', mode: 'satRush', stat: 'satWinsPct', subs: 'L20 G10' },
   { id: 'mk-hoarder', name: 'MAGPIE', tier: 'epic', mode: null, stat: 'gemsPct', subs: 'L15 W4 X1' },
   { id: 'mk-domino', name: 'DOMINO', tier: 'epic', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C9 P.75' },
+  // NEW GEARS nov2 (Andy "make hella sick gears"): five EPICS on free (stat, tier) slots — painted in ChatGPT Plus
+  { id: 'mk-bullseye', name: 'BULLSEYE', tier: 'epic', mode: null, stat: 'gameXpPct', subs: 'C9 G15' },
+  { id: 'mk-rocketskates', name: 'ROCKET SKATES', tier: 'epic', mode: 'wordRace', stat: 'raceWinsPct', subs: 'C3 L10 X3' },
+  { id: 'mk-snowball', name: 'SNOWBALL', tier: 'epic', mode: null, stat: 'streakWinsPct', subs: 'W4 G10 O30' },
+  { id: 'mk-telescope', name: 'TELESCOPE', tier: 'epic', mode: null, stat: 'longWinsPct', subs: 'C6 P.5 L10' },
+  { id: 'mk-drumsticks', name: 'DRUMSTICKS', tier: 'epic', mode: null, stat: 'critEvery', subs: 'C6 W4 X2' },
   // ---- LEGENDARY (9) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct', subs: 'C9 X10 L15' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct', subs: 'P1 W20 G15' },
@@ -213,6 +219,8 @@ const RAW_POOL = [
   { id: 'mk-longshot', name: 'LONGSHOT', tier: 'legendary', mode: null, stat: 'longWinsPct', subs: 'C13.5 P1 L22.5' },
   { id: 'mk-hothand', name: 'HOT HAND', tier: 'legendary', mode: null, stat: 'streakWinsPct', subs: 'P2.5 W15' },
   { id: 'mk-arcadestick', name: 'ARCADE STICK', tier: 'legendary', mode: null, stat: 'gameXpPct', subs: 'C18 L15 G15' },
+  // NEW GEARS nov2: four LEGENDARIES (each now 1 IN 130 x 16)
+
   // ---- MYTHIC (4) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins', subs: 'C14 P4 G25' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp', subs: 'C14 W30 L50' },
@@ -220,6 +228,14 @@ const RAW_POOL = [
   { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct', subs: 'X15 G25 O240' }, // oct18: bends time — every letter's XP
   { id: 'mk-firebird', name: 'FIREBIRD', tier: 'mythic', mode: null, stat: 'winsPct', subs: 'P3 L25 O180' }, // oct21: AFTERPARTY
   { id: 'mk-trident', name: 'TRIDENT', tier: 'mythic', mode: 'blitz', stat: 'blitzWinsPct', subs: 'C21 W30 G37.5' }, // oct21: TRIPLE THREAT
+  // NEW GEARS nov2: seven MYTHIC chase pieces (every LEGENDARY main slot is taken by a rolled or UNLISTED gear, so the big ones are MYTHIC)
+  { id: 'mk-anchor', name: 'ANCHOR', tier: 'mythic', mode: 'chain', stat: 'chainWinsPct', subs: 'W30 G25 O240' },
+  { id: 'mk-comet', name: 'COMET', tier: 'mythic', mode: 'wordRace', stat: 'raceWinsPct', subs: 'C14 X30 O120' },
+  { id: 'mk-meltdown', name: 'MELTDOWN', tier: 'mythic', mode: null, stat: 'longWinsPct', subs: 'C14 P2 W60' },
+  { id: 'mk-genie', name: 'GENIE', tier: 'mythic', mode: null, stat: 'luckPct', subs: 'P2 W30 G50' },
+  { id: 'mk-gauntlet', name: 'GAUNTLET', tier: 'mythic', mode: 'fuse', stat: 'fuseWinsPct', subs: 'C28 P2 X15' },
+  { id: 'mk-grimoire', name: 'GRIMOIRE', tier: 'mythic', mode: 'satRush', stat: 'satWinsPct', subs: 'L50 X15 O120' },
+  { id: 'mk-supernova', name: 'SUPERNOVA', tier: 'mythic', mode: null, stat: 'streakWinsPct', subs: 'C14 P4 O120' },
   // ---- SECRET (1) + game-changing perks ----
   { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct', subs: 'C20 P3 W80 G50' },
   { id: 'mk-paradox', name: 'PARADOX', tier: 'secret', mode: null, stat: 'gemsPct', subs: 'C30 L60 O240' }, // oct21: TWIN SOULS

@@ -351,7 +351,7 @@
 .rb2-r--after { position: relative; }
 .rb2-ms.is-jackpot .rb2-ms-r { color: #FFE94A; }
 /* the stamp: invisible at rest, ONE finite slam on a jackpot rebirth (RebirthV2 JACKPOT_SLAM) */
-/* the painted blade burst (gains/ShardBurst) flies UNDER the JACKPOT stamp — the stamp is the read, the blades frame it */
+/* the shard burst (gains/ShardBurst) flies UNDER the JACKPOT stamp — the stamp is the read, the shards frame it */
 .rb2 > .gsb { z-index: 29; }
 .rb2-jack {
   position: fixed;

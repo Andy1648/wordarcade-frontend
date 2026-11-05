@@ -40,7 +40,7 @@ import {
 } from '../juice';
 import { useCachedCenter } from '../juice/useCachedCenter';
 import { reduced as reducedMotion } from '../juice/settings';
-import { heatTier, ladderFor, particleCount, tierCrossed, PUNCH_MS } from '../juice/ladder';
+import { heatTier, ladderFor, particleCount, PUNCH_MS } from '../juice/ladder';
 import { pickEffect, tagLabel } from '../juice/effectSlot';
 import { TierSlam, LuckyBurst, SlotTags, useLatched } from './FeelLadder';
 import { LUCKY_WINS_MULT } from '../progress/luck';
@@ -1262,7 +1262,6 @@ function useHypeFeedback(lastWordResult, inputRef, promptRef, opts = {}) {
           speed: JUICE.VALID.particleSpeed,
           life: JUICE.VALID.particleLife,
           colors: JUICE.VALID.colors,
-          painted: tierCrossed(next - 1, next) > 0, // a combo TIER-UP word throws painted shards (same count); others squares
         });
         ring(r.x, r.y, {
           radius: rung.ring,

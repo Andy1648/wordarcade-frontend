@@ -71,6 +71,19 @@ export const ROLLED_GLYPHS = {
   'mk-firebird': ART('firebird'),
   'mk-trident': ART('trident-v2'), // repainted nov3 (-v2): the v1 had no face / a thin silhouette
   'mk-paradox': ART('paradox'),
+  // NEW GEARS nov2: 12 painted in ONE ChatGPT Plus chat (best of 4-6 variants each), the gear sheet as the style ref
+  'mk-bullseye': ART('bullseye'),
+  'mk-rocketskates': ART('rocketskates'),
+  'mk-snowball': ART('snowball'),
+  'mk-telescope': ART('telescope-v2'),
+  'mk-drumsticks': ART('drumsticks'),
+  'mk-anchor': ART('anchor'),
+  'mk-comet': ART('comet'),
+  'mk-meltdown': ART('meltdown'),
+  'mk-genie': ART('genie'),
+  'mk-gauntlet': ART('gauntlet-v2'),
+  'mk-grimoire': ART('grimoire'),
+  'mk-supernova': ART('supernova'),
   // ---- THE UNLISTED (oct17): found, never rolled — painted stickers in public/gear/unlisted/ ----
   'mk-ul-og': ART('unlisted/og'),
   'mk-ul-wishbone': ART('unlisted/wishbone'),
