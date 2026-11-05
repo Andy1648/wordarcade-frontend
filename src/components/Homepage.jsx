@@ -22,7 +22,7 @@ import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgr
 import { careerLevel } from '../progress/popGrowth';
 import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
-import { rebirthWordsShort } from '../progress/rebirthWords';
+import { rebirthWordsShort, lifetimeGameWords } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -781,10 +781,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     gemFly.flown = true;
     api.fly({ from: gemFly.from, amounts: gemFly.amounts, onLand: (a) => setGemsInFlight((n) => Math.max(0, n - a)), onDone: () => { setGemsInFlight(0); setGemFly(null); } });
   }, [gemFly]);
-  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
+  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady(Date.now(), lifetimeGameWords())); // nov4: only an EARNED spin dots
   useEffect(() => {
     if (!SEASON2) return undefined;
-    const re = () => setWheelDot(wheelReady());
+    const re = () => setWheelDot(wheelReady(Date.now(), lifetimeGameWords()));
     window.addEventListener(WHEEL_CHANGE, re);
     document.addEventListener('visibilitychange', re);
     return () => {

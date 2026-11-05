@@ -95,13 +95,13 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     await boot(page, w, h);
     await navControl(page, 'shop').click();
     await page.locator('.sp2').waitFor({ state: 'visible' });
-    await expect(page.locator('.sp2-tab')).toHaveCount(3);
+    await expect(page.locator('.sp2-tab')).toHaveCount(2);
     await expect(page.locator('.sp2-tab[data-shelf="looks"]')).toHaveCount(0); // no cosmetics screen in the shop
     const m = await layout(page, '.sp2-stock', '.sp2-tab, .sp2-timer');
     expect(m.overlaps, 'shop tab overlaps').toEqual([]);
     expect(m.outside, 'shop tabs inside the shelf').toEqual([]);
     expect(m.small, 'shop tabs ≥ 44px').toEqual([]);
-    await expect(page.locator('.sp2-tab .sp2-tab-ico')).toHaveCount(3);
+    await expect(page.locator('.sp2-tab .sp2-tab-ico')).toHaveCount(2);
     // nov2 (Andy "idk why cosmetics screen on upgrades gives popup"): COSMETICS is a shelf — the CUSTOMIZE menu inline in
     // the shop, no popup over it; every tab's controls apart, inside the shelf, and the try-on never needs a scroll
     await page.locator('.sp2-tab[data-shelf="cosmetics"]').click();

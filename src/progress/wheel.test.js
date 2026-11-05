@@ -196,6 +196,16 @@ test('weekRow: the streak week today falls in, day 7 SUPER always in view, today
   assert.equal(weekRow(0, false)[0].state, 'today'); // a fresh streak is DAY 1
 });
 
+test('EARNED spins (083): wordsLeft counts from the higher of the board and this browser; no need = nothing to earn', async () => {
+  const { wordsLeft, WHEEL_WORDS } = await import('./wheel.js');
+  assert.equal(WHEEL_WORDS, 15);
+  assert.equal(wordsLeft(415, 400, 0), 15); // nothing played since the last spin
+  assert.equal(wordsLeft(415, 400, 409), 6); // the board lags: this browser's words count
+  assert.equal(wordsLeft(415, 420, 0), 0); // earned
+  assert.equal(wordsLeft(null, 0, 0), 0); // a pre-083 server: the spin is simply there
+  assert.equal(wordsLeft(415, 999, 999), 0); // never negative
+});
+
 test('CONFETTI (the PRIZE SHOWER WIN FX, retired nov2) from a server before 078 is paid as 120 gems', () => {
   const s = normalizeSpin({ ok: true, spin: UID, day: 1, kind: 'free', slot: 7, prize: 'cosmetic', cosmetic: 'confetti' });
   assert.equal(s.prize, 'gems');

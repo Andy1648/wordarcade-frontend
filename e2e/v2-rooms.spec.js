@@ -93,7 +93,7 @@ test('SETTINGS (trimmed, Andy oct9; oct14 BEAT SYNC in, RANK PLATE out to the ra
   await expect(panel).toBeVisible();
   // oct28 friendly pass: four labelled groups, the rows inside them
   await expect(panel.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
-  await expect(panel.locator('.sp-label')).toHaveText(['VOLUME', 'MUSIC', 'REDUCE MOTION', 'BEAT SYNC']);
+  await expect(panel.locator('.sp-label')).toHaveText(['VOLUME', 'MUSIC', 'REDUCE MOTION', 'BEAT SYNC', 'CODES']);
   // BEAT SYNC (Andy oct14): its own switch, stored, separate from REDUCE MOTION — OFF by default since oct22
   const bs = panel.getByRole('switch', { name: 'Beat sync' });
   await expect(bs).toHaveAttribute('aria-checked', 'false');

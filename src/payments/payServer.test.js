@@ -408,6 +408,7 @@ test('checkout never sends payment_method_types (Stripe rejects it; the Dashboar
   const s = mockStripe();
   assert.equal((await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: fakeDb().rpc, env: ENV, authUser: AUTH })).status, 200);
   assert.equal(s.created[0].params.payment_method_types, undefined); // Stripe answers 400 to it; the Dashboard sets methods
+  assert.deepEqual(s.created[0].params.managed_payments, { enabled: false }); // +3.5% and added tax would fail the amount check
 });
 
 test('086: a refund under Adaptive Pricing claws by the refunded SHARE (EUR charge, half refunded = half the gems)', async () => {
