@@ -113,7 +113,7 @@ the webhook reads the USD source amount.
 ## 6. Test in TEST mode, then flip the flag
 
 1. Preview env: `sk_test_…`, the test `whsec_…`, service key, `VITE_PAYMENTS_ON=1`. Redeploy the preview.
-2. On the preview: pick a board name (the gems land on the board profile), open UPGRADES → **GEMS**, buy the $1.99 pouch.
+2. On the preview: pick a board name (the gems land on the board profile), tap the **+** beside the gem count, buy the $1.99 pouch.
    Test card `4242 4242 4242 4242`, any future date, any CVC, any ZIP, any email.
    Also try: `4000 0025 0000 3155` (3-D Secure), `4000 0000 0000 9995` (declined → no gems).
 3. Back on the menu: 600 gems fly into the pill within a few seconds. In Supabase: one row in

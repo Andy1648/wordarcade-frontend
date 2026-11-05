@@ -1,13 +1,13 @@
 // packs.js — THE GEM PACKS (real money, Andy nov3 "pay-to-win gems", payments-brief.md). PURE, shared by both sides:
 //   * api/_lib/pay.js (the Vercel function) reads the PRICE from here. The client never sends an amount: it sends a
 //     pack id, and an unknown id is refused. Changing a price is a change to this file (and a deploy), nothing else.
-//   * the GEMS shelf (PaidGemsShelf.jsx) shows the same table, so the dollar price on a card is the price charged.
+//   * the buy-gems panel (BuyGems.jsx) shows the same table, so the dollar price on a card is the price charged.
 // Paid gems are ordinary gems: they land through the one gem door (gemsCore grantGems, reason 'paid') and spend on
 // rolls / boosts exactly like earned ones, at the SAME server odds (the server's gem budget counts them — 082).
 //
 // SAFEGUARDS (kept although the gems are pay-to-win): a dollar price on every pack, a $20 a calendar month cap per
-// account (MONTHLY_CAP_CENTS, enforced server-side in 082 pay_reserve — mirrored here only for the shelf's text),
-// "ask a parent" on the shelf, no countdowns or limited offers, roll odds one tap away, a refund contact line.
+// account (MONTHLY_CAP_CENTS, enforced server-side in 082 pay_reserve — mirrored here only for the panel's text),
+// "ask a parent" on the panel, no countdowns or limited offers, roll odds one tap away, a refund contact line.
 // ART: the packs wear the existing painted gem piles (the wheel's prize piles + the shop chest) until their own
 // art lands — see claude/payments-setup.md "ART REQUEST".
 

@@ -300,9 +300,6 @@ html[data-reduce-motion] .sp-sheet { animation: none; }
 
 /* ---- CODES: one field, one button, one answer line. A redeem is a moment: the prize line slams in like a stamp, a bad
    code shakes no (H3; finite, transform / opacity, keyed per attempt so each one replays) ---- */
-.sp-row--codes { align-items: flex-start; }
-.sp-row--codes .sp-label { margin-top: 14px; } /* level with the box, also while the answer line sits under it */
-.sp-row--codes .sp-ctl { flex: 1 1 auto; min-width: 0; }
 .sp-codes { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .sp-codes-msg.is-ok { color: #2EFFE0; transform-origin: left center; animation: sp-codes-stamp 340ms cubic-bezier(.2, 1.4, .35, 1) both; }
 .sp-codes-msg.is-bad { color: #FF6B3D; animation: sp-codes-shake 300ms linear both; }
@@ -343,7 +340,6 @@ html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
   .sp-row--vol .sp-label { display: none; }
   .sp-row--vol .sp-ctl { flex: 1 1 auto; }
   .sp-row--vol .sp-bars { flex: 1 1 auto; justify-content: center; }
-  .sp-row--codes .sp-label { display: none; } /* the box's own ENTER CODE + REDEEM say it */
 }
 /* SHORT windows (a Chromebook at 1280x551, a laptop at 125%): every row tightens; still ≥ 44 px */
 @media (max-height: 700px) and (min-width: 481px) {
@@ -381,7 +377,7 @@ html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
   .sp-switch { width: 100px; height: 48px; }
   .sp-switch-box { height: 32px; width: 34px; }
   .sp-switch.is-on .sp-switch-box { transform: translateX(50px); }
-  .sp-row--vol .sp-label, .sp-row--vol .sp-val, .sp-row--codes .sp-label { display: none; } /* the SOUND card + MUTE + the bars, ENTER CODE + REDEEM say it */
+  .sp-row--vol .sp-label, .sp-row--vol .sp-val { display: none; } /* the SOUND card + MUTE + the bars, ENTER CODE + REDEEM say it */
   .sp-row--vol .sp-ctl { flex: 1 1 auto; gap: 10px; }
   .sp-mute { min-height: 48px; min-width: 84px; }
   .sp-bars { display: none; } /* 10 bars × 44 px won't fit a phone row: − / + step it instead */
@@ -396,8 +392,9 @@ html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
      code, its message and the paste box fit (closing the sheet brings it back) */
   .sp-sheet:has(.sp-code) .sp-reset,
   .sp-sheet:has(.sp-load-confirm) .sp-reset,
-  .sp-sheet:has(.sp-codes-msg) .sp-reset { display: none; } /* …and so does a code's answer line */
-  .sp-sheet:has(.sp-reset-confirm) .sp-row--codes { display: none; } /* RESET's "are you sure" takes the CODES row's room */
+  .sp-sheet:has(.sp-codes-msg) .sp-reset,
+  .sp-sheet:has(.sp-save > .sp-msg) .sp-reset { display: none; } /* …and so does a code's answer line */
+  .sp-sheet:has(.sp-reset-confirm) .sp-rewards { display: none; } /* RESET's "are you sure" takes the CODES row's room */
 }
 /* SHORT phones (360x640): the rows tighten to the 44 px floor and drop their divider lines, so all four groups fit */
 @media (max-width: 480px) and (max-height: 760px) {
@@ -449,4 +446,28 @@ html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
   .sp-sheet:has(.sp-account) .sp-account { padding-bottom: 2px; }
   .sp-sheet:has(.sp-account) .sp-reset { padding: 0; background: none; border: 0; box-shadow: none; }
   .sp-sheet:has(.sp-account) .sp-reset .sp-group-title { display: none; }
+}
+/* REWARD CODE's own card (Andy nov5) takes one more title + padding: the spacing gives it back, control sizes untouched */
+@media (max-width: 480px) {
+  .sp-sheet:has(.sp-account) .sp { gap: 16px; }
+  .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 9px; }
+}
+@media (max-width: 480px) and (max-height: 760px) {
+  .sp-sheet:has(.sp-account) .sp { gap: 14px; }
+  .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 6px; }
+}
+@media (max-width: 480px) and (max-height: 700px) {
+  .sp-sheet .sp, .sp-sheet:has(.sp-account) .sp { gap: 10px; }
+  .sp-sheet .sp-group, .sp-sheet:has(.sp-account) .sp-group { padding-top: 14px; padding-bottom: 4px; }
+  .sp-sheet:has(.sp-account) { padding-bottom: 6px; }
+  .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 3px; }
+  .sp-sheet:has(.sp-account) .sp-reset { padding: 0; }
+  .sp-sheet .sp-group-title { top: -10px; padding-top: 0; padding-bottom: 0; min-height: 0; line-height: 18px; } /* its foot stays clear of the row under it */
+}
+@media (max-height: 580px) and (min-width: 760px) {
+  .sp-sheet .sp-col { gap: 16px; }
+}
+/* short desktop: a reward code's answer line needs a row in that column, so GAMEPLAY steps aside until the sheet closes */
+@media (max-height: 640px) and (min-width: 760px) {
+  .sp-sheet:has(.sp-codes-msg) .sp-play { display: none; }
 }

@@ -44,6 +44,7 @@ import { rollsPerRoll } from '../../progress/markPerks';
 import { serverRollOn, prepare as prepareServerRoll, take as takeServerRoll, claim as claimServerRoll, syncPity } from '../../leaderboard/serverRoll';
 import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
+import { GemsPlus } from '../gems/GemsPlus.jsx';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
 import { sndRollRelease, sndRollReady } from '../../audio/rollSounds';
@@ -520,6 +521,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               ) : null}
             </div>
             <GemCount value={gems} size={30} className="rs-gems-bal" />
+            <GemsPlus />
           </div>
         </div>
       </div>

@@ -34,7 +34,6 @@ import { lazyWithReload } from '../lib/chunkReload';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
 import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
-import { PAYMENTS_ON } from '../payments/flag.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
@@ -46,8 +45,6 @@ const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx')
 const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp']]; // CODES moved to SETTINGS (Andy nov4)
 // PAID GEMS (Andy nov3; payments/, migration 082): a third shelf, GEMS — real-money gem packs. It exists ONLY with the
 // payments flag on (VITE_PAYMENTS_ON=1; default OFF, so the live shop is untouched); the shelf is its own lazy chunk.
-const PaidGemsShelf = lazyWithReload(() => import('./PaidGemsShelf.jsx'), 'PaidGemsShelf');
-const SHOP_SHELVES = PAYMENTS_ON ? [...SHELVES, ['gems', 'GEMS', '/wheel/prize-gems-s.webp']] : SHELVES;
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
@@ -433,8 +430,8 @@ export default function ShopV2({ onBack }) {
 
         <section className="sp2-stock" aria-label="Boosts">
           <div className="sp2-stock-head">
-            <div className="sp2-tabs" role="tablist" aria-label="Shop shelves" data-n={SHOP_SHELVES.length}>
-              {SHOP_SHELVES.map(([k, label, icon]) => (
+            <div className="sp2-tabs" role="tablist" aria-label="Shop shelves" data-n={SHELVES.length}>
+              {SHELVES.map(([k, label, icon]) => (
                 <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k}
                   onClick={() => setShelf(k)}>
                   <img className="sp2-tab-ico" src={icon} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
@@ -447,7 +444,6 @@ export default function ShopV2({ onBack }) {
           </div>
           {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
           {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
-          {PAYMENTS_ON && shelf === 'gems' ? <div className="sp2-shelf sp2-shelf-gems"><Suspense fallback={null}><PaidGemsShelf /></Suspense></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             {V3.drop ? (
               <div className="sp2-cell is-chest">

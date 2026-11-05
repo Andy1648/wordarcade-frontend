@@ -236,7 +236,7 @@ test('VITE_GOOGLE_ON off (no ?google=1 in the e2e build, as production ships unt
   const a = await device(browser, shared, { save: true, google: false });
   await a.page.locator('[data-nav="settings"]:visible').first().click();
   await a.page.locator('.sp-sheet').waitFor({ state: 'visible' });
-  await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
+  await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'REWARD CODE', 'SAVE CODE', 'DANGER ZONE']);
   await expect(a.page.getByTestId('sp-account')).toHaveCount(0);
   await expect(a.page.getByTestId('google-signin')).toHaveCount(0);
   // a stray token / code in the URL is not picked up either
