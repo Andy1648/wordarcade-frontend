@@ -199,6 +199,8 @@ for (const [w, h] of SIZES) {
     await page.evaluate(() => { window.__rollRng = false; });
     // the seeded gears carry roll luck, so the pinned MYTHIC can climb to SECRET — either is a frame-variant tier
     await expect(cut).toHaveClass(tier === 'mythic' ? /is-(mythic|secret)/ : new RegExp(`is-${tier}`));
+    // a MYTHIC / SECRET reveal holds its telegraph for seconds on a slow machine: wait for the face itself, then let it settle
+    await expect.poll(async () => (await borderDefects(page)).seen, { timeout: 15_000 }).toBeGreaterThanOrEqual(1);
     await page.waitForTimeout(1200);
     await expectClean(page, `roll-reveal-${tier}`);
     await cut.click();
