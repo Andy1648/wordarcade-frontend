@@ -160,7 +160,7 @@ test('one-mode WINS: every mode has its gear; HEADMASTER ×5 in SAT RUSH (season
   for (const mode of Object.keys(MODE_WINS_KINDS)) assert.ok(ROLL_MARKS.some((m) => m.stat.kind === MODE_WINS_KINDS[mode]), mode);
 });
 
-test('FREE OVERDRIVE (every MYTHIC+): 60 s of ×10 after 15 min of play while worn; never while a mythic is not worn', () => {
+test('FREE OVERDRIVE (every MYTHIC+): 60 s of OVERDRIVE after 15 min of play while worn; never while a mythic is not worn', () => {
   assert.equal(FREE_OD_SEC, 60);
   assert.equal(FREE_OD_EVERY_MIN, 15);
   for (const m of ROLL_MARKS) assert.equal(m.perks.includes('freeOd'), tierRank(m.tier) >= tierRank('mythic'), m.id);

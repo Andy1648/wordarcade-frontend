@@ -1,5 +1,5 @@
 // rr-moments.spec.js — Rebirth Rush moments (PROGRESSION FINAL, Andy oct3 20:08).
-//   1. OVERDRIVE: a live taw.overdrive (until in the future) shows the big "OVERDRIVE ×15 · m:ss" pill in the
+//   1. OVERDRIVE: a live taw.overdrive (until in the future) shows the big "OVERDRIVE ×3 · m:ss" pill in the
 //      menu's existing boost slot (desktop XP row / phone top row), and it is gone once OVERDRIVE has ended.
 //   2. the conversion is SILENT: an old save whose level passed the new gate is converted at boot (econMigrate,
 //      stamp 11 → 12) and no "YOUR LEVELS BECAME +N REBIRTHS" card plays (the ONE-NOTICE rule, Andy oct6).
@@ -15,7 +15,7 @@ async function boot(page, seed) {
 }
 
 for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-  test(`OVERDRIVE: a live taw.overdrive shows the OVERDRIVE ×15 pill with its clock @ ${vp.width}`, async ({ page }) => {
+  test(`OVERDRIVE: a live taw.overdrive shows the OVERDRIVE ×3 pill with its clock @ ${vp.width}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await boot(page, () => {
       if (sessionStorage.getItem('rr.seeded')) return;
@@ -34,7 +34,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
     } else {
       const pill = page.getByTestId('overdrive-pill');
       await expect(pill).toBeVisible();
-      await expect(pill).toContainText('OVERDRIVE ×15');
+      await expect(pill).toContainText('OVERDRIVE ×3');
       await expect(pill.locator('.boost-pill-clock')).toHaveText(/^[34]:\d\d$/);
       // a code BOOST is not running, so only the OVERDRIVE pill is in the slot
       await expect(page.locator('.boost-pill:not(.od-pill)')).toHaveCount(0);

@@ -4,7 +4,7 @@
 // infinite loop.
 //
 // Rebirth Rush: OVERDRIVE (overdrive.js — gear / shop / drop / code, never random since oct20) rides the SAME slot, as a bigger
-// pink "OVERDRIVE ×10 · 4:59" pill in front of the boost pill — every surface that shows a boost shows it
+// pink "OVERDRIVE ×3 · 4:59" pill in front of the boost pill — every surface that shows a boost shows it
 // with no new fixed UI. The boost pill names the CODE boost alone (codeBoostMult), so the two never
 // double-count (boostMult() now folds OVERDRIVE in).
 import { boostRemaining, codeBoostMult } from '../progress/boost.js';

@@ -396,7 +396,7 @@
   .sp2-stock-sub { font-size: var(--fs-k14); }
   .sp2-timer .ktc { width: 150px; }
   /* 196 -> 224: the WHAT + TIME lines added by the "boost what?" pass wrap on a 110px-wide card, and the
-     tallest card (OVERDRIVE: "XP + WINS · EVERYTHING" over "5 MIN · BUY AGAIN = +5 MIN") needs 217px — at 196
+     tallest card (EVERYTHING BOOST's three-line WHAT) needs the most — at 196
      its gem price was pushed clean out of the card (measured: 225 by 21px, 150 and SOON by 10px). Numbers never
      leave their boxes. The phone shop already scrolls, so the taller row costs nothing. */
   .sp2-grid { grid-template-rows: none; grid-auto-rows: 224px; gap: 12px; padding: 0 7px 7px 0; }
@@ -984,8 +984,8 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
       the POWER line below. ===== */
 .sp2-card-in { --sp2-stk: 58px; } /* the sticker's 50px + its 8px inset */
 .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card-in > :is(.sp2-art, .sp2-ico, .sp2-big) { margin-right: var(--sp2-stk); }
-/* a boost with short wide art (OVERDRIVE's rocket, EVERYTHING's potion) lifts its two-line WHAT into the sticker's row */
-.sp2-card-in:is([data-stock="overdrive"], [data-stock="extend"]) > .sp2-what { padding-right: var(--sp2-stk); }
+/* EVERYTHING's short potion lifts its two-line WHAT into the sticker's row */
+.sp2-card-in[data-stock="extend"] > .sp2-what { padding-right: var(--sp2-stk); }
 .sp2-card.is-deal .sp2-left { top: 58px; } /* below the sash, still on the right: the content keeps its room left of it */
 .sp2-card.is-epic .sp2-band { padding-left: 30px; }
 /* OVERDRIVE's deal hour — the one card with the gem AND the sash on its top corners: the gem drops to the bottom-left
@@ -1042,6 +1042,7 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
    the sticker's column clear at every size, beating the short-desktop rule that hands it back. e2e/shop-badges.spec.js
    pins every deal hour. */
 .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-what { padding-right: calc(var(--sp2-stk) + 4px); }
+.sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in[data-stock="overdrive"] > .sp2-what { padding-right: 6px; } /* one short line, clear of the sticker: centred like the TIME under it */
 /* …and on a very short desktop the deal hour's bottom-left gem (OVERDRIVE) sits 4px lower, clear of the two-line TIME */
 @media (min-width: 1000px) and (max-height: 580px) { .sp2-card.is-epic.is-deal .sp2-gem { bottom: -16px; } }
 /* …and on a very short desktop the deal card's WHAT keeps that sticker column, so it wraps a line taller: the art tucks
