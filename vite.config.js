@@ -204,6 +204,25 @@ export function withPageMeta(html, m) {
   set(/(<meta name="twitter:image:alt" content=")[^"]*(")/, m.imageAlt)
   return html
 }
+// A stylesheet in <head> blocks ALL paint until it downloads, boot shell included. Parsed at the end of <body>, it blocks only
+// what follows it: the shell paints first, and the (deferred) entry module still waits for the sheet, so the app itself
+// never renders unstyled.
+function bodyStylesheetPlugin() {
+  return {
+    name: 'body-stylesheet',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        const links = html.match(/<link rel="stylesheet"[^>]*href="[^"]*assets\/[^"]*"[^>]*>/g) || []
+        let out = html.replace(/<!--[sS]*?-->s*/g, '') // developer notes never ship: they pay for the boot shell
+        for (const l of links) out = out.replace(l, '')
+        return out.replace('</body>', `${links.join('')}</body>`)
+      },
+    },
+  }
+}
+
 function pageMetaPlugin(outDir) {
   return {
     name: 'page-meta-shells',
@@ -235,6 +254,7 @@ export default defineConfig(({ mode }) => {
   const outDir = isPortal ? 'dist-portal' : 'dist'
   return {
     plugins: [
+      bodyStylesheetPlugin(),
       react(),
       // Dev serves from public/, preview from the build output. `command` is 'serve' for BOTH
       // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —

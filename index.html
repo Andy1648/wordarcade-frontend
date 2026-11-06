@@ -158,9 +158,23 @@
     }
     </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4921084971277860" crossorigin="anonymous"></script>
+    <!-- THE BOOT SHELL (nov6, Andy "remember the idea of smoothness"): a cold visit on a slow link used to stare at a
+         blank screen until the JS ran. This paints with the HTML itself (inline, no request) and React replaces it on
+         mount. The bar is ONE finite transform (it creeps toward 92% over 30 s and stops), never a loop. -->
+    <style>
+      html, body { background: #0d0618; }
+      @font-face { font-family: 'Bungee Shade'; src: url('/fonts/bungee-shade-latin.woff2') format('woff2'); font-display: swap; }
+      .boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; background: #0d0618; }
+      .boot-t { font: 400 clamp(32px, 5vw, 48px)/1 'Bungee Shade', Impact, 'Arial Black', sans-serif; color: #ff4fa3; -webkit-text-stroke: 4px #000; paint-order: stroke fill; transform: rotate(-2deg); text-align: center; }
+      .boot-b { width: min(420px, 70vw); height: 12px; box-sizing: border-box; background: #1a0b2e; border: 3px solid #5c0fa3; border-radius: 8px; overflow: hidden; }
+      .boot-b i { display: block; height: 100%; background: #ff4fa3; transform: scaleX(.92); transform-origin: 0 50%; animation: boot-b 30s cubic-bezier(.08, .7, .2, 1) 1 backwards; }
+      @keyframes boot-b { from { transform: scaleX(.04); } }
+      [data-reduce-motion] .boot-b i { animation: none; transform: scaleX(.5); }
+      @media (prefers-reduced-motion: reduce) { .boot-b i { animation: none; transform: scaleX(.5); } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" role="status" aria-label="Loading TYPE A WORD"><div class="boot-t">TYPE A WORD</div><div class="boot-b"><i></i></div></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

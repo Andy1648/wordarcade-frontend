@@ -1,6 +1,7 @@
 // Homepage.jsx
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
+import OverlaySkeleton from './OverlaySkeleton';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
@@ -1777,7 +1778,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
       {dialog && (
         <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="LOADING" />}>
           <ModeDialog
             game={dialog.game}
             sourceEl={dialog.el}
@@ -1813,7 +1814,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       ) : null}
       {showWheel && (
         <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="DAILY WHEEL" />}>
             <DailyWheel onClose={() => setShowWheel(false)} onPaid={onWheelPaid} />
           </Suspense>
         </ScreenBoundary>
@@ -1840,7 +1841,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="REWARDS" />}>
             <ClaimsPanel
               onClose={() => setShowClaims(false)}
               onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
@@ -1851,7 +1852,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {patchDue && reveal.gears && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
-      {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
+      {showProfile && <Suspense fallback={<OverlaySkeleton title="PROFILE" />}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && !showWheel && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost
@@ -1870,7 +1871,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks === 'gear' && (
         <ScreenBoundary name="equip" onBack={closeGear}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="YOUR GEAR" />}>
             <EquipScreen
               equippedId={equippedMark}
               unlockedIds={markIdList}
@@ -1883,7 +1884,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks === 'gear2' && (
         <ScreenBoundary name="equip2" onBack={closeGear2}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="2ND GEAR" />}>
             <EquipScreen
               slot={2}
               equippedId={gear2Id}
@@ -1898,7 +1899,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks && showMarks !== 'gear' && showMarks !== 'gear2' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="GEARS" />}>
             <MarksIndex
               unlockedIds={markIdList}
               equippedId={equippedMark}
