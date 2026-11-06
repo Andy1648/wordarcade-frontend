@@ -8,8 +8,8 @@
 // SAFEGUARDS (kept although the gems are pay-to-win): a dollar price on every pack, a $20 a calendar month cap per
 // account (MONTHLY_CAP_CENTS, enforced server-side in 082 pay_reserve — mirrored here only for the panel's text),
 // no countdowns or limited offers, roll odds one tap away, a refund contact line.
-// ART: the packs wear the existing painted gem piles (the wheel's prize piles + the shop chest) until their own
-// art lands — see claude/payments-setup.md "ART REQUEST".
+// ART (nov5): each pack wears its own painted art, growing sack → heap → chest → vault (public/shop/pay-*-v1.webp). No
+// numbers are painted in, so the gem amounts below can change without touching the art.
 
 export const PAY_CURRENCY = 'usd';
 /** $20.00 a calendar month (America/New_York) per board profile. MIRRORED in 082_paid_gems.sql CAP_CENTS. */
@@ -19,10 +19,10 @@ export const MONTHLY_CAP_CENTS = 2000;
 // bigger the pack the better the value. Against the 75-gem roll: $1.99 = 13 rolls, $19.99 = 213; the $20 monthly cap still
 // bounds a month to one HOARD (16,000 gems). The server's roll budget counts net paid gems (082), so the odds never move.
 export const PACKS = Object.freeze([
-  Object.freeze({ id: 'pouch', name: 'GEM POUCH', gems: 1000, cents: 199, art: '/wheel/prize-gems-s.webp' }),
-  Object.freeze({ id: 'pile', name: 'GEM PILE', gems: 3000, cents: 499, art: '/wheel/prize-gems-m.webp' }),
-  Object.freeze({ id: 'chest', name: 'GEM CHEST', gems: 7000, cents: 999, art: '/wheel/prize-gems-l.webp' }),
-  Object.freeze({ id: 'hoard', name: 'GEM HOARD', gems: 16000, cents: 1999, art: '/shop/chest-v2.webp' }),
+  Object.freeze({ id: 'pouch', name: 'GEM POUCH', gems: 1000, cents: 199, art: '/shop/pay-pouch-v1.webp' }),
+  Object.freeze({ id: 'pile', name: 'GEM PILE', gems: 3000, cents: 499, art: '/shop/pay-pile-v1.webp' }),
+  Object.freeze({ id: 'chest', name: 'GEM CHEST', gems: 7000, cents: 999, art: '/shop/pay-chest-v1.webp' }),
+  Object.freeze({ id: 'hoard', name: 'GEM HOARD', gems: 16000, cents: 1999, art: '/shop/pay-hoard-v1.webp' }),
 ]);
 
 /** The pack with this id, or null (never a guess: an unknown id is a refused request). */

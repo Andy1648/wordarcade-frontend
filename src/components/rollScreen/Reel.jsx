@@ -224,7 +224,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
     if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
-    const kind = revealKind(tier, mode);
+    const kind = revealKind(tier, mode, { dupe: !!res.dupe, pipUp: !!res.pipUp });
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
     const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
