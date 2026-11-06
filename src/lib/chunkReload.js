@@ -42,6 +42,17 @@ export function isStaleChunkError(err) {
 }
 
 /**
+ * True if the chunk that failed is one the game can live without. An ad blocker or a school filter stops `sentry-*.js` by name on
+ * every visit, and initSentry already swallows the failure: treating it as a stale build reloaded the page and played the
+ * loading screen twice for those players (nov6). Never a reason to reload.
+ */
+export function isOptionalChunkError(err) {
+  if (!err) return false;
+  const text = typeof err === 'string' ? err : `${err.message || ''}`;
+  return /\/assets\/sentry[^/\s]*\.js/i.test(text);
+}
+
+/**
  * Fire the one allowed reload. Returns true if a reload was actually started, false if
  * it was suppressed (already used this session, or no usable sessionStorage).
  * The flag is written BEFORE reload() so the next boot sees it even if reload is
@@ -171,9 +182,10 @@ export function installChunkReloadGuard() {
     // preventDefault() makes Vite's helper RESOLVE the import to undefined instead of rejecting — only
     // do that when a reload is really happening. Otherwise (offline, or the retry already spent) let it
     // reject, so the caller's own error handling runs instead of destructuring `undefined`.
+    if (e && isOptionalChunkError(e.payload)) return; // rejects to its own catch (initSentry)
     if (reloadOnceForStaleChunk() && e && typeof e.preventDefault === 'function') e.preventDefault();
   });
   window.addEventListener('unhandledrejection', (e) => {
-    if (isStaleChunkError(e && e.reason)) reloadOnceForStaleChunk();
+    if (isStaleChunkError(e && e.reason) && !isOptionalChunkError(e.reason)) reloadOnceForStaleChunk();
   });
 }
