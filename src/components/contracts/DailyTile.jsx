@@ -18,7 +18,8 @@ const ContractsSheet = lazy(() => import('./ContractsSheet.jsx'));
 const EMPTY = { picks: ['a', 'b', 'c'], done: [] }; // three empty pips until today is dealt
 const POP = [{ transform: 'scale(1)' }, { transform: 'scale(1.3) rotate(-8deg)', offset: 0.4 }, { transform: 'scale(1) rotate(0)' }];
 
-export default function DailyTile({ onPlay, navigating = false, variant = 'chip' }) {
+/** @param kit the worn POP STYLE's bar kit (progress/kitArt.js kitOf — edge / well / fill art), or null: the track wears it */
+export default function DailyTile({ onPlay, navigating = false, variant = 'chip', kit = null }) {
   const [s, setS] = useState(() => peekToday() || EMPTY);
   const [streak, setStreak] = useState(() => getStreak().count);
   const [open, setOpen] = useState(false);
@@ -85,7 +86,15 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
         <span className="hp-daily-txt" aria-hidden="true">
           <span className="hp-daily-k">CONTRACTS</span>
           <span className="hp-daily-row">
-            <span className="hp-daily-pips">
+            {/* nov4 (Andy: "horrible progress bar dots … they dont fit crazy good looks"): today's three contracts are ONE
+                framed track in three cells, the XP bar's own construction — a worn painted look dresses it in its rim, its
+                well and its painted strip (each cell shows its third of the art, so done cells read as one bar) */}
+            <span
+              className="hp-daily-track"
+              data-kit={kit ? kit.id : undefined}
+              data-testid="daily-track"
+              style={kit ? { '--dt-edge': kit.edge, '--dt-well': kit.well, '--dt-fill': `url(${kit.fill})` } : undefined}
+            >
               {s.picks.map((id) => <i key={id} className={s.done.includes(id) ? 'is-done' : ''} />)}
             </span>
           </span>
