@@ -339,6 +339,10 @@
 .browser-row.is-full .browser-row-status {
   color: #FF5C5C;
 }
+/* SPECTATE (nov4): IN LOBBY (cyan) / PLAYING (pink) after the code; a live row's action reads SPECTATE in pink */
+.browser-row-state { color: #2EFFE0; }
+.browser-row-state.is-live,
+.browser-row.is-live .browser-row-status { color: #FF4FA3; }
 
 /* ---- Empty state ---- */
 
@@ -453,7 +457,8 @@
   .browser-title { font-size: var(--fs-panel); }
   .browser-list { max-height: 52vh; }
 }
-
+
+
 /* ===== THE CODE, AS SLOTS (feat/join-screen-type) ====================================
    Ported verbatim in shape from .lobby-code-slot so the two code entries match. One slot per
    character, so the player can see how many they owe — a single field cannot tell them that.
