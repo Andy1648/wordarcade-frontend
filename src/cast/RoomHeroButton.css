@@ -7,7 +7,7 @@
 .rh-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .rh-btn:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 @media (hover: hover) { .rh-btn:hover { transform: scale(1.06); } }
-.rh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .84); }
+.rh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: var(--scrim); }
 .rh-pop {
   position: relative; width: min(980px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px 18px 18px;
   background: #1a0b2e; border: 5px solid #5E0F9E; border-radius: 8px; box-shadow: 10px 10px 0 #000;

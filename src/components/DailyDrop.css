@@ -65,7 +65,6 @@
   white-space: nowrap;
   transform-origin: 0 60%;
 }
-.dd-sub { font-weight: 700; font-size: var(--fs-k14); letter-spacing: .06em; color: var(--k-dim); white-space: nowrap; }
 
 /* ---- the tier row: the printed odds, filling with tier colour as the climb reaches each tier ---- */
 .dd-row { grid-area: row; display: flex; gap: 4px; }

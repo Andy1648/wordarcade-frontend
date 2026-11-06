@@ -16,7 +16,7 @@
      in headless Chromium), but recent Chrome's standardized `zoom` did not compound it, so the
      overlay rendered at --app-scale (off-centre / clipped) on real browsers. With the zoom removed
      on both sides, inset:0 is the real viewport and 88dvh a real 88% on every browser. */
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
