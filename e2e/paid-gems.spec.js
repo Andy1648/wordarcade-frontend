@@ -5,6 +5,7 @@
 // secret } and NO amount, then the redirect. The return (?paid=1) picks up the paid ledger row, grants it once, acks it,
 // and flies the gems into the menu pill. Stripe and the database are mocked; nothing leaves localhost.
 import { test, expect } from '@playwright/test';
+import { mockGsi } from './support/gsiMock.js';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
 
@@ -28,6 +29,7 @@ async function boot(page, { query = '', gems = 40, signedIn = true, pending = { 
     calls.ack.push(route.request().postDataJSON());
     await route.fulfill({ status: 200, contentType: 'application/json', body: '1' });
   });
+  await mockGsi(page);
   await page.addInitScript(({ gems, secret, signedIn }) => {
     if (sessionStorage.getItem('pg.seeded')) return;
     sessionStorage.setItem('pg.seeded', '1');
@@ -150,6 +152,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     const gate = page.getByTestId('pay-signin');
     await expect(gate).toBeVisible();
     await expect(gate.getByTestId('google-signin')).toBeVisible();
+    await expect(gate.getByTestId('gsi-official')).toBeVisible(); // Google's own button, drawn once the shelf shows
     await expect(page.locator('.pg-pack')).toHaveCount(0);
     await expect(page.getByTestId('pay-parent')).toBeVisible(); // ASK A PARENT still heads it
     const m = await gate.evaluate((el) => {
