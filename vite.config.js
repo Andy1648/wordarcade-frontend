@@ -204,22 +204,14 @@ export function withPageMeta(html, m) {
   set(/(<meta name="twitter:image:alt" content=")[^"]*(")/, m.imageAlt)
   return html
 }
-// A stylesheet in <head> blocks ALL paint until it downloads, boot shell included. Parsed at the end of <body>, it blocks only
-// what follows it: the shell paints first, and the (deferred) entry module still waits for the sheet, so the app itself
-// never renders unstyled.
-function bodyStylesheetPlugin() {
+// Developer notes never ship: dropping them pays for the boot shell in index.html. The main stylesheet stays in <head>: lazy chunks
+// append their CSS to <head> too, so moving it later would flip the cascade and let it beat every chunk's rules (it broke the game
+// screens' layout when tried). So the shell paints once that sheet has arrived, before any JS has run.
+function stripHtmlCommentsPlugin() {
   return {
-    name: 'body-stylesheet',
+    name: 'strip-html-comments',
     apply: 'build',
-    transformIndexHtml: {
-      order: 'post',
-      handler(html) {
-        const links = html.match(/<link rel="stylesheet"[^>]*href="[^"]*assets\/[^"]*"[^>]*>/g) || []
-        let out = html.replace(/<!--[\s\S]*?-->\s*/g, '') // developer notes never ship: they pay for the boot shell
-        for (const l of links) out = out.replace(l, '')
-        return out.replace('</body>', `${links.join('')}</body>`)
-      },
-    },
+    transformIndexHtml: { order: 'post', handler: (html) => html.replace(/<!--[\s\S]*?-->\s*/g, '') },
   }
 }
 
@@ -254,7 +246,7 @@ export default defineConfig(({ mode }) => {
   const outDir = isPortal ? 'dist-portal' : 'dist'
   return {
     plugins: [
-      bodyStylesheetPlugin(),
+      stripHtmlCommentsPlugin(),
       react(),
       // Dev serves from public/, preview from the build output. `command` is 'serve' for BOTH
       // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —

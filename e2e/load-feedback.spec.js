@@ -1,6 +1,6 @@
 // e2e/load-feedback.spec.js — NOTHING WAITS ON A BLANK SCREEN (Andy nov6: "why don't you have a loading symbol or a filler for
-// things that don't load immediately"). A cold visit paints the boot shell from the HTML alone, before any JS or CSS has
-// arrived; the shell's bar is finite; a slow overlay chunk shows its skeleton after a beat; a fast one never flashes it.
+// things that don't load immediately"). A cold visit paints the boot shell before any JS has arrived; the shell's bar is
+// finite; a slow overlay chunk shows its skeleton after a beat; a fast one never flashes it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
@@ -8,13 +8,13 @@ import { menuReady, navControl } from './support/menu.js';
 const SEED = { 'taw.seenMenu': '1', 'taw.seenMenuSpotlight': '1', 'taw.tut.markRolls': '1', 'taw.rollsOn': '1', 'taw.marksRevealed': '1', 'taw.xp': JSON.stringify({ lv: 12, into: 0 }) };
 
 for (const [w, h] of [[1366, 768], [390, 844]]) {
-  test(`${w}x${h}: the boot shell paints with the HTML alone, finite, then React replaces it`, async ({ page }) => {
+  test(`${w}x${h}: the boot shell paints before any JS, finite, then React replaces it`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await installBackendMock(page);
-    // hold every script + stylesheet: only the HTML has arrived
+    // hold every script: only the HTML + the stylesheet have arrived
     let release;
     const gate = new Promise((res) => { release = res; });
-    await page.route(/\/assets\/.*\.(js|css)$/, async (route) => { await gate; await route.continue(); });
+    await page.route(/\/assets\/.*\.js$/, async (route) => { await gate; await route.continue(); });
     await page.goto('/?portal=1', { waitUntil: 'commit' });
     const title = page.locator('.boot-t');
     await expect(title).toBeVisible();
