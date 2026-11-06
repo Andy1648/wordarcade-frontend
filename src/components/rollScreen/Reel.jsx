@@ -398,16 +398,6 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         { opacity: 0 },
       ], { duration: span, easing: 'ease-in-out', fill: 'none' });
     }
-    // BEAT 1, ANTICIPATION (design research move 1): the card back SQUASHES like a crate bracing — down + wide, then up
-    // + narrow, home — before anything else moves (every tier; transform only, finite, from its base)
-    if (tl.squash) {
-      anim(n.rvRattle, [
-        { transform: 'scale(1, 1)' },
-        { transform: 'scale(1.07, 0.9)', offset: 0.45 },
-        { transform: 'scale(0.97, 1.04)', offset: 0.75 },
-        { transform: 'scale(1, 1)' },
-      ], { duration: tl.squash.ms, delay: tl.squash.at, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'none' });
-    }
     // BEFORE the flip: EPIC rattles; LEGENDARY+ telegraph — the back's edge lights in the RARITY COLOUR and the rattle
     // builds; SECRET spins the back up (faster and faster) with the edge glinting through it
     if (tl.preShake) {

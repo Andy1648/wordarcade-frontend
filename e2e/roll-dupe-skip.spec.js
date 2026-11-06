@@ -1,9 +1,5 @@
-// e2e/roll-four-beat.spec.js — DESIGN RESEARCH MOVE 1 + 7 on the gear roll:
-//   * a NEW EPIC+ gear opens the cutscene, and its first beat is the card-back SQUASH (a finite transform one-shot on
-//     .rv-rattle) before the rattle / flip — the four beats: squash → tell → flip + painted blades → stats;
-//   * a DUPLICATE skips the ceremony (move 7): no cutscene — the short line path (the painted line burst + the result
-//     line under the reel) — and the result still lands with its × copies chip.
-// Real motion.
+// e2e/roll-dupe-skip.spec.js — a RARE / EPIC DUPLICATE skips the ceremony: no cutscene, the short line path, and the
+// result still lands with its × copies chip. Real motion; the roll's Math.random is pinned low so it lands EPIC.
 import { test, expect } from '@playwright/test';
 import { holdRoll } from './support/roll.js';
 import { installBackendMock } from './support/backendMock.js';
@@ -39,38 +35,18 @@ async function openRoll(page, marks) {
   await page.locator('.rs-overlay').waitFor();
 }
 
-test('a NEW EPIC+ gear: the cutscene opens on the card-back SQUASH, then flips', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 });
-  await page.addInitScript(() => {
-    window.__squash = [];
-    const orig = Element.prototype.animate;
-    Element.prototype.animate = function (frames, opts) {
-      try {
-        if (this.classList && this.classList.contains('rv-rattle') && Array.isArray(frames) && frames.some((f) => /scale\(1\.07, 0\.9\)/.test(f.transform || ''))) {
-          window.__squash.push({ t: performance.now(), ms: opts && opts.duration, it: opts && opts.iterations });
-        }
-      } catch { /* never break */ }
-      return orig.call(this, frames, opts);
-    };
-  });
-  await openRoll(page, {});
-  await holdRoll(page);
-  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
-  await expect.poll(() => page.evaluate(() => window.__squash.length), { timeout: 3000 }).toBe(1);
-  const sq = await page.evaluate(() => window.__squash[0]);
-  expect(sq.ms).toBe(160);
-  expect(sq.it === undefined || sq.it === 1).toBe(true); // finite
-});
-
-test('a DUPLICATE skips the cutscene: the short line path, the result still lands', async ({ page }) => {
+test('an EPIC DUPLICATE skips the cutscene: the short line path, the result still lands', async ({ page }) => {
   expect(ids.length).toBeGreaterThan(20);
   await page.setViewportSize({ width: 1366, height: 768 });
+  await page.addInitScript(() => { const real = Math.random; Math.random = () => (window.__rollRng ? 0.001 : real()); });
   const marks = {};
   ids.forEach((id, i) => { marks[id] = { n: 99, first: 1 + i }; }); // everything owned, ★ maxed: every roll is a dupe, no pip step
   await openRoll(page, marks);
+  await page.evaluate(() => { window.__rollRng = true; });
   await holdRoll(page);
   const result = page.locator('[data-testid="mark-roll-result"]');
   await expect(result).toHaveCount(1, { timeout: 15_000 });
+  await page.evaluate(() => { window.__rollRng = false; });
   await expect(result.locator('.rs-chip.is-dupe')).toHaveCount(1); // the × copies chip says it is a dupe
   // no ceremony: the cutscene never opened for it
   await page.waitForTimeout(600);

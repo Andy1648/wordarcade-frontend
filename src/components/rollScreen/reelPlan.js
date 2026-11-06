@@ -300,11 +300,11 @@ export function needMoreText(price, have, fmt = (n) => String(n)) {
  */
 export function revealKind(tier, mode = 'full', { dupe = false, pipUp = false } = {}) {
   if (mode !== 'full') return 'line';
-  // MOVE 7 (design research): a DUPLICATE skips the ceremony — the short line path (the painted line burst + the result
-  // line under the reel, ~400 ms). Only a NEW gear or a dupe that steps a ★ pip up (a tier-up) earns the cutscene.
-  if (dupe && !pipUp) return 'line';
   const r = tierIndex(tier);
   if (r >= tierIndex('legendary')) return 'full';
+  // the common copies skip the ceremony: a RARE / EPIC duplicate takes the short line path (the result line + its × copies
+  // chip), unless it steps a ★ pip up. LEGENDARY+ is rare enough to keep its full reveal, copy or not.
+  if (dupe && !pipUp) return 'line';
   return r === tierIndex('epic') ? 'dim' : 'lite';
 }
 /** THE REVEAL CARD'S WIDTH (design audit nov2: a ~250px card floating in a void lost the big stat hit Andy asked for
