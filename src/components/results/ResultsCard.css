@@ -528,5 +528,5 @@
 .rs2-peak[data-heat='2'] { --c: #FFE94A; }
 .rs2-peak[data-heat='3'] { --c: #FF6B3D; }
 .rs2-peak[data-heat='4'] { --c: #FF4FA3; }
-.rs2-peak-n { font-family: 'Bungee', cursive; font-size: max(var(--fs-k24), calc(var(--fs-k24) * var(--u))); line-height: 1; color: var(--c); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs2-peak-n { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: var(--fs-panel); line-height: 1; color: var(--c); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .rs2-peak-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); line-height: 1.05; color: #fff; }
