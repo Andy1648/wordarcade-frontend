@@ -978,6 +978,8 @@ body:has(.rs-cut.is-on) .rs-overlay .rs-track { opacity: 0.18; transition: opaci
 @media (max-height: 760px) {
   .rs-pity-bar { height: 18px; }
 }
+/* a 768-tall window: the thicker FOUND chips pushed the band up, and the parked pointer ran out of headroom (--rs-up) */
+@media (max-height: 800px) { .rsx-chip-bar { height: 8px; border-width: 2px; } }
 @media (max-width: 480px) {
   .rs-close, .rs-index-btn, .rs-rates-btn, .rs-auto-btn, .rs-equipped { border-width: 4px; }
   .rs-pity-bar { height: 18px; border-width: 3px; }
