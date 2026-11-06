@@ -3,7 +3,7 @@
 //      frame times through a full reel spin + the LEGENDARY full reveal run at 60fps: median ≤ 20 ms; p95 is a stall
 //      guard for now (see the test) — CI-aware, like input-latency.spec.js (CI is ~1.5x slower at the same throttle)
 //   2. spam on ROLL never double-charges: 20 raw taps roll nothing (R4: a tap is not a hold); 8 rapid holds = exactly 10 gems per roll actually made
-//   3. 0 gems: a clear state — "NO GEMS" on the button and, on a press, −N + gem; never a silent grey button
+//   3. 0 gems: a clear state — "N MORE" on the button, PLAY FOR GEMS under it and, on a press, −N + gem; never a silent grey button
 //   4. AUTO stops cleanly when the gems run out: no negative balance, no stuck spinner, the toggle resets
 //   5. the tab going hidden, or leaving (✕ / INDEX) mid-roll, still lands and saves the result
 //   6. a refresh mid-roll keeps the mark you paid for — saved at purchase, charged exactly once
@@ -174,13 +174,13 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', String(after.gems));
 });
 
-test('3. 0 gems: "NO GEMS" + on a press −N + gem — never a silent grey button', async ({ page }) => {
+test('3. 0 gems: "N MORE" + PLAY FOR GEMS + on a press −N + gem — never a silent grey button', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.gems': gemsOf(0), 'taw.markRolls': STARTED() });
   await openRoll(page);
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveClass(/is-short/);
-  await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
+  await expect(roll.locator('.rs-roll-lbl')).toHaveText(/^[\d,.]+[A-Z]* MORE$/);
   await expect(roll.locator('img.gem-icon')).toBeVisible();
   await holdRoll(page);
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '10');
@@ -210,7 +210,7 @@ test('4. AUTO stops cleanly when the gems run out: no negative balance, no stuck
   expect(s.gems).toBeLessThan(10);
   const roll = page.locator('.rs-roll');
   await expect(roll).not.toHaveClass(/is-rolling/);
-  await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
+  await expect(roll.locator('.rs-roll-lbl')).toHaveText(/^[\d,.]+[A-Z]* MORE$/);
   await expect(page.locator('.rs-need')).toHaveText(`−${10 - s.gems}`);
   await page.waitForTimeout(1200);
   expect(await reelAnims(page)).toBe(0);
