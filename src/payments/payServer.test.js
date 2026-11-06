@@ -447,3 +447,54 @@ test('086 SQL: Google-only RPCs, unlink revokes devices, relink wait, cap + flag
   assert.match(sql, /grant execute on function public\.pay_claw2\(text, numeric, text\) to service_role;/);
   assert.doesNotMatch(sql, /grant execute on function public\.pay_[a-z0-9_]+\([^)]*\) to [^;]*anon/);
 });
+
+// ============================================================================================================ THE LOG LINE
+test('every call logs one line: what happened, and never a secret, token, player id, Stripe id or checkout URL', async () => {
+  const lines = [];
+  const real = console.log;
+  console.log = (l) => lines.push(String(l));
+  try {
+    const db = fakeDb();
+    const s = mockStripe();
+    const ok = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    assert.equal(ok.status, 200);
+    await handleCheckout(checkoutReq({ pack: 'nope', secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    await handleCheckout(checkoutReq({ pack: 'pouch', secret: 'not-hex' }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    await handleWebhook(new Request('https://typeaword.com/api/stripe-webhook', { method: 'POST', body: '{}' }), { stripe, rpc: db.rpc, env: ENV });
+    await handleWebhook(new Request('https://typeaword.com/api/stripe-webhook', { method: 'POST', body: '{}' }), { stripe, rpc: db.rpc, env: {} });
+  } finally {
+    console.log = real;
+  }
+  const got = lines.map((l) => JSON.parse(l));
+  assert.deepEqual(got, [
+    { pay: 'checkout', status: 200 },
+    { pay: 'checkout', status: 400, error: 'bad_pack' },
+    { pay: 'checkout', status: 400, error: 'bad_secret' },
+    { pay: 'webhook', status: 400, error: 'bad_signature' },
+    { pay: 'webhook', status: 503, error: 'not_configured' },
+  ]);
+  for (const l of lines) {
+    assert.ok(!l.includes(SECRET), 'no device secret');
+    assert.ok(!l.includes(UID), 'no account id');
+    assert.ok(!l.includes(PID), 'no profile id');
+    assert.ok(!/https?:|cs_|pi_|whsec|sk_/.test(l), 'no URL or Stripe id');
+  }
+});
+
+test('a paid webhook logs its event type and that it granted; a retry logs duplicate', async () => {
+  const lines = [];
+  const real = console.log;
+  console.log = (l) => lines.push(String(l));
+  try {
+    const db = fakeDb();
+    const hook = () => handleWebhook(signedReq(completed()), { stripe, rpc: db.rpc, env: ENV });
+    await hook();
+    await hook();
+  } finally {
+    console.log = real;
+  }
+  assert.deepEqual(lines.map((l) => JSON.parse(l)), [
+    { pay: 'webhook', status: 200, event: 'checkout.session.completed', granted: true, duplicate: false },
+    { pay: 'webhook', status: 200, event: 'checkout.session.completed', granted: false, duplicate: true },
+  ]);
+});
