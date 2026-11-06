@@ -129,6 +129,9 @@ for (const vp of VIEWS) {
     await expect(panel.locator('.pg-pack')).toHaveCount(4);
     const prices = { pouch: '$1.99', pile: '$4.99', chest: '$9.99', hoard: '$19.99' };
     for (const [id, usd] of Object.entries(prices)) await expect(page.getByTestId(`pay-price-${id}`)).toHaveText(usd);
+    // every pack says its gems in full, the same way (16,000, never 16K), inside its card at every size
+    for (const [id, n] of Object.entries({ pouch: '1,000', pile: '3,000', chest: '7,000', hoard: '16,000' })) await expect(panel.locator(`.pg-pack[data-pack="${id}"] .pg-gems`)).toHaveText(n);
+    expect(await panel.evaluate((el) => [...el.querySelectorAll('.pg-pack')].filter((p) => { const o = p.getBoundingClientRect(); const g = p.querySelector('.pg-gems').getBoundingClientRect(); return g.left < o.left || g.right > o.right; }).length)).toBe(0);
     await expect(panel.locator('.pg-pack.is-over')).toHaveCount(1); // $19.99 > $15.01 left: greyed, price still shown
     await expectPanelFits(panel);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-panel-${vp.width}.png` });
