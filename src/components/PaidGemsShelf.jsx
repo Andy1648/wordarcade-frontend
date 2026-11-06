@@ -92,7 +92,7 @@ export default function PaidGemsShelf() {
         <div className="pg-signin" data-testid="pay-signin">
           <span className="pg-signin-h">SIGN IN TO BUY GEMS</span>
           <span className="pg-signin-t">Every purchase stays on your Google account, on any device.</span>
-          <GoogleButton />
+          <GoogleButton className="pg-gsi" />
         </div>
       ) : chosen ? (
         <div className="pg-confirm" role="group" aria-label={`Buy ${chosen.gems} gems for ${formatUsd(chosen.cents)}`} data-testid="pay-confirm">

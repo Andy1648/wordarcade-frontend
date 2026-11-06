@@ -1,5 +1,5 @@
-// AuthLanding.jsx — back from Google (085): the menu mounts this (lazy) once, on a sign-in landing or while a restore
-// waits on the player. It runs auth.finishSignIn and says what happened in ONE place:
+// AuthLanding.jsx — signed in with Google (085): mountLanding.jsx mounts this after the popup, and the menu (`resume`) while a
+// restore still waits on the player. It runs auth.finishSignIn and says what happened in ONE place:
 //   confirm_link   this device has a name and the account none yet: LINK <NAME> TO <email>? — LINK / NOT NOW (signs out).
 //              Nothing links a board row without this (security review nov4, HIGH 2)
 //   linked     a short stamp — "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT" (it leaves on its own)
@@ -26,26 +26,22 @@ const LINE = {
   error: 'COULD NOT SIGN IN · TRY AGAIN FROM SETTINGS',
 };
 
-export default function AuthLanding({ landing, onDone }) {
+export default function AuthLanding({ resume = false, onDone }) {
   const [st, setSt] = useState(() => {
     const who = pendingRestore();
-    return who && !landing ? { state: 'confirm', who } : { state: 'busy' };
+    return who && resume ? { state: 'confirm', who } : { state: 'busy' };
   });
   const boxRef = useRef(null);
   useEffect(() => {
     if (st.state !== 'busy') return undefined;
     let live = true;
-    Promise.resolve(landing).then((ok) => {
-      // a landing that did not trade (no verifier in this tab, stale, refused): nothing was stored — say nothing
-      if (ok === false) { if (live && onDone) onDone(); return null; }
-      return finishSignIn();
-    }).then((r) => {
-      if (!live || !r) return;
+    finishSignIn().then((r) => {
+      if (!live) return;
       if (r.state === 'restored') { location.reload(); return; }
       setSt(r);
     });
     return () => { live = false; };
-  }, [st.state, landing, onDone]);
+  }, [st.state]);
   useEffect(() => { kitPlay(boxRef.current, POP, { duration: 280, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }, [st.state]);
   // a stamp leaves on its own
   useEffect(() => {
