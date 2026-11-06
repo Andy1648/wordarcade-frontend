@@ -9,7 +9,8 @@
 //   * the DOLLAR price is the face of every pack;
 //   * $20 a month per account: the server refuses past it (082 pay_reserve); the panel shows what is left and greys out a
 //     pack that would cross it (price still shown);
-//   * no countdowns, no "limited" offers, no sale badges: a pack is always the same price;
+//   * no countdowns, no "limited" offers, no sale badges: a pack is always the same price. FIRST BUY ×2 is the one bonus: honest
+//     amounts (1,000 + 1,000 BONUS), no "was" price, and the server decides it at grant time (088);
 //   * ODDS sits here (the roll screen's RATES popup: paid gems roll at the same server odds);
 //   * a refund line: reply to the Stripe receipt (or VITE_REFUND_EMAIL); refunded gems are taken back off.
 // Motion: hover / press transforms and one finite enter; nothing loops.
@@ -21,7 +22,7 @@ import { useAuthSession, GoogleButton } from './account/GoogleAccount.jsx';
 import { GemIcon, useGems } from './gems/GemChip.jsx';
 import { authAvailable, AUTH_LANDED } from '../leaderboard/auth.js';
 import { PACKS, MONTHLY_CAP_CENTS, formatUsd, capLeft, fitsCap, packById } from '../payments/packs.js';
-import { fetchPaid, applyPaid, startCheckout, hasProfile, PAY_RESUME_KEY, readPayResume } from '../payments/payClient.js';
+import { fetchPaid, fetchFirstBuy, applyPaid, startCheckout, hasProfile, PAY_RESUME_KEY, readPayResume } from '../payments/payClient.js';
 import { formatNum, formatShort } from '../format';
 
 const REFUND_EMAIL = (import.meta.env && import.meta.env.VITE_REFUND_EMAIL) || '';
@@ -41,10 +42,16 @@ export default function BuyGems({ onClose }) {
   const [busy, setBusy] = useState(null); // the pack id on its way to Stripe
   const [want, setWantState] = useState(readPayResume); // the pack id waiting on a Google sign-in
   const [note, setNote] = useState(null);
+  const [first, setFirst] = useState(false); // FIRST BUY ×2 still open for this account (088)
   const closeRef = useRef(null);
   const resumed = useRef(!!readPayResume()); // this mount picked a waiting pack back up
   const signed = useAuthSession(); // 085: REQUIRED TO BUY — the packs show once a Google account is signed in
   const gems = useGems();
+  useEffect(() => {
+    let live = true;
+    fetchFirstBuy({ signedIn: !!signed }).then((open) => { if (live) setFirst(open); });
+    return () => { live = false; };
+  }, [signed]);
 
   useEffect(() => {
     let live = true;
@@ -144,7 +151,7 @@ export default function BuyGems({ onClose }) {
 
         {asking ? (
           <div className="pg-signin" data-testid="pay-signin" data-pack={asking.id}>
-            <span className="pg-signin-h">SIGN IN TO GET {formatNum(asking.gems)} GEMS</span>
+            <span className="pg-signin-h">SIGN IN TO GET {formatNum(asking.gems)}{first ? ` + ${formatNum(asking.gems)} BONUS` : ''} GEMS</span>
             <span className="pg-signin-t">{formatUsd(asking.cents)}. Your gems stay on your Google account, on any device.</span>
             <GoogleButton />
             <button type="button" className="pg-back" onClick={() => setWant(null)} data-testid="pay-signin-back">BACK</button>
@@ -157,14 +164,16 @@ export default function BuyGems({ onClose }) {
                 <div key={p.id} role="listitem" className="pg-cell">
                   <button
                     type="button"
-                    className={`pg-pack${over ? ' is-over' : ''}`}
+                    className={`pg-pack${over ? ' is-over' : ''}${first ? ' is-first' : ''}`}
                     data-pack={p.id}
                     disabled={!!busy}
                     onClick={() => onPack(p)}
-                    aria-label={`${p.name}: ${p.gems} gems for ${formatUsd(p.cents)}${over ? ' — past this month’s limit' : ''}`}
+                    aria-label={`${p.name}: ${p.gems} gems${first ? ` plus ${p.gems} first-buy bonus gems` : ''} for ${formatUsd(p.cents)}${over ? ' — past this month’s limit' : ''}`}
                   >
                     <img className="pg-art" src={p.art} width="256" height="256" alt="" draggable="false" />
+                    {first ? <span className="pg-first" data-testid="pay-first">FIRST BUY ×2</span> : null}
                     <span className="pg-gems"><GemIcon size={22} />{formatNum(p.gems)}</span>
+                    {first ? <span className="pg-bonus" data-testid={`pay-bonus-${p.id}`}>+{formatNum(p.gems)} BONUS</span> : null}
                     <span className="pg-price" data-testid={`pay-price-${p.id}`}>{busy === p.id ? 'OPENING…' : formatUsd(p.cents)}</span>
                   </button>
                 </div>
@@ -182,8 +191,8 @@ export default function BuyGems({ onClose }) {
         {/* a note lies over the fine print for a moment (same cell), so a tap never moves the packs */}
         <div className="pg-low">
           <p className={`pg-fine${note ? ' is-hid' : ''}`} data-testid="pay-refund">
-            Same roll odds as earned gems. Bought by mistake? Reply to the Stripe receipt
-            {REFUND_EMAIL ? <> or email <b>{REFUND_EMAIL}</b></> : null} for a refund; the gems are taken back.
+            {first ? 'First buy doubles, once per Google account; a refund takes it back for good. ' : null}
+            Same odds as earned gems. Mistake? Reply to the Stripe receipt{REFUND_EMAIL ? <> or email <b>{REFUND_EMAIL}</b></> : null} for a refund; the gems are taken back.
           </p>
           {note ? <div className="pg-note" role="status" aria-live="polite" data-testid="pay-note">{note}</div> : null}
         </div>

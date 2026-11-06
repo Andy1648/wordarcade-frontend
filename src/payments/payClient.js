@@ -101,6 +101,19 @@ export async function fetchPaid(call = rpc) {
   }
 }
 
+/** Should the panel show FIRST BUY ×2? Only a guess for the stamp: 088 pay_grant alone decides, at grant time. False until 088 has
+ *  run (the function is missing), and on any failure: never promise a bonus we can't confirm. */
+export async function fetchFirstBuy({ signedIn = false, call = rpc } = {}) {
+  if (!LEADERBOARD_ENABLED) return false;
+  const args = { p_secret: peekSecret() || null };
+  try {
+    const r = signedIn ? await (await import('../leaderboard/auth.js')).authRpc('pay_first_buy_open', args) : await call('pay_first_buy_open', args);
+    return r === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Apply the rows once each, then ack. -> { credited, clawed, ids }. `onCredit(total)` runs before any grant. */
 export async function applyPaid(rows, { onCredit, call = rpc } = {}) {
   const done = new Set(readApplied());
