@@ -215,7 +215,7 @@ function bodyStylesheetPlugin() {
       order: 'post',
       handler(html) {
         const links = html.match(/<link rel="stylesheet"[^>]*href="[^"]*assets\/[^"]*"[^>]*>/g) || []
-        let out = html.replace(/<!--[sS]*?-->s*/g, '') // developer notes never ship: they pay for the boot shell
+        let out = html.replace(/<!--[\s\S]*?-->\s*/g, '') // developer notes never ship: they pay for the boot shell
         for (const l of links) out = out.replace(l, '')
         return out.replace('</body>', `${links.join('')}</body>`)
       },
