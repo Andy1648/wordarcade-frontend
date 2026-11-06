@@ -83,3 +83,6 @@
 @media (min-width: 1800px) and (min-height: 1000px) {
   .wct { max-width: min(64vw, calc(320px * var(--ov-k, 1))); }
 }
+
+/* the results card tallies these same lines itself: a toast over it covered the rank table (nov6) */
+body:has(.rs2) .wct { display: none; }

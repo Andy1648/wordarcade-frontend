@@ -6128,6 +6128,20 @@ html[data-beat='true'] .cb-category-display {
   background: rgba(154, 26, 255, 0.1);
   clip-path: polygon(0 30%, 100% 6%, 100% 20%, 0 44%);
 }
+/* THE HEAT (nov6): the band behind the prompt takes the streak's tier colour, deeper per tier. Quiet at T0. One opacity
+   transition on a tier change, nothing at rest. Same colours as the board edge (FeelLadder.css). */
+.wb-heat {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 20%, 0 44%);
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.game-stage[data-heat='1'] .wb-heat { background: #2EFFE0; opacity: 0.1; }
+.game-stage[data-heat='2'] .wb-heat { background: #FFE94A; opacity: 0.16; }
+.game-stage[data-heat='3'] .wb-heat { background: #FF6B3D; opacity: 0.24; }
+.game-stage[data-heat='4'] .wb-heat { background: #FF4FA3; opacity: 0.34; }
+@media (prefers-reduced-motion: reduce) { .wb-heat { transition: none; } }
 .wb-bandrule {
   position: absolute;
   left: 0;
