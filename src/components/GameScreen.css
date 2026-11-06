@@ -7176,3 +7176,53 @@ html[data-beat='true'] .wb-belly {
 @media (min-width: 900px) and (min-height: 600px) {
   .game-stage--blitz .cb-round { min-height: calc(100dvh - 270px); }
 }
+
+/* SPECTATE (nov4): a watcher's static line where the input would be (in the bottom bar's flow, never fixed), and the
+   game-over note that replaces PLAY AGAIN / REMATCH. Flat, coloured outline, hard black shadow, no motion. */
+.game-watch-bar {
+  /* positioned like the input row it replaces, so it paints above the board's positioned backdrop layers */
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: #FF4FA3;
+  background: #1a0b2e;
+  border: 3px solid #b8206e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.game-watch-note {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #FF4FA3;
+  text-align: center;
+}
+.game-watch-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: #FF4FA3;
+  border: 3px solid #b8206e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
