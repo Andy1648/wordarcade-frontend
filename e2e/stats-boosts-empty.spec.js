@@ -1,5 +1,5 @@
-// e2e/stats-boosts-empty.spec.js — STATS → BOOSTS with nothing running: the where-from guide fills the page (it was a void beside a
-// thin column), everything on screen, nothing over the all-time strip beneath it.
+// e2e/stats-boosts-empty.spec.js — STATS → BOOSTS with nothing running: one empty line (the where-from guide went in #685, "no
+// filler"), on screen, nothing over the all-time strip beneath it.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
@@ -21,17 +21,15 @@ for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 551], [390, 844]]) {
     await expect(root.locator('.st2-bl-none')).toHaveText('NO BOOSTS RUNNING');
     await page.waitForTimeout(400);
     if (OUT) await page.screenshot({ path: `${OUT}/boosts-${w}.png` });
+    await expect(root.locator('.st2-where')).toHaveCount(0);
     const g = await page.evaluate(() => {
-      const r = document.querySelector('.st2-where').getBoundingClientRect();
+      const r = document.querySelector('.st2-bl-none').getBoundingClientRect();
       const strip = document.querySelector('.st2-life, [class*="st2-life"]');
       const s = strip ? strip.getBoundingClientRect() : null;
-      return { left: r.left, right: r.right, bottom: r.bottom, stripTop: s ? s.top : null, width: r.width };
+      return { left: r.left, right: r.right, bottom: r.bottom, stripTop: s ? s.top : null };
     });
     expect(g.left).toBeGreaterThanOrEqual(0);
     expect(g.right).toBeLessThanOrEqual(w);
-    if (w > 480) {
-      expect(g.width, 'the guide is the page, not a side column').toBeGreaterThan(w * 0.6);
-      if (g.stripTop != null) expect(g.bottom).toBeLessThanOrEqual(g.stripTop + 1);
-    }
+    if (w > 480 && g.stripTop != null) expect(g.bottom).toBeLessThanOrEqual(g.stripTop + 1);
   });
 }
