@@ -54,7 +54,7 @@ for (const vp of VPS) {
     await expect(page.getByTestId('profile-plate')).toBeVisible();
     await expect(tile).toHaveAttribute('aria-label', /1 of 3 done/);
     // ONE readout (audit oct25): the chip shows pips, never pips AND "1/3"
-    if (await tile.locator('.hp-daily-pips').count()) await expect(tile).not.toContainText('1/3');
+    if (await tile.locator('.hp-daily-track').count()) await expect(tile).not.toContainText('1/3');
     const box = await tile.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(44);
     await tile.scrollIntoViewIfNeeded();

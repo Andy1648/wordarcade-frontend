@@ -913,16 +913,21 @@
 .st2-info.is-on { background: var(--st2-c); border-color: #000; color: #000; -webkit-text-stroke: 0; }
 .st2-result-sub { flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { .st2-info { transition: none; } }
-/* BOOSTS: one line per source; with nothing running the empty state and the list stack as one centred column */
+/* BOOSTS: one line per source */
 .st2-where { gap: 8px; border-color: #5c0fa3; border-radius: 8px; min-width: min(420px, 100%); }
 .st2-where-h { font-size: var(--fs-k20); }
 .st2-where-row { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px; font-size: var(--fs-k16); }
 .st2-where-row b { font-size: var(--fs-k18); }
 .st2-where-row i { font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k16); white-space: nowrap; }
-.st2-boosts:has(.st2-bl-none) { grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; gap: 18px; }
-.st2-boosts:has(.st2-bl-none) .st2-where { align-self: auto; }
 .st2-bl-none { padding: 10px 20px; background: #1a0b2e; border: 4px solid #5c0fa3; border-radius: 8px; box-shadow: 5px 5px 0 #000; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 /* phone: the unit and its "?" share one row (the column the formula used to take is the row's height budget) */
 .st2--narrow .st2-result-sub { flex-direction: row; align-items: center; }
 .st2--narrow .st2-info { width: 44px; height: 44px; }
 .st2--narrow .st2-result-sub .st2-basex { flex-basis: 100%; }
+/* nothing running (nov6): the where-from guide becomes the page instead of a void beside a thin column */
+.st2-boosts.is-empty { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; }
+.st2-boosts.is-empty .st2-bl-none { align-self: end; text-align: center; }
+.st2-boosts.is-empty .st2-where { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.st2-boosts.is-empty .st2-where-h { grid-column: 1 / -1; }
+.st2--narrow .st2-boosts.is-empty .st2-where { grid-template-columns: minmax(0, 1fr); }
+.st2-boosts.is-empty .st2-where-row { flex-direction: column; align-items: flex-start; gap: 4px; }
