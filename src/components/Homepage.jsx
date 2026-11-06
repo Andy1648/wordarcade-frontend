@@ -1383,11 +1383,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
   // the lock is the LEVEL gate only — at the gate it opens and says "PLAY N WORDS" if game words are short (035)
   // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
-  const ownsAnyGear = useMemo(() => {
-    if (equippedMark || markIdList.length) return true;
+  const ownedGear = useMemo(() => {
     const st = loadRollState();
-    return !!(st && st.marks && Object.keys(st.marks).length);
+    return new Set([...markIdList, ...(st && st.marks ? Object.keys(st.marks) : []), ...(equippedMark ? [equippedMark] : [])]).size;
   }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ownsAnyGear = ownedGear > 0;
   // FIRST-RUN PROGRESSIVE REVEAL (progress/reveal.js): a newcomer's menu opens a step at a time — the TITLE (hero +
   // PLAY), then the core (wins / upgrades / stats / contracts / board / achievements) after a first game or LV3, then
   // gears + gems, then rebirth when near. Existing saves are grandfathered to ALL. Keyed on the signals only (cheap,
@@ -1479,6 +1479,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const gear2Lock = s2Unlocks && gear2Gate != null && !s2Unlocks.unlocked('mark2', s2State) ? `R${gear2Gate}` : null;
   const [gear2Id, setGear2Id] = useState(() => (SEASON2 && V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null));
   const wornGear2 = markShown && !gear2Lock && gear2Id && gear2Id !== equippedMark ? markEntry(gear2Id) : null;
+  // nov3 HONEST DOTS (design move 16): an empty gear slot's dot only when the visit pays — slot 1: a gear to EQUIP or a
+  // roll you can take; slot 2: a SECOND gear to put in it. Never "the slot is empty" alone.
+  const gearDot = !wornGear && (ownsAnyGear || rollDot);
+  const gear2Dot = !wornGear2 && ownedGear >= 2;
   const openGear2 = () => {
     if (navigating) return;
     if (gear2Lock) { handleRebirth(); return; }
@@ -1494,10 +1498,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const markChip = markShown && reveal.gears ? (
     showGear2 ? (
       <>
-        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
-        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} />
+        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
+        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} dot={gear2Dot} />
       </>
-    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
   ) : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
@@ -1511,8 +1515,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
-      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
-      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
+      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} dot={gearDot} />
+      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} dot={gear2Dot} /> : null}
     </>
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV

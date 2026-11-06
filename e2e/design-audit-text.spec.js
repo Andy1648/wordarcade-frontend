@@ -5,7 +5,7 @@
 //   #4  the 7 mode dialogs: title + ONE hook line + the mode's painted card art + the choice buttons — no tagline chip,
 //       no EXAMPLE box, no stats list
 //   #5  the CHAIN death card: no "+0 GEMS" pill, no repeated rule sentence, one balanced column when there is no score
-//   #6  STATS: the formula sits behind a "?" tap; BOOSTS is one line per source; the ALL TIME window has no glow
+//   #6  STATS: the formula sits behind a "?" tap; the ALL TIME window has no glow
 //   #13 the wheel offline: a disabled kit SPIN with a short reason + a RETRY that re-asks the server
 import { test, expect } from '@playwright/test';
 import { bootMenu } from './support/screens.js';
@@ -136,7 +136,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     expect(await smallTargets(page, '.solo-deathcard'), '≥ 44px targets').toEqual([]);
   });
 
-  test(`#6 STATS: formula behind a tap, one-line boosts, ALL TIME in the current style @ ${tag}`, async ({ page }) => {
+  test(`#6 STATS: formula behind a tap, clean boosts, ALL TIME in the current style @ ${tag}`, async ({ page }) => {
     test.setTimeout(60_000);
     await page.setViewportSize({ width: w, height: h });
     await bootMenu(page, 60, '?portal=1&season2=1');
@@ -154,14 +154,11 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-stats-math-${tag}.png` });
     await clean(page, '.st2-hero', 'stats hero + math');
     expect(await smallTargets(page, '.st2-head, .st2-hero'), '≥ 44px targets').toEqual([]);
-    // BOOSTS: one line per source
+    // BOOSTS: clean (the where-from guide went in #685)
     await page.locator('.st2-tab[data-tab="boosts"]').click();
     await expect(page.getByTestId('st2-boosts')).toBeVisible();
     await page.waitForTimeout(300);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/after-stats-boosts-${tag}.png` });
-    const rows = await page.evaluate(() => [...document.querySelectorAll('.st2-where-row')].map((r) => { const b = r.querySelector('b'); return Math.round(r.getBoundingClientRect().height / b.getBoundingClientRect().height); }));
-    expect(rows.length).toBe(4);
-    for (const n of rows) expect(n, 'one line per boost source').toBeLessThanOrEqual(1);
     await clean(page, '.st2-boosts', 'boosts');
     // ALL TIME: no glow on the level numeral, thick cell outlines
     await page.locator('.st2-tab[data-tab="xp"]').click();

@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 12px 16px;
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
 }
 .dw {
   --dw-c: var(--k-pink, #FF4FA3);

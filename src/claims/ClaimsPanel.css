@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px 8px;
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   font-family: 'Space Mono', monospace;
 }
 .claims-panel {

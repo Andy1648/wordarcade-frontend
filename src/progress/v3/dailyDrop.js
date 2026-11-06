@@ -11,7 +11,7 @@
 //     EPIC       12%   +60 GEMS
 //     LEGENDARY   4%   +150 GEMS  — the prototype's "1 FREE EPIC+ ROLL" has no grant path yet (the STOCK 'epicroll' is
 //                                    buyable:false and markRolls has no banked/forced roll), so it pays the gem fallback
-//     MYTHIC      1%   ×15 OVERDRIVE · 5 MIN (nov4; overdrive.js OVERDRIVE_MULT) — the STOCK overdrive's own code path (stock.js grantOverdrive: slot 1,
+//     MYTHIC      1%   ×3 OVERDRIVE · 5 MIN (overdrive.js OVERDRIVE_MULT) — the STOCK overdrive's own code path (stock.js grantOverdrive: slot 1,
 //                                    time stacks, the multiplier never does)
 //
 // Store: taw.s2.drop = { day: 'YYYY-MM-DD' (local), claimed: bool, tier: index | null }. Every write is a no-op with

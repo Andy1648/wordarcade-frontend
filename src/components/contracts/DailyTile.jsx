@@ -64,7 +64,7 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
     return (
       <>
         <KitIconButton art="/cast/props/flame.webp" tone="hot" className="hp-ico is-daily" data-nav="contracts" tag={`${n}/${of}`}
-          dot={n === 0 ? 1 : undefined} disabled={navigating} onClick={() => setOpen(true)} ariaLabel={label} title="Daily contracts" />
+          disabled={navigating} onClick={() => setOpen(true)} ariaLabel={label} title="Daily contracts" />
         {sheet}
       </>
     );

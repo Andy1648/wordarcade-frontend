@@ -639,7 +639,7 @@
   top: calc(100px * var(--st2-k));
   height: calc(400px * var(--st2-k));
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: calc(24px * var(--st2-k));
 }
 .st2-bl { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-rows: min-content; gap: 12px; overflow-y: auto; min-height: 0; }
@@ -685,11 +685,6 @@
 .st2-bt-clock { grid-area: clock; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k28); color: #fff; font-variant-numeric: tabular-nums; }
 .st2-bt-clock small { font-size: var(--fs-k14); color: #c9b8e8; }
 .st2-bl-none { margin: 0; align-self: center; justify-self: center; font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k26); color: #c9b8e8; }
-.st2-where { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #12071f; border: 4px solid #000; box-shadow: 5px 5px 0 #000; align-self: start; }
-.st2-where-h { font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k18); color: #FFE94A; }
-.st2-where-row { display: flex; flex-direction: column; gap: 1px; font-family: var(--k-mono, 'Space Mono', monospace); font-weight: 700; font-size: var(--fs-k14); color: #c9b8e8; }
-.st2-where-row b { font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; text-transform: uppercase; font-size: var(--fs-k16); color: #fff; }
-.st2-where-row i { font-style: normal; color: #2EFFE0; }
 .st2--narrow .st2-boosts { position: relative; left: auto; right: auto; top: auto; height: auto; grid-template-columns: 1fr; }
 .st2--narrow .st2-bt-mult { min-width: 64px; height: 44px; font-size: var(--fs-k20); }
 .st2--narrow .st2-bt-name { font-size: var(--fs-k18); }
@@ -913,12 +908,6 @@
 .st2-info.is-on { background: var(--st2-c); border-color: #000; color: #000; -webkit-text-stroke: 0; }
 .st2-result-sub { flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { .st2-info { transition: none; } }
-/* BOOSTS: one line per source */
-.st2-where { gap: 8px; border-color: #5c0fa3; border-radius: 8px; min-width: min(420px, 100%); }
-.st2-where-h { font-size: var(--fs-k20); }
-.st2-where-row { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px; font-size: var(--fs-k16); }
-.st2-where-row b { font-size: var(--fs-k18); }
-.st2-where-row i { font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-size: var(--fs-k16); white-space: nowrap; }
 .st2-bl-none { padding: 10px 20px; background: #1a0b2e; border: 4px solid #5c0fa3; border-radius: 8px; box-shadow: 5px 5px 0 #000; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 /* phone: the unit and its "?" share one row (the column the formula used to take is the row's height budget) */
 .st2--narrow .st2-result-sub { flex-direction: row; align-items: center; }
@@ -927,6 +916,6 @@
 /* nothing running (nov6): the where-from guide becomes the page instead of a void beside a thin column */
 .st2-boosts.is-empty { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; }
 .st2-boosts.is-empty .st2-bl-none { align-self: end; text-align: center; }
-.st2-boosts.is-empty .st2-where { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 32px; } /* two columns: each source stays on one line */
+.st2-boosts.is-empty .st2-where { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .st2-boosts.is-empty .st2-where-h { grid-column: 1 / -1; }
 .st2--narrow .st2-boosts.is-empty .st2-where { grid-template-columns: minmax(0, 1fr); }

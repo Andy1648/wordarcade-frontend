@@ -7,7 +7,7 @@
   /* fix/overlay-zoom: reciprocal --app-scale zoom removed (rendered inside the STATS view whose
      .view-screen zoom is forced to 1). It cancelled only in headless; recent real Chrome left it at
      --app-scale. See ShopScreen.css. */
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   display: flex; align-items: center; justify-content: center;
   padding: 20px; font-family: 'Space Mono', monospace;
 }
