@@ -18,6 +18,17 @@ export function paymentsEnabled(env = process.env) {
   return env.VITE_PAYMENTS_ON === '1' && !!env.STRIPE_SECRET_KEY;
 }
 
+// ONE LOG LINE PER CALL, for Vercel's logs (Andy nov6: see the first real purchase, and why a call failed). A fixed list of
+// fields, so a secret, a token, an email, a player id or a Stripe id can never reach the logs.
+const LOG_FIELDS = ['error', 'granted', 'duplicate', 'clawed', 'ignored', 'released'];
+export async function logPay(route, res, extra = {}) {
+  let body = {};
+  try { body = await res.clone().json(); } catch { /* nothing to read: the status still says it */ }
+  const line = { pay: route, status: res.status, ...extra };
+  for (const k of LOG_FIELDS) if (body && body[k] !== undefined) line[k] = body[k];
+  console.log(JSON.stringify(line));
+}
+
 const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
@@ -76,7 +87,12 @@ export function siteOrigin(request, env = process.env) {
  *   404 off · 400 bad_pack / bad_secret / bad_body · 401 sign_in · 403 no_profile / not_linked / flagged · 409 cap ·
  *   502 stripe/db/auth trouble
  */
-export async function handleCheckout(request, { stripe, rpc, env = process.env, now = Date.now, authUser = verifyAuthUser(env) } = {}) {
+export async function handleCheckout(request, deps = {}) {
+  const res = await checkout(request, deps);
+  await logPay('checkout', res);
+  return res;
+}
+async function checkout(request, { stripe, rpc, env = process.env, now = Date.now, authUser = verifyAuthUser(env) } = {}) {
   if (!paymentsEnabled(env) || !stripe || !rpc) return json(404, { error: 'off' });
   let body;
   try {
@@ -231,12 +247,19 @@ function notFoundOr(r, o) {
   return { status: 200, body: { clawed: (r && r.clawed) || 0 } };
 }
 
-export async function handleWebhook(request, { stripe, rpc, env = process.env } = {}) {
+export async function handleWebhook(request, deps = {}) {
+  const seen = {};
+  const res = await webhook(request, deps, seen);
+  await logPay('webhook', res, seen);
+  return res;
+}
+async function webhook(request, { stripe, rpc, env = process.env } = {}, seen = {}) {
   const secret = env.STRIPE_WEBHOOK_SECRET;
   if (!stripe || !secret) return json(503, { error: 'not_configured' });
   const raw = await request.text(); // the RAW body: the signature is over these exact bytes (never re-serialise)
   const event = await verifyEvent(stripe, raw, request.headers.get('stripe-signature'), secret);
   if (!event) return json(400, { error: 'bad_signature' });
+  seen.event = String(event.type || '');
   if (!rpc) return json(500, { error: 'db_not_configured' }); // Stripe retries until SUPABASE_SERVICE_ROLE_KEY is set
   try {
     const out = await routeEvent(event, rpc);
