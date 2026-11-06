@@ -100,7 +100,7 @@ for (const [w, h] of SIZES) {
       return menu.length >= 3 && menu.every((d) => d.onTop);
     }, { timeout: 5000, message: 'every menu dot on top' }).toBe(true);
     await navControl(page, 'shop').click();
-    await page.getByTestId('daily-chest-card').waitFor({ state: 'visible' });
+    await page.getByTestId('daily-spin-card').waitFor({ state: 'visible' });
     let shop = [];
     // the daily chest's dot + (oct28) the LOOKS tab's NEW dot — 5000 gems make a look affordable
     await expect.poll(async () => { shop = await dotsOnTop(page, '.sp2-dot'); return shop.length === 2 && shop.every((d) => d.onTop); }, { timeout: 5000 }).toBe(true);

@@ -6,7 +6,7 @@
 //   * POWER (left) — "wins buy only POWER": the price is keyTierCost(P) (PROGRESSION FINAL: 300 × 8^P — v3/econ.js), the
 //     buy is shop.buyKeyPower() (the v3 swap counts the POWER LEVEL achievement), on a 1 s KitHoldButton (one POWER
 //     per hold). The plate is a tilted square carrying the kit POWER key.
-//   * DAILY FREE DROP (top of the right column, DailyDrop.jsx / v3/dailyDrop.js) — one free chest a local day.
+//   * THE DAILY WHEEL (Andy nov5: it replaced the daily chest and left the menu): the first BOOSTS card opens the wheel.
 //   * STOCK (right) — GEM-priced items (v3/stock.js): odd prices 45 / 65 / 120 / 150 / 225 / 495, rarity bands,
 //     ×N LEFT, an hourly RESTOCK chip on the wall clock, the kit SOLD OUT stamp. The SEALED EPIC+ ROLL
 //     (065) are sold by the SERVER (serverTickets.buyTicket) and open in place (SealedRollReveal). 069: EPIC+ only (500).
@@ -28,15 +28,19 @@ import { shopOpened as evShopOpened, itemPurchased as evItemPurchased } from '..
 import { sndPurchase } from '../audio/gameSounds';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum, formatRate, formatMultExact } from '../format';
-import DailyDrop from './DailyDrop';
 import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
+import ScreenBoundary from './ScreenBoundary';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
-import { SHOP_ITEM_ART, CHEST_ART } from '../progress/boostArt.js';
+import { SHOP_ITEM_ART } from '../progress/boostArt.js';
+import { lastSpunDay, wheelNeed, WHEEL_CHANGE } from '../progress/wheelDot.js';
+import { localDayIndex } from '../progress/streak.js';
+import { lifetimeGameWords } from '../progress/rebirthWords.js';
 import { PAYMENTS_ON } from '../payments/flag.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
+const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel');
 const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollReveal'), 'SealedRollReveal');
 // COSMETICS (Andy oct28 "i want all cosmetics to be from profile"; nov2 "idk why cosmetics screen on upgrades gives popup
 // instead of just shop screen"): the COSMETICS tab is a shelf like BOOSTS — the ONE CUSTOMIZE menu (the same component
@@ -139,37 +143,43 @@ function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef 
   );
 }
 
+const untilMidnight = (now) => {
+  const m = new Date(now);
+  m.setHours(24, 0, 0, 0);
+  const t = Math.max(0, Math.ceil((m.getTime() - now) / 1000));
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(Math.floor(t / 3600))}:${p(Math.floor((t % 3600) / 60))}:${p(t % 60)}`;
+};
 /**
- * THE DAILY CHEST as a SHELF ITEM (Andy oct10: "make the daily chest an item (like the other boosts and it has another
- * popup for the user to click)"): the first BOOSTS card — the chest art, FREE, ONCE A DAY — and a tap opens the chest
- * POPUP (the DailyDrop tap-to-open flow, unchanged). Claimed today: the CLAIMED stamp + the countdown to midnight.
- * A dot while it is ready (Andy: badges are a plain dot).
+ * THE DAILY WHEEL as a SHELF ITEM (Andy nov5): the first BOOSTS card. Its face says where today's spin stands: SPIN (earned, with
+ * a dot), the game words still to go (083: earned by playing), or the countdown once spun. A tap always opens the wheel.
  */
-function DailyChestCard({ now, onOpen }) {
-  const D = V3.drop;
-  const saved = D.readDrop(now);
-  const claimed = !!saved.claimed;
+function DailySpinCard({ now, onOpen }) {
+  const spun = lastSpunDay() >= localDayIndex(now);
+  const need = wheelNeed();
+  const left = need == null ? 0 : Math.max(0, need - lifetimeGameWords());
+  const ready = !spun && left === 0;
+  const face = spun ? untilMidnight(now) : left > 0 ? `${formatNum(left)} WORDS` : 'SPIN';
   return (
     <KitStampCard
-      stamped={claimed}
+      stamped={spun}
       kind="claimed"
-      className={`sp2-card sp2-chest${claimed ? ' is-claimed' : ' is-ready'}`}
-      style={{ '--sp2-line': '#FFE94A', '--sp2-fill': '#3a2a08' }}
+      className={`sp2-card sp2-chest${spun ? ' is-claimed' : ready ? ' is-ready' : ''}`}
+      style={{ '--sp2-line': '#FF4FA3', '--sp2-fill': '#3a0822' }}
       onClick={onOpen}
-      badge={!claimed ? <span className="sp2-dot" aria-hidden="true" /> : null}
-      ariaLabel={claimed ? `Daily chest opened — next in ${D.formatCountdown(D.msToReset(now))}` : 'Daily chest — free, once a day. Open it'}
+      badge={ready ? <span className="sp2-dot" aria-hidden="true" /> : null}
+      ariaLabel={spun ? `Daily wheel spun — next in ${face}` : ready ? 'Daily wheel — today\'s spin is ready' : `Daily wheel — play ${face} to earn today's spin`}
     >
-      <span className="sp2-card-in" data-stock="daily-chest" data-testid="daily-chest-card">
+      <span className="sp2-card-in" data-stock="daily-spin" data-testid="daily-spin-card">
         <span className="sp2-band">
           <span className="sp2-name">DAILY</span>
-          {/* no ×1 LEFT sticker (nov2 declutter): FREE / the CLAIMED stamp already say it, and it sat on "CHEST" */}
         </span>
         <span className="sp2-chest-art" aria-hidden="true">
-          <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
+          <img className="sp2-chest-paint" src="/wheel/icon.webp" width="256" height="256" alt="" draggable="false" />
         </span>
-        <span className="sp2-big">CHEST</span>
+        <span className="sp2-big">WHEEL</span>
         <span className="sp2-what">ONCE A DAY</span>
-        <span className="sp2-price">{claimed ? D.formatCountdown(D.msToReset(now)) : 'FREE'}</span>
+        <span className="sp2-price">{face}</span>
       </span>
     </KitStampCard>
   );
@@ -200,11 +210,11 @@ export default function ShopV2({ onBack }) {
   const [note, setNote] = useState(null);
   // BOOSTS | LOOKS | CODES (Andy oct8: the season-1 POP STYLES, SOUND PACKS and CODES are back, one tap away)
   const [shelf, setShelf] = useState('boosts');
-  const [chest, setChest] = useState(false); // the DAILY CHEST popup
+  const [spin, setSpin] = useState(false); // the DAILY WHEEL over the shop
   const [sealed, setSealed] = useState(null); // 065: a just-bought SEALED ROLL's ticket — the opening popup
   const buying = useRef(false);
-  const chestRef = useRef(chest);
-  chestRef.current = chest;
+  const spinRef = useRef(spin);
+  spinRef.current = spin;
   const [ladder, setLadder] = useState(false); // THE POWER LADDER popup (a tap on the plate)
   const ladderRef = useRef(ladder);
   ladderRef.current = ladder;
@@ -254,7 +264,7 @@ export default function ShopV2({ onBack }) {
       if (e.key !== 'Escape') return;
       if (sealedRef.current) return; // the SEALED ROLL opening owns the screen until NICE
       if (ladderRef.current) { setLadder(false); plateRef.current?.focus(); } // Esc closes the power forms first
-      else if (chestRef.current) setChest(false); // Esc closes the chest popup first
+      else if (spinRef.current) return; // the wheel has its own Esc (never mid-spin)
       else onBackRef.current();
     };
     window.addEventListener('keydown', onKey);
@@ -355,14 +365,12 @@ export default function ShopV2({ onBack }) {
           <SealedRollReveal ticket={sealed} onDone={() => setSealed(null)} />
         </Suspense>
       ) : null}
-      {chest && V3.drop ? (
-        <div className="sp2-pop" role="dialog" aria-modal="true" aria-label="Daily chest" onClick={(e) => { if (e.target === e.currentTarget) setChest(false); }}>
-          <div className="sp2-pop-in">
-            <button type="button" className="sp2-pop-x" onClick={() => setChest(false)} aria-label="Close the daily chest">✕</button>
-            {/* the tap-to-open flow rides the RESTOCK clock's 1 s tick (`now`) */}
-            <DailyDrop now={now} />
-          </div>
-        </div>
+      {spin ? (
+        <ScreenBoundary name="daily-wheel" onBack={() => setSpin(false)}>
+          <Suspense fallback={null}>
+            <DailyWheel onClose={() => setSpin(false)} onPlay={() => { setSpin(false); onBackRef.current(); }} />
+          </Suspense>
+        </ScreenBoundary>
       ) : null}
       {ladder ? <PowerLadder current={form.n} onClose={() => { setLadder(false); plateRef.current?.focus(); }} /> : null}
       <div className="sp2-scale">
@@ -449,12 +457,10 @@ export default function ShopV2({ onBack }) {
           {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
           {PAYMENTS_ON && shelf === 'gems' ? <div className="sp2-shelf sp2-shelf-gems"><Suspense fallback={null}><PaidGemsShelf /></Suspense></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
-            {V3.drop ? (
-              <div className="sp2-cell is-chest">
-                <DailyChestCard now={now} onOpen={() => { sndPurchase(); setChest(true); }} />
-              </div>
-            ) : null}
-            {/* move 8, fixed rhythm: FREE chest → the featured SEALED ROLL → boosts (placed in ShopV2.css, FIXED SHOP RHYTHM) */}
+            <div className="sp2-cell is-chest">
+              <DailySpinCard now={now} onOpen={() => { sndPurchase(); setSpin(true); }} />
+            </div>
+            {/* move 8, fixed rhythm: the daily wheel → the featured SEALED ROLL → boosts (placed in ShopV2.css, FIXED SHOP RHYTHM) */}
             {SHELF_ORDER(STOCK).map((it) => (
               <div key={it.id} className={`sp2-cell${it.ticket ? ' is-ticket' : ' is-boost'}`} data-cell={it.id} ref={(el) => { cards.current[it.id] = el; }}>
                 <StockCard it={it} left={left[it.id]} gems={gems} now={now} onBuy={onBuy} bought={bought[it.id] || 0} shineRef={(el) => { shines.current[it.id] = el; }} floatRef={(el) => { floats.current[it.id] = el; }} />

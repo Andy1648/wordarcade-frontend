@@ -37,6 +37,7 @@ import { kitPlay } from '../kit/motion.js';
 import { wheelState, spinWheel, claimWheel } from '../../leaderboard/serverWheel.js';
 import { grantGems } from '../../progress/gemsCore.js';
 import { grantStockFx } from '../../progress/v3/stock.js';
+import { wheelBoostUnlockMult } from '../../progress/v3/unlocks.js';
 import { grantKit, kitById, kitSrc } from '../../cast/kit.js';
 import { showRewarded, rewardedReady } from '../../ads/rewarded.js';
 import { holdBeats } from '../../hooks/useBeatSync';
@@ -45,7 +46,9 @@ import { holdBeats } from '../../hooks/useBeatSync';
 // restyled ~350 menu nodes a frame UNDER the wheel while it spun (measured: 400 ms of style recalc per spin at 1x CPU)
 const stopMenuPointer = (e) => e.stopPropagation();
 
-const PAY = { grantGems, grantFx: grantStockFx, grantKit };
+// R20 (REBIRTH ROAD): the XP / WINS boosts run twice as long; the line the wheel prints says the same
+const PAY = { grantGems, grantFx: (kind, min) => grantStockFx(kind, min * wheelBoostUnlockMult()), grantKit };
+const shownSpin = (s) => (s && (s.prize === 'xp' || s.prize === 'wins') ? { ...s, amount: s.amount * wheelBoostUnlockMult() } : s);
 const WIND_DEG = 24; // the pull-back before the launch
 const POP_MS = 1150; // the prize's burst-out + drop
 const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
@@ -159,7 +162,7 @@ function playOnce(el, frames, opts) {
   return a;
 }
 
-export default function DailyWheel({ onClose, onPaid }) {
+export default function DailyWheel({ onClose, onPaid, onPlay }) {
   const onPaidRef = useRef(onPaid);
   onPaidRef.current = onPaid;
   const [st, setSt] = useState({ phase: 'load' }); // load | off | locked | ready | spinning | landed | done
@@ -456,7 +459,7 @@ export default function DailyWheel({ onClose, onPaid }) {
                   <span className="dw-earn-fill" style={{ transform: `scaleX(${(WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)) / WHEEL_WORDS})` }} />
                   <span className="dw-earn-t">{WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} / {WHEEL_WORDS} GAME WORDS</span>
                 </span>
-                <KitButton tone="cyan" label="PLAY" sub={`${st.left} MORE ${st.left === 1 ? 'WORD' : 'WORDS'} TO SPIN`} labelSize={30} width={220} onClick={tryClose} data-testid="wheel-play" />
+                <KitButton tone="cyan" label="PLAY" sub={`${st.left} MORE ${st.left === 1 ? 'WORD' : 'WORDS'} TO SPIN`} labelSize={30} width={220} onClick={() => { if (onPlay && phaseRef.current !== 'spinning') onPlay(); else tryClose(); }} data-testid="wheel-play" />
               </div>
             ) : null}
             {st.phase === 'ready' ? (
@@ -467,7 +470,7 @@ export default function DailyWheel({ onClose, onPaid }) {
               <div ref={resultRef} className={`dw-result is-${s.prize}`} data-testid="wheel-result">
                 <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
                 <span className="dw-result-t">
-                  <span className="dw-result-l">{cos ? cos.name : resultText(s)}</span>
+                  <span className="dw-result-l">{cos ? cos.name : resultText(shownSpin(s))}</span>
                   <span className="dw-result-s">
                     {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
                     {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}

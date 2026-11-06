@@ -41,7 +41,10 @@ export const REBIRTH_GATE_STEP = 18; // … then +18 levels a rebirth (R2 LV33, 
 export const ASCENSION_ON = false; // FINAL v2: no ascension for now (hidden)
 export const ASCEND_AT = 10; // kept for the hidden ascension (lb_ascend refuses while ASCENSION_ON is false)
 export const ASCEND_STEP = 5;
-export const JACKPOT_GEMS = 150; // REBIRTH ROAD (Andy oct13): a JACKPOT rebirth (R5, R10 …) pays +150 on top — 2 rolls. 036's gem budget (250 a game word, 25 words a rebirth) covers it many times over
+export const JACKPOT_GEMS = 100; // nov5: was 150, see REBIRTH_GEMS_CAP. // REBIRTH ROAD (Andy oct13): a JACKPOT rebirth (R5, R10 …) pays +150 on top — 2 rolls. 036's gem budget (250 a game word, 25 words a rebirth) covers it many times over
+// nov5 (paid gems must feel worth buying): 25 × R grew without limit — R40 paid 1,000 at once. Flat from R4; the most a rebirth pays is 200.
+// private.gem_budget still counts 25 × R: a ceiling on what the server trusts, so it stays (never refuses a gem already earned).
+export const REBIRTH_GEMS_CAP = 100;
 export const REBIRTH_GEMS_PER_R = 25; // Andy oct11: a rebirth pays 25 × the new R (R1 25 · R3 75 = a roll · R10 250) — levels pay none now
 export const MENU_SHARE = 0.2; // a menu letter = a fifth of a game letter
 
@@ -74,9 +77,10 @@ export const PER_PLAYER_BEATEN = 15; // (season 1's table; season 2 pays the WIN
 // Andy oct10 "a lot more for multiplayer … n × how many people playing for the winner to take all gems": a game with
 // people in it pays its WINNER POT_PER_PLAYER × the people playing (you included); everyone else gets the pot's 0.
 export const POT_PER_PLAYER = 30;
+export const POT_MAX = 150; // nov5: an 8-player win paid 240 at once (before a gem gear's bonus)
 export function winnerPot(people) {
   const n = int0(people);
-  return n >= 2 ? POT_PER_PLAYER * n : 0;
+  return n >= 2 ? Math.min(POT_MAX, POT_PER_PLAYER * n) : 0;
 }
 // WORD RACE pays SPEED (Andy oct10): 0.4 gem per word a minute, every racer, capped (Andy oct15 "slightly less gems": was 0.5 / cap 40).
 export const RACE_GEMS_PER_WPM = 0.4;
@@ -160,7 +164,7 @@ export function rebirthGate(rebirths) {
 }
 /** Gems a rebirth pays: REBIRTH_GEMS_PER_R × the R it lands on (Andy oct11). */
 export function rebirthGems(rcAfter) {
-  return REBIRTH_GEMS_PER_R * int0(rcAfter) + (isJackpotRebirth(rcAfter) ? JACKPOT_GEMS : 0);
+  return Math.min(REBIRTH_GEMS_CAP, REBIRTH_GEMS_PER_R * int0(rcAfter)) + (isJackpotRebirth(rcAfter) ? JACKPOT_GEMS : 0);
 }
 /** The rebirth count an ascension would need at `stars` (hidden — see ASCENSION_ON). */
 export function ascendAt(stars = 0) {

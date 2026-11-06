@@ -167,24 +167,22 @@ test('UNLOCKS: start ROLL + INDEX · R1 AUTO ROLL · R2 AUTO REBIRTH · R5 2nd M
   near(MR.luck(st, { permanentOwned: 0, markLuck: 0 }), 1.25);
 });
 
-test('REBIRTH ROAD (Andy oct13): jackpot gems, R10 OVERDRIVE ×2 LONG, R15 POWER −25%, R20 DAILY DROP ×2', async () => {
+test('REBIRTH ROAD (Andy oct13): jackpot gems, R10 OVERDRIVE ×2 LONG, R15 POWER −25%, R20 SPIN BOOSTS ×2', async () => {
   const OD = await import('../overdrive.js');
-  const DD = await import('./dailyDrop.js');
-  // a JACKPOT rebirth pays +150 on top of 25 × R
-  assert.deepEqual([4, 5, 6, 10].map((r) => E.rebirthGems(r)), [100, 125 + 150, 150, 250 + 150]);
+  // nov5: 25 × R, capped at 100; a JACKPOT rebirth pays +100 on top, so no rebirth ever pays more than 200
+  assert.deepEqual([1, 3, 4, 5, 6, 10, 40, 100].map((r) => E.rebirthGems(r)), [25, 75, 100, 200, 100, 200, 200, 200]);
   reset();
   X.saveRebirths(9);
   const od9 = OD.overdriveLengthMs();
   const cost9 = X.keyTierCost(3);
-  const drop9 = DD.payText(0);
   X.saveRebirths(10);
   assert.equal(OD.overdriveLengthMs(), od9 * 2, 'R10: OVERDRIVE runs twice as long');
   assert.equal(X.keyTierCost(3), cost9, 'POWER full price before R15');
   X.saveRebirths(15);
   assert.equal(X.keyTierCost(3), Math.round(cost9 * 0.75), 'R15: POWER −25%');
-  assert.equal(DD.payText(0), drop9, 'the drop pays its table before R20');
+  assert.equal(U.wheelBoostUnlockMult(), 1, 'the wheel boosts run their table before R20');
   X.saveRebirths(20);
-  assert.equal(DD.payText(0), `+${DD.DROP_TIERS[0].pay.gems * 2} GEMS`, 'R20: the drop pays double');
+  assert.equal(U.wheelBoostUnlockMult(), 2, 'R20: the wheel boosts run twice as long');
   reset();
 });
 
