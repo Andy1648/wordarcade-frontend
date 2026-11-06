@@ -98,12 +98,39 @@ for (const [w, h] of [[1920, 1080], [1366, 768], [1280, 551], [1024, 768], [390,
   test(`${w}x${h}: after a roll the result line under the cards is above the dim`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await openRoll(page);
+    const bandY = (await box(page, '.rs-win')).y;
     await holdRoll(page);
     await expect(page.getByTestId('mark-roll-result')).toHaveCount(1, { timeout: 15000 });
     await keepReveal(page);
     await settle(page);
     // the shades ARE up (the dim this test is about)
     expect(Number(await page.locator('.rs-shade.is-l').evaluate((el) => getComputedStyle(el).opacity))).toBeGreaterThan(0.3);
+    // Andy nov6 "unprofessional": the dim is ONE clean layer inside the panel. The shades + fades stop exactly at the
+    // purple frame (a stale --rs-up ran them over it, leaving a card-wide bright piece), and the tint covers the fades
+    const dim = await page.evaluate(() => {
+      const st = document.querySelector('.rs-stage');
+      const s = st.getBoundingClientRect();
+      const inner = { top: s.top + st.clientTop, bottom: s.top + st.clientTop + st.clientHeight };
+      const win = document.querySelector('.rs-win');
+      const r = win.getBoundingClientRect();
+      const fade = getComputedStyle(win, '::before');
+      const sh = document.querySelector('.rs-shade.is-l').getBoundingClientRect();
+      return {
+        inner,
+        shade: { top: sh.top, bottom: sh.bottom },
+        fade: { top: r.top + parseFloat(fade.top), bottom: r.bottom - parseFloat(fade.bottom) },
+        tellOverFade: Number(getComputedStyle(document.querySelector('.rs-tell')).zIndex) > Number(fade.zIndex),
+      };
+    });
+    for (const part of [dim.shade, dim.fade]) {
+      expect(part.top, 'the dim stops at the top frame').toBeGreaterThanOrEqual(dim.inner.top - 0.5);
+      expect(part.top, 'the dim reaches the top frame').toBeLessThanOrEqual(dim.inner.top + 2);
+      expect(part.bottom, 'the dim stops at the bottom frame').toBeLessThanOrEqual(dim.inner.bottom + 0.5);
+      expect(part.bottom, 'the dim reaches the bottom frame, no hard edge mid-panel').toBeGreaterThanOrEqual(dim.inner.bottom - 2);
+    }
+    expect(dim.tellOverFade).toBe(true);
+    // the result landing never shoves the cards: the band stays put where the screen has the room to reserve
+    if (w > 720 && h >= 700) expect(Math.abs((await box(page, '.rs-win')).y - bandY), 'the band holds still on the land').toBeLessThanOrEqual(2);
     expect(await covered(page, '[data-testid="mark-roll-result"]')).toEqual([]);
     expect(await covered(page, '.rsx-coll')).toEqual([]);
     // design audit nov2 ("EGG T|MER"): once landed the pointer is PARKED — no bar through the card, the top triangle

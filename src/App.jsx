@@ -344,6 +344,9 @@ const SOLO_RETURNING_PRESET = 'easy';
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
  */
+// REJECT LOG: lazy, so the menu's first paint never pays for it; fire-and-forget, and it can never touch the game.
+const logRejected = (word, mode, ctx) => { import('./telemetry/rejectLog.js').then((m) => m.noteReject(word, mode, ctx)).catch(() => {}); };
+
 function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
@@ -563,6 +566,10 @@ function App() {
   // score" (see e2e/word-bomb-scoring RACE). Reset each game_started; entries are consumed
   // on match, and the server always answers a submit so the list self-drains.
   const myOutstandingWordsRef = useRef([]);
+  // REJECT LOG (nov6): a rejected result doesn't echo what was typed, so these remember it. Logging only: nothing reads them
+  // for game state.
+  const blitzSubmittedRef = useRef([]); // answers awaiting answer_result, oldest first
+  const blitzCategoryRef = useRef('');
   // WINS visibility (Economy v3): a LIVE running estimate of the wins this round/game will
   // pay, shown in the in-game HUD and ticking up as MY answers are accepted; and the total
   // actually EARNED this run, shown large on the game-over screen. `winsTally` is the pending
@@ -728,7 +735,13 @@ function App() {
   useEffect(() => {
     if (reconnect === 'trying' && wsStatus === 'open' && !rejoinSentRef.current) {
       rejoinSentRef.current = true;
-      if (reconnectRoomRef.current) {
+      const watched = watchingRef.current; // SPECTATE: a watcher comes back as a watcher (spectate_room), never a seat
+      if (watched && watched.code) {
+        rejoinPendingRef.current = true;
+        send('spectate_room', { code: watched.code, name: watched.name || playerName || resolvePlayerName() });
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = setTimeout(reconnectGiveUp, 6000);
+      } else if (reconnectRoomRef.current) {
         rejoinPendingRef.current = true;
         send('join_room', { code: reconnectRoomRef.current, name: playerName || resolvePlayerName() });
         if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
@@ -737,6 +750,9 @@ function App() {
         reconnectGiveUp();
       }
     }
+  // watchingRef (read inside, after render) is useRoom's STABLE ref, declared below this effect: listing it here would
+  // read it before its declaration (a TDZ crash) and could never change the effect anyway.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reconnect, wsStatus, send, playerName, reconnectGiveUp]);
 
   // feat/offline: connectivity, so the multiplayer modes (Word Bomb / Category Blitz — which NEED the
@@ -804,13 +820,19 @@ function App() {
     myId,
     setMyId,
     myIdRef,
+    watching,
+    setWatching,
+    watchingRef,
     goToLobby,
     handleOpenBrowser,
     handleRefreshPublicRooms,
     handleJoinPublicRoom,
+    handleWatchPublicRoom,
     handleCreatePublicFromBrowser,
     handleLeaveRoom,
   } = useRoom({ send, setView, setPlayerName, goHome });
+  // SPECTATE: true while a watcher's rematch-seat join_room is in flight (its failure has its own landing).
+  const watchJoinRef = useRef(false);
 
   // Daily-Challenge progression state (refactor/app-split step 3). The drain (App), goHome and
   // handleLeaveRequest/handleStartDaily call these setters and read dailyStateRef — unchanged.
@@ -1222,6 +1244,21 @@ function App() {
       setPublicRooms(lastMessage.payload.rooms || []);
     }
 
+    // SPECTATE (nov4): the server accepted our watch - we are in this room's AUDIENCE (never its players). The roster,
+    // a watchOnly game_started and the live snapshot follow in this order.
+    if (lastMessage.type === 'room_spectating') {
+      watchingRef.current = { ...(watchingRef.current || {}), code: lastMessage.payload.code };
+      setWatching(lastMessage.payload.code);
+    }
+    // Taking a seat anywhere (create / join / quick play) ends a watch server-side; mirror it.
+    if (lastMessage.type === 'room_joined' || lastMessage.type === 'room_created') {
+      watchJoinRef.current = false;
+      if (watchingRef.current) {
+        watchingRef.current = null;
+        setWatching(null);
+      }
+    }
+
     if (lastMessage.type === 'room_update') {
       // feat/reconnect: a room_update while a rejoin is in flight = we're back in (a waiting/finished
       // room accepted us). Clear the reconnect overlay; the normal handling below restores state.
@@ -1251,12 +1288,25 @@ function App() {
       // left only by game_started.
       // Functional update so we read the LIVE view, not the stale `view` captured
       // in this effect's closure (the effect is keyed only on [lastMessage]).
-      setView((prev) => (prev === 'game' || prev === 'cg-arm' || prev === 'vs-bot' ? prev : 'room'));
+      // A WATCHER is not in this room: its roster updates never pull it to the waiting room (game_started puts it on
+      // the read-only game view; a rematch's game_reset below seats it). watchingRef is a ref - the live value.
+      if (!watchingRef.current) {
+        setView((prev) => (prev === 'game' || prev === 'cg-arm' || prev === 'vs-bot' ? prev : 'room'));
+      }
     }
 
     if (lastMessage.type === 'game_reset') {
       // Host rematch: the room data already arrived via room_update; this is
       // the explicit cue to leave the game view and return to the lobby.
+      // SPECTATE: a watcher takes a seat in the rematch lobby (the server ends the watch on join). If the lobby is
+      // full the join_room error below sends it to the JOIN ROOM list.
+      if (watchingRef.current) {
+        const w = watchingRef.current;
+        watchingRef.current = null;
+        setWatching(null);
+        watchJoinRef.current = true;
+        send('join_room', { code: w.code, name: w.name || playerName });
+      }
       setView('room');
     }
 
@@ -1265,10 +1315,17 @@ function App() {
     // to, so surface a blocking notice whose only exit is the menu - the
     // alternative is a lobby that silently stopped responding.
     if (lastMessage.type === 'room_closed') {
+      const reason = lastMessage.payload?.reason;
+      if (watchingRef.current) {
+        watchingRef.current = null;
+        setWatching(null);
+      }
       setRoomClosedNotice(
-        lastMessage.payload?.reason === 'server_error'
+        reason === 'server_error'
           ? 'THE SERVER HIT A GLITCH AND CLOSED THIS ROOM. GRAB A FRESH ONE.'
-          : 'THIS ROOM SAT QUIET TOO LONG, SO THE SERVER SWEPT IT AWAY.'
+          : reason === 'ended' // SPECTATE: everyone left the game we were watching
+            ? 'THE GAME YOU WERE WATCHING IS OVER. EVERYONE LEFT.'
+            : 'THIS ROOM SAT QUIET TOO LONG, SO THE SERVER SWEPT IT AWAY.'
       );
     }
 
@@ -1321,9 +1378,14 @@ function App() {
       const startedMode = lastMessage.payload.gameType || 'word-bomb';
       gameModeRef.current = startedMode;
       gameStartMsRef.current = Date.now();
-      // No longer a first-timer: future rooms default to CRAZY instead of CHILL.
-      markPlayed();
-      track('game_started', { mode: startedMode, daily: !!lastMessage.payload.daily });
+      // SPECTATE: watching is not playing - no first-timer flip, no game_started event.
+      if (lastMessage.payload.watchOnly) {
+        track('game_watched', { mode: startedMode });
+      } else {
+        // No longer a first-timer: future rooms default to CRAZY instead of CHILL.
+        markPlayed();
+        track('game_started', { mode: startedMode, daily: !!lastMessage.payload.daily });
+      }
     }
 
     if (lastMessage.type === 'typing_update') {
@@ -1457,6 +1519,7 @@ function App() {
       if (qIdx !== -1) q.splice(qIdx, 1);
       const submitter = feedCurrentRef.current;
       const isMine = qIdx !== -1 || submitter.id === myIdRef.current;
+      if (payload.reason === 'not_a_word' && q.length) logRejected(q[q.length - 1], 'word-bomb'); // my latest submit
       const attributedId = isMine ? myIdRef.current : submitter.id;
       const playerName = isMine ? myNameRef.current || 'YOU' : submitter.name || 'SOMEONE';
       if (payload.accepted) {
@@ -1658,6 +1721,8 @@ function App() {
       // CategoryBlitzScreen doesn't replay the 3-2-1) and carries `reroll`/`by`
       // so non-host clients can flash the "host rerolled" notice.
       setCategoryRound(payload);
+      blitzCategoryRef.current = payload.category || '';
+      blitzSubmittedRef.current = [];
       setTimerSeconds(payload.timerSeconds);
       setCategoryRerolls(payload.rerollsRemaining ?? null);
       setMyAnswers([]);
@@ -1693,6 +1758,8 @@ function App() {
     if (lastMessage.type === 'answer_result') {
       const payload = lastMessage.payload;
       setCheckingAnswer(null); // result is in - drop the "checking…" state
+      const typed = blitzSubmittedRef.current.shift();
+      if (payload.reason === 'not_on_list' && typed) logRejected(typed, 'blitz', blitzCategoryRef.current);
       // RARITY (word-value): score an accepted answer and carry the verdict on the result so the
       // feedback toast can pop "RARE ×2.5". answer_result is always about MY own answer.
       const blitzRarity = payload.accepted ? rarityOf(payload.answer) : null;
@@ -1893,7 +1960,7 @@ function App() {
       // Analytics: counts/enums only (no PII). mode + duration come from refs
       // stamped at game_started; player_count from the room-synced ref — all live,
       // never stale. duration omitted if we somehow never saw a start.
-      track('game_completed', {
+      if (!watchingRef.current) track('game_completed', {
         mode: gameModeRef.current || payload.gameType || 'word-bomb',
         player_count: playerCountRef.current,
         duration_seconds: gameStartMsRef.current
@@ -1919,6 +1986,18 @@ function App() {
       }
       setServerError(friendlyError(lastMessage.payload.message));
       setLinkJoinPending(false); // if a link join was in flight, it just failed
+      // SPECTATE: a refused watch (the game ended / too many watchers) leaves us where we were, not watching.
+      if (lastMessage.payload.context === 'spectate_room') {
+        watchingRef.current = null;
+        setWatching(null);
+        setView((prev) => (prev === 'home' ? 'browse' : prev));
+      }
+      // a rematch seat a watcher could not take (the lobby filled) - the rematch lobby is not ours: back to the list
+      if (lastMessage.payload.context === 'join_room' && watchJoinRef.current) {
+        watchJoinRef.current = false;
+        setRoom(null);
+        setView((prev) => (prev === 'room' ? 'browse' : prev));
+      }
       // A join that failed while we're still on the HOME screen (an invite
       // link to a full/ended/unknown room) must not dead-end invisibly: land
       // on the JOIN ROOM screen, which shows the error plus live public rooms
@@ -2263,6 +2342,9 @@ function App() {
     satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
     setLobbyPublicDefault(true);
+    watchingRef.current = null; // SPECTATE: the menu is never "watching"
+    setWatching(null);
+    watchJoinRef.current = false;
     setRoom(null);
     setPublicRooms([]);
     setServerError('');
@@ -2484,6 +2566,7 @@ function App() {
   }
 
   function handleSubmitAnswer(answer) {
+    blitzSubmittedRef.current.push(answer);
     send('submit_answer', { answer });
   }
 
@@ -2522,9 +2605,10 @@ function App() {
     const conn =
       typeof navigator !== 'undefined' &&
       (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
-    if (conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ''))) {
-      return; // slow/metered: don't steal the menu's bandwidth — load screens on navigation
-    }
+    if (conn && conn.saveData) return; // the player asked for less data: load screens on navigation
+    // nov6: a slow link needs the warm MOST (a cold GEARS tap there took 17 s). It only starts on the first gesture and runs one
+    // chunk at a time, so it cannot flood the menu's own load; it stops after the likeliest next taps, no second pass.
+    const slowLink = !!conn && /(^|-)(2g|3g)$/.test(conn.effectiveType || '');
     // A warm-up that fails (offline, a flaky network) is harmless — navigation lazy-loads on demand —
     // so its rejection is caught here instead of surfacing as an uncaught error ("Unable to preload
     // CSS …" in the failure-states OFFLINE run).
@@ -2554,6 +2638,7 @@ function App() {
       () => import('./components/LobbyScreen'),
       () => import('./components/PublicRoomsScreen'),
     ];
+    if (slowLink) WARM.length = 5;
     const OVERLAYS = ['RollScreen', 'MarksIndex', 'EquipScreen', 'ShopScreen', 'ShopV2', 'RebirthV2', 'StatsScreen', 'StatsV2', 'LeaderboardScreen', 'LeaderboardV2', 'AchievementsV3', 'AudioPanel', 'ProfileCard'];
     const idle = (fn) => (typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 60));
     const warm = () => {
@@ -2562,7 +2647,7 @@ function App() {
       const next = () => {
         // never parse a screen's code while a game is on screen (typing latency) — resume once back out
         if (warmViewRef.current === 'game') { setTimeout(next, 2000); return; }
-        const load = WARM.shift() || (pre || (pre = preloadersFor(OVERLAYS))).shift();
+        const load = WARM.shift() || (slowLink ? null : (pre || (pre = preloadersFor(OVERLAYS))).shift());
         if (load) quiet(Promise.resolve().then(load)).finally(() => idle(next));
       };
       idle(next);
@@ -2700,6 +2785,8 @@ function App() {
         onRematch={handleRematch}
         onPlayAgain={handlePlayAgain}
         onRerollCategory={handleRerollCategory}
+        // SPECTATE: a watcher sees the live board read-only (no input, no rematch)
+        watchOnly={!!watching}
         rematchPending={rematchPending}
         rerollPending={rerollPending}
         musicSetVolume={music.setVolume}
@@ -2786,6 +2873,7 @@ function App() {
         name={playerName}
         onNameChange={setPlayerName}
         onJoin={handleJoinPublicRoom}
+        onWatch={handleWatchPublicRoom}
         onRefresh={handleRefreshPublicRooms}
         onCreatePublic={handleCreatePublicFromBrowser}
         onBack={goHome}
@@ -2878,6 +2966,7 @@ function App() {
         rooms={publicRooms}
         onRefreshRooms={handleRefreshPublicRooms}
         onJoinPublicRoom={handleJoinPublicRoom}
+        onWatchPublicRoom={handleWatchPublicRoom}
         onCreatePublic={handleCreatePublicFromBrowser}
         playerName={playerName}
         onCredits={goToCredits}

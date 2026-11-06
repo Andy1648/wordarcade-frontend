@@ -1,6 +1,7 @@
 // Homepage.jsx
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
+import OverlaySkeleton from './OverlaySkeleton';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
@@ -193,7 +194,7 @@ const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear
 
 let paidAsked = false; // PAID GEMS: the pick-up runs once a page load
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onWatchPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -1383,11 +1384,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
   // the lock is the LEVEL gate only — at the gate it opens and says "PLAY N WORDS" if game words are short (035)
   // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
-  const ownsAnyGear = useMemo(() => {
-    if (equippedMark || markIdList.length) return true;
+  const ownedGear = useMemo(() => {
     const st = loadRollState();
-    return !!(st && st.marks && Object.keys(st.marks).length);
+    return new Set([...markIdList, ...(st && st.marks ? Object.keys(st.marks) : []), ...(equippedMark ? [equippedMark] : [])]).size;
   }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ownsAnyGear = ownedGear > 0;
   // FIRST-RUN PROGRESSIVE REVEAL (progress/reveal.js): a newcomer's menu opens a step at a time — the TITLE (hero +
   // PLAY), then the core (wins / upgrades / stats / contracts / board / achievements) after a first game or LV3, then
   // gears + gems, then rebirth when near. Existing saves are grandfathered to ALL. Keyed on the signals only (cheap,
@@ -1479,6 +1480,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const gear2Lock = s2Unlocks && gear2Gate != null && !s2Unlocks.unlocked('mark2', s2State) ? `R${gear2Gate}` : null;
   const [gear2Id, setGear2Id] = useState(() => (SEASON2 && V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null));
   const wornGear2 = markShown && !gear2Lock && gear2Id && gear2Id !== equippedMark ? markEntry(gear2Id) : null;
+  // nov3 HONEST DOTS (design move 16): an empty gear slot's dot only when the visit pays — slot 1: a gear to EQUIP or a
+  // roll you can take; slot 2: a SECOND gear to put in it. Never "the slot is empty" alone.
+  const gearDot = !wornGear && (ownsAnyGear || rollDot);
+  const gear2Dot = !wornGear2 && ownedGear >= 2;
   const openGear2 = () => {
     if (navigating) return;
     if (gear2Lock) { handleRebirth(); return; }
@@ -1494,10 +1499,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const markChip = markShown && reveal.gears ? (
     showGear2 ? (
       <>
-        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
-        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} />
+        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
+        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} dot={gear2Dot} />
       </>
-    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
   ) : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
@@ -1505,12 +1510,14 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
   // (DAILY BLITZ was retired for MINER, Andy oct26 — its chip/icon/row left this cluster; MINER is a game card.)
-  const dailyTile = reveal.core ? <DailyTile onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  // the worn look's bar kit (set by the effect further down); declared here so the DAILY chip's track can wear it too
+  const [barSkin, setBarSkin] = useState(null);
+  const dailyTile = reveal.core ? <DailyTile kit={barSkin} onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
-      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
-      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
+      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} dot={gearDot} />
+      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} dot={gear2Dot} /> : null}
     </>
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
@@ -1558,7 +1565,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  const [barSkin, setBarSkin] = useState(null);
   useEffect(() => {
     let live = true;
     const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
@@ -1703,6 +1709,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               heard={roomsHeard}
               name={playerName}
               onJoin={onJoinPublicRoom}
+              onWatch={onWatchPublicRoom}
               onCreate={onCreatePublic}
               onNavigate={() => setNavigating(true)}
               onOpenAll={handleDialogJoin}
@@ -1777,7 +1784,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
       {dialog && (
         <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="LOADING" />}>
           <ModeDialog
             game={dialog.game}
             sourceEl={dialog.el}
@@ -1813,7 +1820,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       ) : null}
       {showWheel && (
         <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="DAILY WHEEL" />}>
             <DailyWheel onClose={() => setShowWheel(false)} onPaid={onWheelPaid} />
           </Suspense>
         </ScreenBoundary>
@@ -1840,7 +1847,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="REWARDS" />}>
             <ClaimsPanel
               onClose={() => setShowClaims(false)}
               onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
@@ -1851,7 +1858,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {patchDue && reveal.gears && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
-      {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
+      {showProfile && <Suspense fallback={<OverlaySkeleton title="PROFILE" />}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
       {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && !showWheel && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost
@@ -1870,7 +1877,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks === 'gear' && (
         <ScreenBoundary name="equip" onBack={closeGear}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="YOUR GEAR" />}>
             <EquipScreen
               equippedId={equippedMark}
               unlockedIds={markIdList}
@@ -1883,7 +1890,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks === 'gear2' && (
         <ScreenBoundary name="equip2" onBack={closeGear2}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="2ND GEAR" />}>
             <EquipScreen
               slot={2}
               equippedId={gear2Id}
@@ -1898,7 +1905,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks && showMarks !== 'gear' && showMarks !== 'gear2' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="GEARS" />}>
             <MarksIndex
               unlockedIds={markIdList}
               equippedId={equippedMark}

@@ -20,6 +20,10 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
   // live mirror the drain reads for same-tick attribution (written alongside setMyId in the drain).
   const [myId, setMyId] = useState(null);
   const myIdRef = useRef(null);
+  // SPECTATE (nov4): the live public game we are WATCHING ({ code, name }) or null. A watcher is never a player: the
+  // server keeps it out of the room's players and refuses its game actions. The ref is the drain's live copy.
+  const [watching, setWatching] = useState(null);
+  const watchingRef = useRef(null);
 
   // PUBLIC by default (Andy nov6 "lobbies should feel alive"): lobby bots only join a public room, and the toggle sat on
   // PRIVATE, so a player who just clicked through waited alone. PRIVATE stays one tap away.
@@ -40,8 +44,9 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
 
   // (Re)request the public-room list. Stable so the browser screen can call it on mount + on its
   // auto-refresh interval without re-subscribing every render.
+  // withLive: live public games stay listed as 'playing' (SPECTATE); an older server ignores the flag.
   const handleRefreshPublicRooms = useCallback(() => {
-    send('list_public_rooms', {});
+    send('list_public_rooms', { withLive: true });
   }, [send]);
 
   // Join a specific public room from the browser — the SAME join-by-code path as the Join Room screen.
@@ -52,13 +57,30 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
     track('room_joined', { mode: 'join' }); // fire-and-forget; no name/PII
   }
 
+  // SPECTATE a live public game from the browser / the menu panel. The server answers room_spectating, the roster,
+  // a watchOnly game_started and a snapshot - App's drain turns those into the read-only game view.
+  function handleWatchPublicRoom(code, name) {
+    setPlayerName(name);
+    setServerError('');
+    watchingRef.current = { code, name }; // the name re-used to take a seat on a rematch; `watching` is set on room_spectating
+    send('spectate_room', { code, name });
+    track('room_watched', {}); // fire-and-forget; no name/PII
+  }
+
   // Browser empty-state "create public room": jump to the create lobby with PUBLIC pre-set.
   function handleCreatePublicFromBrowser() {
     goToLobby('solo', true);
   }
 
   function handleLeaveRoom() {
-    send('leave_room', {});
+    if (watchingRef.current) {
+      // a watcher holds no seat: leave_room would be a no-op, stop_spectating drops it from the audience
+      send('stop_spectating', {});
+      watchingRef.current = null;
+      setWatching(null);
+    } else {
+      send('leave_room', {});
+    }
     goHome();
   }
 
@@ -76,10 +98,14 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
     myId,
     setMyId,
     myIdRef,
+    watching,
+    setWatching,
+    watchingRef,
     goToLobby,
     handleOpenBrowser,
     handleRefreshPublicRooms,
     handleJoinPublicRoom,
+    handleWatchPublicRoom,
     handleCreatePublicFromBrowser,
     handleLeaveRoom,
   };

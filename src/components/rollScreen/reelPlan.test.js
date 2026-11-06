@@ -172,6 +172,12 @@ test('ROLL v1 reveals are rarity-scaled: lite < EPIC (REVEAL v2), dim at EPIC, f
   for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t), 'full');
   assert.equal(revealKind('secret', 'short'), 'line');
   assert.equal(revealKind('legendary', 'none'), 'line');
+  // a common duplicate takes the short path; a dupe that steps a ★ pip up keeps its reveal; LEGENDARY+ always keeps it
+  assert.equal(revealKind('rare', 'full', { dupe: true }), 'line');
+  assert.equal(revealKind('epic', 'full', { dupe: true }), 'line');
+  assert.equal(revealKind('epic', 'full', { dupe: true, pipUp: true }), 'dim');
+  assert.equal(revealKind('epic', 'full', { dupe: false }), 'dim');
+  for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t, 'full', { dupe: true }), 'full');
 });
 
 test('the AUTO cycle: OFF → EPIC+ → LEGENDARY+ → OFF (GEAR POOL v2: RARE+ is every roll, so it is gone)', async () => {

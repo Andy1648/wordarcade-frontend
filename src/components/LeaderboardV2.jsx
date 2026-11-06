@@ -605,7 +605,7 @@ export default function LeaderboardV2({ onBack }) {
             const mine = !!(p && myId && p.id === myId);
             const n = p ? nums(p, tab, gains) : null;
             const who = podCast[place - 1];
-            const name = p ? p.username : 'YOUR NAME HERE?';
+            const name = p ? p.username : (data.loaded ? 'YOUR NAME HERE?' : '…'); // nov6: a loading board is not an empty one
             return (
               <div key={place} className={`lb2-col lb2-col--${place} lb2-slide${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p ? nameTier(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
                 {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : <span className="lb2-t3-open">{place}</span>}
@@ -670,7 +670,11 @@ export default function LeaderboardV2({ onBack }) {
           <span>#</span><span className="lb2-cols-who"><span className={myPct ? 'lb2-cols-pl has-pct' : 'lb2-cols-pl'}>PLAYER</span>{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : myPct ? <span className="lb2-pct" data-testid="lb2-pct">YOU: TOP {myPct}%</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
         </div>
         <div className="lb2-list lb2-slide"><div className="lb2-scroll" ref={scrollRef}>
-          {!data.loaded && <p className="lb2-note">LOADING THE BOARD…</p>}
+          {!data.loaded && (
+            <div className="lb2-skel" role="status" aria-label="Loading the board">
+              {Array.from({ length: 8 }, (_, i) => <div key={i} className={`lb2-skel-row${i % 2 ? '' : ' is-odd'}`}><span /><span /></div>)}
+            </div>
+          )}
           {data.loaded && data.error && (
             <p className="lb2-note">COULDN’T LOAD THE BOARD. <button type="button" className="lb2-retry" onClick={tab === 'week' ? loadWeekTab : loadAll}>RETRY</button></p>
           )}

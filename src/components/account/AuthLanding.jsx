@@ -10,7 +10,7 @@
 // A modal only while it needs an answer; the stamp is pointer-events:none. Motion: one finite pop in.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { finishSignIn, restoreAccount, declineRestore, pendingRestore, linkThisDevice } from '../../leaderboard/auth.js';
+import { finishSignIn, AUTH_LANDED, restoreAccount, declineRestore, pendingRestore, linkThisDevice } from '../../leaderboard/auth.js';
 import { kitPlay } from '../kit/motion.js';
 import { formatNum } from '../../format';
 import './AuthLanding.css';
@@ -43,6 +43,11 @@ export default function AuthLanding({ resume = false, onDone }) {
     return () => { live = false; };
   }, [st.state]);
   useEffect(() => { kitPlay(boxRef.current, POP, { duration: 280, easing: 'cubic-bezier(.3,1.5,.5,1)' }); }, [st.state]);
+  // settled: tell anyone waiting on this sign-in (the buy-gems panel's purchase)
+  useEffect(() => {
+    if (['busy', 'busy-restore', 'confirm', 'confirm_link', 'restored'].includes(st.state)) return;
+    window.dispatchEvent(new CustomEvent(AUTH_LANDED, { detail: { state: st.state } }));
+  }, [st.state]);
   // a stamp leaves on its own
   useEffect(() => {
     if (st.state === 'busy' || st.state === 'confirm') return undefined;

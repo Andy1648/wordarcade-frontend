@@ -78,7 +78,7 @@ async function mockAuth(page, shared, calls, seen) {
   });
 }
 
-async function device(browser, shared, { save, own = false, google = true, blocked = false, viewport = { width: 1280, height: 720 } }) {
+async function device(browser, shared, { save, own = false, google = true, payments = false, blocked = false, viewport = { width: 1280, height: 720 } }) {
   const ctx = await browser.newContext({ viewport });
   const page = await ctx.newPage();
   const calls = [];
@@ -107,9 +107,15 @@ async function device(browser, shared, { save, own = false, google = true, block
       localStorage.setItem('taw.s2.wins', '12');
     }
   }, { secret: SECRET, id: ID, save, own });
-  await page.goto(`/?portal=1&season2=1${google ? '&google=1' : ''}`);
+  const checkouts = [];
+  await page.route('**/api/checkout', async (route) => {
+    checkouts.push(route.request().postDataJSON());
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/?season2=1&portal=1&payments=1&google=1' }) });
+  });
+  await page.route('**/rest/v1/rpc/pay_gems_pending', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ rows: [], spent_cents: 0, cap_cents: 2000, flagged: false, profile: true }) }));
+  await page.goto(`/?portal=1&season2=1${google ? '&google=1' : ''}${payments ? '&payments=1' : ''}`);
   await menuReady(page);
-  return { ctx, page, calls, seen, gsi };
+  return { ctx, page, calls, seen, gsi, checkouts };
 }
 const raw = (page, k) => page.evaluate((key) => localStorage[key] ?? null, k).catch(() => null);
 async function openSettings(page) {
@@ -230,7 +236,7 @@ test('VITE_GOOGLE_ON off (no ?google=1 in the e2e build, as production ships unt
   const shared = sharedDb();
   const a = await device(browser, shared, { save: true, google: false });
   await openSettings(a.page);
-  await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
+  await expect(a.page.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'REWARD CODE', 'SAVE CODE', 'DANGER ZONE']);
   await expect(a.page.getByTestId('sp-account')).toHaveCount(0);
   await expect(a.page.getByTestId('google-signin')).toHaveCount(0);
   expect(a.gsi.requests).toBe(0);
@@ -441,3 +447,56 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await a.ctx.close();
   });
 }
+
+// ============================================================== a pack tapped signed out: Google first, then that purchase
+async function tapPackSignedOut(page) {
+  await page.locator('[data-testid="gems-plus"]:visible').first().click();
+  await page.getByTestId('buy-gems').locator('.pg-pack[data-pack="pile"]').click();
+  await page.getByTestId('pay-signin').getByTestId('gsi-official').click();
+}
+test('signed out, an account already linked to this name: a pack → Google → straight on to checkout for that pack', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  shared.links.set(UID, ID);
+  const a = await device(browser, shared, { save: true, payments: true });
+  await tapPackSignedOut(a.page);
+  await expect.poll(() => a.checkouts.length, { timeout: 15_000 }).toBe(1);
+  expect(a.checkouts[0].pack).toBe('pile');
+  expect(a.checkouts[0].access).toBe(TOKEN);
+  await a.ctx.close();
+});
+
+test('signed out, not linked yet: a pack → Google → LINK → checkout; NOT NOW buys nothing and stays on the sign-in step', async ({ browser }) => {
+  test.setTimeout(60_000);
+  const shared = sharedDb();
+  const a = await device(browser, shared, { save: true, payments: true });
+  await tapPackSignedOut(a.page);
+  await a.page.getByTestId('auth-link-not-now').click();
+  await expect(a.page.getByTestId('auth-confirm-link')).toHaveCount(0);
+  expect(a.checkouts.length).toBe(0);
+  await expect(a.page.getByTestId('pay-signin')).toBeVisible();
+  await a.page.getByTestId('pay-signin').getByTestId('gsi-official').click();
+  await a.page.getByTestId('auth-link').click(); // a real click: the dialog sits above the panel
+  await expect.poll(() => a.checkouts.length, { timeout: 15_000 }).toBe(1);
+  expect(a.checkouts[0].pack).toBe('pile');
+  expect(shared.links.get(UID)).toBe(ID);
+  await a.ctx.close();
+});
+
+test('signed out on a fresh browser: a pack → Google → the account restores (a reload) → the purchase carries on, once', async ({ browser }) => {
+  test.setTimeout(90_000);
+  const shared = sharedDb();
+  const first = await device(browser, shared, { save: true });
+  await expect.poll(() => shared.saves.size, { timeout: 15_000 }).toBe(1);
+  shared.links.set(UID, ID);
+  const b = await device(browser, shared, { save: false, payments: true });
+  await tapPackSignedOut(b.page);
+  await expect.poll(() => b.checkouts.length, { timeout: 25_000 }).toBe(1);
+  expect(b.checkouts[0].pack).toBe('pile');
+  await expect.poll(async () => JSON.parse((await raw(b.page, 'taw.lb.profile')) || '{}').username).toBe('GoogleKid'); // the mock Stripe navigates away mid-read
+  await b.page.waitForTimeout(1500);
+  expect(b.checkouts.length).toBe(1);
+  expect(await b.page.evaluate(() => sessionStorage.getItem('taw.pay.resume'))).toBeNull();
+  await first.ctx.close();
+  await b.ctx.close();
+});
