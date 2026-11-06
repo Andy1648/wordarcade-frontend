@@ -1422,7 +1422,7 @@
 .lb2-lg-goal b { color: #2EFFE0; }
 .lb2-lg-bar { position: relative; display: block; width: 100%; height: calc(20px * var(--lb2-k)); min-height: 14px; overflow: hidden; box-sizing: border-box; background: #0d0618; border: 3px solid #000; border-radius: 6px; }
 .lb2-lg-bar i { position: absolute; inset: 0; background: #2EFFE0; transform-origin: left center; }
-.lb2-lg-rank { flex: none; order: -1; font-family: var(--k-display, 'Bungee', sans-serif); font-weight: 400; font-size: max(var(--fs-k24), calc(var(--fs-k32) * var(--lb2-k))); line-height: 1; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.lb2-lg-rank { flex: none; order: -1; font-family: var(--k-display, 'Bungee', sans-serif); text-transform: uppercase; font-weight: 400; font-size: max(var(--fs-k24), calc(var(--fs-k32) * var(--lb2-k))); line-height: 1; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 .lb2--narrow .lb2-lg { position: relative; left: auto; top: auto; width: auto; height: auto; flex: none; flex-direction: row; text-align: left; margin: 4px 8px 6px; padding: 8px 10px; gap: 10px; }
 .lb2--narrow .lb2-lg-art { width: 56px; height: 56px; }
 .lb2--narrow .lb2-lg-next { width: 40px; height: 40px; }
