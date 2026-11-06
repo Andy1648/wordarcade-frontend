@@ -2,7 +2,8 @@
 // corner....) too ai tell"): a centred sheet over a dimmed menu, in FOUR labelled groups instead of a wall of rows —
 //
 //   SOUND        VOLUME (MUTE + a 10-step bar = the master volume, 0 = sound off) · MUSIC · GAME SFX (in a match)
-//   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music) · CODES (redeem)
+//   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music)
+//   REWARD CODE  type a code, get a prize (RedeemCodes)
 //   SAVE CODE   the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
 //   DANGER ZONE  RESET ACCOUNT, two steps — its own red card, apart from everything else
 //
@@ -21,7 +22,7 @@ import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
 import { exportSave } from '../save/saveBackup';
-import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort, rememberShortCode, copyText } from '../save/saveCode';
+import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, restoreError, formatShort, rememberShortCode, copyText } from '../save/saveCode';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, rpc } from '../leaderboard/client';
 import { progressScoreFromKeys, localScore } from '../save/cloudSave';
 import { resolveXpState } from '../progress/xp';
@@ -153,7 +154,7 @@ function SaveRow() {
   };
   const confirmParsed = (r, isUndo) => {
     if (!r.ok) {
-      setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : r.error));
+      setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : restoreError(r, draft)));
       return;
     }
     const mine = codeHeadline(r.keys, r.acct);
@@ -211,7 +212,7 @@ function SaveRow() {
           </div>
           {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" data-testid="sp-save-code" onFocus={selectAll} onClick={selectAll} /> : null}
           <form className="sp-restore" onSubmit={check}>
-            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE A CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
+            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
             <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim() || busy}>RESTORE</button>
           </form>
           {undo && !code ? (
@@ -340,14 +341,14 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
         <Row label="BEAT SYNC">
           <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
         </Row>
-        {/* CODES (Andy nov4 "move codes to settings"): the one place to redeem, a row here rather than a fifth card so a
-            360x640 sheet still fits. The menu's sheet only: onToggleSfx means a match is on, and nobody redeems mid-round */}
-        {LEADERBOARD_ENABLED && !onToggleSfx ? (
-          <Row label="CODES" className="sp-row--codes">
-            <RedeemCodes />
-          </Row>
-        ) : null}
       </Group>
+      {/* REWARD CODE (Andy nov4 "move codes to settings"; nov5: its own card, told apart from the SAVE code). The menu's sheet
+          only: onToggleSfx means a match is on, and nobody redeems mid-round */}
+      {LEADERBOARD_ENABLED && !onToggleSfx ? (
+        <Group title="REWARD CODE" tone="#FF6B3D" edge="#b8431f" className="sp-rewards">
+          <RedeemCodes />
+        </Group>
+      ) : null}
       </div>
       <div className="sp-col">
         <SaveRow />

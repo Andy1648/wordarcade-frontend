@@ -32,40 +32,41 @@ Buying gems needs a Google account linked to the player's board name (085): the 
 server, and the same account restores the progress on any new device. Playing never needs it.
 
 1. **Google Cloud Console** (console.cloud.google.com) → create a project (e.g. "Type A Word") →
-   **APIs & Services → OAuth consent screen**: External, app name **Type A Word**, support email, logo optional,
-   scopes: the default `openid`, `email`, `profile` only. Publish the app (Testing mode only lets listed test users in).
+   **APIs & Services → OAuth consent screen**: External, app name **Type A Word**, support email, logo optional, homepage
+   `https://typeaword.com`, privacy `https://typeaword.com/privacy`, scopes: the default `openid`, `email`, `profile` only.
+   Publish the app (Testing mode only lets listed test users in).
 2. **APIs & Services → Credentials → Create credentials → OAuth client ID** → type **Web application**:
-   * Authorized JavaScript origins: `https://typeaword.com`
-   * Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase shows the exact one
-     on the Google provider page). Copy the **Client ID** and **Client secret**.
+   * **Authorized JavaScript origins** (this is what sign-in checks now; exact origins, **no wildcards**):
+     `https://typeaword.com`, and for local testing both `http://localhost` and `http://localhost:5173`.
+     A Vercel preview's address changes per deploy, so **the Google button shows an error on previews** unless that exact
+     origin is added. Test sign-in on production or localhost.
+   * Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (Supabase's Google provider page
+     requires a client secret and shows this; the game no longer redirects).
+   Copy the **Client ID** and **Client secret**.
 3. **Supabase → Authentication → Sign In / Providers → Google**: turn it ON, paste the Client ID + Client secret, save.
+   Leave **Skip nonce check OFF**: the game sends the nonce, and that check is the replay protection.
    **Turn OFF the other ways in** (security review nov4): Authentication → Sign In / Providers → **Email**: disable it
    (or at least "Allow new users to sign up" off), and **Allow anonymous sign-ins: OFF**. An email or anonymous
    session would be an `authenticated` user too; 086 + the checkout refuse anything that isn't Google, but there is no
-   reason to let one exist. PKCE needs no setting — the game sends the challenge itself.
-4. **Supabase → Authentication → URL Configuration**:
-   * Site URL: `https://typeaword.com`
-   * Redirect URLs (add EXACTLY these, nothing broader): `https://typeaword.com/**`, `http://localhost:5173/**`,
-     `http://localhost:4173/**`, and — only if you want to sign in on previews — THIS project's preview pattern
-     `https://wordarcade-frontend-*-beenchilling.vercel.app/**`.
-   * **NEVER `https://*.vercel.app/**`** (security review nov4, HIGH 1): anyone can deploy `something.vercel.app`; with
-     that on the list, a sign-in link crafted to land there hands that site the player's Google session, and with it
-     their board row. The `-beenchilling` suffix is our Vercel team's own, so nobody else can mint a preview under it.
-5. Run **085_google_signin.sql** after 082 / 084, then **086_pay_auth_hardening.sql** (the security review's server
+   reason to let one exist.
+4. Run **085_google_signin.sql** after 082 / 084, then **086_pay_auth_hardening.sql** (the security review's server
    fixes: Google-only, unlink revokes devices, cap + dispute flag per Google account, refunds by share), then
    `notify pgrst, 'reload schema';`
-6. Check: Settings → SAVE CODE → **SIGN IN WITH GOOGLE** → pick an account → back on the menu a stamp says
-   "SIGNED IN · SAVED TO YOUR GOOGLE ACCOUNT". On a second browser, sign in with the same account → it asks
-   "LOAD YOUR PROGRESS?" (or loads straight away on a fresh browser) and comes back as the same name and level.
+5. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_ON` = `1`, then redeploy. The Client ID
+   is public and already in the code (`VITE_GOOGLE_CLIENT_ID` only overrides it). Until the flag is set the game shows no
+   sign-in button anywhere, so it can ship dark. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
+6. Check: Settings → SAVE CODE → Google's **Sign in with Google** button → a Google popup, on the same page → a dialog asks
+   "LINK YOUR NAME?". On a second browser, sign in with the same account → it asks "LOAD YOUR PROGRESS?" (or loads straight
+   away on a fresh browser) and comes back as the same name and level.
 
-7. **LAST — switch it on:** Vercel → Settings → Environment Variables → add `VITE_GOOGLE_ON` = `1` (Production +
-   Preview), then redeploy. Until then the game shows no sign-in button anywhere and ignores a sign-in landing, so it can
-   ship dark before steps 1–5 are done. (Turn this on BEFORE `VITE_PAYMENTS_ON`: buying needs a signed-in account.)
+**School / Chromebook accounts:** an admin can block third-party sign-in. Google then shows its own "access blocked" message
+in the popup, and the page isn't told (GIS has no callback for that, or for a closed popup): the button just stays there.
+If a school filter blocks Google's script, the game says so and offers RETRY; the save code always works.
 
 What is stored: only the Supabase auth user id and which board name it is linked to (`private.auth_links`). The email
 Google returns stays inside Supabase Auth; the game shows it only to the signed-in player, in their own Settings, on
-their own device. No new env var is needed — the checkout function checks the session with the existing
-`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (set them for **Production + Preview** if they aren't already).
+their own device. The checkout function checks the session with the existing `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
+(set them for **Production + Preview** if they aren't already).
 
 ## 2. Run the SQL (Supabase SQL editor)
 
@@ -113,10 +114,10 @@ the webhook reads the USD source amount.
 ## 6. Test in TEST mode, then flip the flag
 
 1. Preview env: `sk_test_…`, the test `whsec_…`, service key, `VITE_PAYMENTS_ON=1`. Redeploy the preview.
-2. On the preview: pick a board name (the gems land on the board profile), open UPGRADES → **GEMS**, buy the $1.99 pouch.
+2. On the preview: pick a board name (the gems land on the board profile), tap the **+** beside the gem count, buy the $1.99 pouch.
    Test card `4242 4242 4242 4242`, any future date, any CVC, any ZIP, any email.
    Also try: `4000 0025 0000 3155` (3-D Secure), `4000 0000 0000 9995` (declined → no gems).
-3. Back on the menu: 600 gems fly into the pill within a few seconds. In Supabase: one row in
+3. Back on the menu: 1,000 gems fly into the pill within a few seconds. In Supabase: one row in
    `private.pay_purchases`, one `+300` row in `private.pay_gem_ledger` with `delivered_at` set.
 4. Stripe → Payments → the payment → **Refund**: the next menu load takes the gems back (never below 0 on the device).
 5. Cap: buy until $20 this month — the next pack is greyed out and the server answers 409 `cap`.
@@ -136,8 +137,12 @@ the webhook reads the USD source amount.
   Refunded purchases still count toward the month, and an open checkout reserves its amount for 35 minutes.
 - **One grant per Stripe checkout session** (`pay_purchases.stripe_session_id` primary key); retries are safe.
 - **Disputed accounts are flagged** (no more checkouts). Unflag by deleting the row in `private.pay_flags`.
-- **No countdowns, sales or "limited" offers.** The shelf prints the dollar price on every pack, "ASK A PARENT FIRST",
-  what is left of the month's $20, ODDS (the same table the roll uses), and the refund line.
+- **No countdowns, sales or "limited" offers.** The panel prints the dollar price on every pack, what is left of the month's
+  $20, ODDS (the same table the roll uses), and the refund line.
+- **No "ask a parent" line (Andy nov5: most players are in high school).** The refund line and the $20 cap stay.
+- **The packs always show; one place to buy.** The **+** on a gem pill opens the panel, and the shop has no GEMS tab. Signed
+  in, a tap goes straight to Stripe (no confirm step: Stripe's page shows the price again). Signed out, a tap asks for Google
+  first, then that same purchase continues.
 - Refund policy (recommended by the brief): refund any minor's purchase on request, no questions; refund anything
   within 14 days. Refund in the Stripe dashboard — the webhook does the rest.
 - A **RESET ACCOUNT** wipes local gems (bought ones too); the purchase records stay on the server.
@@ -145,7 +150,7 @@ the webhook reads the USD source amount.
 ## ART REQUEST (open)
 
 The packs wear existing art for now: `/wheel/prize-gems-s.webp` (POUCH), `/wheel/prize-gems-m.webp` (PILE),
-`/wheel/prize-gems-l.webp` (CHEST), `/shop/chest-v2.webp` (HOARD), and the tab uses the small pile. Wanted: four painted
+`/wheel/prize-gems-l.webp` (CHEST), `/shop/chest-v2.webp` (HOARD), Wanted: four painted
 **gem piles** growing in size (a handful → a heap → an open chest → an overflowing vault), the cyan gem of the GEMS
 pill, same ink weight as the wheel prizes, 512×512 transparent webp, ONE pile per image (ChatGPT). New filenames
 only (art is immutable-cached): e.g. `public/shop/pay-pouch-v1.webp` … then `node scripts/art-manifest.mjs`.

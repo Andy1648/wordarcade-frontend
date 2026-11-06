@@ -7,7 +7,7 @@
 // is live EXTENDS it (adds its minutes) at the higher of the two multipliers — a code is never wasted.
 // PURE + guarded store, like every other progress module: blocked storage → no boost, never throws.
 
-import { overdriveMult } from './overdrive.js';
+import { overdriveMult, OVERDRIVE_MULT, RETIRED_OVERDRIVE_MULT } from './overdrive.js';
 // PROGRESSION v3 (SEASON2, default OFF): the R3 unlock "2nd boost slot" — a boost that starts while one is live
 // runs in its OWN slot (taw.s2.boost2) at the same time instead of extending the first, and the two multiply.
 // MINIMAL MODEL (phase 3): one extra slot; the HUD pill for it is the visual PR's. OFF = one slot, as before.
@@ -16,14 +16,16 @@ export const BOOST_KEY = 'taw.boost';
 export const BOOST_DEFAULT_MULT = 3;
 export const BOOST_DEFAULT_MIN = 10;
 
-function read(key = BOOST_KEY) {
+/** A boost slot ({ until, mult, od } — od: it is an OVERDRIVE, not a code BOOST; both can be ×3). Every reader goes through here. */
+export function readBoostSlot(key = BOOST_KEY) {
   try {
     const o = JSON.parse(localStorage.getItem(key) || 'null');
     if (!o) return null;
     const until = Number(o.until);
     const mult = Number(o.mult);
     if (!Number.isFinite(until) || until <= 0 || !Number.isFinite(mult) || mult <= 1) return null;
-    return { until, mult };
+    const retired = mult === RETIRED_OVERDRIVE_MULT;
+    return { until, mult: retired ? OVERDRIVE_MULT : mult, od: retired || !!o.od };
   } catch {
     return null;
   }
@@ -41,7 +43,7 @@ export function announceTimers() {
 
 /** ms of BOOST left at `now` (0 when none). */
 export function boostRemaining(now = Date.now()) {
-  const b = read();
+  const b = readBoostSlot();
   return b ? Math.max(0, b.until - now) : 0;
 }
 
@@ -51,22 +53,23 @@ export function isBoostActive(now = Date.now()) {
 
 /** The redeem-code boost alone: ×N while active, else 1. */
 export function codeBoostMult(now = Date.now()) {
-  const b = read();
+  const b = readBoostSlot();
   return b && b.until > now ? b.mult : 1;
 }
-/** The BOOST factor right now, for every mode: the redeem-code boost × OVERDRIVE (overdrive.js, ×10 for 5 min). */
+/** The BOOST factor right now, for every mode: the redeem-code boost × OVERDRIVE (overdrive.js). */
 export function boostMult(now = Date.now()) {
   return codeBoostMult(now) * overdriveMult(now);
 }
 
-/** Start (or extend) a BOOST. Returns { mult, remaining }. */
-export function startBoost(mult = BOOST_DEFAULT_MULT, minutes = BOOST_DEFAULT_MIN, now = Date.now()) {
+/** Start (or extend) a BOOST (od: an OVERDRIVE code). Returns { mult, remaining }. */
+export function startBoost(mult = BOOST_DEFAULT_MULT, minutes = BOOST_DEFAULT_MIN, now = Date.now(), od = false) {
   const m = Number.isFinite(Number(mult)) && Number(mult) > 1 ? Math.floor(Number(mult)) : BOOST_DEFAULT_MULT;
   const min = Number.isFinite(Number(minutes)) && Number(minutes) > 0 ? Number(minutes) : BOOST_DEFAULT_MIN;
-  const cur = read();
+  const cur = readBoostSlot();
   const live = cur && cur.until > now;
   const until = (live ? cur.until : now) + min * 60000;
   const next = { until, mult: live ? Math.max(cur.mult, m) : m };
+  if (od ? next.mult === m : live && cur.od) next.od = 1;
   try {
     localStorage.setItem(BOOST_KEY, JSON.stringify(next));
   } catch {

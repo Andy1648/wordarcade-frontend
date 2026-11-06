@@ -25,6 +25,7 @@ import { hardestBot } from '../botDiff.js';
 import { liveRankV3 } from './ranks.js';
 import { stockXpMult } from './stock.js'; // the SHOP's STOCK timed effects (P3)
 import { takeLevelChests } from './levelChest.js'; // LEVEL CHESTS: every 5th level of a climb (Andy oct22)
+import { readBoostSlot } from '../boost.js';
 import { frenzyXpMult } from '../frenzy.js'; // FUSE FRENZY = ×5 XP per key for 5 min in season 2 (Andy oct8)
 
 export const LV_GEMS_KEY = `${S2_PREFIX}lvgems`; // { r, peak }: the climb whose levels have paid LEVEL_UP gems (Andy oct10)
@@ -247,27 +248,19 @@ export const rankSwap = {
 
 // ---- boost.js (__v3): the R3 unlock — a 2nd BOOST slot that runs alongside and multiplies ----------------------------
 export const BOOST2_KEY = `${S2_PREFIX}boost2`;
-function readSlot2() {
-  try {
-    const o = JSON.parse(localStorage.getItem(BOOST2_KEY) || 'null');
-    return o && Number(o.until) > 0 && Number(o.mult) > 1 ? { until: Number(o.until), mult: Number(o.mult) } : null;
-  } catch {
-    return null;
-  }
-}
 const slot2Mult = (now) => {
-  const b = readSlot2();
+  const b = readBoostSlot(BOOST2_KEY);
   return b && b.until > now ? b.mult : 1;
 };
 /** boost.js codeBoostMult / startBoost in season 2, wrapping the live ones (slot 1 stays theirs). */
 export const boostSwap = (liveMult, liveStart) => ({
   a: (now = Date.now()) => liveMult(now) * slot2Mult(now), // the 2nd slot multiplies
   /** while slot 1 runs and R3 opened the 2nd slot, a new boost runs there (extended like slot 1) */
-  b(mult, minutes, now = Date.now()) {
-    if (!(liveMult(now) > 1 && featureOpen('boost2'))) return liveStart(mult, minutes, now);
+  b(mult, minutes, now = Date.now(), od = false) {
+    if (!(liveMult(now) > 1 && featureOpen('boost2'))) return liveStart(mult, minutes, now, od);
     const m = Number(mult) > 1 ? Math.floor(Number(mult)) : 3;
     const min = Number(minutes) > 0 ? Number(minutes) : 10;
-    const cur = readSlot2();
+    const cur = readBoostSlot(BOOST2_KEY);
     const live = cur && cur.until > now;
     const next = { until: (live ? cur.until : now) + min * 60000, mult: live ? Math.max(cur.mult, m) : m };
     try {

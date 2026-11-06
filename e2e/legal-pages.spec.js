@@ -10,7 +10,7 @@ import { menuReady } from './support/menu.js';
 const SHOTS = process.env.SHOTS;
 const PAGES = {
   privacy: ['andywang1648@gmail.com', 'EFFECTIVE NOVEMBER 3, 2026', 'Stripe', 'never see or store card numbers', 'cookieless', 'AdSense', 'do not sell', 'under 13', 'Reset account', 'Supabase Auth'],
-  terms: ['no cash value', '$20 a month', 'Refunds', 'Fair play', 'parent or guardian', 'Privacy Policy'],
+  terms: ['no cash value', '$20 a month', 'Refunds', 'Fair play', "a parent's permission to buy", 'Privacy Policy'],
 };
 
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
