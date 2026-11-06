@@ -28,7 +28,6 @@ export function FuseFirstRunCard() {
   return (
     <>
       <h2>OUT OF FUSES</h2>
-      <div className="solo-armhint">SNEAK THOSE LETTERS INTO A WORD</div>
       <div className="solo-chain-example" aria-label="ARM makes CHARM, ALARM, FARMER">
         <b className="cx-pivot">ARM</b>
         <span className="cx-arrow"> → </span>
