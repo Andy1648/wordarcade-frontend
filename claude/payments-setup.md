@@ -137,6 +137,10 @@ the webhook reads the USD source amount.
   Refunded purchases still count toward the month, and an open checkout reserves its amount for 35 minutes.
 - **One grant per Stripe checkout session** (`pay_purchases.stripe_session_id` primary key); retries are safe.
 - **Disputed accounts are flagged** (no more checkouts). Unflag by deleting the row in `private.pay_flags`.
+- **FIRST BUY: DOUBLE GEMS (088).** Once per Google account, on the first pack bought; the server decides at grant time. A
+  refund or dispute takes the bonus back with the pack and it is never granted again. A board profile that has already
+  bought doesn't qualify on a new Google account. The stamp stays off until 088 has run. Stripe's receipt names the pack's
+  gems, without the bonus.
 - **No countdowns, sales or "limited" offers.** The panel prints the dollar price on every pack, what is left of the month's
   $20, ODDS (the same table the roll uses), and the refund line.
 - **No "ask a parent" line (Andy nov5: most players are in high school).** The refund line and the $20 cap stay.
