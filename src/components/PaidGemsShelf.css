@@ -174,3 +174,4 @@
 }
 .pg-signin-h { font: 400 var(--fs-k24) 'Bungee', cursive; text-transform: uppercase; color: #FFE94A; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 .pg-signin-t { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #fff; max-width: 34ch; }
+.pg-signin .pg-gsi { align-items: center; }
