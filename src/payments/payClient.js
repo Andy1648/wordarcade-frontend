@@ -2,7 +2,7 @@
 //   startCheckout(packId)  POST /api/checkout { pack, secret, access } -> redirect to Stripe Checkout. NEVER an amount.
 //                          access = the SIGN IN WITH GOOGLE session (085: buying needs one; no session -> 'sign_in').
 //   fetchPaid()            082 pay_gems_pending: the paid-gem ledger rows this browser has not applied yet, plus this
-//                          month's spend and cap (the shelf's "left this month" line).
+//                          month's spend and cap (the panel's "left this month" line).
 //   applyPaid(rows)        applies each row ONCE (the ids are remembered in taw.pay.applied, so a lost ack can never pay
 //                          twice): +N through the one gem door (grantGems 'paid'), −N off the balance FLOORED AT 0
 //                          (082's header: the server budget keeps the rest of the debt), then acks them to the server.
@@ -37,6 +37,17 @@ export function clawGems(n) {
   saveGemState(s);
   tellBalance(s.bal);
   return took;
+}
+
+// A pack waiting on a Google sign-in, for the length of the tab: LOAD YOUR PROGRESS reloads the page on the way to it.
+export const PAY_RESUME_KEY = 'taw.pay.resume';
+const RESUME_MS = 10 * 60 * 1000;
+/** The pack id waiting on a sign-in (this tab, the last few minutes), or null. */
+export function readPayResume() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(PAY_RESUME_KEY) || 'null');
+    return r && typeof r.pack === 'string' && Date.now() - r.at < RESUME_MS ? r.pack : null;
+  } catch { return null; }
 }
 
 /** Does this browser have a board profile the gems can land on? (the server re-checks: pay_reserve 'no_profile') */

@@ -1,0 +1,31 @@
+/* GemsPlus.css — a 44 px target around a smaller flat face (coloured outline, hard black shadow). Press feedback only. */
+.gems-plus {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.gems-plus-face {
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  background: #2EFFE0;
+  color: #0d0618;
+  border: 3px solid #12A99A;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 #000;
+  font: 400 var(--fs-k22, 22px)/1 'Bungee', sans-serif;
+  transition: transform 120ms ease-out;
+}
+@media (hover: hover) { .gems-plus:hover .gems-plus-face { transform: translate(-1px, -1px); } }
+.gems-plus:active .gems-plus-face { transform: translate(2px, 2px); box-shadow: none; }
+.gems-plus:focus-visible { outline: 3px solid #fff; outline-offset: -3px; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) { .gems-plus-face { transition: none; } }
