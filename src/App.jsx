@@ -2605,9 +2605,10 @@ function App() {
     const conn =
       typeof navigator !== 'undefined' &&
       (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
-    if (conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ''))) {
-      return; // slow/metered: don't steal the menu's bandwidth — load screens on navigation
-    }
+    if (conn && conn.saveData) return; // the player asked for less data: load screens on navigation
+    // nov6: a slow link needs the warm MOST (a cold GEARS tap there took 17 s). It only starts on the first gesture and runs one
+    // chunk at a time, so it cannot flood the menu's own load; it stops after the likeliest next taps, no second pass.
+    const slowLink = !!conn && /(^|-)(2g|3g)$/.test(conn.effectiveType || '');
     // A warm-up that fails (offline, a flaky network) is harmless — navigation lazy-loads on demand —
     // so its rejection is caught here instead of surfacing as an uncaught error ("Unable to preload
     // CSS …" in the failure-states OFFLINE run).
@@ -2637,6 +2638,7 @@ function App() {
       () => import('./components/LobbyScreen'),
       () => import('./components/PublicRoomsScreen'),
     ];
+    if (slowLink) WARM.length = 5;
     const OVERLAYS = ['RollScreen', 'MarksIndex', 'EquipScreen', 'ShopScreen', 'ShopV2', 'RebirthV2', 'StatsScreen', 'StatsV2', 'LeaderboardScreen', 'LeaderboardV2', 'AchievementsV3', 'AudioPanel', 'ProfileCard'];
     const idle = (fn) => (typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 600 }) : setTimeout(fn, 60));
     const warm = () => {
@@ -2645,7 +2647,7 @@ function App() {
       const next = () => {
         // never parse a screen's code while a game is on screen (typing latency) — resume once back out
         if (warmViewRef.current === 'game') { setTimeout(next, 2000); return; }
-        const load = WARM.shift() || (pre || (pre = preloadersFor(OVERLAYS))).shift();
+        const load = WARM.shift() || (slowLink ? null : (pre || (pre = preloadersFor(OVERLAYS))).shift());
         if (load) quiet(Promise.resolve().then(load)).finally(() => idle(next));
       };
       idle(next);
