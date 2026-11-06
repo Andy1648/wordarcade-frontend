@@ -40,7 +40,7 @@ export default function Customize({ hero, kit, onKit, onEquip, onBought, tab0 = 
       </div>
       <div className="cz-body">
         {tab === 'hero' ? <HeroPicker current={hero} onEquip={onEquip} onBought={onBought} tapEquips /> : null}
-        {tab === 'frame' ? <KitPicker key={tab} hero={hero} kit={kit} onKit={onKit} slot0={tab} bare /> : null}
+        {tab === 'frame' ? <KitPicker hero={hero} kit={kit} onKit={onKit} /> : null}
         {looks ? (
           <div className="cz-looks">
             {tab === 'pop' ? <div className="sp2-tryfx" aria-hidden="true"><MenuXpFx ref={tryFxRef} menuTier={tryTier} /></div> : null}

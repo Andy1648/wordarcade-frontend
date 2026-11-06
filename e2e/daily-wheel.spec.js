@@ -161,7 +161,6 @@ for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']
       const pk = page.getByTestId('kit-picker');
       await page.getByTestId('customize').getByRole('tab', { name: tab }).click();
       await pk.getByRole('radio', { name: new RegExp(name) }).click();
-      await pk.getByRole('button', { name: `WEAR ${name}` }).click();
       await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible();
       expect(await page.evaluate((k) => JSON.parse(localStorage.getItem('taw.s2.kit'))[k], slotKey)).toBe(id);
       if (SHOTS) { await page.waitForTimeout(700); await page.screenshot({ path: `${DIR}/cosmetic-${id}-worn-${vn}.png` }); }

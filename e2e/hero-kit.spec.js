@@ -62,9 +62,9 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await pk.getByRole('radio', { name: /BOMB SQUAD/ }).click();
     await expect(pk.locator('.skp-locked')).toContainText('MASTERY ROAD');
     await expect(pk.getByRole('button', { name: /Hold to buy/ })).toHaveCount(0);
-    // CHAIN: claimed on the CHAIN road → WEAR
+    // CHAIN: claimed on the CHAIN road → one tap wears it
     await pk.getByRole('radio', { name: 'CHAIN' }).click();
-    await pk.getByRole('button', { name: 'WEAR CHAIN' }).click();
+    await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible();
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).frame)).toBe('chain');
     await page.locator('.pf-back').click();
     await expect(page.locator('.pf-left [data-frame="chain"]')).toBeVisible();
