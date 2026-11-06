@@ -49,8 +49,8 @@ test('tiers: Andy\'s five tiers (no COMMON), odds and MAINs — and MARK_TIERS s
 test('pool: every tier has a mark, no COMMON; LEGENDARY+ carry a perk, below that only the oct21 EPICS; MYTHIC+ get FREE OVERDRIVE', () => {
   for (const t of TIERS) assert.ok(ROLL_MARKS.some((m) => m.tier === t), t);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
-  assert.equal(ROLL_MARKS.length, 48, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION');
-  const EPIC_PERKS = ['mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino'];
+  assert.equal(ROLL_MARKS.length, 60, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION + 12 nov2 NEW GEARS');
+  const EPIC_PERKS = ['mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino', 'mk-snowball', 'mk-telescope', 'mk-drumsticks']; // + nov2
   for (const m of ROLL_MARKS) {
     const top = ['legendary', 'mythic', 'secret'].includes(m.tier) || EPIC_PERKS.includes(m.id);
     assert.equal(m.perks.length > 0, top, `${m.id} (${m.tier}) perk`);
@@ -76,8 +76,8 @@ test('odds: the table sums to 1; each rarer TIER is exactly 1 IN X; RARE (the fl
   // GEAR EXPANSION (oct21): the TIER odds never move; each gear's share is its tier's split by the tier's size
   assert.equal(oneInX('mk-origin'), 30000, 'two secrets (oct21: + PARADOX) split 1 IN 15,000');
   assert.equal(oneInX('mk-leviathan'), 1560, 'twelve legendaries (oct18: +4, oct21: +3) split 1 IN 130 (oct22)');
-  assert.equal(oneInX('mk-nova'), 720, 'twelve epics (oct21: +5) split 1 IN 60');
-  assert.equal(oneInX('mk-hydra'), 12000, 'six mythics (oct18: + CHRONOS, oct21: + FIREBIRD, TRIDENT) split 1 IN 2,000');
+  assert.equal(oneInX('mk-nova'), 1020, 'seventeen epics (oct21: +5, nov2: +5) split 1 IN 60');
+  assert.equal(oneInX('mk-hydra'), 26000, 'thirteen mythics (oct18: + CHRONOS, oct21: + FIREBIRD, TRIDENT, nov2: +7) split 1 IN 2,000');
   assert.equal(oneInX('mk-smith'), 16, 'sixteen rares split 97.64%');
 });
 

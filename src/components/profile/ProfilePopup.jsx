@@ -2,7 +2,7 @@
 // inside the profile … the most basic and important user stats (like time played) as well as a space for the profile
 // description (the same that transfers to the leaderboard when others click)"). Left: your hero alive on its pedestal
 // (signature idle + layered props; tap = WIN) and ONE button, CUSTOMIZE → every cosmetic in one menu (Customize.jsx —
-// hero, frame, WIN FX, pop style, sound; the shop's COSMETICS button opens the same menu). Right: your name + worn title,
+// hero, frame, WIN FX, pop style, sound; the shop's COSMETICS button opens the same menu). Right: your name + your LEAGUE,
 // six stat tiles and the DESCRIPTION editor (ProfileCard's own Bio — what others see when they tap you on the board).
 // oct28 (Andy "unecessarily cramped … reduced unecessary stuff"): the hero's tagline, CHANGE HERO and the YOUR HEROES
 // strip are gone — the HERO tab of CUSTOMIZE is the one place to pick. Lazy (its own chunk); pops in once, nothing loops.
@@ -21,28 +21,15 @@ import '../kit/kitIconData.js';
 import { kitPlay } from '../kit/motion.js';
 import { Bio, BadgeRow } from '../ProfileCard.jsx';
 import { myBio, myShowcase } from '../../leaderboard/showcase.js';
-import { getMyProfile, myStats, pushShowcaseNow } from '../../leaderboard/client.js';
+import { getMyProfile, myStats, pushShowcaseNow, getLastRank } from '../../leaderboard/client.js';
+import LeagueBadge from '../../leaderboard/LeagueBadge.jsx';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
 import { unlistedIndex } from '../../unlisted/unlisted.js';
-import { KitRankPlate } from '../kit/KitRankPlate.jsx';
-import { RANKS_V3, liveRankV3 } from '../../progress/v3/ranks.js';
-import { shownPlateIndex } from '../../progress/platePick';
 import './ProfilePopup.css';
 
-// ALL TITLES (Andy oct21 "include title popup in the profile"): the TITLE row opens the ladder on top of the profile
-const RankLadder = lazy(() => import('../RankLadder.jsx'));
 // SAVE CODE (save-safety oct28): your short code + COPY under your name — lazy (the save-code chunk carries the codec)
 const SaveCodeChip = lazy(() => import('../../save/SaveCodeNudge.jsx'));
-function wornTitle() {
-  try {
-    const you = Math.max(0, RANKS_V3.indexOf(liveRankV3()));
-    return RANKS_V3[shownPlateIndex(you)] || RANKS_V3[0];
-  } catch {
-    return RANKS_V3[0];
-  }
-}
-
 const POP = [{ transform: 'scale(.9) translateY(12px)', opacity: 0 }, { transform: 'scale(1.02)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }];
 
 /** A banner STAT MEDALLION (nov2 design audit #14 / research 5.1 — "a banner with fixed slots: 3 trackers"): hero-art's
@@ -70,8 +57,6 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
   const [view, setView] = useState(view0); // 'profile' | 'customize' (every cosmetic: Customize.jsx)
   const [kit, setKit] = useState(readKit); // the worn components { frame, fx }
   const [cheer, setCheer] = useState(0);
-  const [titles, setTitles] = useState(false); // ALL TITLES open over the profile
-  const [title, setTitle] = useState(wornTitle); // re-read when the ladder closes (a new title may be worn)
   // NEW HERO! (oct18): heroes earned by playing since the last look reveal on open (rarest last); a purchase reveals too
   const [reveal, setReveal] = useState(() => {
     const ids = unseenHeroes();
@@ -92,13 +77,13 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
   useEffect(() => { kitPlay(cardRef.current, POP, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)' }); }, []);
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== 'Escape' || reveal || titles) return; // the reveal / the title ladder own Escape while up
+      if (e.key !== 'Escape' || reveal) return; // the reveal owns Escape while up
       e.stopPropagation();
       if (view !== 'profile' && view0 === 'profile') setView('profile'); else onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [view, view0, onClose, reveal, titles]);
+  }, [view, view0, onClose, reveal]);
 
   const equip = (next) => {
     writeMain(next);
@@ -140,11 +125,8 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
                   {/* ONE name source (nov2 audit #14: "NO NAME YET" sat beside a KEYFIEND plate): no name yet → the plate
                       stands alone and the hint under it says how to get one */}
                   {me ? <FitText className="pf-name">{me.username}</FitText> : null}
-                  {/* TITLE (oct28): the painted title sits ON your name, the way everyone else sees it; tap → TITLES */}
-                  <button type="button" className="pf-titlerow" onClick={() => setTitles(true)} data-testid="profile-title" aria-label={`Title: ${title.name} — see all titles`}>
-                    <KitRankPlate rank={title.req} fit className="pf-title-plate" />
-                    <span className="pf-titlerow-go" aria-hidden="true">CHANGE ▸</span>
-                  </button>
+                  {/* LEAGUE (nov2, Andy: titles out — "top x amount are a certain rank"): your board band + place (leagues.js) */}
+                  {me ? <LeagueBadge rank={getLastRank()} place className="pf-league" data-testid="profile-league" /> : null}
                 </div>
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
                 {me ? <Suspense fallback={null}><SaveCodeChip /></Suspense> : null}
@@ -162,7 +144,6 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
           </div>
         )}
       </div>
-      {titles ? <Suspense fallback={null}><RankLadder onClose={() => { setTitles(false); setTitle(wornTitle()); }} /></Suspense> : null}
       {reveal ? <HeroUnlock ids={reveal.ids} equipped={reveal.equipped} onEquip={(next) => { equip(next); setReveal((r) => (r ? { ...r, equipped: next } : r)); }} onClose={revealDone} /> : null}
     </div>,
     document.body,

@@ -15,9 +15,9 @@
 //   STREAK: every 3rd+ day in a row is HOT (gems ×1.5), every 7th is SUPER (gems ×2, boosts 20 MIN, a ticket one tier
 //   up). One missed day is forgiven. The odds never change — only what a slot pays (the server applies it).
 import { localDayIndex } from './streak.js';
-import { WHEEL_KEY, WHEEL_CHANGE, wheelReady } from './wheelDot.js';
+import { WHEEL_KEY, WHEEL_CHANGE, WHEEL_WORDS, wheelReady } from './wheelDot.js';
 
-export { WHEEL_KEY, WHEEL_CHANGE, wheelReady };
+export { WHEEL_KEY, WHEEL_CHANGE, WHEEL_WORDS, wheelReady };
 
 /** Rewarded-ad extra spin: the client half of the feature flag (AdSense H5 is not approved yet). */
 export const WHEEL_AD_ON = false;
@@ -225,10 +225,25 @@ export function resultText(s) {
   return 'NEW COSMETIC';
 }
 export const bonusText = (b) => (b === 'super' ? 'SUPER SPIN · ×2' : b === 'hot' ? 'HOT STREAK · ×1.5' : '');
+/** The bonus a streak DAY pays (067): every 7th SUPER, the 3rd day on HOT. */
+export const dayBonus = (d) => (d % 7 === 0 ? 'super' : d >= 3 ? 'hot' : null);
+/**
+ * THE WEEK ROW (nov3 design-research move 18): the 7 days of the streak week `today` falls in (day 1–7, 8–14, …), each
+ * { day, bonus, state } — 'done' (spun), 'today' (today's spin still waiting) or 'next'; day 7's SUPER is always in view.
+ * `today` = the streak day today's spin is; `spun` = it has been spun.
+ */
+export function weekRow(today, spun) {
+  const t = Math.max(1, Math.floor(Number(today) || 1));
+  const base = t - (((t - 1) % 7) + 1);
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = base + i + 1;
+    return { day, bonus: dayBonus(day), state: day < t || (day === t && spun) ? 'done' : day === t ? 'today' : 'next', now: day === t };
+  });
+}
 /** What tomorrow's streak bonus will be, from today's streak count. */
 export function nextBonus(streak) {
   const n = Math.max(0, Math.floor(Number(streak) || 0)) + 1;
-  return n % 7 === 0 ? 'super' : n >= 3 ? 'hot' : null;
+  return dayBonus(n);
 }
 
 // ---- the paid store (a spin pays into THIS save once) -------------------------------------------------------------
@@ -239,9 +254,10 @@ export function readWheel() {
       paid: Array.isArray(o && o.paid) ? o.paid.filter((x) => UUID.test(String(x))) : [],
       day: Number.isInteger(o && o.day) ? o.day : 0,
       streak: Number.isInteger(o && o.streak) ? o.streak : 0,
+      need: Number.isFinite(o && o.need) ? o.need : null,
     };
   } catch {
-    return { paid: [], day: 0, streak: 0 };
+    return { paid: [], day: 0, streak: 0, need: null };
   }
 }
 function writeWheel(o) {
@@ -253,6 +269,18 @@ function writeWheel(o) {
 export function noteSpun(day, streak) {
   const w = readWheel();
   return writeWheel({ ...w, day: Math.max(w.day, day), streak: Number.isInteger(streak) ? streak : w.streak });
+}
+
+/** Remember the game-word count the next spin needs (the menu dot compares it to your words). */
+export function noteNeed(need) {
+  if (!Number.isFinite(need)) return false;
+  return writeWheel({ ...readWheel(), need: Math.floor(need) });
+}
+/** How many more game words today's spin needs: the server's need against the higher of its count and this browser's
+ *  (the board row lags the save by up to a submit). null need (a pre-083 server) = nothing to earn. */
+export function wordsLeft(need, serverWords, localWords) {
+  if (!Number.isFinite(need)) return 0;
+  return Math.max(0, Math.floor(need) - Math.max(Number(serverWords) || 0, Number(localWords) || 0));
 }
 
 /**
