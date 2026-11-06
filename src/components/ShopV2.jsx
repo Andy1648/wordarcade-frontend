@@ -315,7 +315,11 @@ export default function ShopV2({ onBack }) {
     if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
     if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); setNote(NOTE.gems); return; }
     buying.current = true;
+    // the server sells it: the card says it heard the tap while the answer travels (CSS holds this for 150 ms, so a fast answer never flickers)
+    const card = cards.current[it.id];
+    if (card) card.classList.add('is-busy');
     const r = await buyTicket(it.ticket);
+    if (card) card.classList.remove('is-busy');
     buying.current = false;
     if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
     if (!r.ok) {
