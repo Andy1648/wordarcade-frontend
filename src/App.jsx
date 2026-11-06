@@ -344,6 +344,9 @@ const SOLO_RETURNING_PRESET = 'easy';
  * Top-level view state manager + the single shared WebSocket connection
  * for the whole app.
  */
+// REJECT LOG: lazy, so the menu's first paint never pays for it; fire-and-forget, and it can never touch the game.
+const logRejected = (word, mode, ctx) => { import('./telemetry/rejectLog.js').then((m) => m.noteReject(word, mode, ctx)).catch(() => {}); };
+
 function App() {
   // CrazyGames entry (?cg=1) lands directly in the ARM state; every other entry
   // starts on the home menu, exactly as before.
@@ -563,6 +566,10 @@ function App() {
   // score" (see e2e/word-bomb-scoring RACE). Reset each game_started; entries are consumed
   // on match, and the server always answers a submit so the list self-drains.
   const myOutstandingWordsRef = useRef([]);
+  // REJECT LOG (nov6): a rejected result doesn't echo what was typed, so these remember it. Logging only: nothing reads them
+  // for game state.
+  const blitzSubmittedRef = useRef([]); // answers awaiting answer_result, oldest first
+  const blitzCategoryRef = useRef('');
   // WINS visibility (Economy v3): a LIVE running estimate of the wins this round/game will
   // pay, shown in the in-game HUD and ticking up as MY answers are accepted; and the total
   // actually EARNED this run, shown large on the game-over screen. `winsTally` is the pending
@@ -1512,6 +1519,7 @@ function App() {
       if (qIdx !== -1) q.splice(qIdx, 1);
       const submitter = feedCurrentRef.current;
       const isMine = qIdx !== -1 || submitter.id === myIdRef.current;
+      if (payload.reason === 'not_a_word' && q.length) logRejected(q[q.length - 1], 'word-bomb'); // my latest submit
       const attributedId = isMine ? myIdRef.current : submitter.id;
       const playerName = isMine ? myNameRef.current || 'YOU' : submitter.name || 'SOMEONE';
       if (payload.accepted) {
@@ -1713,6 +1721,8 @@ function App() {
       // CategoryBlitzScreen doesn't replay the 3-2-1) and carries `reroll`/`by`
       // so non-host clients can flash the "host rerolled" notice.
       setCategoryRound(payload);
+      blitzCategoryRef.current = payload.category || '';
+      blitzSubmittedRef.current = [];
       setTimerSeconds(payload.timerSeconds);
       setCategoryRerolls(payload.rerollsRemaining ?? null);
       setMyAnswers([]);
@@ -1748,6 +1758,8 @@ function App() {
     if (lastMessage.type === 'answer_result') {
       const payload = lastMessage.payload;
       setCheckingAnswer(null); // result is in - drop the "checking…" state
+      const typed = blitzSubmittedRef.current.shift();
+      if (payload.reason === 'not_on_list' && typed) logRejected(typed, 'blitz', blitzCategoryRef.current);
       // RARITY (word-value): score an accepted answer and carry the verdict on the result so the
       // feedback toast can pop "RARE ×2.5". answer_result is always about MY own answer.
       const blitzRarity = payload.accepted ? rarityOf(payload.answer) : null;
@@ -2554,6 +2566,7 @@ function App() {
   }
 
   function handleSubmitAnswer(answer) {
+    blitzSubmittedRef.current.push(answer);
     send('submit_answer', { answer });
   }
 
