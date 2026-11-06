@@ -2759,7 +2759,10 @@ export default function GameScreen({
     };
     check();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(check);
-    return () => { live = false; };
+    // late rows (the TRY row arrives after mount) can tip a card that fit at first: re-check when any part of it resizes
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    if (ro) for (const part of card.children) ro.observe(part);
+    return () => { live = false; if (ro) ro.disconnect(); };
   }, [gameOver, missedWord, winsEarnedTotal, winsBonusLines, payoutLedger]);
 
   // Category Blitz is a completely different (simultaneous, round-based)
