@@ -18,7 +18,7 @@ export default function StatsBoosts() {
   useTimerClock(anyBoostRemaining);
   const list = activeBoosts();
   return (
-    <div className="st2-boosts" data-testid="st2-boosts">
+    <div className={`st2-boosts${list.length ? '' : ' is-empty'}`} data-testid="st2-boosts">
       {list.length ? (
         <ul className="st2-bl" aria-label="Running boosts">
           {list.map((b) => (
