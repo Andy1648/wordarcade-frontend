@@ -7,7 +7,7 @@
 //
 // SAFEGUARDS (kept although the gems are pay-to-win): a dollar price on every pack, a $20 a calendar month cap per
 // account (MONTHLY_CAP_CENTS, enforced server-side in 082 pay_reserve — mirrored here only for the panel's text),
-// "ask a parent" on the panel, no countdowns or limited offers, roll odds one tap away, a refund contact line.
+// no countdowns or limited offers, roll odds one tap away, a refund contact line.
 // ART: the packs wear the existing painted gem piles (the wheel's prize piles + the shop chest) until their own
 // art lands — see claude/payments-setup.md "ART REQUEST".
 
