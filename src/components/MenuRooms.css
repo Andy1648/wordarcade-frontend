@@ -163,6 +163,17 @@
   background: #2EFFE0;
   border: 3px solid #12a894;
 }
+.mr-join.is-watch { color: #0d0618; background: #FF4FA3; border-color: #b8206e; }
+/* SPECTATE (nov4): the button reads IN LOBBY over JOIN / PLAYING over SPECTATE */
+.mr-join { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.mr-status {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-mrmeta);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mr-action { line-height: 1; white-space: nowrap; }
 .mr-join:hover:not(:disabled),
 .mr-create:hover:not(:disabled),
 .mr-more:hover:not(:disabled),
