@@ -49,7 +49,7 @@ for (let n = 10; n <= 101; n += 1) SUFFIXES.push(illionName(n)); // up to 1e306 
 export { SUFFIXES };
 
 /** Group the integer part in threes: 1234567 → "1,234,567". */
-function grouped(n) {
+export function grouped(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, THIN);
 }
 

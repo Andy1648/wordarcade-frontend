@@ -23,7 +23,7 @@ import { GemIcon, useGems } from './gems/GemChip.jsx';
 import { authAvailable, AUTH_LANDED } from '../leaderboard/auth.js';
 import { PACKS, MONTHLY_CAP_CENTS, formatUsd, capLeft, fitsCap, packById } from '../payments/packs.js';
 import { fetchPaid, fetchFirstBuy, applyPaid, startCheckout, hasProfile, PAY_RESUME_KEY, readPayResume } from '../payments/payClient.js';
-import { formatNum, formatShort } from '../format';
+import { formatNum, formatShort, grouped } from '../format';
 
 const REFUND_EMAIL = (import.meta.env && import.meta.env.VITE_REFUND_EMAIL) || '';
 
@@ -151,7 +151,7 @@ export default function BuyGems({ onClose }) {
 
         {asking ? (
           <div className="pg-signin" data-testid="pay-signin" data-pack={asking.id}>
-            <span className="pg-signin-h">SIGN IN TO GET {formatNum(asking.gems)}{first ? ` + ${formatNum(asking.gems)} BONUS` : ''} GEMS</span>
+            <span className="pg-signin-h">SIGN IN TO GET {grouped(asking.gems)}{first ? ` + ${grouped(asking.gems)} BONUS` : ''} GEMS</span>
             <span className="pg-signin-t">{formatUsd(asking.cents)}. Your gems stay on your Google account, on any device.</span>
             <GoogleButton />
             <button type="button" className="pg-back" onClick={() => setWant(null)} data-testid="pay-signin-back">BACK</button>
@@ -172,8 +172,8 @@ export default function BuyGems({ onClose }) {
                   >
                     <img className="pg-art" src={p.art} width="256" height="256" alt="" draggable="false" />
                     {first ? <span className="pg-first" data-testid="pay-first">FIRST BUY ×2</span> : null}
-                    <span className="pg-gems"><GemIcon size={22} />{formatNum(p.gems)}</span>
-                    {first ? <span className="pg-bonus" data-testid={`pay-bonus-${p.id}`}>+{formatNum(p.gems)} BONUS</span> : null}
+                    <span className="pg-gems"><GemIcon size={22} />{grouped(p.gems)}</span>
+                    {first ? <span className="pg-bonus" data-testid={`pay-bonus-${p.id}`}>+{grouped(p.gems)} BONUS</span> : null}
                     <span className="pg-price" data-testid={`pay-price-${p.id}`}>{busy === p.id ? 'OPENING…' : formatUsd(p.cents)}</span>
                   </button>
                 </div>
