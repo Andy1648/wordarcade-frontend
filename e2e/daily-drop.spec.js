@@ -134,7 +134,7 @@ test('the ⓘ shows the printed odds; the DAILY CHEST is the first BOOSTS card, 
   await dd.locator('.dd-info').click();
   await expect(dd.locator('.dd-odd-name')).toHaveText(['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC']);
   await expect(dd.locator('.dd-odd-p')).toHaveText(['55%', '28%', '12%', '4%', '1%']);
-  await expect(dd.locator('.dd-odd .dd-pay-n')).toHaveText(['+15', '+30', '+60', '+150', '×15']);
+  await expect(dd.locator('.dd-odd .dd-pay-n')).toHaveText(['+15', '+30', '+60', '+150', '×3']);
   await dd.locator('.dd-info').click();
   await expect(dd.locator('.dd-odds')).toHaveCount(0);
   const m = await page.evaluate(() => {

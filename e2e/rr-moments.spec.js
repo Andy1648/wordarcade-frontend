@@ -28,7 +28,7 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
       const tile = page.locator('.hp-dock--grid .bd-tile.bd-rush');
       await expect(tile).toBeVisible();
       await expect(tile.locator('.bd-name')).toHaveText('OVERDRIVE');
-      await expect(tile.locator('.bd-mult')).toHaveText('×15');
+      await expect(tile.locator('.bd-mult')).toHaveText('×3');
       await expect(tile.locator('.bd-clock')).toHaveText(/^[34]:\d\d$/);
       await expect(page.locator('.hp-dock--grid .bd-tile')).toHaveCount(1);
     } else {
