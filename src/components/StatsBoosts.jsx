@@ -5,13 +5,14 @@ import { activeBoosts, anyBoostRemaining } from '../progress/liveBoost.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { useTimerClock } from '../frenzy/useTimerClock.js';
 import { boostArt } from '../progress/boostArt.js';
+import { OVERDRIVE_MULT } from '../progress/overdrive.js';
 
 // WHERE each boost comes from — ONE line each (design audit nov2 #6: it was a three-line wall of explanation)
 const WHERE = [
-  ['OVERDRIVE ×5', 'SHOP'],
-  ['XP / WINS +50%', 'SHOP'],
-  ['LUCK ×2', 'SHOP'],
-  ['FRENZY ×5', 'FUSE · ALL 26'],
+  [`OVERDRIVE ×${OVERDRIVE_MULT}`, 'UPGRADES'],
+  ['XP / WINS +50%', 'UPGRADES'],
+  ['LUCK ×2', 'UPGRADES'],
+  ['FRENZY ×5', 'FUSE → ALL 26'],
 ];
 
 export default function StatsBoosts() {

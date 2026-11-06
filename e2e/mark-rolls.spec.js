@@ -94,8 +94,8 @@ test('MARKS opens the ROLL screen: tutorial, one big ROLL (no ×10), pity ladder
   await expect(page.locator('.rs-overlay')).toBeVisible(); // the tap closed the spotlight, not the ROLL screen
 
   await expect(page.getByTestId('mark-roll-10')).toHaveCount(0);
-  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN [\d,]+/);
-  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/EPIC\+ IN ≤ [\d,]+/);
+  await expect(page.getByTestId('roll-pity')).toContainText(/LEGENDARY\+ IN ≤ [\d,]+/);
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveText(/FREE ROLL/);
   const pityBefore = await pity(page);
@@ -157,7 +157,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
     'taw.markRolls': JSON.stringify({ v: 3, rolls: 600, sinceEpic: 3, sinceLegendary: 59, everEpic: true, starter: true, marks: {}, milestones: [] }),
   });
   await openRoll(page);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 1');
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 1');
   await holdRoll(page);
   const cut = page.getByTestId('roll-cutscene');
   await expect(cut).toHaveClass(/is-on/, { timeout: SPUN });
@@ -172,7 +172,7 @@ test('LEGENDARY pity: the full-screen cutscene says "1 IN X" huge', async ({ pag
   await cut.click();
   await expect(cut).not.toHaveClass(/is-on/, { timeout: 2000 });
   await expect(card(page)).toHaveCount(1);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 60'); // the hard pity is 60 (Andy oct22, 063; GEAR POOL v2 50, was 125)
 });
 
 test('AUTO ROLL "until EPIC or better" stops on an EPIC+', async ({ page }) => {
@@ -446,6 +446,12 @@ test('RATES opens your next roll\'s odds per tier; Esc closes it and leaves the 
   await expect(pop.locator('.rs-rates-row')).toHaveCount(5);
   await expect(pop.locator('.rs-rates-row[data-tier="secret"] .rs-rates-odds')).toHaveText(/^1 IN [\d,.KM]+$/);
   await expect(pop.locator('.rs-rates-row[data-tier="rare"] .rs-rates-odds')).toHaveText(/^[\d.]+%$/); // never "1 IN 1"
+  // nov3 (design research move 6): the popup sits ON TOP — it used to render behind the reel panel, "visible" yet unseen
+  const onTop = await pop.evaluate((e) => { const r = e.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && e.contains(t); });
+  expect(onTop, 'nothing covers the odds').toBe(true);
+  // …and it states the pity guarantees
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/EPIC\+ WITHIN \d+ ROLLS?/);
+  await expect(pop.getByTestId('roll-rates-pity')).toContainText(/LEGENDARY\+ WITHIN \d+ ROLLS?/);
   const box = await pop.locator('.rs-rates-x').boundingBox();
   expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
   await page.keyboard.press('Escape');

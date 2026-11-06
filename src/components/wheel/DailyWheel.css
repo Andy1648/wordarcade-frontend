@@ -115,10 +115,38 @@
   color: #fff;
   transform: rotate(-1.5deg);
 }
-.dw-head-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.dw-head-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; } /* the week row first; ODDS drops under it when the column is narrow */
 .dw-streak.is-hot { border-color: #D9381E; color: var(--k-orange, #FF6B3D); }
 .dw-streak.is-super { border-color: #a87400; color: var(--k-gold, #FFC23D); }
 .dw-streak-b { color: var(--k-yellow, #FFE94A); }
+/* THE WEEK ROW (nov3 design-research move 18): seven days on one plate — numbered pips (spun = cyan, stamped; today =
+   yellow, lit; HOT days ringed orange), then DAY 7: the painted wheel with its ×2 sticker, bigger than any pip. */
+.dw-week { gap: 4px; padding: 4px 8px 4px 6px; }
+.dw-pip {
+  flex: none; width: 30px; height: 30px; box-sizing: border-box; display: grid; place-items: center;
+  border: 3px solid #4b3577; border-radius: 6px; background: #241142; color: #b9a6dc;
+  font-family: 'Bungee', cursive; font-size: var(--fs-k16); line-height: 1; text-transform: uppercase;
+}
+.dw-pip.is-hot { border-color: #D9381E; }
+.dw-pip.is-done { background: var(--k-cyan, #2EFFE0); border-color: #0f9c8a; color: #000; }
+.dw-pip.is-today { background: var(--k-yellow, #FFE94A); border-color: #a87400; color: #000; box-shadow: 2px 2px 0 #000; }
+.dw-day7 { position: relative; flex: none; width: 44px; height: 44px; margin: -6px 0 -6px 2px; box-sizing: border-box; padding: 2px; border: 3px solid transparent; border-radius: 8px; }
+.dw-day7.is-today { background: var(--k-yellow, #FFE94A); border-color: #a87400; box-shadow: 2px 2px 0 #000; }
+.dw-day7.is-done { background: var(--k-cyan, #2EFFE0); border-color: #0f9c8a; }
+.dw-day7 img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.dw-day7.is-next img { filter: saturate(.7); }
+.dw-day7-x {
+  position: absolute; right: -8px; bottom: -4px; padding: 1px 4px; border: 2px solid #000; border-radius: 6px;
+  background: var(--k-gold, #FFC23D); color: #000; font: 400 var(--fs-k16) 'Bungee', cursive; line-height: 1; text-transform: uppercase; transform: rotate(-8deg);
+}
+@media (max-width: 420px) {
+  /* a phone: the row takes the head's whole width (the ✕ only guards the wordmark's line) so the week + ODDS stay ONE line */
+  .dw-head-row { flex-wrap: nowrap; gap: 6px; margin-inline: -42px; }
+  .dw-head-row .dw-odds-btn { min-width: 0; padding: 0 10px; }
+  .dw-week { gap: 3px; padding: 3px 6px 3px 4px; }
+  .dw-pip { width: 26px; height: 26px; border-width: 2px; }
+  .dw-day7 { width: 38px; height: 38px; }
+}
 
 /* ---- the wheel ---- */
 .dw-stage { position: relative; padding-top: calc(var(--wd) * 0.062); } /* the pointer stands proud of the rim: its headroom is the stage's own */
@@ -378,3 +406,12 @@
 /* OFFLINE: the disabled SPIN + RETRY side by side (they stack on a narrow foot) */
 .dw-off { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; }
 .dw-off .kb-lockchip { font-size: var(--fs-body); } /* the reason reads at the 16px floor */
+/* EARNED SPINS (Andy nov4 "dont have daily spin for free"): until today's game words are in, the foot shows how far —
+   a chunky bar (transform-only fill, static), the words left, and PLAY back to the menu. The hub stays disabled. */
+.dw-earn { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.dw-earn-bar { position: relative; display: grid; place-items: center; width: 240px; height: 34px; overflow: hidden; box-sizing: border-box; border: 3px solid #000; border-radius: 8px; background: #241142; box-shadow: 3px 3px 0 #000; }
+.dw-earn-fill { position: absolute; inset: 0; background: var(--k-cyan, #2EFFE0); transform-origin: left center; }
+/* the count rides ON the bar; PLAY's own line says how many are left */
+.dw-earn-t { position: relative; font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+/* a short phone: PLAY alone (its line carries the count) — the wheel keeps its size, the foot its SPIN height */
+@media (max-height: 700px) and (max-aspect-ratio: 6/5) { .dw-earn-bar { display: none; } }

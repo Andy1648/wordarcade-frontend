@@ -26,6 +26,7 @@ const packBlob = async (code) => (await import('../save/cloudCodec.js')).packBlo
 import { queueClaim } from '../progress/claims.js';
 import { flagOn, flagDefaultOn } from '../lib/featureFlags.js';
 import { rankChange, ownDropSince, rivalPing, nextRivalLog, RIVAL_MAX_RANK } from './rival.js';
+import { OVERDRIVE_MULT } from '../progress/overdrive.js';
 
 const RAW_URL = (import.meta.env && import.meta.env.VITE_SUPABASE_URL) || '';
 const KEY = (import.meta.env && import.meta.env.VITE_SUPABASE_ANON_KEY) || '';
@@ -136,6 +137,15 @@ export function getMyProfile() {
 function saveMyProfile(p) {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify({ id: p.id, username: p.username })); } catch { /* ignore */ }
 }
+/** SIGN IN WITH GOOGLE's restore (auth.js, 085): this device now holds `secret` — a NEW device secret the server added
+ *  to the signed-in account's board row — and that row's name. Every later call proves the row with it. */
+export function adoptSecret(secret, profile) {
+  try { localStorage.setItem(SECRET_KEY, secret); } catch { /* blocked */ }
+  writeSecretCookie(secret);
+  if (profile && profile.id) saveMyProfile(profile);
+  boardChecked = false;
+  lastSubmit = 0;
+}
 
 // ---- what the board shows about me -----------------------------------------------------------
 // PV10: the AUTHORITATIVE level (xp.js resolves the v10 shape, converts a legacy one, and ignores a
@@ -191,6 +201,8 @@ export async function claimName(username) {
   if (!LEADERBOARD_ENABLED || !secret) throw Object.assign(new Error('unavailable'), { code: 'unavailable' });
   const row = await rpc('lb_claim', { p_secret: secret, p_username: username });
   saveMyProfile(row);
+  // SIGN IN WITH GOOGLE (085): signed in before there was a name to link — the new name links now (lazy, never awaited)
+  try { if (localStorage.getItem('taw.auth')) import('./auth.js').then((m) => m.linkThisDevice()).catch(() => {}); } catch { /* blocked */ }
   lastSubmit = 0;
   const pushed = await submitStats(true);
   // Seed the rank-up baseline with where the claim landed — but only if my stats actually reached
@@ -757,6 +769,26 @@ export async function fetchRowsBelow(rank, n = 2) {
     return [];
   }
 }
+/** YOUR NEIGHBOURHOOD past the board (Andy nov2: "2 above, you, 2 below"): the `n` players ranked just above and just
+ *  below `rank`, each list in board order (best first), never me. { above: [], below: [] } on any failure. Two GETs. */
+export async function fetchNeighbours(rank, n = 2) {
+  const out = { above: [], below: [] };
+  if (!LEADERBOARD_ENABLED) return out;
+  const mine = getMyProfile();
+  const cols = `rank,id,username,level,rebirths,lifetime_words${SEASON2 ? ',stars' : ''}`;
+  const get = async (q) => {
+    try {
+      const r = await fetch(`${BASE}/rest/v1/${BOARD_VIEW}?select=${cols}&${q}`, { headers: headers() });
+      return r.ok ? ((await r.json()) || []).filter((x) => !mine || x.id !== mine.id) : [];
+    } catch {
+      return [];
+    }
+  };
+  const [up, down] = await Promise.all([get(`rank=lt.${Number(rank)}&order=rank.desc&limit=${n + 1}`), get(`rank=gt.${Number(rank)}&order=rank.asc&limit=${n}`)]);
+  out.above = up.slice(0, n).reverse();
+  out.below = down.slice(0, n);
+  return out;
+}
 /** The row just above `rank` on the live board (not me), or null. One GET. */
 export async function fetchRowAbove(rank) {
   if (!LEADERBOARD_ENABLED) return null;
@@ -850,8 +882,8 @@ export async function redeemCode(raw) {
   if (res.kind === 'tester') return { ok: true, code: res.code, kind: 'tester', wins: 0, label: res.label || res.code };
   if (res.kind === 'overdrive') {
     const min = Number(res.boost_min) > 0 ? Number(res.boost_min) : 5;
-    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: 5, min } }); // OVERDRIVE ×5 (Andy oct11; overdrive.js OVERDRIVE_MULT)
-    return { ok: true, code: res.code, kind: 'overdrive', mult: 5, min, wins: 0, label: res.label || res.code };
+    queueClaim({ id: `code:${res.code}`, kind: 'boost', label: `OVERDRIVE — ${label}`, amount: 0, meta: { mult: OVERDRIVE_MULT, min } }); // OVERDRIVE ×15 (nov4; overdrive.js OVERDRIVE_MULT)
+    return { ok: true, code: res.code, kind: 'overdrive', mult: OVERDRIVE_MULT, min, wins: 0, label: res.label || res.code };
   }
   if (res.kind === 'boost') {
     const mult = Number(res.boost_mult) > 1 ? Math.floor(Number(res.boost_mult)) : 3;

@@ -29,12 +29,10 @@ const keyMult = (m) => (m >= 1000 ? formatNum(m) : formatMultExact(m));
 const RETIRED_PERKS = new Set(['power', 'autoForge', 'head']);
 const LIVE_PERKS = PERKS.filter((p) => !RETIRED_PERKS.has(p.id));
 import ShopSticker from './ShopSticker';
-import RedeemCodes from './RedeemCodes';
 import RebirthCeremony from './RebirthCeremony';
 import OverlaySkeleton from './OverlaySkeleton';
 import { ownedMarkIds } from '../progress/marks';
 import { MASTERY_MODES, masteryWords } from '../progress/mastery';
-import { LEADERBOARD_ENABLED } from '../leaderboard/client';
 import { performRebirth, performAscend } from '../leaderboard/serverRebirth';
 import { rebirthRefusalText } from '../leaderboard/rebirthFlow';
 import { burst } from '../juice';
@@ -128,7 +126,7 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
   const keyTut = view === 'shop' && !keyTutDone && !autoMode
     ? dueHosted('shop', { keyAffordable: wins >= kpCost, keyTier, rebirths }, hasSeenTutorial)
     : null;
-  const cheapestUnowned = [...POP_STYLES, ...SOUND_PACKS]
+  const cheapestUnowned = [...POP_STYLES]
     .filter((i) => !owned.has(i.id))
     .sort((a, b) => itemPrice(a.id) - itemPrice(b.id))[0] || null;
 
@@ -351,31 +349,6 @@ function ShopScreenLive({ onBack, initialView = 'shop' }) {
                 />
               ))}
             </div>
-
-            <h3 className="shop-subtitle">SOUND PACKS</h3>
-            <div className="shop-grid shop-grid--compact">
-              {SOUND_PACKS.map((item) => (
-                <Card
-                  key={item.id}
-                  item={SEASON2 ? { ...item, price: itemPrice(item.id) } : item}
-                  type="soundPack"
-                  owned={owned}
-                  equipped={equipped}
-                  wins={shelfBalance}
-                  cheapestUnowned={cheapestUnowned}
-                  onBuy={onBuy}
-                  onEquip={onEquip}
-                />
-              ))}
-            </div>
-
-            {/* STEP 61: CODES — last, small; the shop's job is spending, a code is a side door. */}
-            {LEADERBOARD_ENABLED && (
-              <>
-                <h3 className="shop-subtitle">CODES</h3>
-                <RedeemCodes />
-              </>
-            )}
           </div>
         ) : (
           <div className="shop-body">
