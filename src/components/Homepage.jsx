@@ -114,12 +114,12 @@ const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
-// SIGN IN WITH GOOGLE (085): back from Google (main.jsx __TAW_SIGNIN), or a restore still waiting on the player's OK
+// SIGN IN WITH GOOGLE (085): a restore still waiting on the player's OK (the popup's own landing mounts itself: mountLanding.jsx)
 import { GOOGLE_ON } from '../leaderboard/googleFlag.js';
 const AuthLanding = lazyWithReload(() => import('./account/AuthLanding.jsx'), 'AuthLanding');
 const authLanding = () => {
   if (!GOOGLE_ON) return false; // VITE_GOOGLE_ON off: no landing, ever (googleFlag.js)
-  try { return !!(window.__TAW_SIGNIN || localStorage.getItem('taw.auth.pending')); } catch { return false; }
+  try { return !!localStorage.getItem('taw.auth.pending'); } catch { return false; }
 };
 // the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
 const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
@@ -1809,7 +1809,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       ) : null}
       {authLand ? (
         <Suspense fallback={null}>
-          <AuthLanding landing={window.__TAW_SIGNIN} onDone={() => { window.__TAW_SIGNIN = null; setAuthLand(false); }} />
+          <AuthLanding resume onDone={() => setAuthLand(false)} />
         </Suspense>
       ) : null}
       {showWheel && (
