@@ -86,31 +86,35 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
   });
 }
 
-// ---- #6 MINER dialog chip vs title ----------------------------------------------------------------------------------
+// ---- #6 MINER dialog header (the SOLO/MULTI chip was removed by design audit nov2 #4: the header is now the painted
+// ART banner, the TITLE, the hook and the one-row PAY chip) — no two of them overlap, and nothing is drawn over the title
 test.describe('phone (touch)', () => {
   test.use({ isMobile: true, hasTouch: true });
   for (const [w, h] of [[390, 844], [360, 640]]) {
-    test(`#6 @${w}x${h} MINER dialog: the SOLO/MULTI chip and the MINER title never overlap`, async ({ page }) => {
+    test(`#6 @${w}x${h} MINER dialog: the title never overlaps the art, the hook or the pay row`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await boot(page, REGULAR);
       await (await revealMode(page, 'miner')).click({ force: true });
-      await page.locator('.mode-dialog-shell .mode-ex').waitFor();
+      await page.locator('.mode-dialog-shell .mode-dialog-title').waitFor();
       await page.waitForTimeout(500);
       if (SHOTS) await page.screenshot({ path: `${SHOTS}/miner-dialog-${w}x${h}.png` });
-      const chip = await box(page, '.mode-dialog-chip');
-      // the title BLOCK (its line box; the inline word's content area reaches a few px above the caps — no ink there)
-      for (const sel of ['.mode-dialog-title', '.mode-dialog-liner']) {
-        const t = await box(page, sel);
-        expect(t.t, `${sel} starts below the chip (chip bottom ${chip.b}, ${sel} top ${t.t})`).toBeGreaterThanOrEqual(chip.b);
+      const parts = ['.mode-dialog-art', '.mode-dialog-title', '.mode-dialog-liner', '.mode-dialog-payrow'];
+      for (const sel of parts) await expect(page.locator(`.mode-dialog-shell ${sel}`), `${sel} drawn`).toBeVisible();
+      const B = {};
+      for (const sel of parts) B[sel] = await box(page, `.mode-dialog-shell ${sel}`);
+      // top to bottom: art, title, hook, pay — each starts at or below the one above it ends, so none overlap
+      for (let i = 1; i < parts.length; i++) {
+        expect(B[parts[i]].t, `${parts[i]} starts below ${parts[i - 1]} (${parts[i - 1]} bottom ${B[parts[i - 1]].b}, ${parts[i]} top ${B[parts[i]].t})`).toBeGreaterThanOrEqual(B[parts[i - 1]].b - 0.5);
       }
-      // ...and the chip is what is drawn at its own centre and along its lower edge (the title used to sit on top)
-      const onChip = await page.evaluate(() => {
-        const c = document.querySelector('.mode-dialog-chip'); const r = c.getBoundingClientRect();
-        return [[0.5, 0.5], [0.2, 0.8], [0.5, 0.8], [0.8, 0.8]].every(([fx, fy]) => { const t = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !!t && (t === c || c.contains(t)); });
+      for (const sel of parts) if (sel !== '.mode-dialog-title') expect(hit(B['.mode-dialog-title'], B[sel], 0.5), `the title overlaps ${sel}`).toBe(false);
+      // ...and the title is what is drawn along its own middle (nothing sits on top of it)
+      const onTitle = await page.evaluate(() => {
+        const c = document.querySelector('.mode-dialog-shell .mode-dialog-title'); const r = c.getBoundingClientRect();
+        return [[0.2, 0.5], [0.4, 0.5]].every(([fx, fy]) => { const t = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !!t && (t === c || c.contains(t)); });
       });
-      expect(onChip, 'nothing is drawn over the SOLO/MULTI chip').toBe(true);
-      // the chip is a 16px label and the CTA row stays reachable (44px)
-      expect(await page.locator('.mode-dialog-chip').evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(16);
+      expect(onTitle, 'nothing is drawn over the MINER title').toBe(true);
+      // the pay row reads at the 16px floor and the CTA row stays reachable (44px)
+      expect(await page.locator('.mode-dialog-pay-k').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(16);
       for (const b of await page.locator('.mode-dialog-actions button').all()) {
         await b.scrollIntoViewIfNeeded();
         const r = await b.boundingBox();

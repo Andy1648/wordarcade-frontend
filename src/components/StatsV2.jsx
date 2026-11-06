@@ -245,6 +245,7 @@ export default function StatsV2({ onBack, onMore }) {
   const [life] = useState(readLife);
   // CRIT (Andy oct8): its OWN row — a chance per key, not a multiplier, so it is never folded into the chain's product
   const [crit] = useState(() => critSummary(critTotals()));
+  const [showMath, setShowMath] = useState(false);
   const [tab, setTab] = useState('xp'); // XP first + the default (Andy oct9)
   // the replay: idx = chips landed (after BASE), cur = the running multiplier, done = slammed
   const [play, setPlay] = useState({ idx: 0, cur: 1, done: false });
@@ -398,7 +399,9 @@ export default function StatsV2({ onBack, onMore }) {
             <span className="st2-result-v" data-testid="st2-result" style={{ '--len': Math.max(4, resultText.length) }}>{resultText}</span>
             <div className="st2-result-sub">
               <span className="st2-unit">{look.unit}</span>
-              <span className="st2-basex">{gearOn ? `(BASE ${rateText(b.parts.base)} + GEAR ${rateText(b.parts.gear)})` : `BASE ${rateText(b.base)}`} × {boardMult(b.mult)}</span>
+              {/* the MATH behind a small info tap (design audit nov2 #6) — the screen leads with the number, not the formula */}
+              <button type="button" className={`st2-info${showMath ? ' is-on' : ''}`} aria-expanded={showMath} aria-label="Show the math" data-testid="st2-info" onClick={() => setShowMath((v) => !v)}>?</button>
+              {showMath ? <span className="st2-basex" data-testid="st2-basex">{gearOn ? `(BASE ${rateText(b.parts.base)} + GEAR ${rateText(b.parts.gear)})` : `BASE ${rateText(b.base)}`} × {boardMult(b.mult)}</span> : null}
             </div>
           </div>
         </div>

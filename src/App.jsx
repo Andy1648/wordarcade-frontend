@@ -2341,7 +2341,7 @@ function App() {
     soloOfferRef.current = false;
     satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
-    setLobbyPublicDefault(false);
+    setLobbyPublicDefault(true);
     watchingRef.current = null; // SPECTATE: the menu is never "watching"
     setWatching(null);
     watchJoinRef.current = false;

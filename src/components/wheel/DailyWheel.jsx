@@ -166,6 +166,7 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
   const onPaidRef = useRef(onPaid);
   onPaidRef.current = onPaid;
   const [st, setSt] = useState({ phase: 'load' }); // load | off | locked | ready | spinning | landed | done
+  const [tries, setTries] = useState(0); // RETRY (design audit nov2 #13) re-asks the server
   const [odds, setOdds] = useState(false);
   const rotorRef = useRef(null);
   const icoRefs = useRef([]); // the 8 prize icons: counter-rotated so each one always stands upright to the viewer
@@ -237,7 +238,8 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
       live.current = false;
       for (const t of pending) clearTimeout(t);
     };
-  }, [park]);
+  }, [park, tries]);
+  const retry = useCallback(() => { setSt({ phase: 'load' }); setTries((n) => n + 1); }, []);
 
   const land = useCallback((s, rest) => {
     restRef.current = rest;
@@ -456,7 +458,14 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
 
           <div className="dw-foot">
             {st.phase === 'load' ? <p className="dw-msg">LOADING…</p> : null}
-            {st.phase === 'off' ? <p className="dw-msg">THE WHEEL NEEDS A CONNECTION · TRY AGAIN SOON</p> : null}
+            {/* OFFLINE (design audit nov2 #13): a house-style SPIN, disabled, with the reason on its lock chip — and a
+                real RETRY beside it — instead of a grey sentence where the button was */}
+            {st.phase === 'off' ? (
+              <div className="dw-off" data-testid="wheel-off">
+                <KitButton tone="pink" label="SPIN" disabled lockText="OFFLINE" labelSize={34} width={220} ariaLabel="Spin — offline" onDeny={retry} data-testid="wheel-spin-off" />
+                <KitButton tone="cyan" label="RETRY" labelSize={24} width={150} onClick={retry} data-testid="wheel-retry" />
+              </div>
+            ) : null}
             {st.phase === 'locked' ? (
               <div className="dw-earn" data-testid="wheel-locked">
                 <span className="dw-earn-bar" role="progressbar" aria-valuemin={0} aria-valuemax={WHEEL_WORDS} aria-valuenow={WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} aria-label="Game words toward today's spin">
