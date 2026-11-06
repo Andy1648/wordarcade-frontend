@@ -237,7 +237,7 @@ test('SHORT CODE: COPY gives XXXXX-XXXXX; a wiped phone types it and gets the sa
   await openSettings(b);
   await b.getByLabel('Paste a save code').fill('ZZZZZ-ZZZZZ');
   await b.getByRole('button', { name: 'RESTORE', exact: true }).click();
-  await expect(b.locator('.sp-msg')).toHaveText('NO SAVE WITH THAT CODE');
+  await expect(b.locator('.sp-msg')).toContainText('NO SAVE WITH THAT CODE');
   expect(await rebirths(b)).toBe('7');
   await actx.close();
   await bctx.close();

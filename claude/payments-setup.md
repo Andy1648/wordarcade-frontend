@@ -114,10 +114,10 @@ the webhook reads the USD source amount.
 ## 6. Test in TEST mode, then flip the flag
 
 1. Preview env: `sk_test_…`, the test `whsec_…`, service key, `VITE_PAYMENTS_ON=1`. Redeploy the preview.
-2. On the preview: pick a board name (the gems land on the board profile), open UPGRADES → **GEMS**, buy the $1.99 pouch.
+2. On the preview: pick a board name (the gems land on the board profile), tap the **+** beside the gem count, buy the $1.99 pouch.
    Test card `4242 4242 4242 4242`, any future date, any CVC, any ZIP, any email.
    Also try: `4000 0025 0000 3155` (3-D Secure), `4000 0000 0000 9995` (declined → no gems).
-3. Back on the menu: 600 gems fly into the pill within a few seconds. In Supabase: one row in
+3. Back on the menu: 1,000 gems fly into the pill within a few seconds. In Supabase: one row in
    `private.pay_purchases`, one `+300` row in `private.pay_gem_ledger` with `delivered_at` set.
 4. Stripe → Payments → the payment → **Refund**: the next menu load takes the gems back (never below 0 on the device).
 5. Cap: buy until $20 this month — the next pack is greyed out and the server answers 409 `cap`.
@@ -137,8 +137,12 @@ the webhook reads the USD source amount.
   Refunded purchases still count toward the month, and an open checkout reserves its amount for 35 minutes.
 - **One grant per Stripe checkout session** (`pay_purchases.stripe_session_id` primary key); retries are safe.
 - **Disputed accounts are flagged** (no more checkouts). Unflag by deleting the row in `private.pay_flags`.
-- **No countdowns, sales or "limited" offers.** The shelf prints the dollar price on every pack, "ASK A PARENT FIRST",
-  what is left of the month's $20, ODDS (the same table the roll uses), and the refund line.
+- **No countdowns, sales or "limited" offers.** The panel prints the dollar price on every pack, what is left of the month's
+  $20, ODDS (the same table the roll uses), and the refund line.
+- **No "ask a parent" line (Andy nov5: most players are in high school).** The refund line and the $20 cap stay.
+- **The packs always show; one place to buy.** The **+** on a gem pill opens the panel, and the shop has no GEMS tab. Signed
+  in, a tap goes straight to Stripe (no confirm step: Stripe's page shows the price again). Signed out, a tap asks for Google
+  first, then that same purchase continues.
 - Refund policy (recommended by the brief): refund any minor's purchase on request, no questions; refund anything
   within 14 days. Refund in the Stripe dashboard — the webhook does the rest.
 - A **RESET ACCOUNT** wipes local gems (bought ones too); the purchase records stay on the server.
@@ -146,7 +150,7 @@ the webhook reads the USD source amount.
 ## ART REQUEST (open)
 
 The packs wear existing art for now: `/wheel/prize-gems-s.webp` (POUCH), `/wheel/prize-gems-m.webp` (PILE),
-`/wheel/prize-gems-l.webp` (CHEST), `/shop/chest-v2.webp` (HOARD), and the tab uses the small pile. Wanted: four painted
+`/wheel/prize-gems-l.webp` (CHEST), `/shop/chest-v2.webp` (HOARD), Wanted: four painted
 **gem piles** growing in size (a handful → a heap → an open chest → an overflowing vault), the cyan gem of the GEMS
 pill, same ink weight as the wheel prizes, 512×512 transparent webp, ONE pile per image (ChatGPT). New filenames
 only (art is immutable-cached): e.g. `public/shop/pay-pouch-v1.webp` … then `node scripts/art-manifest.mjs`.
