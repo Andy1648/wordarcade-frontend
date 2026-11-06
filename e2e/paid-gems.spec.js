@@ -168,7 +168,7 @@ for (const vp of VIEWS) {
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-signedout-${vp.width}.png` });
     await panel.locator('.pg-pack[data-pack="pile"]').click();
     const ask = page.getByTestId('pay-signin');
-    await expect(ask).toContainText('SIGN IN TO GET 1,700 GEMS');
+    await expect(ask).toContainText('SIGN IN TO GET 3,000 GEMS');
     await expect(ask).toContainText('$4.99');
     await expect(ask.getByTestId('gsi-official')).toBeVisible();
     await expectPanelFits(panel);

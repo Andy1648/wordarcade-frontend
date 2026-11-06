@@ -462,7 +462,10 @@ html[data-reduce-motion] .sp-codes-msg.is-bad { animation: none; }
   .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 6px; }
 }
 @media (max-width: 480px) and (max-height: 700px) {
-  .sp-sheet .sp, .sp-sheet:has(.sp-account) .sp { gap: 10px; }
+  .sp-scrim { padding: 2px 8px; }
+  .sp-sheet .sp, .sp-sheet:has(.sp-account) .sp { gap: 10px; padding-top: 0; }
+  .sp-sheet, .sp-sheet:has(.sp-account) { gap: 4px; }
+  .sp-sheet .sp-group { gap: 3px; }
   .sp-sheet .sp-group, .sp-sheet:has(.sp-account) .sp-group { padding-top: 14px; padding-bottom: 4px; }
   .sp-sheet:has(.sp-account) { padding-bottom: 6px; }
   .sp-sheet:has(.sp-account) .sp-group { padding-bottom: 3px; }

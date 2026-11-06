@@ -44,6 +44,8 @@ const wins = (page) => page.evaluate(() => Number(localStorage.getItem('taw.s2.w
 const openSettings = async (page) => {
   await page.locator('[data-nav="settings"]:visible').first().click();
   await page.locator('.sp-sheet').waitFor({ state: 'visible' });
+  // the sheet's one enter scales it: a target measured mid-way reads a hair under 44 (43.98 on a slow CI box)
+  await expect.poll(() => page.locator('.sp-sheet').evaluate((el) => Math.abs(el.getBoundingClientRect().width - el.offsetWidth) < 0.05)).toBe(true);
 };
 async function redeem(page, code) {
   await page.locator('.sp-codes-input').fill(code);

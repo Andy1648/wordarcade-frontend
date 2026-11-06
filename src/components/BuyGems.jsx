@@ -179,14 +179,13 @@ export default function BuyGems({ onClose }) {
           </span>
           <RatesPop label="ODDS" className="pg-odds" />
         </div>
-        {/* a note takes the fine print's place for a moment, so a tap never moves the packs */}
+        {/* a note lies over the fine print for a moment (same cell), so a tap never moves the packs */}
         <div className="pg-low">
-          {note ? <div className="pg-note" role="status" aria-live="polite" data-testid="pay-note">{note}</div> : (
-            <p className="pg-fine" data-testid="pay-refund">
-              Same roll odds as earned gems. Bought by mistake? Reply to the Stripe receipt
-              {REFUND_EMAIL ? <> or email <b>{REFUND_EMAIL}</b></> : null} for a refund; the gems are taken back.
-            </p>
-          )}
+          <p className={`pg-fine${note ? ' is-hid' : ''}`} data-testid="pay-refund">
+            Same roll odds as earned gems. Bought by mistake? Reply to the Stripe receipt
+            {REFUND_EMAIL ? <> or email <b>{REFUND_EMAIL}</b></> : null} for a refund; the gems are taken back.
+          </p>
+          {note ? <div className="pg-note" role="status" aria-live="polite" data-testid="pay-note">{note}</div> : null}
         </div>
       </div>
     </div>

@@ -64,7 +64,7 @@ export function GoogleButton({ className = '' }) {
       {phase === 'loading' ? <span className="gsi-load">LOADING GOOGLE…</span> : null}
       {phase === 'blocked' ? (
         <div className="gsi-blocked" role="status" data-testid="google-blocked">
-          <span className="gsi-blocked-t">GOOGLE IS BLOCKED HERE · SAVE CODE STILL WORKS</span>
+          <span className="gsi-blocked-t">GOOGLE IS BLOCKED · SAVE CODE WORKS</span>
           <button type="button" className="gsi-out" onClick={() => setTries((n) => n + 1)} data-testid="google-retry">RETRY</button>
         </div>
       ) : null}

@@ -117,7 +117,7 @@ the webhook reads the USD source amount.
 2. On the preview: pick a board name (the gems land on the board profile), tap the **+** beside the gem count, buy the $1.99 pouch.
    Test card `4242 4242 4242 4242`, any future date, any CVC, any ZIP, any email.
    Also try: `4000 0025 0000 3155` (3-D Secure), `4000 0000 0000 9995` (declined → no gems).
-3. Back on the menu: 600 gems fly into the pill within a few seconds. In Supabase: one row in
+3. Back on the menu: 1,000 gems fly into the pill within a few seconds. In Supabase: one row in
    `private.pay_purchases`, one `+300` row in `private.pay_gem_ledger` with `delivered_at` set.
 4. Stripe → Payments → the payment → **Refund**: the next menu load takes the gems back (never below 0 on the device).
 5. Cap: buy until $20 this month — the next pack is greyed out and the server answers 409 `cap`.

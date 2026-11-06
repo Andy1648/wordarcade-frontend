@@ -493,7 +493,7 @@ test('signed out on a fresh browser: a pack → Google → the account restores 
   await tapPackSignedOut(b.page);
   await expect.poll(() => b.checkouts.length, { timeout: 25_000 }).toBe(1);
   expect(b.checkouts[0].pack).toBe('pile');
-  expect(JSON.parse(await raw(b.page, 'taw.lb.profile')).username).toBe('GoogleKid');
+  await expect.poll(async () => JSON.parse((await raw(b.page, 'taw.lb.profile')) || '{}').username).toBe('GoogleKid'); // the mock Stripe navigates away mid-read
   await b.page.waitForTimeout(1500);
   expect(b.checkouts.length).toBe(1);
   expect(await b.page.evaluate(() => sessionStorage.getItem('taw.pay.resume'))).toBeNull();

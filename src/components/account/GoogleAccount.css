@@ -18,5 +18,5 @@
 .gsi-slot.is-off { display: none; }
 .gsi-load { position: absolute; left: 0; top: 0; height: 44px; display: flex; align-items: center; pointer-events: none; font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.06em; color: #c9b8e8; }
 .gsi-blocked { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.gsi-blocked-t { flex: 1 1 180px; font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.04em; color: #FFE94A; }
+.gsi-blocked-t { flex: 1 1 180px; font: 700 var(--fs-k14) 'Space Mono', monospace; line-height: 1.25; color: #FFE94A; }
 .gsi-note { font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.04em; color: #FF6B3D; }
