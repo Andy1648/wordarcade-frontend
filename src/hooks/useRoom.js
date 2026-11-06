@@ -12,7 +12,7 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
   const [publicRooms, setPublicRooms] = useState([]);
   // Lobby entry mode ('solo' | 'join' | a preselected game id) + whether Create defaults to PUBLIC.
   const [lobbyMode, setLobbyMode] = useState(null);
-  const [lobbyPublicDefault, setLobbyPublicDefault] = useState(false);
+  const [lobbyPublicDefault, setLobbyPublicDefault] = useState(true);
   const [serverError, setServerError] = useState('');
   // Set when the SERVER closed our room (idle reap / contained error) — drives the ROOM CLOSED overlay.
   const [roomClosedNotice, setRoomClosedNotice] = useState(null);
@@ -21,7 +21,9 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
   const [myId, setMyId] = useState(null);
   const myIdRef = useRef(null);
 
-  function goToLobby(mode, publicDefault = false) {
+  // PUBLIC by default (Andy nov6 "lobbies should feel alive"): lobby bots only join a public room, and the toggle sat on
+  // PRIVATE, so a player who just clicked through waited alone. PRIVATE stays one tap away.
+  function goToLobby(mode, publicDefault = true) {
     setLobbyMode(mode);
     setLobbyPublicDefault(publicDefault);
     setServerError('');

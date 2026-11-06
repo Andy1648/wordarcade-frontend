@@ -2262,7 +2262,7 @@ function App() {
     soloOfferRef.current = false;
     satAutoStartRef.current = false; // they have seen the menu; SAT's cover + mode picker apply again
     setLobbyMode(null);
-    setLobbyPublicDefault(false);
+    setLobbyPublicDefault(true);
     setRoom(null);
     setPublicRooms([]);
     setServerError('');
