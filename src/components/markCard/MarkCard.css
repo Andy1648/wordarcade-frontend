@@ -40,6 +40,7 @@
 .mc-frame { position: absolute; left: 0; top: 0; width: 180px; height: 300px; display: block; pointer-events: none; }
 /* MYTHIC / SECRET frame variant (public/fx/frame-<tier>.svg, drawn on a 228×348 box round the 180×300 card) */
 .mc-frame-x { position: absolute; left: -24px; top: -24px; width: 228px; height: 348px; display: block; pointer-events: none; }
+.mc-bespoke-part { position: absolute; display: block; height: auto; max-width: none; pointer-events: none; }
 
 /* RARITY on the rarity plate (y 9–37): the tier colour with an ink stroke */
 .mc-head {

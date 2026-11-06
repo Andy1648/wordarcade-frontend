@@ -19,7 +19,7 @@ import { holdRoll } from './support/roll.js';
 import { PATCH_ID } from '../src/components/patchNotes/patchSeen.js';
 
 const SIZES = [[1366, 768], [1920, 1080], [390, 844]];
-const MYTHIC = 'mk-singularity';
+const MYTHIC = process.env.BORDER_GEAR || 'mk-kraken'; // a BESPOKE gear (gearBespoke.js): its painted pieces must hold the same border room as a tier frame
 const LEGENDARY = 'mk-thunderclap';
 const OWN = [MYTHIC, LEGENDARY, 'mk-hydra', 'mk-origin', 'mk-brainstorm', 'mk-leviathan', 'mk-eclipse', 'mk-thunderclap', 'mk-detonator'];
 const SECRET = 'a7'.repeat(24);
