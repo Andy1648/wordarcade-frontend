@@ -1,5 +1,5 @@
 // e2e/avatar-frame.spec.js — Andy oct26: "the worn frame goes round the hero portrait wherever it shows". The menu's
-// profile plate face wears the round frame (AvatarFrame) when a frame is worn, stays the plain tile when none is, and
+// profile plate face wears the square frame (AvatarFrame) when a frame is worn, stays the plain tile when none is, and
 // swaps the moment you equip (kit.js writeKit → taw:kit-change). AVATAR_SHOTS=<dir> also writes one still per frame.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -30,7 +30,7 @@ test('a worn frame goes round the menu profile face; the ring art loads', async 
   const ok = await avf.locator('.avf-ring').evaluate((img) => img.complete && img.naturalWidth > 0);
   expect(ok).toBe(true);
   const face = await avf.locator('.avf-face').evaluate((el) => getComputedStyle(el).borderRadius);
-  expect(face).toBe('50%');
+  expect(face).toBe('22%');
 });
 
 test('no frame worn: the plain tile face, no ring', async ({ page }) => {
@@ -77,3 +77,26 @@ if (SHOTS) {
     }
   }
 }
+
+test.describe('JACKPOT pays out', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('three coins fly once on load and again on hover, finite, gone at rest; other frames have none', async ({ page }) => {
+    await menuWith(page, 'jackpot');
+    const coins = page.locator('.avf .avf-coin');
+    await expect(coins).toHaveCount(3);
+    const state = () => coins.evaluateAll((els) => ({
+      inf: els.some((e) => e.getAnimations().some((a) => a.effect.getTiming().iterations === Infinity)),
+      visible: els.filter((e) => Number(getComputedStyle(e).opacity) > 0.01).length,
+    }));
+    await expect.poll(async () => (await state()).visible, { timeout: 4000 }).toBe(0);
+    expect((await state()).inf).toBe(false);
+    await page.locator('.avf').first().hover();
+    await expect.poll(async () => (await state()).visible, { timeout: 3000, intervals: [20] }).toBeGreaterThan(0);
+    await expect.poll(async () => (await state()).visible, { timeout: 4000 }).toBe(0);
+  });
+  test('another frame carries no coins', async ({ page }) => {
+    await menuWith(page, 'frost');
+    await expect(page.locator('.avf')).toHaveCount(1);
+    await expect(page.locator('.avf-coin')).toHaveCount(0);
+  });
+});
