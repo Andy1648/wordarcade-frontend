@@ -147,13 +147,9 @@ the webhook reads the USD source amount.
   within 14 days. Refund in the Stripe dashboard — the webhook does the rest.
 - A **RESET ACCOUNT** wipes local gems (bought ones too); the purchase records stay on the server.
 
-## ART REQUEST (open)
+## Pack art (done nov5)
 
-The packs wear existing art for now: `/wheel/prize-gems-s.webp` (POUCH), `/wheel/prize-gems-m.webp` (PILE),
-`/wheel/prize-gems-l.webp` (CHEST), `/shop/chest-v2.webp` (HOARD), Wanted: four painted
-**gem piles** growing in size (a handful → a heap → an open chest → an overflowing vault), the cyan gem of the GEMS
-pill, same ink weight as the wheel prizes, 512×512 transparent webp, ONE pile per image (ChatGPT). New filenames
-only (art is immutable-cached): e.g. `public/shop/pay-pouch-v1.webp` … then `node scripts/art-manifest.mjs`.
+Painted: `public/shop/pay-{pouch,pile,chest,hoard}-v1.webp`, a sack, a heap, a chest and a vault (512×512 transparent, one per image, no numbers painted in). Wired in `src/payments/packs.js`.
 
 ## Money reality (from the brief)
 
