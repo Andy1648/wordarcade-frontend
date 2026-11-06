@@ -212,8 +212,6 @@ html[data-beat='true'] .homepage-logo {
   .homepage-stage[data-paged] .hp-util { --hp-tr: 44px; --hp-tr-ico: 30px; gap: 8px; }
   .homepage-stage[data-paged] .hp-util .kb--icon { height: 44px; }
 }
-.hp-icons .is-wheel .kb-art { width: calc(var(--hp-tr-ico) * 1.2); height: calc(var(--hp-tr-ico) * 1.2); overflow: visible; }
-.hp-icons .is-wheel .kb-art img { left: 0; top: 0; width: 100%; height: 100%; translate: none; object-fit: contain; }
 
 /* ---- the left rail: WINS / GEMS pills + SHOP · ROLL · INDEX · REBIRTH (kit, sized to the mockup) ---- */
 .hp-rail {

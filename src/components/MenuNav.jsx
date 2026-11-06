@@ -33,7 +33,7 @@ export function focusNav(root, id) {
   if (el) el.focus();
 }
 
-export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, wheel = null, navigating }) {
+export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, news = null, daily = null, navigating }) {
   return (
     <div className="hp-icons" role="group" aria-label="Records">
       {/* DAILY CONTRACTS (oct21): the flame + today's count — joins this cluster where PROFILE was (the profile is the XP
@@ -64,20 +64,6 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, new
         ariaLabel={ach.count > 0 ? `Open achievements — ${formatNum(ach.count)} to claim` : 'Open achievements'}
         title="Achievements"
       />)}
-      {/* THE DAILY WHEEL (Andy oct24): the slot SETTINGS + NEWS freed when they moved to the bottom-right cluster */}
-      {wheel && (
-        <KitIconButton
-          art="/wheel/icon.webp"
-          tone="pink"
-          className="hp-ico is-wheel"
-          data-nav="wheel"
-          dot={wheel.dot || undefined}
-          disabled={navigating}
-          onClick={wheel.onClick}
-          ariaLabel={wheel.dot ? 'Open the daily wheel — a free spin is waiting' : 'Open the daily wheel'}
-          title="Daily wheel"
-        />
-      )}
       <NewsIcon news={news} navigating={navigating} />
       {/* SETTINGS (Andy oct9 "top right placement instead"): the cog joins this cluster as its last tile */}
       {settingsSlot}

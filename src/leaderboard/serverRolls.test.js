@@ -27,7 +27,11 @@ test('the server constants are the game constants (price, shiny, bonus roll, pit
   has(`BONUS_EVERY constant integer := ${BONUS_ROLL_EVERY};`);
   // the pity constants live in pick_gear, which 063 redefines (LEG_PITY 60)
   assert.ok(pool.includes(`EPIC_PITY constant integer := ${PITY.epic.hard}; LEG_PITY constant integer := ${PITY.legendary.hard};`), '063 pick_gear pity');
-  for (const [t, g] of Object.entries(DUPE_GEMS)) has(`when '${t}' then ${g}`);
+  // the server's budget is a CEILING on what it trusts: its dupe table may only sit at or above what the game pays
+  for (const [t, g] of Object.entries({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 })) {
+    has(`when '${t}' then ${g}`);
+    assert.ok(g >= DUPE_GEMS[t], `${t} pays more than the server budget counts`);
+  }
   has('LUCK_CAP constant double precision := 15;');
   has('WRITE-ONLY: Claude never runs migrations');
 });

@@ -9,7 +9,7 @@
 // Soft asserts: one run lists EVERY defect at a size (the test still fails on any).
 // SHOTS=1 saves the screenshots (claude/shots-wheel-layout/).
 import { test, expect } from '@playwright/test';
-import { boot } from './support/wheelBoot.js';
+import { boot, openWheel } from './support/wheelBoot.js';
 
 const SHOTS = !!process.env.SHOTS;
 const DIR = process.env.SHOTS_DIR || 'claude/shots-wheel-layout';
@@ -102,7 +102,7 @@ for (const [w, h] of SIZES) {
   test(`daily wheel ${w}x${h}: big, inside the panel, nothing overlaps (ready + landed)`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await boot(page, { slot: 2 });
-    await page.locator('[data-nav="wheel"]').first().click();
+    await openWheel(page);
     await expect(page.getByTestId('wheel-spin')).toBeVisible();
     await artLoaded(page);
     await page.waitForTimeout(300);

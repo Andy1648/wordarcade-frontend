@@ -25,7 +25,7 @@ for (const [w, h] of SIZES) {
     });
     await page.goto('/?portal=1&season2=1');
     await navControl(page, 'shop').click();
-    await page.getByTestId('daily-chest-card').waitFor({ state: 'visible' });
+    await page.getByTestId('daily-spin-card').waitFor({ state: 'visible' });
     await page.waitForTimeout(600); // the shelf's arrival slide
     const bad = await page.evaluate(() => [...document.querySelectorAll('.sp2-grid:not([hidden]) .sp2-card')].map((card) => {
       const face = card.querySelector('.kstc-card');

@@ -1,7 +1,7 @@
 // e2e/shop-tab-dots.spec.js — Andy oct28: "add notification dot not just on menu screen for shop but inside as well (boost,
 // looks)". The shelf tabs carry the NEW dot (v3/shopDots.js), from the same reads as the menu's UPGRADES dot: an unseen
 // hourly restock with something payable (BOOSTS), a newly affordable look (LOOKS). Opening a shelf marks it seen, and the
-// menu dot goes out with it. Seeded: 100 gems (CHROME 75, an XP BOOST 45), 0 wins (POWER out of reach), today's chest claimed.
+// menu dot goes out with it. Seeded: 100 gems (CHROME 75, an XP BOOST 45), 0 wins (POWER out of reach), today's today's spin spun.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl, navDot } from './support/menu.js';
@@ -19,7 +19,7 @@ async function boot(page, gems) {
     localStorage.setItem('taw.s2.gems', JSON.stringify({ bal: gems, mig: 1 }));
     const d = new Date();
     const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    localStorage.setItem('taw.s2.drop', JSON.stringify({ day, claimed: true, tier: 'rare' }));
+    localStorage.setItem('taw.s2.wheel', JSON.stringify({ day: 99999999, paid: [] })); // today's spin already spun
   }, gems);
   await page.goto('/?portal=1&season2=1');
   await menuReady(page);
@@ -46,7 +46,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   });
 }
 
-test('nothing affordable, chest claimed: no dot on the menu or any shelf tab', async ({ page }) => {
+test('nothing affordable, the spin already spun: no dot on the menu or any shelf tab', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page, 0);
   await expect(navDot(page, 'shop')).toHaveCount(0);

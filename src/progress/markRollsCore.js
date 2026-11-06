@@ -319,7 +319,8 @@ export function permanentMarkById(id) {
 /** Dupes per ★ pip, by tier (Andy oct5). */
 // DUPES → GEMS (gear card v4, Andy oct11: "no tiers/stars — duplicates pay gems"): a duplicate now pays its tier's gems
 // and never adds a ★. A save from before v4 keeps the ★ pips it had (frozen in the mark's `p`), so no gear ever got weaker.
-export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 });
+// nov5: a lucky duplicate paid 500 / 2,500 at once. private.gem_budget keeps the old table (a ceiling, never refuses an earned gem).
+export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 50, mythic: 100, secret: 200 });
 export const DUPES_PER_PIP = { rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
 export const MAX_PIPS = 5;
 export const PIP_STEP = 0.2; // each pip +20% of the stat → ★5 = ×2
