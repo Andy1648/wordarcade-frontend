@@ -70,7 +70,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
     await expect(pf.getByTestId('customize').getByRole('tab')).toHaveCount(3);
     for (const [t, sel, main] of [
       ['hero', '.hc', '.hc'],
-      ['frame', '.skp-tile, .skp-stage, .skp-cta, .skp-act > *', '.skp-stage'],
+      ['frame', '.skp-tile, .skp-stage, .skp-cta, .skp-plate, .skp-act > *', '.skp-stage'],
       ['pop', '.sp2-look', '.sp2-look'],
     ]) {
       await pf.locator(`.cz-tab[data-cz="${t}"]`).click();
@@ -115,6 +115,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844]]) {
       expect(c.overlaps, `shop COSMETICS · ${t}: overlaps`).toEqual([]);
       expect(c.outside, `shop COSMETICS · ${t}: inside the shelf`).toEqual([]);
       expect(c.small, `shop COSMETICS · ${t}: tap targets ≥ 44px`).toEqual([]);
+      if (t === 'frame' && process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/frame-shop-${w}.png` });
       if (t === 'frame' && w >= 1000) {
         const sc = await page.locator('.sp2-shelf-cz .cz-body').evaluate((e) => e.scrollHeight - e.clientHeight);
         expect(sc, `shop COSMETICS · ${t}: the try-on fits without a scroll`).toBeLessThanOrEqual(1);
@@ -171,4 +172,72 @@ test('no name yet: the title plate stands alone with the claim hint — never "N
   await expect(pf).not.toContainText('NO NAME YET');
   await expect(pf.locator('.pf-hint')).toBeVisible();
   await expect(pf.locator('.pf-medal')).toHaveCount(3);
+});
+
+// CUSTOMIZE → FRAME (Andy "still gotta rework that interface"; #632's try-on absorbed): your menu plate wearing it, every frame on
+// your face by tier, one tap to wear, and the way to get it always in view
+for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
+  test(`${w}x${h}: FRAME: the plate wears what you look at, frames sit on your face by tier, the buy button is in view`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await boot(page, w, h);
+    await page.locator('[data-nav="profile"]:visible').first().click();
+    await page.getByTestId('profile-kit').click();
+    await page.locator('.cz-tab[data-cz="frame"]').click();
+    const pk = page.getByTestId('kit-picker');
+    await expect(pk.locator('.skp-tier-k')).toHaveText(['STARTER', 'MASTERY', 'RARE']);
+    await expect(pk.locator('.skp-tile')).toHaveCount(10);
+    await expect(pk.locator('.skp-tile .avf-face img')).toHaveCount(10); // your face in every frame, not an empty frame
+    await expect(pk.locator('.skp-tile .avf-coin, .skp-tile [class*="coin"]')).toHaveCount(0); // JACKPOT's coins play in the try-on only
+    await page.locator('[data-frame-tile="flame"]').click();
+    await expect(pk.locator('.skp-name')).toHaveText('FLAME');
+    await expect(page.getByTestId('kit-plate-preview').locator('.avf')).toHaveAttribute('data-avf', 'flame');
+    await expect(page.getByTestId('kit-plate-preview')).toContainText('PROFILE');
+    await expect(pk.locator('.skp-stage [data-frame="flame"]')).toBeVisible();
+    await page.waitForTimeout(400);
+    // the way to get it: on screen with no scroll, at every size, clear of the plate and the tiles
+    const g = await pk.evaluate((el) => {
+      const act = el.querySelector('.skp-act').getBoundingClientRect();
+      const plate = el.querySelector('.skp-plate').getBoundingClientRect();
+      const body = el.closest('.cz-body').getBoundingClientRect();
+      const tiles = [...el.querySelectorAll('.skp-tile')].map((t) => t.getBoundingClientRect());
+      const hit = (p, q) => Math.min(p.right, q.right) - Math.max(p.left, q.left) > 1 && Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top) > 1;
+      return {
+        actBottom: act.bottom,
+        vh: innerHeight,
+        overlaps: tiles.filter((t) => hit(t, act) || hit(t, plate)).length,
+        minTile: Math.min(...tiles.map((t) => t.height)),
+        clipped: [...el.querySelectorAll('.skp-stage .fc, .skp-plate, .skp-act > *, .skp-tile')].filter((n) => { const r = n.getBoundingClientRect(); return r.width > 0 && (r.left < body.left - 1 || r.right > body.right + 1); }).map((n) => `${n.className}:${Math.round(n.getBoundingClientRect().left)}-${Math.round(n.getBoundingClientRect().right)} body ${Math.round(body.left)}-${Math.round(body.right)}`),
+      };
+    });
+    expect(g.actBottom).toBeLessThanOrEqual(g.vh);
+    expect(g.overlaps).toBe(0);
+    expect(g.minTile).toBeGreaterThanOrEqual(44);
+    expect(g.clipped, 'nothing cut off at the sides').toEqual([]);
+    if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/frame-${w}.png` });
+  });
+}
+
+test('FRAME: one tap wears a frame you own; TAKE OFF clears it; a frame you don\'t own stays a try-on', async ({ page }) => {
+  await boot(page, 1366, 768);
+  await page.evaluate(() => {
+    localStorage.setItem('taw.s2.kit', JSON.stringify({ frame: null, own: ['frost', 'flame'] }));
+  });
+  await page.reload();
+  await menuReady(page);
+  await page.locator('[data-nav="profile"]:visible').first().click();
+  await page.getByTestId('profile-kit').click();
+  await page.locator('.cz-tab[data-cz="frame"]').click();
+  const worn = () => page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit') || '{}').frame ?? null);
+  await page.locator('[data-frame-tile="flame"]').click();
+  await expect.poll(worn).toBe('flame');
+  await expect(page.locator('[data-frame-tile="flame"] .skp-worn')).toBeVisible();
+  await expect(page.locator('.skp-cta.is-off')).toHaveText('TAKE OFF');
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/frame-worn-1366.png` });
+  await page.locator('[data-frame-tile="graffiti"]').click(); // not owned: looks, doesn't wear
+  await expect.poll(worn).toBe('flame');
+  await page.locator('[data-frame-tile="frost"]').click();
+  await expect.poll(worn).toBe('frost');
+  await page.locator('.skp-cta.is-off').click();
+  await expect.poll(worn).toBe(null);
+  await expect(page.locator('.skp-worn')).toHaveCount(0);
 });

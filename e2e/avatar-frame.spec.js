@@ -58,7 +58,7 @@ if (SHOTS) {
     await page.locator('[data-testid="profile-plate"]').first().click();
     await page.locator('.pf-kit').first().click();
     await page.locator('.cz-tab[data-cz="frame"]').click();
-    await expect(page.locator('[data-testid="kit-picker"] .skp-avatar .avf-ring')).toBeVisible();
+    await expect(page.locator('[data-testid="kit-plate-preview"] .avf-ring')).toBeVisible();
     await page.waitForTimeout(800);
     await page.screenshot({ path: `${SHOTS}/customize.png` });
   });

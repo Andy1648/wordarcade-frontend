@@ -10,7 +10,7 @@ import './AvatarFrame.css';
 
 const pct = (n) => `${Math.round(n * 100) / 100}%`;
 
-export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow = 1.3, preview, children = null }) {
+export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow = 1.3, preview, still = false, children = null }) {
   const [worn, setFrame] = useState(wornAvatarFrame);
   // `preview` (CUSTOMIZE try-on) shows that frame instead of the worn one
   const frame = preview !== undefined ? (Object.prototype.hasOwnProperty.call(AVATAR_WIN, preview) ? preview : null) : worn;
@@ -29,7 +29,7 @@ export default function AvatarFrame({ src, bg = '#2a1647', className = '', grow 
     <span className={`avf ${className}`} data-avf={frame} aria-hidden="true">
       <span className="avf-face" style={face}><img src={src} alt="" draggable="false" /></span>
       <img className="avf-ring" src={avatarFrameSrc(frame)} style={ring} width="256" height="256" alt="" draggable="false" />
-      {frame === 'jackpot' ? <JackpotCoins box={ring} /> : null}
+      {frame === 'jackpot' && !still ? <JackpotCoins box={ring} /> : null}
     </span>
   );
 }
