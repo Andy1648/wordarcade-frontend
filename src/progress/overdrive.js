@@ -20,7 +20,9 @@ import { V3 } from './season.js'; // V3.unlocks: the R10 OVERDRIVE ×2 LONG unlo
 // here, its state under the season's own key (v3/hooks.js S2_KEYS maps taw.overdrive → taw.s2.overdrive).
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
-export const OVERDRIVE_MULT = 5; // Andy oct11: ×5 (was ×10) — every OVERDRIVE (random, MYTHIC+ free, shop, codes, daily drop)
+// nov4 (Andy "make overdrive give 3x as much"): ×15 (was ×5 since oct11, ×10 before) — every OVERDRIVE: the shop card, the
+// daily drop's MYTHIC, OVERDRIVE codes, the MYTHIC+ gears' free one and AFTERPARTY. The ONE number every door reads.
+export const OVERDRIVE_MULT = 15;
 export const OVERDRIVE_MIN = 5;
 export const OVERDRIVE_EVERY_MIN = [30, 60]; // minutes of PLAY between OVERDRIVEs (uniform)
 export const PLAY_GAP_CAP_MS = 5000; // one flush gap never counts more than 5 s of play

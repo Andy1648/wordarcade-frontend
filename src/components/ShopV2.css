@@ -486,8 +486,6 @@
 .sp2-look-btn:active:not(:disabled) { transform: translate(3px, 3px); }
 .sp2-look-buy { background: var(--k-cyan); }
 .sp2-look-btn:disabled { background: var(--k-panel); color: var(--k-mute); cursor: not-allowed; }
-.sp2-codes { display: flex; flex-direction: column; gap: 12px; }
-.sp2-codes-what { margin: 0; font-family: var(--k-mono); font-weight: 700; font-size: var(--fs-k16); color: #fff; }
 
 /* ---- THE DAILY CHEST shelf item + its popup (Andy oct10) ---- */
 .sp2-chest-art { position: relative; flex: 0 0 auto; width: 60px; height: 60px; margin-top: 2px; display: block; }
@@ -904,9 +902,9 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
   .sp2-stock-head .sp2-tab { gap: 4px; padding: 0 8px 0 4px; }
   .sp2-tab-ico { width: 26px; height: 26px; margin: -4px 0; }
 }
-/* the phone: three equal tabs, the icon over its word, so COSMETICS fits a 360px row */
+/* the phone: equal tabs (two, or three with the PAID GEMS shelf), the icon over its word, so COSMETICS fits a 360px row */
 @media (max-width: 999px) {
-  .sp2-stock-head .sp2-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .sp2-stock-head .sp2-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; }
   .sp2-stock-head .sp2-tab { flex-direction: column; justify-content: center; gap: 2px; min-height: 56px; padding: 4px 2px; font-size: var(--fs-k14); }
   .sp2-stock-head .sp2-tab .sp2-tab-ico { margin: 0; }
 }
@@ -934,11 +932,6 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 /* oct29 (hero-art): the painted OVERDRIVE rocket is a thin diagonal — at the shared art box it read smaller than the
    chunky can / coins / clover beside it. It draws a fifth bigger (transform: layout untouched, still its own ratio). */
 .sp2-card-in[data-stock="overdrive"] > .sp2-art { transform: scale(1.2); }
-
-/* ===== HEAR BEFORE YOU BUY (oct29, CUSTOMIZE → SOUND): the keycap is the button; its speaker badge says so. A tap plays the
-   pack's click and the keycap presses down once (one finite WAAPI transform run per tap, ShopV2Looks pressKey). ===== */
-.sp2-hear { position: relative; }
-.sp2-hear-ico { position: absolute; z-index: 2; right: -4px; bottom: 2px; pointer-events: none; }
 
 /* ===== CAN-AFFORD (oct29 shop functionality, Andy "make shop much better (functionality and design)"): what you can buy
    right now wears the cyan price tag; what you can't keeps its art LIT (nov3 design-research move 9 — dimming turned a
@@ -1051,3 +1044,7 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-what { padding-right: calc(var(--sp2-stk) + 4px); }
 /* …and on a very short desktop the deal hour's bottom-left gem (OVERDRIVE) sits 4px lower, clear of the two-line TIME */
 @media (min-width: 1000px) and (max-height: 580px) { .sp2-card.is-epic.is-deal .sp2-gem { bottom: -16px; } }
+/* …and on a very short desktop the deal card's WHAT keeps that sticker column, so it wraps a line taller: the art tucks
+   5px closer to it so the price stays inside the card (OVERDRIVE's hour at 1280x551 was 2px past — shop-price-fit pins
+   every deal hour now) */
+@media (min-width: 1000px) and (max-height: 580px) { .sp2-cell:not(.is-ticket):not(.is-chest) .sp2-card.is-deal .sp2-card-in > .sp2-art { margin-bottom: -12px; } }

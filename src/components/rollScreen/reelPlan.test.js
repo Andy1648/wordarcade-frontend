@@ -227,6 +227,8 @@ test('the reveal card dominates (design audit nov2): ~65% of the height on deskt
   assert.ok(h({ vw: 1280, vh: 551 }) <= 551 - 200 + 1);
   // phone: ~75% of the width when the height allows, else what fits
   assert.equal(revealCardW({ vw: 390, vh: 844 }), Math.round(390 * 0.75));
+  // a MYTHIC / SECRET frame variant hangs outside the card: the phone card steps in so its horns stay on screen
+  assert.equal(revealCardW({ vw: 390, vh: 844, frame: true }), Math.round(390 * 0.64));
   assert.equal(revealCardW({ vw: 360, vh: 640 }), Math.round(360 * 0.75));
   assert.ok(h({ vw: 360, vh: 640, kind: 'full' }) <= 640 - 230 + 1);
   // a perk / dupe plate: beside the card on desktop (width room), under it on a phone (height room)
