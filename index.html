@@ -159,7 +159,7 @@
     </script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4921084971277860" crossorigin="anonymous"></script>
     <!-- THE BOOT SHELL (nov6, Andy "remember the idea of smoothness"): a cold visit on a slow link used to stare at a
-         blank screen until the JS ran. This paints with the HTML itself (inline, no request) and React replaces it on
+         blank screen until the JS ran. This paints as soon as the stylesheet is in, before any JS, and React replaces it on
          mount. The bar is ONE finite transform (it creeps toward 92% over 30 s and stops), never a loop. -->
     <style>
       html, body { background: #0d0618; }

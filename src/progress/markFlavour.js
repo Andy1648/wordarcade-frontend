@@ -71,6 +71,12 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-gauntlet': 'ONE PUNCH LIGHTS THE FUSE.',
   'mk-grimoire': 'EVERY WORD, ALREADY WRITTEN.',
   'mk-supernova': 'WIN MORE. BURN BRIGHTER.',
+  // ---- NEW GEARS nov3 ----
+  'mk-cherrybomb': 'KEEP WINNING. KEEP TICKING.',
+  'mk-spraycan': 'BIG WORDS. BIGGER LETTERS.',
+  'mk-popcorn': 'EVERY GAME POPS OFF.',
+  'mk-pinata': 'HIT IT. GET RICH.',
+  'mk-megaton': 'WIN STREAK GOES NUCLEAR.',
   // ---- SECRET ----
   'mk-origin': 'BEFORE THE FIRST WORD, THIS.',
   // ---- PERMANENT ----
