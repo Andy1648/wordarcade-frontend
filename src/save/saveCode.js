@@ -286,6 +286,27 @@ export function normalizeShort(text) {
 /** K7M2QX9PAH → K7M2Q-X9PAH */
 export const formatShort = (code) => (code && code.length === 10 ? `${code.slice(0, 5)}-${code.slice(5)}` : String(code || ''));
 
+// THE TWO KINDS OF CODE (Andy nov5): a REWARD code is typed to get a prize, a SAVE code holds progress. A code in the wrong box
+// says so, in the words of the box it belongs in. A 10-letter reward code is legal, and a plain 10 letters could be either,
+// so that case is only named after the server has said no; a long save code can never be a reward code.
+export const WRONG_BOX = {
+  saveInReward: 'THAT IS A SAVE CODE — PASTE IT UNDER SAVE CODE, NOT HERE. NOTHING WAS CLAIMED',
+  maybeSaveInReward: 'NOT A REWARD CODE — IS IT A SAVE CODE? PASTE THOSE UNDER SAVE CODE',
+  rewardInSave: 'THAT LOOKS LIKE A REWARD CODE — TYPE IT UNDER REWARD CODE. NOTHING WAS CHANGED',
+  maybeRewardInSave: 'NO SAVE WITH THAT CODE — IS IT A REWARD CODE? TYPE THOSE UNDER REWARD CODE',
+};
+/** True when pasted text can only be a long save code (its prefix, or far past a reward code's 32 characters). */
+export function isLongSaveCode(text) {
+  const c = cleanPaste(text);
+  return c.startsWith(CODE_PREFIX) || c.startsWith(CLOUD_PREFIX) || c.length > 64;
+}
+/** The line for a failed RESTORE, naming the reward box when that is where this text belongs. */
+export function restoreError(r, text) {
+  if (r.reason === 'not_found') return WRONG_BOX.maybeRewardInSave;
+  if (r.error === SAVE_ERRORS.notOurs && /^[A-Z0-9-]{3,32}$/i.test(String(text || '').trim())) return WRONG_BOX.rewardInSave;
+  return r.error;
+}
+
 export const SHORT_ERRORS = {
   not_found: 'NO SAVE WITH THAT CODE',
   bad_code: 'CHECK THE CODE — 10 LETTERS AND NUMBERS',

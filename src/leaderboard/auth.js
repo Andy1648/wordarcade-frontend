@@ -34,6 +34,7 @@ const CLIENT_ID = (import.meta.env && import.meta.env.VITE_GOOGLE_CLIENT_ID) || 
 export const AUTH_KEY = 'taw.auth'; // { access, refresh, exp (ms), email }
 export const AUTH_PENDING_KEY = 'taw.auth.pending'; // the restore waiting on the player's OK: { username, level, rebirths }
 export const AUTH_CHANGE = 'taw:auth-change';
+export const AUTH_LANDED = 'taw:auth-landed'; // detail: { state } — the landing has settled (linked, no_name, a refusal): a waiting purchase moves on
 export const AUTH_FAIL = 'taw:auth-fail'; // detail: { reason } — the button says what went wrong and re-arms
 export const authAvailable = () => GOOGLE_ON && LEADERBOARD_ENABLED && !!BASE && !!KEY; // VITE_GOOGLE_ON (googleFlag.js)
 
