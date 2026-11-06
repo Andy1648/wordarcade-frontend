@@ -44,6 +44,8 @@ const wins = (page) => page.evaluate(() => Number(localStorage.getItem('taw.s2.w
 const openSettings = async (page) => {
   await page.locator('[data-nav="settings"]:visible').first().click();
   await page.locator('.sp-sheet').waitFor({ state: 'visible' });
+  // the sheet's one enter scales it: a target measured mid-way reads a hair under 44 (43.98 on a slow CI box)
+  await expect.poll(() => page.locator('.sp-sheet').evaluate((el) => Math.abs(el.getBoundingClientRect().width - el.offsetWidth) < 0.05)).toBe(true);
 };
 async function redeem(page, code) {
   await page.locator('.sp-codes-input').fill(code);
@@ -90,12 +92,12 @@ for (const [w, h, query] of [[1920, 1080, ''], [1366, 768, ''], [1280, 551, ''],
     const input = page.locator('.sp-codes-input');
     const btn = page.locator('.sp-codes-btn');
     await expect(input).toBeVisible();
-    await expect(btn).toHaveText('REDEEM');
-    await expect(sheet.locator('.sp-play .sp-codes')).toHaveCount(1); // a row in GAMEPLAY
+    await expect(btn).toHaveText('CLAIM');
+    await expect(sheet.locator('.sp-rewards .sp-codes')).toHaveCount(1); // its own card, apart from the SAVE code
     await input.fill('X'); // REDEEM awake, as a player sees it
     for (const loc of [input, btn]) {
       const b = await loc.boundingBox();
-      expect(b.height, 'a full 44 px target').toBeGreaterThanOrEqual(44);
+      expect(Math.round(b.height), 'a full 44 px target (the fit zoom renders 43.975 on some runners)').toBeGreaterThanOrEqual(44);
       expect(b.width).toBeGreaterThanOrEqual(44);
     }
     expect(await input.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 'no iOS focus zoom').toBeGreaterThanOrEqual(16);
@@ -222,3 +224,47 @@ test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts Ã
   await expect(await redeem(page, 'GEMRAIN')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
   expect(await gems(), 'never twice').toBe(g0 + 150);
 });
+
+// nov5: two kinds of code, told apart. A code in the wrong box says which box it belongs in, and changes nothing
+for (const [w, h] of [[1366, 768], [360, 640]]) {
+  test(`a save code in the REWARD box and a reward code in the SAVE box each say so, and the sheet still fits @${w}x${h}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page);
+    await page.locator('[data-nav="settings"]:visible').first().click();
+    const sheet = page.locator('.sp-sheet');
+    await sheet.waitFor({ state: 'visible' });
+    await expect(sheet.locator('.sp-group-title').filter({ hasText: 'REWARD CODE' })).toHaveCount(1);
+    await expect(sheet.locator('.sp-group-title').filter({ hasText: 'SAVE CODE' })).toHaveCount(1);
+    await expect(page.locator('.sp-codes-input')).toHaveAttribute('placeholder', 'TYPE REWARD CODE');
+    await expect(page.getByLabel('Paste a save code')).toHaveAttribute('placeholder', 'PASTE SAVE CODE');
+    const fits = () => sheet.evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.getBoundingClientRect().bottom <= innerHeight + 1);
+    expect(await fits()).toBe(true);
+    // each group's title tag stays off the row under it
+    expect(await sheet.evaluate((el) => [...el.querySelectorAll('.sp-group')].filter((g) => {
+      const tag = g.querySelector('.sp-group-title').getBoundingClientRect();
+      const next = g.querySelector('.sp-group-title').nextElementSibling.getBoundingClientRect();
+      return tag.bottom > next.top + 4 && tag.left < next.right && tag.right > next.left; // 4: a tag's -2deg tilt grows its box
+    }).length)).toBe(0);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-settings-${w}.png` });
+
+    // a whole save code, pasted into the reward box: named at once, no request, no stump left behind
+    let redeems = 0;
+    page.on('request', (r) => { if (r.url().includes('lb_redeem')) redeems += 1; });
+    await page.locator('.sp-codes-input').fill(`TAW2.${'a'.repeat(400)}.deadbeef`);
+    await expect(page.locator('.sp-codes-msg')).toContainText('THAT IS A SAVE CODE');
+    await expect(page.locator('.sp-codes-input')).toHaveValue('');
+    expect(redeems).toBe(0);
+    expect(await fits()).toBe(true);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-save-in-reward-${w}.png` });
+    await page.locator('.sp-close').click();
+
+    // a reward code, typed into the save box
+    await page.locator('[data-nav="settings"]:visible').first().click();
+    await sheet.waitFor({ state: 'visible' });
+    await page.getByLabel('Paste a save code').fill('GIFT-2026');
+    await page.getByRole('button', { name: 'RESTORE' }).click();
+    await expect(sheet.locator('.sp-save > .sp-msg')).toContainText('REWARD CODE');
+    expect(await fits()).toBe(true);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-reward-in-save-${w}.png` });
+  });
+}
