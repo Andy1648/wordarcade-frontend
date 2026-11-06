@@ -1,5 +1,5 @@
 /* RatesPop.css — the ODDS button + popup (RatesPop.jsx): out of RollScreen.css so the shop's GEMS shelf (paid gems,
-   PaidGemsShelf.jsx) shows the SAME odds popup without the roll screen's stylesheet. The roll screen's own placement
+   BuyGems.jsx) shows the SAME odds popup without the roll screen's stylesheet. The roll screen's own placement
    tweaks (.rs-opts .rs-rates-btn, the phone's disc-only button) stay in RollScreen.css. nov4 merge: main's #647 block
    (the i disc, the pity guarantees, the popup always portaled to the body above every layer). */
 .rs-rates-btn {

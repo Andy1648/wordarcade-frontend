@@ -116,3 +116,11 @@
   opacity: 0;
   transform: translate(-50%, 0);
 }
+
+/* the buy-gems "+" sits inside the pill's right end, and the figure moves left of it (fit() shrinks a long one to the room) */
+.kp-body > .gems-plus { position: absolute; z-index: 2; right: 0; top: 50%; margin-top: -22px; } /* z-index: above the menu chip's 44 px hit layer */
+.kp.has-plus .kp-body .kp-box .kp-numwrap { right: 42px; }
+/* the menu rail's pill is narrow: a smaller face, a tab on the pill's end, leaves the figure its room ("1,740" must fit) */
+.hp-rail .kp-body > .gems-plus { right: calc(max(8 * var(--u), 8px) - 22px); } /* its face's centre, in from the pill's end (the button itself stays 44 px) */
+.hp-rail .gems-plus-face { width: max(24px, calc(24 * var(--u))); height: max(24px, calc(24 * var(--u))); border-width: 2px; font-size: var(--fs-k18); }
+.hp-rail .kp.has-plus .kp-body .kp-box .kp-numwrap { right: max(22px, calc(22 * var(--u))); }
