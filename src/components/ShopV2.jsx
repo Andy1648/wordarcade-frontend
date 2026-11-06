@@ -56,12 +56,10 @@ const SHOP_SHELVES = PAYMENTS_ON ? [...SHELVES, ['gems', 'GEMS', '/wheel/prize-g
 const SHOP_ART = SHOP_ITEM_ART;
 
 const NOTE = {
-  nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
   soon: 'SEALED ROLLS OPEN SOON',
   offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
   budget: 'NOT YET — PLAY A LITTLE MORE',
-  gems: 'PLAY A GAME TO EARN GEMS',
-  sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
+  sold_out: 'SOLD OUT',
   not_sold: 'NOT IN THE SHOP ANYMORE',
 };
 
@@ -90,7 +88,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef 
   const deal = !it.ticket && V3.stock.dealOf(now) === it.id;
   const price = it.ticket ? it.price : V3.stock.stockPrice(it.id, now);
   // CAN-AFFORD (oct29 shop functionality): a card you can buy now keeps its lit price; one you can't says how many
-  // gems short you are on the price itself, in red, the art still lit (the tap answers with the deny shake + the gems pill + where to earn)
+  // gems short you are on the price itself, in red, the art still lit (the tap answers with the deny shake + the gems pill)
   const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
@@ -141,7 +139,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef 
 
 /**
  * THE DAILY CHEST as a SHELF ITEM (Andy oct10: "make the daily chest an item (like the other boosts and it has another
- * popup for the user to click)"): the first BOOSTS card — the chest art, FREE, ONCE A DAY — and a tap opens the chest
+ * popup for the user to click)"): the first BOOSTS card — the chest art, FREE — and a tap opens the chest
  * POPUP (the DailyDrop tap-to-open flow, unchanged). Claimed today: the CLAIMED stamp + the countdown to midnight.
  * A dot while it is ready (Andy: badges are a plain dot).
  */
@@ -168,7 +166,6 @@ function DailyChestCard({ now, onOpen }) {
           <img className="sp2-chest-paint" src={CHEST_ART} width="256" height="256" alt="" draggable="false" />
         </span>
         <span className="sp2-big">CHEST</span>
-        <span className="sp2-what">ONCE A DAY</span>
         <span className="sp2-price">{claimed ? D.formatCountdown(D.msToReset(now)) : 'FREE'}</span>
       </span>
     </KitStampCard>
@@ -313,7 +310,7 @@ export default function ShopV2({ onBack }) {
     if (buying.current) return;
     const short = it.price - getGems();
     if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
-    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); setNote(NOTE.gems); return; }
+    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); return; }
     buying.current = true;
     // the server sells it: the card says it heard the tap while the answer travels (CSS holds this for 150 ms, so a fast answer never flickers)
     const card = cards.current[it.id];
@@ -324,7 +321,7 @@ export default function ShopV2({ onBack }) {
     if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') { gemsPill.current?.deny(r.short || short); setNote(NOTE.gems); }
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short || short);
       else if (r.reason === 'sold_out') { setLeft(V3.stock.setStockLeft(it.id, 0)); setNote(NOTE.sold_out); }
       else setNote(NOTE[r.reason] || NOTE.offline);
       return;
@@ -342,7 +339,7 @@ export default function ShopV2({ onBack }) {
     setLeft(r.left);
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') { gemsPill.current?.deny(r.short); setNote(NOTE.gems); }
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short);
       else setNote(NOTE[r.reason] || null);
       return;
     }

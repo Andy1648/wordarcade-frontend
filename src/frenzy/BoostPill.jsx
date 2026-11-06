@@ -4,10 +4,10 @@
 // infinite loop.
 //
 // Rebirth Rush: OVERDRIVE (overdrive.js — gear / shop / drop / code, never random since oct20) rides the SAME slot, as a bigger
-// pink "OVERDRIVE ×10 · 4:59" pill in front of the boost pill — every surface that shows a boost shows it
+// pink "OVERDRIVE ×3 · 4:59" pill in front of the boost pill — every surface that shows a boost shows it
 // with no new fixed UI. The boost pill names the CODE boost alone (codeBoostMult), so the two never
 // double-count (boostMult() now folds OVERDRIVE in).
-import { boostRemaining, codeBoostMult } from '../progress/boost.js';
+import { boostRemaining, codeBoostMult, readBoostSlot } from '../progress/boost.js';
 import { overdriveRemaining, OVERDRIVE_MULT } from '../progress/overdrive.js';
 import { formatFrenzy } from '../progress/frenzy.js';
 import { formatNum } from '../format.js';
@@ -41,7 +41,7 @@ function CodeBoostPill({ className = '' }) {
   const m = codeBoostMult();
   return (
     <span className={`boost-pill${ending ? ' is-ending' : ''} ${className}`} role="status" aria-label={`Boost times ${m} for ${formatFrenzy(ms)}`}>
-      <span className="boost-pill-name">BOOST ×{formatNum(m)}</span>
+      <span className="boost-pill-name">{readBoostSlot()?.od ? 'OVERDRIVE' : 'BOOST'} ×{formatNum(m)}</span>
       <span className="boost-pill-clock">{formatFrenzy(ms)}</span>
     </span>
   );

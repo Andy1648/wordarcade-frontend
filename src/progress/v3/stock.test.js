@@ -1,5 +1,5 @@
 // stock.test.js — the SHOP's STOCK (season 2, P3): 6 gem-priced items, ×N LEFT per 5-minute window, SOLD OUT, the
-// timed effects (+25% XP, ×2 LUCK), ×10 OVERDRIVE (a boost), the EVERYTHING BOOST (XP + WINS + LUCK), and the visual-only
+// timed effects (+25% XP, ×2 LUCK), ×3 OVERDRIVE (a boost), the EVERYTHING BOOST (XP + WINS + LUCK), and the visual-only
 // FREE EPIC+ ROLL. The flag is set before any import (node --test runs each file in its own process).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,7 +51,7 @@ test('a buy costs GEMS, takes one unit, and SELLS OUT; the next window restocks'
   assert.equal(r.gems, 2000 - p);
   assert.equal(G.getGems(), 2000 - p);
   assert.equal(r.left.overdrive, 1);
-  assert.equal(BO.codeBoostMult(T0 + 1000), 15, '×15 OVERDRIVE is a ×15 boost (Andy nov4; was ×5)');
+  assert.equal(BO.codeBoostMult(T0 + 1000), 3, 'OVERDRIVE is a ×3 boost (Andy nov6)');
   assert.ok(BO.boostRemaining(T0) <= 5 * 60000 && BO.boostRemaining(T0) > 4 * 60000);
   r = ST.buyStock('overdrive', T0 + 1000);
   assert.equal(r.ok, true);
@@ -115,14 +115,14 @@ test('EVERYTHING BOOST (Andy oct12): no running boost needed — starts XP + WIN
   for (const k of ['xp', 'wins', 'luck']) assert.equal(ST.stockFxLeft(k, T0), 10 * 60_000, k);
 });
 
-test('OVERDRIVE: ×15, a 2nd buy ADDS 5 MIN and stays ×15 — time stacks, the multiplier never does (Andy oct8; ×15 nov4)', () => {
+test('OVERDRIVE: ×3, a 2nd buy ADDS 5 MIN and stays ×3 — time stacks, the multiplier never does (Andy oct8)', () => {
   mem.clear();
   setGems(2000);
   ST.buyStock('overdrive', T0);
-  assert.equal(BO.codeBoostMult(T0 + 1000), 15);
+  assert.equal(BO.codeBoostMult(T0 + 1000), 3);
   assert.equal(BO.boostRemaining(T0), 5 * 60_000);
   ST.buyStock('overdrive', T0 + 60_000);
-  assert.equal(BO.codeBoostMult(T0 + 61_000), 15, 'still ×15, never ×225');
+  assert.equal(BO.codeBoostMult(T0 + 61_000), 3, 'still ×3, never ×9');
   assert.equal(BO.boostRemaining(T0), 10 * 60_000, '5 + 5 minutes');
 });
 
