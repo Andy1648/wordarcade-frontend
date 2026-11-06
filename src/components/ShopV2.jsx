@@ -47,8 +47,6 @@ const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollRev
 const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx'), 'ShopCosmetics');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
 const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp']]; // CODES moved to SETTINGS (Andy nov4)
-// PAID GEMS (Andy nov3; payments/, migration 082): a third shelf, GEMS — real-money gem packs. It exists ONLY with the
-// payments flag on (VITE_PAYMENTS_ON=1; default OFF, so the live shop is untouched); the shelf is its own lazy chunk.
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
