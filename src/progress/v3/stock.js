@@ -7,10 +7,9 @@
 //   COMMON     +25% WINS · 10 MIN      60   ×5   → stockWinsMult() ×1.25 on WINS / WORD (wins.js perWordFactors.boost)
 //   RARE       ×2 LUCK · 15 MIN        120  ×3   → stockLuckMult() ×2 on roll luck (v3/unlocks.js unlockLuckMult)
 //   (×2 GEM DROPS removed — Andy oct6: "Do NOT scale gems"; the gem earn table stays exactly FINAL's)
-//   EPIC       ×10 OVERDRIVE           750  ×2   → ×10 on XP AND WINS for 5 min (Andy oct8: "they do SO MUCH — they should
-//                                                  def cost more gems": 225 → 750, ten rolls' worth — the premium boost). A 2nd buy while it runs ADDS 5 MIN
-//                                                  and stays ×10 (Andy oct8: "time stacks") — written to boost slot 1
-//                                                  directly, never the R3 2nd slot (that multiplied ×10 × ×10 = ×100)
+//   EPIC       ×3 OVERDRIVE            300  ×2   → ×3 on XP AND WINS for 5 min (overdrive.js OVERDRIVE_MULT). A 2nd buy while it runs ADDS 5 MIN
+//                                                  and stays ×3 (Andy oct8: "time stacks") — written to boost slot 1
+//                                                  directly, never the R3 2nd slot (that multiplied it by itself)
 //   RARE       +5 MIN BOOSTS           150  ×2   → +5 min on the running XP / WINS / LUCK boosts ONLY — never OVERDRIVE
 //                                                  (Andy oct8)
 //   EPIC       SEALED EPIC+ ROLL       500  ×2   → a SERVER ticket (065 lb_ticket_buy) — guaranteed EPIC or better
@@ -21,7 +20,7 @@
 // gemsCore.js only (never hooks.js / unlocks.js — they import THIS).
 import { SEASON2 } from '../season.js';
 import { S2_PREFIX } from './store.js';
-import { announceTimers } from '../boost.js';
+import { announceTimers, readBoostSlot } from '../boost.js';
 import { OVERDRIVE_MULT } from '../overdrive.js';
 import { loadGemState, saveGemState, tellBalance } from '../gemsCore.js';
 
@@ -39,16 +38,15 @@ export const STOCK = [
   { id: 'xp25', rarity: 'common', icon: 'levels', name: 'XP BOOST', big: '+50%', what: 'XP PER KEY', time: '10 MIN', price: 45, max: 5, fx: 'xp', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50% (id kept: saves)
   { id: 'wins25', rarity: 'common', icon: 'wins', name: 'WINS BOOST', big: '+50%', what: 'WINS PER WORD', time: '10 MIN', price: 60, max: 5, fx: 'wins', mult: 1.5, min: 10 }, // Andy oct10: +25% → +50%
   { id: 'luck2', rarity: 'rare', icon: 'luck', name: 'LUCK BOOST', big: '×2', what: 'ROLL LUCK', time: '15 MIN', price: 120, max: 3, fx: 'luck', mult: 2, min: 15 },
-  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: `×${OVERDRIVE_MULT}`, what: 'XP + WINS · EVERYTHING', time: '5 MIN · BUY AGAIN = +5 MIN', price: 300, max: 2, boost: { mult: OVERDRIVE_MULT, min: 5 } } /* nov4: ×15 (overdrive.js OVERDRIVE_MULT) */,
+  { id: 'overdrive', rarity: 'epic', icon: 'overdrive', name: 'OVERDRIVE', big: `×${OVERDRIVE_MULT}`, what: 'XP + WINS', time: '5 MIN', price: 300, max: 2, boost: { mult: OVERDRIVE_MULT, min: 5 } },
   // Andy oct12: EVERYTHING BOOST — was TIME BOOST (+5 MIN on a running boost, useless with none). Now it STARTS the XP,
   // WINS and LUCK boosts together for 5 min (a running one gains 5 min). Never OVERDRIVE. id kept (saves' stock counts).
-  { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN · NOT OVERDRIVE', price: 150, max: 2, all: 5 },
+  { id: 'extend', rarity: 'rare', icon: 'clock', name: 'EVERYTHING BOOST', big: 'ALL 3', what: 'XP +50% · WINS +50% · LUCK ×2', time: '5 MIN', price: 150, max: 2, all: 5 },
   // 065 SEALED ROLL (Andy oct24; 069 oct26: EPIC+ only, 500): a guaranteed EPIC+ gear roll. NOT bought here: the SERVER sells it
   // (lb_ticket_buy — price, hourly stock and the floor are its own; rollTickets.js TICKET_SHOP mirrors them) and the shop
   // card routes the tap there (buyStock answers 'ticket'). the card draws the vessel (VesselArt). NO tagline (Andy oct25:
   // too much writing) — the art + tier word + price carry it; new-gear-first stays a quiet server behaviour.
-  // design research move 6: a bundle states its GUARANTEED floor in words, not just the tier name
-  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', what: 'OR BETTER · GUARANTEED', price: 500, max: 2 },
+  { id: 'epicroll', rarity: 'epic', ticket: 'epic', name: 'SEALED ROLL', big: 'EPIC+', what: 'GUARANTEED', price: 500, max: 2 },
 ];
 export const RARITY = {
   common: { name: 'COMMON', line: '#A9B4C8', fill: '#262b38' },
@@ -154,12 +152,13 @@ function liveTimers(now) {
 /** Is an XP / WINS / LUCK boost running (the +5 MIN item needs one)? */
 export const anyTimerLive = (now = Date.now()) => liveTimers(now).length > 0;
 
-/** OVERDRIVE: ×5 (Andy oct11) in boost slot 1. A buy while it runs ADDS its minutes and stays ×5 — time stacks, the multiplier
- *  never does (the R3 2nd slot is for code boosts; an OVERDRIVE there multiplied ×10 × ×10). */
+/** OVERDRIVE in boost slot 1. A buy while it runs ADDS its minutes and stays at its × — time stacks, the multiplier
+ *  never does (the R3 2nd slot is for code boosts; an OVERDRIVE there multiplied by itself). od marks it (a code ×3 is a BOOST). */
 function startOverdrive(mult, min, now) {
-  const cur = readJson(BOOST1_KEY);
-  const live = cur && num(cur.until) > now && num(cur.mult) > 1;
-  const next = { until: (live ? num(cur.until) : now) + min * 60000, mult: live ? Math.max(num(cur.mult), mult) : mult };
+  const cur = readBoostSlot();
+  const live = cur && cur.until > now;
+  const next = { until: (live ? cur.until : now) + min * 60000, mult: live ? Math.max(cur.mult, mult) : mult };
+  if (next.mult === mult) next.od = 1;
   if (!writeJson(BOOST1_KEY, next)) return false;
   announceTimers();
   return true;

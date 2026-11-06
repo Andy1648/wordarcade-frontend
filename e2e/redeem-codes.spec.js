@@ -106,7 +106,7 @@ for (const [w, h, query] of [[1920, 1080, ''], [1366, 768, ''], [1280, 551, ''],
     await expect(await redeem(page, 'nope')).toHaveText("THAT CODE DOESN'T EXIST");
     await page.waitForTimeout(350); // the shake is over
     await check();
-    await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×15 · 5 MIN — STARTED');
+    await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×3 · 5 MIN — STARTED');
     await page.waitForTimeout(350);
     await check();
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/settings-${w}x${h}${query ? '-google' : ''}-redeemed.png` });
@@ -207,7 +207,7 @@ test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', a
 });
 
 // ---- Andy oct10 (migration 030): GEMS + OVERDRIVE codes — applied at redeem ----
-test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×15 for its minutes', async ({ page }) => {
+test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×3 for its minutes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page);
   await openSettings(page);
@@ -215,9 +215,9 @@ test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts �
   const g0 = await gems();
   await expect(await redeem(page, 'gemrain')).toHaveText('+150 GEMS — ADDED');
   await expect.poll(gems).toBe(g0 + 150);
-  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×15 · 5 MIN — STARTED');
+  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×3 · 5 MIN — STARTED');
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
-  expect(boost && boost.mult).toBe(15); // nov4: OVERDRIVE ×15
+  expect(boost && boost.mult).toBe(3); // nov6: OVERDRIVE ×3
   expect(boost.until - Date.now()).toBeGreaterThan(4 * 60_000);
   await expect(await redeem(page, 'GEMRAIN')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
   expect(await gems(), 'never twice').toBe(g0 + 150);

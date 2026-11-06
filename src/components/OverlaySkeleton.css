@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(13, 6, 24, 0.72);
+  background: var(--scrim);
   animation: ovsk-in 120ms ease-out 150ms 1 both; /* nov6: a chunk that lands inside 150 ms never flashes a skeleton */
 }
 @keyframes ovsk-in { from { opacity: 0; } to { opacity: 1; } }

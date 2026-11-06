@@ -41,7 +41,7 @@ function sndOpen(tier) {
   [0, 1, 2].forEach((k) => tone(t + k * 0.09, { freq: pentFreq(NOTE.C5 + tier + k * 2), type: 'triangle', dur: 0.16, gain: 0.16, attack: 0.005 }));
 }
 
-/** What tier `i` pays: the gem icon + "+15 GEMS", or the OVERDRIVE icon + "OVERDRIVE ×15 · 5 MIN" (`full`) / "×15 · 5 MIN". */
+/** What tier `i` pays: the gem icon + "+15 GEMS", or the OVERDRIVE icon + "OVERDRIVE ×3 · 5 MIN" (`full`) / "×3 · 5 MIN". */
 function PayLine({ i, full = false, size = 20 }) {
   const t = V3.drop.DROP_TIERS[i];
   if (t.pay.gems) {
@@ -160,7 +160,6 @@ export default function DailyDrop({ now }) {
   const lit = phase === 'claimed' ? -1 : tier ?? -1; // the tier row fills up to the climb; CLAIMED shows the reward
   const taps = climb ? climb.taps : 0;
   const msLeft = D.msToReset(now);
-  const sub = phase === 'ready' ? 'FREE · ONCE A DAY' : phase === 'opening' ? (taps ? 'KEEP TAPPING' : 'TAP TO CLIMB') : 'COME BACK TOMORROW';
   const label = phase === 'ready'
     ? 'Daily free drop, ready. Tap to open'
     : phase === 'opening'
@@ -187,7 +186,7 @@ export default function DailyDrop({ now }) {
         </span>
         {odds ? (
           <span className="dd-odds">
-            <span className="dd-odds-h">DROP ODDS · WHAT EACH PAYS</span>
+            <span className="dd-odds-h">DROP ODDS</span>
             <span className="dd-odds-list" role="list" aria-label="Drop odds">
               {TIERS.map((t, i) => (
                 <span key={t.id} className="dd-odd" role="listitem" style={{ '--dd-c': t.color }}>
@@ -202,7 +201,6 @@ export default function DailyDrop({ now }) {
           <>
             <span className="dd-head">
               <span className="dd-big" ref={bigRef}>{phase === 'ready' ? 'DAILY DROP' : T.name}</span>
-              <span className="dd-sub">{sub}</span>
             </span>
             {phase === 'claimed' ? (
               <span className="dd-reward" aria-live="polite">

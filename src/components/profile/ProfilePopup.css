@@ -1,6 +1,6 @@
 /* ProfilePopup — one card: hero on the left, you on the right; on a phone it stacks. Flat panels, colored outlines,
    hard black shadows (house style). Sizes ride the kit tokens; the card scrolls inside itself, never the page. */
-.pf-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .84); }
+.pf-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: var(--scrim); }
 .pf {
   position: relative; width: min(980px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px;
   background: #1a0b2e; border: 5px solid var(--pf-d); border-radius: 8px; box-shadow: 10px 10px 0 #000;
