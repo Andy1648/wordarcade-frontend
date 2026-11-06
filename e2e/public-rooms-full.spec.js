@@ -31,8 +31,8 @@ test('a full public room shows FULL and cannot be joined; an open one stays join
   await expect(fullRow).toBeDisabled();
   await expect(fullRow.locator('.browser-row-status')).toHaveText('FULL');
 
-  // The open room is a normal, enabled row (clutter pass: no "WAITING" status — only FULL / JOINING… print).
+  // The open room is a normal, enabled row whose action reads JOIN (SPECTATE nov4: IN LOBBY → JOIN / PLAYING → SPECTATE).
   const openRow = page.locator('.browser-row:not(.is-full)').first();
   await expect(openRow).toBeEnabled();
-  await expect(openRow.locator('.browser-row-status')).toHaveCount(0);
+  await expect(openRow.locator('.browser-row-status')).toHaveText('JOIN');
 });

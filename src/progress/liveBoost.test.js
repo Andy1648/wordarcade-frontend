@@ -18,3 +18,19 @@ test('liveBoostRemaining: the ×10 item boost counts even with no Rebirth Rush o
   store.set('taw.overdrive', JSON.stringify({ playMs: 0, nextMs: null, until: T + 400_000 }));
   assert.equal(liveBoostRemaining(T), 400_000, 'the longer of the two wins');
 });
+
+test('a slot written during the ×15 weeks keeps its clock and runs at ×3, named OVERDRIVE; a ×3 code stays a BOOST', async () => {
+  const { activeBoosts } = await import('./liveBoost.js');
+  const { codeBoostMult, boostMult } = await import('./boost.js');
+  const T = 1_800_000_000_000;
+  const row = () => activeBoosts(T).find((b) => b.id === 'boost1');
+  const set = (o) => globalThis.localStorage.setItem('taw.boost', JSON.stringify(o));
+  set({ until: T + 200_000, mult: 15 });
+  assert.equal(codeBoostMult(T), 3);
+  assert.equal(boostMult(T), 3);
+  assert.deepEqual([row().name, row().mult, row().ms], ['OVERDRIVE', '×3', 200_000]);
+  set({ until: T + 200_000, mult: 3 }); // the TRIPLE code
+  assert.deepEqual([row().name, row().mult], ['BOOST', '×3']);
+  set({ until: T + 200_000, mult: 3, od: 1 }); // the shop / drop / an OVERDRIVE code
+  assert.deepEqual([row().name, row().mult], ['OVERDRIVE', '×3']);
+});

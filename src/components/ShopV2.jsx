@@ -37,7 +37,6 @@ import { SHOP_ITEM_ART } from '../progress/boostArt.js';
 import { lastSpunDay, wheelNeed, WHEEL_CHANGE } from '../progress/wheelDot.js';
 import { localDayIndex } from '../progress/streak.js';
 import { lifetimeGameWords } from '../progress/rebirthWords.js';
-import { PAYMENTS_ON } from '../payments/flag.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel');
@@ -50,8 +49,6 @@ const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx')
 const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp']]; // CODES moved to SETTINGS (Andy nov4)
 // PAID GEMS (Andy nov3; payments/, migration 082): a third shelf, GEMS — real-money gem packs. It exists ONLY with the
 // payments flag on (VITE_PAYMENTS_ON=1; default OFF, so the live shop is untouched); the shelf is its own lazy chunk.
-const PaidGemsShelf = lazyWithReload(() => import('./PaidGemsShelf.jsx'), 'PaidGemsShelf');
-const SHOP_SHELVES = PAYMENTS_ON ? [...SHELVES, ['gems', 'GEMS', '/wheel/prize-gems-s.webp']] : SHELVES;
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
@@ -60,12 +57,10 @@ const SHOP_SHELVES = PAYMENTS_ON ? [...SHELVES, ['gems', 'GEMS', '/wheel/prize-g
 const SHOP_ART = SHOP_ITEM_ART;
 
 const NOTE = {
-  nothing: 'NO BOOST RUNNING — NOTHING TO EXTEND',
   soon: 'SEALED ROLLS OPEN SOON',
   offline: 'SEALED ROLLS NEED YOU ONLINE WITH A NAME',
   budget: 'NOT YET — PLAY A LITTLE MORE',
-  gems: 'PLAY A GAME TO EARN GEMS',
-  sold_out: 'SOLD OUT — RESTOCKS ON THE TIMER',
+  sold_out: 'SOLD OUT',
   not_sold: 'NOT IN THE SHOP ANYMORE',
 };
 
@@ -94,7 +89,7 @@ function StockCard({ it, left, onBuy, floatRef, gems, now, bought = 0, shineRef 
   const deal = !it.ticket && V3.stock.dealOf(now) === it.id;
   const price = it.ticket ? it.price : V3.stock.stockPrice(it.id, now);
   // CAN-AFFORD (oct29 shop functionality): a card you can buy now keeps its lit price; one you can't says how many
-  // gems short you are on the price itself, in red, the art still lit (the tap answers with the deny shake + the gems pill + where to earn)
+  // gems short you are on the price itself, in red, the art still lit (the tap answers with the deny shake + the gems pill)
   const short = !sold && !soon ? Math.max(0, price - gems) : 0;
   return (
     <KitStampCard
@@ -178,7 +173,6 @@ function DailySpinCard({ now, onOpen }) {
           <img className="sp2-chest-paint" src="/wheel/icon.webp" width="256" height="256" alt="" draggable="false" />
         </span>
         <span className="sp2-big">WHEEL</span>
-        <span className="sp2-what">ONCE A DAY</span>
         <span className="sp2-price">{face}</span>
       </span>
     </KitStampCard>
@@ -323,14 +317,18 @@ export default function ShopV2({ onBack }) {
     if (buying.current) return;
     const short = it.price - getGems();
     if (left[it.id] <= 0) { fx(cards.current[it.id], FX.deny); setNote(NOTE.sold_out); return; }
-    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); setNote(NOTE.gems); return; }
+    if (short > 0) { fx(cards.current[it.id], FX.deny); gemsPill.current?.deny(short); return; }
     buying.current = true;
+    // the server sells it: the card says it heard the tap while the answer travels (CSS holds this for 150 ms, so a fast answer never flickers)
+    const card = cards.current[it.id];
+    if (card) card.classList.add('is-busy');
     const r = await buyTicket(it.ticket);
+    if (card) card.classList.remove('is-busy');
     buying.current = false;
     if (Number.isFinite(r.left)) setLeft(V3.stock.setStockLeft(it.id, r.left));
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') { gemsPill.current?.deny(r.short || short); setNote(NOTE.gems); }
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short || short);
       else if (r.reason === 'sold_out') { setLeft(V3.stock.setStockLeft(it.id, 0)); setNote(NOTE.sold_out); }
       else setNote(NOTE[r.reason] || NOTE.offline);
       return;
@@ -348,7 +346,7 @@ export default function ShopV2({ onBack }) {
     setLeft(r.left);
     if (!r.ok) {
       fx(cards.current[it.id], FX.deny);
-      if (r.reason === 'gems') { gemsPill.current?.deny(r.short); setNote(NOTE.gems); }
+      if (r.reason === 'gems') gemsPill.current?.deny(r.short);
       else setNote(NOTE[r.reason] || null);
       return;
     }
@@ -441,8 +439,8 @@ export default function ShopV2({ onBack }) {
 
         <section className="sp2-stock" aria-label="Boosts">
           <div className="sp2-stock-head">
-            <div className="sp2-tabs" role="tablist" aria-label="Shop shelves" data-n={SHOP_SHELVES.length}>
-              {SHOP_SHELVES.map(([k, label, icon]) => (
+            <div className="sp2-tabs" role="tablist" aria-label="Shop shelves" data-n={SHELVES.length}>
+              {SHELVES.map(([k, label, icon]) => (
                 <button key={k} type="button" role="tab" aria-selected={shelf === k} className={`sp2-tab${shelf === k ? ' is-on' : ''}`} data-shelf={k}
                   onClick={() => setShelf(k)}>
                   <img className="sp2-tab-ico" src={icon} width="256" height="256" alt="" aria-hidden="true" draggable="false" />
@@ -455,7 +453,6 @@ export default function ShopV2({ onBack }) {
           </div>
           {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
           {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
-          {PAYMENTS_ON && shelf === 'gems' ? <div className="sp2-shelf sp2-shelf-gems"><Suspense fallback={null}><PaidGemsShelf /></Suspense></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             <div className="sp2-cell is-chest">
               <DailySpinCard now={now} onOpen={() => { sndPurchase(); setSpin(true); }} />

@@ -88,10 +88,9 @@ test('buying moves the line: 100 gems → buy XP (45) → WINS (60) is now NEED 
   await expect(shop.getByTestId('short-wins25')).toHaveText('NEED 5');
 });
 
-test("tapping a card you can't afford shakes it and says where gems come from — nothing is bought", async ({ page }) => {
+test("tapping a card you can't afford shakes it — nothing is bought", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const shop = await boot(page, 100);
   await card(shop, 'luck2').click();
-  await expect(shop.locator('.sp2-note')).toContainText('PLAY A GAME TO EARN GEMS');
   await expect(shop.getByTestId('short-luck2')).toHaveText('NEED 20');
 });

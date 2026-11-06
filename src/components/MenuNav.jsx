@@ -46,7 +46,7 @@ export function MenuIcons({ board, ach, achSlot = null, settingsSlot = null, new
           className="homepage-nav-btn hp-m-navbtn is-board"
           data-nav="leaderboard"
           tag={board.rank ? `#${formatNum(board.rank)}` : undefined}
-          dot={board.news || undefined}
+          /* nov3 HONEST DOTS (design move 16): no dot for "your rank went up" — news, not a reward; the label still says it */
           disabled={navigating}
           onClick={board.onClick}
           ariaLabel={`Open leaderboard${board.myRank ? ` — you're #${formatNum(board.myRank)}` : ''}${board.news ? ' — your rank went up' : ''}`}
@@ -318,7 +318,9 @@ export function subChip(x) {
   const key = x.kind === 'critRatePct' ? 'RATE' : x.kind === 'critPower' ? 'PWR' : '';
   return { n, icon, key, label: t };
 }
-export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }) {
+// nov3 HONEST DOTS (design move 16): an empty slot's dot shows only when the visit pays — a gear to EQUIP, or a roll
+// you can take (Homepage decides: `dot`). A dot that lies once trains the player to ignore them all.
+export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1, dot = false }) {
   const two = slot === 2; // the 2ND GEAR, unlocked (Andy oct11 "i want it to be the same as the first gear")
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
@@ -384,7 +386,7 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
           ) : null}
         </span>
       </span>
-      {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
+      {dot && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
     </button>
   );
 }
@@ -395,9 +397,9 @@ export function MenuGearSlot({ mark, owns = false, onClick, disabled, slot = 1 }
  * boosts, in the gear's tier frame. Below R5: a padlock + "R5" (a tap opens REBIRTH, where the unlock lives). Unlocked
  * and empty: NONE / EQUIP ONE + a dot. A tap opens the EQUIP screen in slot-2 mode. Static (the showcase is slot 1's).
  */
-export function MenuGearSlot2({ mark, locked = null, onClick, disabled }) {
+export function MenuGearSlot2({ mark, locked = null, onClick, disabled, dot = false }) {
   // UNLOCKED: the same full slot as YOUR GEAR (name plate, big stat, substat chips, glow, showcase) — Andy oct11
-  if (!locked) return <MenuGearSlot mark={mark} owns onClick={onClick} disabled={disabled} slot={2} />;
+  if (!locked) return <MenuGearSlot mark={mark} owns onClick={onClick} disabled={disabled} slot={2} dot={dot} />;
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   const stat = mark ? gearSplit(mainTag(mark.id) || mark.blurb || mark.name) : null;
@@ -442,13 +444,13 @@ export function MenuGearSlot2({ mark, locked = null, onClick, disabled }) {
           )}
         </span>
       </span>
-      {!locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
+      {dot && !locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
     </button>
   );
 }
 
 /** The phone's 2ND GEAR chip (beside the GEAR chip): the worn gear's NAME, or a padlock + R5, or EQUIP + a dot. */
-export function MenuGear2Chip({ mark, locked = null, onClick }) {
+export function MenuGear2Chip({ mark, locked = null, onClick, dot = false }) {
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
   return (
@@ -466,14 +468,14 @@ export function MenuGear2Chip({ mark, locked = null, onClick }) {
       <span className="hp-chip-k">2ND</span>
       {locked ? <KitIcon name="lock" size={18} shadow={1} extras={false} className="hp-chip-lock" /> : null}
       <span className="menu-mark-name">{locked ? locked : mark ? mark.name : 'EQUIP'}</span>
-      {!locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
+      {dot && !locked && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
     </button>
   );
 }
 
 /** The worn mark, NAME ONLY — or, while nothing is worn, "ROLL" + a notification dot (it opens the ROLL screen). It
  *  wears the YOUR GEAR slot's TIER FRAME (Andy oct9): the edge stripe, border and shadow in the tier colour. */
-export function MenuMarkChip({ mark, owns = false, onClick }) {
+export function MenuMarkChip({ mark, owns = false, onClick, dot = false }) {
   const name = mark ? mark.name : owns ? 'EQUIP' : 'ROLL';
   const tier = mark ? (CARD_RAR[mark.tier] ? mark.tier : 'rare') : null;
   const rar = tier ? CARD_RAR[tier] : null;
@@ -490,7 +492,7 @@ export function MenuMarkChip({ mark, owns = false, onClick }) {
     >
       <span className="hp-chip-edge" aria-hidden="true" />
       <span className="menu-mark-name">{name}</span>
-      {!mark && <span className="hp-chip-dot" aria-hidden="true" />}
+      {dot && !mark && <span className="hp-chip-dot" aria-hidden="true" />}
     </button>
   );
 }

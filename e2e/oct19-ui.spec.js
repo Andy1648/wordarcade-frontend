@@ -81,6 +81,7 @@ for (const [w, h] of SIZES) {
     const hero = page.locator('.av3-hero');
     await expect(hero.locator('.av3-hero-label')).toHaveText('ALMOST');
     await expect(page.locator('.av3-lg-item.is-hero')).toHaveAttribute('data-gear', 'mk-grandmaster');
+    await page.evaluate(() => document.fonts && document.fonts.ready); // measured in the fallback font, the name can wrap onto the count
     const [label, badge, name, nums] = await Promise.all(['.av3-hero-label', '.av3-hero-badge', '.av3-hero-name', '.av3-hero-nums'].map((s) => box(hero.locator(s))));
     expect(apart(label, badge), 'ALMOST vs the badge').toBe(true);
     expect(apart(badge, name), 'the badge vs the name').toBe(true);

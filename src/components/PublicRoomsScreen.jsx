@@ -1,7 +1,8 @@
 // PublicRoomsScreen.jsx
 // The unified JOIN ROOM screen. Two ways into a game, one screen:
 //   1. Type a room code at the top (the join-by-code flow), or
-//   2. Tap a room from the auto-refreshing public-games list below.
+//   2. Tap a room from the auto-refreshing public-games list below - a lobby (IN LOBBY → JOIN) or, SPECTATE
+//      (nov4), a live game (PLAYING → SPECTATE: onWatch, the read-only watch). Lobbies first.
 // Both paths send the SAME `join_room` (via onJoin) - App owns the messaging;
 // this screen is presentational + validation only and holds no game logic.
 //
@@ -41,6 +42,7 @@ export default function PublicRoomsScreen({
   name,
   onNameChange,
   onJoin,
+  onWatch,
   onRefresh,
   onCreatePublic,
   onBack,
@@ -88,7 +90,7 @@ export default function PublicRoomsScreen({
     }
   }, [serverError]);
 
-  function handleJoin(code) {
+  function handleJoin(code, watch = false) {
     if (joiningCode) return; // already committing to a join
     const trimmed = (name || '').trim();
     if (!trimmed) {
@@ -98,7 +100,8 @@ export default function PublicRoomsScreen({
     setLocalError('');
     sound.click();
     setJoiningCode(code);
-    onJoin(code, trimmed);
+    if (watch && onWatch) onWatch(code, trimmed);
+    else onJoin(code, trimmed);
   }
 
   function handleCodeChange(e) {
@@ -140,7 +143,11 @@ export default function PublicRoomsScreen({
   }
 
   const error = localError || serverError;
-  const isEmpty = !rooms || rooms.length === 0;
+  // lobbies first, then live games (each group in the server's order)
+  const list = (rooms || []).map((r, i) => ({ r, i }))
+    .sort((a, b) => ((a.r.status === 'playing') - (b.r.status === 'playing')) || a.i - b.i)
+    .map((x) => x.r);
+  const isEmpty = list.length === 0;
 
   return (
     <div className="browser-wrap" data-skin={SEASON2 ? 'v2' : undefined}>
@@ -272,32 +279,35 @@ export default function PublicRoomsScreen({
           </div>
         ) : (
           <ul className="browser-list">
-            {rooms.map((room) => {
+            {list.map((room) => {
               const joining = joiningCode === room.code;
-              const full = room.playerCount >= room.maxPlayers;
+              const live = room.status === 'playing';
+              const full = !live && room.playerCount >= room.maxPlayers;
+              const watchable = live && room.canSpectate !== false && !!onWatch;
+              const action = full ? 'FULL' : live ? (watchable ? 'SPECTATE' : 'NO SEATS') : 'JOIN';
               return (
                 <li key={room.code}>
                   <button
-                    className={`browser-row${full ? ' is-full' : ''}`}
+                    className={`browser-row${full ? ' is-full' : ''}${live ? ' is-live' : ''}`}
                     style={{ '--row-accent': gameColor(room.gameType) }}
-                    onClick={() => handleJoin(room.code)}
-                    disabled={!!joiningCode || full}
+                    onClick={() => handleJoin(room.code, live)}
+                    disabled={!!joiningCode || full || (live && !watchable)}
+                    data-testid="browser-room-row"
+                    data-status={live ? 'playing' : 'waiting'}
                   >
                     <span className="browser-row-main">
                       <span className="browser-row-game">{gameLabel(room.gameType)}</span>
-                      <span className="browser-row-code">#{room.code}</span>
+                      <span className="browser-row-code">
+                        #{room.code} · <span className={`browser-row-state${live ? ' is-live' : ''}`}>{live ? 'PLAYING' : 'IN LOBBY'}</span>
+                      </span>
                     </span>
                     <span className="browser-row-meta">
                       <span className={`browser-row-count${full ? ' full' : ''}`}>
                         {room.playerCount}/{room.maxPlayers}
                       </span>
-                      {/* CLUTTER PASS: no "WAITING" on every open row — a listed room is a waiting room;
-                          only FULL / JOINING… say something. */}
-                      {(full || joining) && (
-                        <span className="browser-row-status">
-                          {full ? 'FULL' : 'JOINING…'}
-                        </span>
-                      )}
+                      <span className="browser-row-status">
+                        {joining ? (live ? 'OPENING…' : 'JOINING…') : action}
+                      </span>
                     </span>
                   </button>
                 </li>

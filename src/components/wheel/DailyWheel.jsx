@@ -392,6 +392,10 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
   const bonusNow = s ? s.bonus : nextBonus(st.streak || 0);
   const canAd = WHEEL_AD_ON && st.adOn && rewardedReady() && (st.phase === 'done' || st.phase === 'landed') && !st.ad && s && s.kind === 'free';
   const cos = s && s.prize === 'cosmetic' && s.cosmetic ? kitById(s.cosmetic) : null;
+  const resSub = s ? [
+    s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : '',
+    s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? bonusText(s.bonus) : '',
+  ].filter(Boolean).join(' · ') : '';
 
   if (typeof document === 'undefined') return null;
   return createPortal(
@@ -463,7 +467,7 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
               </div>
             ) : null}
             {st.phase === 'ready' ? (
-              <KitButton tone="pink" label="SPIN" sub="EARNED TODAY" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
+              <KitButton tone="pink" label="SPIN" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
             ) : null}
             {st.phase === 'spinning' ? <p className="dw-msg">…</p> : null}
             {(st.phase === 'landed' || st.phase === 'done') && s ? (
@@ -471,21 +475,17 @@ export default function DailyWheel({ onClose, onPaid, onPlay }) {
                 <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
                 <span className="dw-result-t">
                   <span className="dw-result-l">{cos ? cos.name : resultText(shownSpin(s))}</span>
-                  <span className="dw-result-s">
-                    {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
-                    {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}
-                  </span>
+                  {resSub ? <span className="dw-result-s">{resSub}</span> : null}
                 </span>
               </div>
             ) : null}
-            {(st.phase === 'landed' || st.phase === 'done') ? <p className="dw-msg is-next">NEXT FREE SPIN TOMORROW</p> : null}
             {canAd ? <KitButton tone="cyan" label="WATCH AD" sub="+1 SPIN TODAY" labelSize={24} width={200} onClick={watchAd} /> : null}
           </div>
         </div>
 
         {odds ? (
           <div className="dw-odds" role="group" aria-label="Wheel odds">
-            <span className="dw-odds-h">WHAT THE WHEEL PAYS</span>
+            <span className="dw-odds-h">ODDS</span>
             <ul>
               {oddsRows().map((o) => (
                 <li key={o.slot} style={{ '--o-c': o.color }}>

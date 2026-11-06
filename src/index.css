@@ -168,6 +168,9 @@ html[data-view='game'] .screen-flash {
    POINTER DEVICES ONLY: a touch phone's native bar is an overlay that takes no layout room; any ::-webkit-scrollbar
    style turns it into a classic bar that EATS width (a 320px phone would lose 20px+ to gutters). */
 :root {
+  /* THE ONE MODAL DIM (nov6, Andy on dims "too unprofessional"): every full-screen modal dims the page by the same amount; they ran
+     from .55 to .88, so the menu read through some and not others. Hard stops (crash, connection lost) keep their own darker dim. */
+  --scrim: rgba(13, 6, 24, 0.86);
   --sb-thumb: var(--theme-ink, #FF4FA3);
   --sb-thumb-hover: var(--theme-xp-fill, #2EFFE0);
   --sb-track: transparent;

@@ -2,7 +2,9 @@
 // load). Back from Stripe (?paid=1) it POLLS — the webhook can land a few seconds after the redirect — and the bought gems
 // fly into the menu's gem pill like the wheel's: the pill holds them (gemsInFlight), six painted gems arc in from the
 // middle of the screen, and it counts each one in as it lands (Homepage's KitFlyLayer). Otherwise: one quiet fetch.
-import { collectPaid } from './payClient.js';
+import { collectPaid, readPayResume } from './payClient.js';
+import { readSession } from '../leaderboard/auth.js';
+import { openBuyGems } from '../components/gems/GemsPlus.jsx';
 import { bootSearch } from '../lib/featureFlags.js';
 
 // Stripe sends the payer back to /?paid=1 (api/_lib/pay.js success_url) — read as the page LOADED (the app tidies the bar).
@@ -23,5 +25,6 @@ export default function pickUpPaid(setGemsInFlight, setGemFly, poll = paidReturn
       window.history.replaceState(window.history.state, '', u.pathname + u.search + u.hash);
     } catch { /* cosmetic */ }
   }
+  if (readPayResume() && readSession()) openBuyGems(); // a purchase a sign-in's restore reloaded the page in the middle of
   return collectPaid({ poll, onCredit: fly });
 }

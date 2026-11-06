@@ -1,10 +1,10 @@
 // GoogleAccount.jsx — SIGN IN WITH GOOGLE (085, leaderboard/auth.js), the one button + the one account line every place
-// shares (SETTINGS → ACCOUNT, PROFILE, the shop's GEMS tab).
+// shares (SETTINGS → ACCOUNT, PROFILE, the buy-gems panel).
 //   GoogleButton     Google's own button (Google Identity Services draws it; the popup stays on this page). Its height is
 //                    Google's ~40 px, the one target under the 44 px floor; it can't be changed
 //   AccountLine      signed out: what signing in is for + the button · signed in: SIGNED IN · <email> + SIGN OUT
 //                    (the email shows only here, on this player's own device — the server never stores it)
-// Optional to play: nothing here blocks the game. The GEMS tab alone requires it (PaidGemsShelf).
+// Optional to play: nothing here blocks the game. Buying gems alone requires it (BuyGems).
 import { useEffect, useRef, useState } from 'react';
 import { authAvailable, readSession, renderGoogleButton, signOut, AUTH_CHANGE, AUTH_FAIL } from '../../leaderboard/auth.js';
 import './GoogleAccount.css';
@@ -64,7 +64,7 @@ export function GoogleButton({ className = '' }) {
       {phase === 'loading' ? <span className="gsi-load">LOADING GOOGLE…</span> : null}
       {phase === 'blocked' ? (
         <div className="gsi-blocked" role="status" data-testid="google-blocked">
-          <span className="gsi-blocked-t">GOOGLE IS BLOCKED HERE · SAVE CODE STILL WORKS</span>
+          <span className="gsi-blocked-t">GOOGLE IS BLOCKED · SAVE CODE WORKS</span>
           <button type="button" className="gsi-out" onClick={() => setTries((n) => n + 1)} data-testid="google-retry">RETRY</button>
         </div>
       ) : null}
