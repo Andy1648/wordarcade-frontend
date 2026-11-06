@@ -86,6 +86,9 @@ export const MARK_PERKS = {
   'mk-gauntlet': ['critKey10', 'freeOd'],
   'mk-grimoire': ['fortune', 'freeOd'],
   'mk-supernova': ['overdrive15', 'freeOd'],
+  // NEW GEARS nov3 — existing perks only
+  'mk-pinata': ['dropTwice', 'freeOd'],
+  'mk-megaton': ['critKey10', 'frenzyAll', 'freeOd'],
 };
 
 export const LETTERS_PERK_MULT = 2;

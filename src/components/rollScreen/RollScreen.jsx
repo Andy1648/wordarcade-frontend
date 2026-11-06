@@ -503,9 +503,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
           </button>
         </span>
-        <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
+        <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'} style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line, '--rs-tier-edge': CARD_RAR[cardTier(worn.tier)].edge } : undefined}>
           <span className="rs-equipped-k">EQUIPPED</span>
-          <span className="rs-equipped-v" style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line } : undefined}>{worn ? worn.tag : 'NONE'}</span>
+          <span className="rs-equipped-v">{worn ? worn.tag : 'NONE'}</span>
         </div>
         <h2 className="rs-title" aria-hidden="true">ROLL</h2>
         <div className="rs-topr">
