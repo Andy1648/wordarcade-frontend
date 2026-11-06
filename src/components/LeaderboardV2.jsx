@@ -6,7 +6,7 @@
 //   * THIS WEEK reads public.leaderboard_s2_weekly (024: ★ / rebirths / levels GAINED this ET week); until 024 runs it
 //     falls back to the live weekly view filtered to season-2 rows (words this week).
 //   * a WHITE PODIUM for the top 3 (vector blocks, the crown on #1), then ranks 4 … 10 in rows.
-//   * every name wears its v3 RANK plate (INKLING … ENDGAME — by rebirths, then ★; s2Board.rankPlate).
+//   * the podium wears each name's RANK LEAGUE (leagues.js — nov2: titles out, the board band is the rank).
 //   * ▲▼ = the place each player held the last time this browser looked at the same tab (a snapshot under taw.s2.).
 //   * YOUR row is lifted and pulses (a FINITE pulse when the board lands / the tab changes) — wherever you are: on the
 //     podium (top 3), in the list, or pinned under it with your real rank when you are past #10.
@@ -17,14 +17,14 @@ import { Fragment, Suspense, useCallback, useEffect, useLayoutEffect, useRef, us
 import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
-import { KitRankPlate } from './kit/KitRankPlate.jsx';
-import { shownPlateIndex } from '../progress/platePick';
+import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
+import { leagueOf, nextLeague } from '../leaderboard/leagues.js';
 import {
   boardCaps,
   fetchBoard,
   fetchView,
   fetchBoardCount,
-  fetchRowAbove,
+  fetchNeighbours,
   topPercent,
   getMyProfile,
   submitStats,
@@ -40,7 +40,7 @@ import {
   rankBand,
 } from '../leaderboard/client.js';
 import { nameVerdict } from '../leaderboard/nameFilter.js';
-import { rankPlate, boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
+import { boardMoves, boardSnapshot, hasEarned } from '../leaderboard/s2Board.js';
 import { useMomentHold } from '../lib/useMomentSlot';
 import { formatNum } from '../format';
 import CastArt from '../cast/CastArt.jsx';
@@ -112,14 +112,6 @@ function Prize({ rank, pod = false }) {
       +{fmt(g)}
     </span>
   );
-}
-
-// P9a: every name wears its SHAPED v3 plate (KitLevelUp.dc.html 03 — kit/KitRankPlate, FIT mode for a dense list).
-function Plate({ row, className = '', mine = false }) {
-  const base = rankPlate(row);
-  // YOUR row / podium spot shows the plate you picked in SETTINGS (Andy oct8) — any rank already reached
-  const p = mine ? { ...base, i: shownPlateIndex(base.i) } : base;
-  return <KitRankPlate rank={p.i} fit shine={false} className={`lb2-plate ${className}`} />;
 }
 
 function Move({ n }) {
@@ -318,6 +310,16 @@ const softBreak = (name) => String(name == null ? '' : name).split(/(?<=[_-])/).
 
 /** The closest board band above a rank: past #100 → TOP 100, #51–100 → TOP 50, #26–50 → TOP 25, #11–25 → TOP 10. */
 const nearestBand = (rank) => (rank > 100 ? 100 : rank > 50 ? 50 : rank > 25 ? 25 : 10);
+// the NEXT GOAL a chase line names: on ALL TIME the next RANK LEAGUE up ("11 TO TITAN" - nov2, the dividers are leagues
+// now, so the chase speaks the same language); THIS WEEK keeps its TOP-N band (the week board has no leagues)
+const climbGoal = (rank, wk) => {
+  if (!wk) {
+    const nl = nextLeague(rank);
+    if (nl) return { n: nl.places, to: nl.league.name };
+  }
+  const b = nearestBand(rank);
+  return { n: rank - b, to: `TOP ${b}` };
+};
 
 export default function LeaderboardV2({ onBack }) {
   useMomentHold(true); // no queued moment starts under the board
@@ -348,10 +350,10 @@ export default function LeaderboardV2({ onBack }) {
       // THE GHOST (Andy nov2 climb pick 3): past the board, the player ranked right above you rides in over your row,
       // so even #2,000 has someone to PASS
       const meR = b.me ? Number(b.me.rank) : 0;
-      const ghost = meR > BOARD_SIZE + 1 ? await fetchRowAbove(meR) : null;
+      const near = meR > BOARD_SIZE + 1 ? await fetchNeighbours(meR, 2) : null;
       const moves = boardMoves([...b.rows, ...(b.me ? [b.me] : [])], readSeen().all);
       writeSeen('all', boardSnapshot(b.rows, b.me));
-      setAll({ ...b, ghost, total, loaded: true, error: false, moves });
+      setAll({ ...b, near, total, loaded: true, error: false, moves });
       // reading the board is reading the news (as the live board): clear the badge, keep this rank as the baseline
       const mine = getMyProfile();
       const meNow = mine && (b.rows.find((r) => r.id === mine.id) || b.me);
@@ -436,8 +438,17 @@ export default function LeaderboardV2({ onBack }) {
   // ranks 4 … 100 (Andy oct28 "extend to top 100"; 50 oct14, 20 oct13); past #100 your own row takes the last place, with your
   // real rank. The list SCROLLS inside its panel (7 rows show, the stage is a fixed 1280×720) and opens on your row.
   let list = rows.slice(3, BOARD_SIZE);
-  const ghost = meRow && !meOnBoard && data.ghost && data.ghost.id !== meRow.id ? data.ghost : null;
-  if (meRow && !meOnBoard) list = ghost ? [...rows.slice(3, BOARD_SIZE - 2), ghost, meRow] : [...rows.slice(3, BOARD_SIZE - 1), meRow];
+  // YOUR NEIGHBOURHOOD (Andy nov2): past the board the list ends on the 2 players above you, you, and the 2 below - plain
+  // rows in the same list (no new view, no new chrome); the board's own last rows make room for them
+  const near = meRow && !meOnBoard && data.near ? data.near : null;
+  const nearRows = near ? [...near.above, ...near.below] : [];
+  const isNear = (r) => nearRows.some((x) => x.id === r.id);
+  const rightAbove = near && near.above.length ? near.above[near.above.length - 1] : null; // the player right above you
+  if (meRow && !meOnBoard) {
+    const tail = near ? [...near.above, meRow, ...near.below] : [meRow];
+    const head = rows.slice(3, BOARD_SIZE).filter((r) => !tail.some((x) => x.id === r.id) && Number(r.rank) < Number((tail[0] || meRow).rank));
+    list = [...head.slice(0, Math.max(0, BOARD_SIZE - 3 - tail.length)), ...tail];
+  }
   const wk = tab === 'week';
   // a phone's header columns are 70px / 52px: the '+' ran REBIRTHS into LEVELS ("+REBIRTHS+LEVELS", audit 2); the row numbers
   // already read +R / +12
@@ -450,8 +461,8 @@ export default function LeaderboardV2({ onBack }) {
   // THE CLIMB INTO A TIER since your last look on this tab (a first look is not a climb)
   const myMove = meRow ? Number(data.moves[meRow.id] || 0) : 0;
   const newTier = meRow && myMove > 0 ? enteredTier(Number(meRow.rank) + myMove, meRow.rank) : null;
-  // YOUR CLIMB: the player ranked right above you (on the board, or the ghost past it) and the gap to pass them
-  const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || ghost : null;
+  // YOUR CLIMB: the player ranked right above you (on the board, or your neighbourhood past it) and the gap to pass them
+  const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || rightAbove : null;
   const climbGap = climbTo ? gapTo(meRow, climbTo, tab, gains) : null;
 
 
@@ -606,7 +617,7 @@ export default function LeaderboardV2({ onBack }) {
                     <span className="lb2-pod-name-t" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
                   </span>
                   <span className="lb2-t3-sub">
-                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p ? <Plate row={p} mine={mine} className="lb2-pod-plate" /> : null}
+                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p && !wk ? <LeagueBadge rank={place} className="lb2-pod-plate lb2-pod-league" /> : null}
                     {wk ? <Prize rank={place} pod /> : null}
                   </span>
                 </span>
@@ -631,6 +642,7 @@ export default function LeaderboardV2({ onBack }) {
                 <span className="lb2-climb-rank">
                   {nameTier(meRow.rank) ? <RankSeal rank={meRow.rank} className="lb2-climb-seal" /> : <b className="lb2-climb-n">#{fmt(meRow.rank)}</b>}
                   {myPct ? <span className="lb2-climb-pct">TOP {myPct}%</span> : null}
+                  {!wk ? <LeagueBadge rank={meRow.rank} className="lb2-climb-league" data-testid="lb2-climb-league" /> : null}
                 </span>
               </div>
             ) : (
@@ -643,7 +655,7 @@ export default function LeaderboardV2({ onBack }) {
                 {climbGap ? <span className="lb2-climb-bar" aria-hidden="true"><i className="lb2-fill" style={{ width: `${Math.round(climbGap.fill * 100)}%` }} /></span> : null}
               </p>
             ) : null}
-            {meRow && Number(meRow.rank) > 10 ? <p className="lb2-climb-band"><b>{fmt(meRow.rank - nearestBand(meRow.rank))}</b> TO TOP {nearestBand(meRow.rank)}</p> : null}
+            {meRow && Number(meRow.rank) > 10 ? (() => { const g = climbGoal(Number(meRow.rank), wk); return <p className="lb2-climb-band"><b>{fmt(g.n)}</b> TO {g.to}</p>; })() : null}
             {wk ? (
               <ol className="lb2-climb-prizes" aria-label="This week's prizes">
                 {Array.from({ length: 10 }, (_, i) => i + 1).filter((k) => weekPrize(k)).map((k) => (
@@ -679,13 +691,21 @@ export default function LeaderboardV2({ onBack }) {
             const band = rankBand(r.rank);
             const tier = nameTier(r.rank);
             const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
-            const sep = band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null;
+            // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js - CHAMPION, TITAN at #11, MASTER at #51, and
+            // past the board YOUR league over your row), read from leagueOf so the dividers can never drift from the badges.
+            // THIS WEEK keeps its TOP bands (the week board's places are not league places; TOP 10 is the prize zone).
+            const league = wk ? null : leagueOf(r.rank);
+            const sep = wk
+              ? (band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null)
+              : (league && (k === 0 || leagueOf(list[k - 1].rank) !== league) ? league.name : null);
             return (
               <Fragment key={r.id}>
-              {/* the cut line: a slim flat divider - the band name, then a rule in its colour (Andy nov2: the painted ribbons
-                  "look horrendous"; the rank LEAGUES' badge set replaces this label once it lands) */}
-              {sep && <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>}
-              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${ghost && r.id === ghost.id ? ' is-ghost' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
+              {/* the cut line: a slim flat divider - the league badge (or the week's band name), then a rule in its colour
+                  (Andy nov2: the painted ribbons "look horrendous") */}
+              {sep && (league
+                ? <div className="lb2-sep is-league" data-league={league.key} aria-hidden="true"><LeagueBadge rank={r.rank} className="lb2-sep-league" /></div>
+                : <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
+              <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${isNear(r) ? ' is-near' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
                 <span className={`lb2-rk${tier ? ' has-seal' : ''}`} data-len={tier ? undefined : String(fmt(r.rank)).length}>{tier ? <RankSeal rank={r.rank} className="lb2-seal" /> : fmt(r.rank)}</span>
@@ -713,10 +733,10 @@ export default function LeaderboardV2({ onBack }) {
                       {/* YOUR distance to the NEAREST band rides INSIDE this line's FitText, after the rival — never beside your
                           name, where a long or shrunk name ran under it (Andy oct26 "overlap with my username and '15 TO TOP
                           10'"): the two scale as one, so they can never cross */}
-                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b>{gap ? <span className="lb2-gap-n"> {gap.text}</span> : <span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>}{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}</FitText> : null}
+                      {rival ? <FitText className="lb2-chase-fit" min={0.55}>PASS <b>{rival.username}</b>{gap ? <span className="lb2-gap-n"> {gap.text}</span> : <span className="lb2-chase-for"> FOR #{fmt(rival.rank)}</span>}{r.rank > 10 ? <span className="lb2-band-tag"><b>{fmt(climbGoal(r.rank, wk).n)}</b> TO {climbGoal(r.rank, wk).to}</span> : null}</FitText> : null}
                       {/* the NEAREST band, not always TOP 10 (Andy oct15: winnability motivates — a goal you can reach); on a
                           small stage with a rival it steps aside so neither is cut */}
-                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(r.rank - nearestBand(r.rank))}</b> TO TOP {nearestBand(r.rank)}</span> : null}
+                      {r.rank > 10 && !rival ? <span className="lb2-chase-band"><b>{fmt(climbGoal(r.rank, wk).n)}</b> TO {climbGoal(r.rank, wk).to}</span> : null}
                     </span>
                   ) : null}
                   {/* Andy oct8: only the TOP 3 wear name plates (the podium) — rows 4+ give that room to the FULL name */}

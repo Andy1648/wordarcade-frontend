@@ -203,6 +203,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await expect(lb.locator('.lb2-row.is-rival')).toHaveAttribute('data-rank', '60');
     // CLIMB 1 (nov2): the gap in the stat that decides the order (#60 is one rebirth ahead) + its fill bar
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
+    // ALL TIME the chase names the next RANK LEAGUE, in the dividers' language (#61 -> TITAN ends at #50)
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('11 TO TITAN');
+    if (vp.width > 1000) await expect(lb.locator('.lb2-climb-band')).toHaveText('11 TO TITAN');
     await expect(lb.locator('.lb2-row.is-me .lb2-gap')).toHaveCount(1);
     // the list opens on whole rows: the first thing under its top edge starts AT the edge (no sliver of a cut row)
     const sliver = await page.evaluate(() => { const sc = document.querySelector('.lb2-scroll'); const first = [...sc.children].find((el) => el.offsetTop + el.offsetHeight > sc.scrollTop + 1); return first ? Math.round(sc.scrollTop - first.offsetTop) : 0; });
@@ -231,18 +234,21 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     // painted ribbons "look horrendous"): no ribbon art, a readable name, no taller than a third of a row
     await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
     const seps = await lb.locator('.lb2-sep').evaluateAll((els) => els.map((e) => {
-      const name = e.querySelector('.lb2-sep-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
+      const name = e.querySelector('.lb2-sep-name, .lg-badge-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
       const art = [e, ...e.querySelectorAll('*')].some((x) => ['', '::before', '::after'].some((p) => /url\(/.test(getComputedStyle(x, p || null).backgroundImage) || /url\(/.test(getComputedStyle(x, p || null).maskImage || '')));
       return { art, px: name ? parseFloat(getComputedStyle(name).fontSize) : 0, h: e.getBoundingClientRect().height, rowH: row.getBoundingClientRect().height, text: name ? name.textContent : '' };
     }));
-    expect(seps.length, 'the TOP 50 / TOP 100 cut lines are on the board').toBeGreaterThanOrEqual(2);
+    expect(seps.length, 'the league cut lines are on the board').toBeGreaterThanOrEqual(2);
+    // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js) - each sits right above the league's first row
+    const lines = await lb.locator('.lb2-sep.is-league').evaluateAll((els) => els.map((e) => ({ league: e.dataset.league, next: e.nextElementSibling && e.nextElementSibling.dataset.rank })));
+    expect(lines).toEqual([{ league: 'champion', next: '4' }, { league: 'titan', next: '11' }, { league: 'master', next: '51' }]);
     for (const sp of seps) {
       expect(sp.art, `${sp.text}: a cut line wears no ribbon art`).toBe(false);
       expect(sp.px, `${sp.text}: name size`).toBeGreaterThanOrEqual(16);
       expect(sp.h, `${sp.text}: slim (${Math.round(sp.h)}px vs a ${Math.round(sp.rowH)}px row)`).toBeLessThanOrEqual(sp.rowH * 0.75);
     }
     if (SHOTS) {
-      await lb.locator('.lb2-sep[data-band="stone"]').scrollIntoViewIfNeeded();
+      await lb.locator('.lb2-sep[data-league="master"]').scrollIntoViewIfNeeded();
       await page.waitForTimeout(300);
       await page.screenshot({ path: `${SHOTS}/lb-cutline-${vp.width}.png` });
     }
@@ -256,6 +262,8 @@ for (const vp of [{ width: 1280, height: 551 }, { width: 1366, height: 768 }, { 
     await expect(lb.locator('.lb2-tab[data-tab="week"]')).toHaveAttribute('aria-selected', 'true');
     await expect(lb.locator('.lb2-row').first()).toBeVisible({ timeout: 10_000 });
     await page.waitForTimeout(2500);
+    // THIS WEEK keeps its TOP-N wording (the week board has no leagues)
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('TO TOP 25');
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-week-${vp.width}.png` });
     // YOUR CLIMB's THIS WEEK gem ladder stays inside its panel
     if (vp.width > 1000) {
@@ -275,17 +283,33 @@ test('@1024x768 the header (YOU / CHANGE) is clickable over the smaller podium',
   expect(await overlapsIn(page)).toEqual([]);
 });
 
-// CLIMB 3 (nov2): past the TOP 100 the player right above you rides in over your row, so there is still someone to PASS
+// YOUR NEIGHBOURHOOD (Andy nov2): past the TOP 100 the list ends on the 2 players above you, you, and the 2 below - plain
+// rows in the same list under your league's line, with the player right above you as the RIVAL to PASS
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
-  test(`@${vp.width} past #100: a ghost of the player above you, with the gap to pass them`, async ({ page }) => {
+  test(`@${vp.width} past #100: your neighbourhood (2 above, you, the players below) under your league line`, async ({ page }) => {
+    // R1 LV70 sits between the R1 LV74 (#119) and R1 LV67 (#121) rows -> #120
+    const lb = await boot(page, vp, { level: 70, rebirths: 1 });
+    await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '120');
+    const tail = await lb.locator('.lb2-row').evaluateAll((els) => els.slice(-4).map((e) => e.dataset.rank));
+    expect(tail, 'the list ends on #118, #119, YOU, #121').toEqual(['118', '119', '120', '121']);
+    // YOUR league's line (CRYSTAL, #101-300) sits right over the neighbourhood
+    await expect(lb.locator('.lb2-sep.is-league').last()).toHaveAttribute('data-league', 'crystal');
+    expect(await lb.locator('.lb2-sep.is-league').last().evaluate((e) => e.nextElementSibling.dataset.rank)).toBe('118');
+    await expect(lb.locator('.lb2-row[data-rank="119"]')).toHaveClass(/is-rival/);
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
+    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+4 LV');
+    await expect(lb.locator('.lb2-row.is-near')).toHaveCount(3);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-near-${vp.width}.png` });
+    expect(await overlapsIn(page)).toEqual([]);
+  });
+
+  test(`@${vp.width} past #100 at the very bottom: 2 above you, nobody below`, async ({ page }) => {
     const lb = await boot(page, vp, { level: 10, rebirths: 0 });
     await expect(lb.locator('.lb2-row.is-me')).toHaveAttribute('data-rank', '121');
-    const ghost = lb.locator('.lb2-row.is-ghost');
-    await expect(ghost).toHaveAttribute('data-rank', '120');
-    await expect(ghost).toHaveClass(/is-rival/);
-    await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('PASS');
+    const tail = await lb.locator('.lb2-row').evaluateAll((els) => els.slice(-3).map((e) => e.dataset.rank));
+    expect(tail).toEqual(['119', '120', '121']);
+    await expect(lb.locator('.lb2-row[data-rank="120"]')).toHaveClass(/is-rival/);
     await expect(lb.locator('.lb2-row.is-me .lb2-chase')).toContainText('+1 R');
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/lb-ghost-${vp.width}.png` });
     expect(await overlapsIn(page)).toEqual([]);
   });
 }

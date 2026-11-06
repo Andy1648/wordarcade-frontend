@@ -71,17 +71,23 @@ test('fragment bag: first pool.length draws never repeat', () => {
 // ---- the fragment pools (require src/solo/fragmentPools.json) ----
 const POOLS_URL = new URL('./fragmentPools.json', import.meta.url);
 const POOLS_PATH = fileURLToPath(POOLS_URL);
-const EXPECT_SIZES = { e: 113, m: 190, h: 318, b: 405 };
+// The pools Andy pasted were 113/190/318/405 (do NOT regenerate them). Nov4 (Andy: "they need more combo variations …
+// fuse can feel too repetitive"): the pools GROW by appending fragments whose coverage sits inside the tier's own
+// inter-quartile band (scripts/fuseCoverage.mjs) — never by removing or reshuffling one. ORIGINAL holds the pasted
+// fragments; every one of them must still be in its tier.
+const ORIGINAL_SIZES = { e: 113, m: 190, h: 318, b: 405 };
 
 test('fragmentPools.json exists (data asset committed)', () => {
   assert.ok(existsSync(POOLS_PATH), `missing ${POOLS_PATH} — the fitted fragment pools`);
 });
 
-test('fragment pools are exactly 113/190/318/405, 2-3 lowercase a-z, no dupes', () => {
+test('fragment pools only GROW: the pasted 113/190/318/405 lead each tier unchanged; 2-3 lowercase a-z, no dupes', () => {
   const pools = JSON.parse(readFileSync(POOLS_URL, 'utf8'));
+  const all = new Set();
   for (const tier of FUSE_TIERS) {
     const frags = pools[tier].trim().split(/\s+/);
-    assert.equal(frags.length, EXPECT_SIZES[tier], `${tier} size`);
+    assert.ok(frags.length >= ORIGINAL_SIZES[tier], `${tier} shrank below the pasted ${ORIGINAL_SIZES[tier]}`);
+    for (const f of frags) { assert.ok(!all.has(f) || tier === 'b', `${f} is in two of e/m/h`); if (tier !== 'b') all.add(f); }
     assert.equal(new Set(frags).size, frags.length, `${tier} has duplicates`);
     for (const f of frags) {
       assert.ok(/^[a-z]{2,3}$/.test(f), `${tier} fragment "${f}" is not 2-3 lowercase a-z`);
@@ -301,4 +307,40 @@ test('one life: start on 1, the first expire ends the run, a full strip grants n
   const e = eng.expire();
   assert.equal(e.ended, true);
   assert.equal(eng.state.alive, false);
+});
+
+// ---- CROSS-RUN MEMORY (nov4, Andy "fuse can feel too repetitive"): a run skips the LAST run's fragments ----
+test('bag draw(avoid) skips avoided fragments while any other is left, then serves them', () => {
+  const bag = createFragmentBag(['aa', 'bb', 'cc', 'dd'], mulberry32(3));
+  const avoid = new Set(['aa', 'bb']);
+  const first = [bag.draw(avoid), bag.draw(avoid)];
+  assert.deepEqual(first.sort(), ['cc', 'dd'], 'the avoided ones wait');
+  assert.deepEqual([bag.draw(avoid), bag.draw(avoid)].sort(), ['aa', 'bb'], 'then come back — the bag still empties');
+});
+
+test('a run with `recent` never reopens on the last run\'s fragments (while the tier has others)', () => {
+  const rng = mulberry32(99);
+  let prev = null;
+  let overlap = 0;
+  let total = 0;
+  for (let r = 0; r < 200; r++) {
+    const eng = createFuseEngine({ ..._real, rng, recent: prev });
+    const frags = [eng.start().fragment];
+    for (let w = 1; w < 10; w++) { eng.state.wordsSolved = w; frags.push(eng.serve().fragment); }
+    if (prev) { overlap += frags.filter((f) => prev.has(f)).length; total += frags.length; }
+    prev = new Set(frags);
+  }
+  assert.equal(overlap, 0, `${overlap}/${total} opening fragments repeated the last run`);
+});
+
+test('a run never serves a fragment twice, even when the tier moves on (the tiers share fragments)', () => {
+  const shared = _real.pools.e.concat(_real.pools.m, _real.pools.h, _real.pools.b);
+  assert.ok(new Set(shared).size < shared.length, 'the pools still overlap: otherwise this test proves nothing');
+  const rng = mulberry32(11);
+  for (let r = 0; r < 100; r++) {
+    const eng = createFuseEngine({ ..._real, rng });
+    const frags = [eng.start().fragment];
+    for (let w = 1; w < 80; w++) { eng.state.wordsSolved = w; frags.push(eng.serve().fragment); }
+    assert.equal(new Set(frags).size, frags.length, `run ${r} repeated a fragment`);
+  }
 });

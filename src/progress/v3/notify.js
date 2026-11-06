@@ -4,7 +4,7 @@
 // toasts). Rank-ups pay nothing (status only, shown via the KitLevelUp top-edge banner). Unlocks = edge toasts.
 // Gains = motion on the bar/counters. Achievements page is the only claim place."
 //
-//   rank-up  (v3 rank INKLING … ENDGAME, by rebirths then ★) → the top-edge RANK-UP banner. Pays nothing.
+//   rank-up  → the top-edge RANK-UP banner, for the BOARD only (RankUpMoment; the v3 titles were retired nov2). Pays nothing.
 //   unlock   (a rebirth unlock, a new frame, a mark rank, an automation buy, a bought item, a first-time tip)
 //            → a RIGHT-edge toast.
 //   gain     (wins / gems / XP) → no announcement here: the menu's pills count up (MenuXpBar useCountUp + "+N").
@@ -83,7 +83,9 @@ export function checkNews(o = {}) {
   const seen = readJson(st, RANK_SHOWN_KEY, null);
   const shown = readJson(st, UNLOCKS_SHOWN_KEY, null);
   const first = seen == null && shown == null;
-  const rank = first ? null : rankNews(Number(seen) || 0, now);
+  // nov2 (Andy: titles out): the INKLING … ENDGAME titles are no longer announced — the RANK-UP banner now speaks only
+  // for the board (RankUpMoment: a new place / a new LEAGUE). The shown index is still kept current below.
+  const rank = null;
   const fresh = unlockNews(Array.isArray(shown) ? shown : [], state);
   write(st, RANK_SHOWN_KEY, Math.max(now, Number(seen) || 0));
   write(st, UNLOCKS_SHOWN_KEY, [...(Array.isArray(shown) ? shown : []), ...fresh.map((u) => u.id)]);

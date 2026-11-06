@@ -84,6 +84,13 @@ export default defineConfig({
       // The v2 kit gallery (/?kit=1, e2e/kit.spec.js) is compiled into the e2e build only; the
       // production build leaves it out entirely (vite.config.js define __KIT_GALLERY__).
       VITE_KIT_GALLERY: '1',
+      // PAID GEMS (payments/flag.js): the e2e build honours ?payments=1, so e2e/paid-gems.spec.js can test the GEMS
+      // shelf both hidden (no param — what production ships with the flag off) and shown. Production never sets it.
+      VITE_PAYMENTS_E2E: '1',
+      // SIGN IN WITH GOOGLE (leaderboard/googleFlag.js): the e2e build honours ?google=1 — hidden without it, as
+      // production ships until VITE_GOOGLE_ON=1. Production never sets it.
+      VITE_GOOGLE_E2E: '1',
+      VITE_GOOGLE_CLIENT_ID: 'e2e-client.apps.googleusercontent.com', // public by nature; the specs mock Google's script
     },
   },
 });

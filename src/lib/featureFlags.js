@@ -15,6 +15,8 @@ let BOOT_SEARCH = '';
 try {
   if (typeof window !== 'undefined') BOOT_SEARCH = window.location.search || '';
 } catch { /* no window */ }
+/** The query string as the page loaded (the app tidies the address bar on boot). */
+export const bootSearch = () => BOOT_SEARCH;
 
 export function flagOn(name, { legacyKey } = {}) {
   if (!name) return false;

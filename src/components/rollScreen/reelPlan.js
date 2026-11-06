@@ -207,7 +207,8 @@ export function hasLight(tier, mode = 'full') {
 }
 /** Pooled particle burst size on the land (EPIC+). The pool holds BURST_POOL nodes. */
 export const BURST_POOL = 18;
-export const BURST = { rare: 0, epic: 10, legendary: 14, mythic: 16, secret: 18 };
+// LEGENDARY throws none (Andy nov3: never stack blades on a tier's own reveal — its idea is the rays + the slam)
+export const BURST = { rare: 0, epic: 10, legendary: 0, mythic: 14, secret: 14 };
 export function burstCount(tier, mode = 'full') {
   return mode === 'full' ? BURST[tier] || 0 : 0;
 }
@@ -308,7 +309,9 @@ export function revealKind(tier, mode = 'full') {
  *  room for what stacks with it ("1 IN X", the FULL reveal's tier banner, TAP TO CONTINUE, a perk/dupe plate).
  *  Pure: Reel.jsx measures the viewport once as a reveal opens (and on resize) and sets --mc-w / --mc-s from this. */
 export const CARD_RATIO_H = 300 / 180;
-export function revealCardW({ vw, vh, kind = 'dim', plate = false }) {
+// `frame`: a MYTHIC / SECRET card wears its frame variant 24 card-px outside it on each side (13% of the card's
+// width a side) — on a phone at 75% its horns ran past the screen's own frame (nov4 gear-borders), so it takes 64%.
+export function revealCardW({ vw, vh, kind = 'dim', plate = false, frame = false }) {
   const full = kind === 'full';
   let h;
   let w;
@@ -319,7 +322,7 @@ export function revealCardW({ vw, vh, kind = 'dim', plate = false }) {
     w = Math.min(w, plate ? (vw - 500) : vw * 0.8); // a perk / dupe plate sits beside the card (≤ 380 + a 40 gap)
   } else {
     const reserve = (full ? 230 : 150) + (plate ? 130 : 0); // the plate stacks under the card on a phone
-    w = Math.min(vw * 0.75, (vh - reserve) / CARD_RATIO_H);
+    w = Math.min(vw * (frame ? 0.64 : 0.75), (vh - reserve) / CARD_RATIO_H);
   }
   return Math.max(120, Math.round(w));
 }
