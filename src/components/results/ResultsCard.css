@@ -520,3 +520,13 @@
   .game-over-overlay .game-over-card.rs2:not(.rs2--narrow) { --rs2-hero-w: 410px; grid-template-columns: calc(410px * var(--u)) minmax(0, 1fr) calc(320px * var(--u)); }
 }
 
+
+/* the numbers stay readable while the coins burst off them */
+.rs2-total-num { position: relative; z-index: 41; }
+/* BEST STREAK (nov6): only when the player had one; its colour is the tier they reached in the game */
+.rs2-peak { display: flex; align-items: center; gap: 8px; padding: 2px 10px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; --c: #2EFFE0; }
+.rs2-peak[data-heat='2'] { --c: #FFE94A; }
+.rs2-peak[data-heat='3'] { --c: #FF6B3D; }
+.rs2-peak[data-heat='4'] { --c: #FF4FA3; }
+.rs2-peak-n { font-family: 'Bungee', cursive; font-size: max(var(--fs-k24), calc(var(--fs-k24) * var(--u))); line-height: 1; color: var(--c); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs2-peak-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); line-height: 1.05; color: #fff; }
