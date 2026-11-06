@@ -5,11 +5,16 @@
 // a page session, a–z words of 2–15 letters only. Fire-and-forget: a failure is dropped, never retried, never shown.
 // Server side: supabase/migrations/084_reject_log.sql (log_rejects RPC — capped again there).
 
-export const REJECT_MODES = ['fuse', 'chain'];
+// Word Bomb / Blitz (nov6, 087): the server's dictionary or list refused it. Blitz also says WHICH category (ctx): a word
+// means nothing without it, and answers there can be up to 3 words.
+export const REJECT_MODES = ['fuse', 'chain', 'word-bomb', 'blitz'];
 export const BATCH_MS = 60 * 1000;
 export const BATCH_MAX = 20;
-export const MAX_FLUSHES = 5;
+export const MAX_FLUSHES = 8; // was 5: each Blitz category is its own batch
 const WORD_RE = /^[a-z]{2,15}$/;
+const PHRASE_RE = /^[a-z]{2,15}( [a-z]{1,15}){0,2}$/;
+const CTX_MAX = 80;
+const batchKey = (mode, ctx) => `${mode}\n${ctx}`;
 
 /**
  * A reject log over an injected `send(mode, words)` (returns a promise) and timer — the live one is `noteReject` below.
@@ -23,13 +28,14 @@ export function createRejectLog({ send, setTimer = setTimeout, clearTimer = clea
 
   function flush() {
     timer = null;
-    for (const [mode, words] of queue) {
+    for (const [key, words] of queue) {
       if (flushes >= MAX_FLUSHES) break;
+      const [mode, ctx] = key.split('\n');
       const batch = [...words].slice(0, BATCH_MAX);
       if (!batch.length) continue;
-      for (const w of batch) { words.delete(w); sent.add(`${mode}:${w}`); }
+      for (const w of batch) { words.delete(w); sent.add(`${key}:${w}`); }
       flushes += 1;
-      try { Promise.resolve(send(mode, batch)).catch(() => {}); } catch { /* dropped */ }
+      try { Promise.resolve(send(mode, batch, ctx)).catch(() => {}); } catch { /* dropped */ }
     }
     const left = [...queue.values()].some((s) => s.size > 0);
     if (left && flushes < MAX_FLUSHES) timer = setTimer(flush, BATCH_MS);
@@ -37,12 +43,15 @@ export function createRejectLog({ send, setTimer = setTimeout, clearTimer = clea
 
   return {
     /** Queue one rejected word. Returns true when it was queued (valid, new, under the caps). */
-    note(word, mode) {
-      const w = String(word || '').trim().toLowerCase();
-      if (!REJECT_MODES.includes(mode) || !WORD_RE.test(w) || flushes >= MAX_FLUSHES) return false;
-      if (sent.has(`${mode}:${w}`)) return false;
-      if (!queue.has(mode)) queue.set(mode, new Set());
-      const q = queue.get(mode);
+    note(word, mode, ctx = '') {
+      const w = String(word || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const c = mode === 'blitz' ? String(ctx || '').slice(0, CTX_MAX) : '';
+      if (!REJECT_MODES.includes(mode) || !(mode === 'blitz' ? PHRASE_RE : WORD_RE).test(w) || flushes >= MAX_FLUSHES) return false;
+      if (mode === 'blitz' && !c) return false;
+      const key = batchKey(mode, c);
+      if (sent.has(`${key}:${w}`)) return false;
+      if (!queue.has(key)) queue.set(key, new Set());
+      const q = queue.get(key);
       if (q.has(w) || q.size >= BATCH_MAX * MAX_FLUSHES) return false;
       q.add(w);
       if (!timer) timer = setTimer(flush, BATCH_MS);
@@ -63,13 +72,13 @@ let live = null;
 function liveLog() {
   if (live) return live;
   live = createRejectLog({
-    send: (mode, words) => import('../leaderboard/client.js').then((m) => (m.LEADERBOARD_ENABLED ? m.rpc('log_rejects', { p_mode: mode, p_words: words }) : null)),
+    send: (mode, words, ctx) => import('../leaderboard/client.js').then((m) => (m.LEADERBOARD_ENABLED ? m.rpc('log_rejects', { p_mode: mode, p_words: words, ...(ctx ? { p_ctx: ctx } : {}) }) : null)),
   });
   if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('pagehide', () => live.flush());
   return live;
 }
 
-/** A solo mode rejected `word` as not in the list. */
-export function noteReject(word, mode) {
-  try { return liveLog().note(word, mode); } catch { return false; }
+/** A mode rejected `word` as not in the list (Blitz: ctx = the category). */
+export function noteReject(word, mode, ctx = '') {
+  try { return liveLog().note(word, mode, ctx); } catch { return false; }
 }
