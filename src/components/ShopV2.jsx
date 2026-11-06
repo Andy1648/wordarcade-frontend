@@ -31,6 +31,7 @@ import { formatNum, formatRate, formatMultExact } from '../format';
 import VesselArt from './rollScreen/VesselArt';
 import { lazyWithReload } from '../lib/chunkReload';
 import ScreenBoundary from './ScreenBoundary';
+import OverlaySkeleton from './OverlaySkeleton';
 // 065 SEALED ROLLS: the SERVER sells the ticket (gems → lb_ticket_buy); the opening is its own lazy chunk (the roll code)
 import { buyTicket } from '../leaderboard/serverTickets';
 import { SHOP_ITEM_ART } from '../progress/boostArt.js';
@@ -363,7 +364,7 @@ export default function ShopV2({ onBack }) {
       ) : null}
       {spin ? (
         <ScreenBoundary name="daily-wheel" onBack={() => setSpin(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="DAILY WHEEL" />}>
             <DailyWheel onClose={() => setSpin(false)} onPlay={() => { setSpin(false); onBackRef.current(); }} />
           </Suspense>
         </ScreenBoundary>
