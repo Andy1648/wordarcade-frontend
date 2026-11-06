@@ -18,12 +18,14 @@ import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
 import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
-import { leagueOf, nextLeague } from '../leaderboard/leagues.js';
+import { leagueOf, nextLeague, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { leagueBand, leagueRows, LEAGUE_SPAN } from '../leaderboard/leagueView.js';
 import {
   boardCaps,
   fetchBoard,
   fetchView,
   fetchBoardCount,
+  fetchAround,
   fetchNeighbours,
   topPercent,
   getMyProfile,
@@ -342,6 +344,7 @@ export default function LeaderboardV2({ onBack }) {
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false, moves: {}, gains: true });
+  const [lg, setLg] = useState({ rows: [], loaded: false }); // MY LEAGUE (leagueView.js): your stretch of your league
 
   const loadAll = useCallback(async () => {
     try {
@@ -395,9 +398,14 @@ export default function LeaderboardV2({ onBack }) {
     if (t === tab) return;
     setTab(t);
     if (t === 'week' && !week.loaded) loadWeekTab();
+    if (t === 'league' && !lg.loaded && allMe) {
+      fetchAround(allMe.rank, LEAGUE_SPAN).then((around) => setLg({ rows: leagueRows(around, allMe), loaded: true }));
+    }
   };
 
-  const data = tab === 'week' ? week : all;
+  const allMe = profile ? all.rows.find((r) => r.id === profile.id) || all.me : null;
+  const isLeague = tab === 'league';
+  const data = tab === 'week' ? week : isLeague ? { ...all, rows: lg.rows, me: allMe, loaded: lg.loaded, near: null } : all;
   const gains = tab === 'week' ? week.gains : true;
   const myId = profile && profile.id;
   const rows = data.rows;
@@ -449,6 +457,8 @@ export default function LeaderboardV2({ onBack }) {
     const head = rows.slice(3, BOARD_SIZE).filter((r) => !tail.some((x) => x.id === r.id) && Number(r.rank) < Number((tail[0] || meRow).rank));
     list = [...head.slice(0, Math.max(0, BOARD_SIZE - 3 - tail.length)), ...tail];
   }
+  if (isLeague) list = rows; // your league's own stretch: every row is a plain row, no medal rows
+  const band = isLeague && meRow ? leagueBand(meRow.rank, all.total) : null;
   const wk = tab === 'week';
   // a phone's header columns are 70px / 52px: the '+' ran REBIRTHS into LEVELS ("+REBIRTHS+LEVELS", audit 2); the row numbers
   // already read +R / +12
@@ -550,6 +560,8 @@ export default function LeaderboardV2({ onBack }) {
   const tabs = [
     { key: 'all', label: 'ALL TIME', sub: '★ → R → LV' },
     ...(caps.weekly ? [{ key: 'week', label: 'THIS WEEK', sub: formatResetIn(weekResetInMs()) }] : []),
+    // a place on the board is what puts you in a league: no row, no tab
+    ...(allMe && leagueOf(allMe.rank) ? [{ key: 'league', label: 'MY LEAGUE', sub: leagueOf(allMe.rank).name }] : []),
   ];
 
   return (
@@ -599,6 +611,22 @@ export default function LeaderboardV2({ onBack }) {
         {/* THE TOP 3 AS RAISED ROWS (Andy nov2: "for bigger games they dont give so much space to first - third place"; the
             research table - Clash Royale / Brawl Stars / Duolingo show the top 3 as medal rows, not a trophy wall). Three
             rows ≈ 11% of the board; the room the podium took goes to YOUR CLIMB below them. */}
+        {band ? (
+          <div className="lb2-lg lb2-slide" data-league={band.league.key} data-testid="lb2-league">
+            <img className="lb2-lg-art" src={LEAGUE_ART[band.league.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+            <span className="lb2-lg-mid">
+              <span className="lb2-lg-name">{band.league.name}</span>
+              {band.next ? (
+                <>
+                  <span className="lb2-lg-goal" data-testid="lb2-league-goal"><b>{fmt(band.toNext)}</b> {band.toNext === 1 ? 'PLACE' : 'PLACES'} TO {band.next.name}</span>
+                  <span className="lb2-lg-bar" aria-hidden="true"><i style={{ transform: `scaleX(${band.fill})` }} /></span>
+                </>
+              ) : <span className="lb2-lg-goal" data-testid="lb2-league-goal">THE TOP OF THE BOARD</span>}
+            </span>
+            <b className="lb2-lg-rank">#{fmt(meRow.rank)}</b>
+            {band.next ? <img className="lb2-lg-next" src={LEAGUE_ART[band.next.key]} width="512" height="512" alt={`Next: ${band.next.name}`} draggable="false" /> : null}
+          </div>
+        ) : !isLeague ? (
         <div className="lb2-top3" aria-label="Top three">
           {[1, 2, 3].map((place) => {
             const p = podium[place - 1];
@@ -629,11 +657,12 @@ export default function LeaderboardV2({ onBack }) {
             );
           })}
         </div>
+        ) : null}
 
         {/* YOUR CLIMB (the room the podium gave back; desktop only - a phone has the sticky YOUR row): your hero, your
             rank, and the one next step - the player to pass and the gap, or the next cut line. THIS WEEK adds the gem
             ladder the week pays. */}
-        {!narrow && (
+        {!narrow && !band && (
           <aside className={`lb2-climb lb2-slide${wk ? ' is-week' : ''}`} aria-label="Your climb">
             <span className="lb2-climb-k">YOUR CLIMB</span>
             {meRow ? (
@@ -692,15 +721,15 @@ export default function LeaderboardV2({ onBack }) {
             const faceId = heroById(heroes[r.id]) ? heroes[r.id] : castFor(r.id, mine).id;
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
-            const band = rankBand(r.rank);
+            const rowBand = rankBand(r.rank);
             const tier = nameTier(r.rank);
             const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
             // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js - CHAMPION, TITAN at #11, MASTER at #51, and
             // past the board YOUR league over your row), read from leagueOf so the dividers can never drift from the badges.
             // THIS WEEK keeps its TOP bands (the week board's places are not league places; TOP 10 is the prize zone).
             const league = wk ? null : leagueOf(r.rank);
-            const sep = wk
-              ? (band ? (band !== prevBand ? `TOP ${band.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null)
+            const sep = isLeague ? null : wk
+              ? (rowBand ? (rowBand !== prevBand ? `TOP ${rowBand.top}` : null) : k > 0 && prevBand ? 'YOUR RANK' : null)
               : (league && (k === 0 || leagueOf(list[k - 1].rank) !== league) ? league.name : null);
             return (
               <Fragment key={r.id}>
@@ -708,7 +737,7 @@ export default function LeaderboardV2({ onBack }) {
                   (Andy nov2: the painted ribbons "look horrendous") */}
               {sep && (league
                 ? <div className="lb2-sep is-league" data-league={league.key} aria-hidden="true"><LeagueBadge rank={r.rank} className="lb2-sep-league" /></div>
-                : <div className="lb2-sep" data-band={band ? band.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
+                : <div className="lb2-sep" data-band={rowBand ? rowBand.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${isNear(r) ? ' is-near' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
                     digit and widens only its own row's rank column, never running into the face */}
