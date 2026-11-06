@@ -204,7 +204,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
      above / below it — the fades reach that far too. oct17: --rs-up (band → the panel's top frame, measured in Reel.jsx)
      both ways — far enough for every glow, never past the frame onto the top bar, never down over the FOUND row */
   top: calc(-1 * var(--rs-up, 0px));
-  bottom: calc(-1 * var(--rs-up, 0px));
+  bottom: calc(-1 * var(--rs-down, 0px)); /* nov6: frame to frame — stopping mid-panel drew a hard edge under the tell */
   width: min(360px, 28%);
   pointer-events: none;
 }
@@ -222,7 +222,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-cell.is-blank { width: var(--cw); height: calc(var(--cw) * 1.6667); background: #1a0b2e; border: 5px solid #000; border-radius: 10px; box-sizing: border-box; }
 /* the two SHADES (Reel.jsx): band-coloured plates left / right of the landing slot; their opacity (one animation each)
    fades the other cards — 22% during the slowdown, 35% once landed */
-.rs-shade { position: absolute; z-index: 1; top: calc(-1 * var(--rs-up, 0px)); bottom: calc(-1 * var(--rs-up, 0px)); background: #08030f; opacity: 0; pointer-events: none; }
+.rs-shade { position: absolute; z-index: 1; top: calc(-1 * var(--rs-up, 0px)); bottom: calc(-1 * var(--rs-down, 0px)); background: #08030f; opacity: 0; pointer-events: none; }
 .rs-shade.is-l { left: 0; right: calc(50% + var(--cw) / 2 + 6px); }
 .rs-shade.is-r { left: calc(50% + var(--cw) / 2 + 6px); right: 0; }
 /* the pointer: a yellow bar (a rectangle) between two triangles (inline SVG) */
@@ -240,12 +240,13 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 .rs-win.is-parked .rs-ptr-bar,
 .rs-win.is-parked .rs-ptr-tri.is-bot { opacity: 0; }
 .rs-win.is-parked .rs-ptr-tri.is-top {
-  transform: translateY(max(calc(-1 * var(--rs-up, 0px)), calc((var(--band) - var(--cw) * 1.6667) / 2 - 3px - 28px)));
+  transform: translateY(max(calc(-1 * max(0px, var(--rs-up, 0px)) - 6px), calc((var(--band) - var(--cw) * 1.6667) / 2 - 3px - 28px)));
 }
 /* THE TELL (R4): a flat tier-colour plate over the band's whole panel (a rectangle, frame to frame) whose opacity pulses in the last cells of an
    EPIC+ spin, and a second pointer in the tier colour that fades in over the yellow one — the colour says WHICH
    rarity before the card is shown. Both rest at opacity 0; Reel.jsx animates them (finite, opacity only). */
-.rs-tell { position: absolute; z-index: 2; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
+/* z 3: over the edge fades (z 2), so the tint is one even layer frame to frame; the pointer (z 3, later) stays on top */
+.rs-tell { position: absolute; z-index: 3; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
 .rs-ptr-tell { position: absolute; inset: 0; opacity: 0; }
 .rs-ptr-bar.is-tell { background: currentColor; }
 /* the rarity light: the ray fan asset as a tinted mask BEHIND the band, opacity/transform only (EPIC+) */
@@ -278,6 +279,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
    the dim only darkens the cards beside the landing slot, never text. The burst (.rs-parts, z 3) stays on top. */
 .rs-result-slot,
 .rsx-coll { position: relative; z-index: 2; }
+/* nov6: the slot holds the line's usual two rows from the start, so the result landing never shoves the band up (the cards
+   jumped ~9px on the land). Short / phone screens keep the 44px floor (media below): they have no height to reserve. */
 .rs-result-slot { min-height: 44px; display: grid; place-items: center; padding: 0 var(--gut); max-width: 100%; box-sizing: border-box; }
 .rs-result {
   display: flex;
@@ -498,7 +501,7 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 /* ---- the RARE flash (over the band) and the EPIC+ rarity WASH (over the screen): flat colour, opacity one-shots ---- */
 /* the FLASH and the TELL span the whole panel inside its frame (--rs-up / --rs-down): a band-sized plate drew a hard line
    through the cards' glow above and below the band */
-.rs-flash { position: absolute; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); z-index: 2; background: #fff; opacity: 0; pointer-events: none; }
+.rs-flash { position: absolute; inset: calc(-1 * var(--rs-up, 0px)) 0 calc(-1 * var(--rs-down, 0px)); z-index: 3; background: #fff; opacity: 0; pointer-events: none; }
 .rs-wash { position: absolute; inset: 0; z-index: 2; background: var(--rs-tier, #B04BFF); opacity: 0; pointer-events: none; }
 .rs-ptr { transform-origin: 50% 0; }
 
@@ -894,6 +897,8 @@ html[data-roll-cover] .cursor-trail { content-visibility: hidden; }
 
 /* ===== THE SHOWCASE (oct15 night — RollShowcase.jsx): the stage's empty band above / below the reel ===== */
 .rs-stage { row-gap: clamp(10px, 2vh, 28px); }
+@media (min-width: 721px) and (min-height: 700px) { .rs-result-slot { min-height: 58px; } }
+@media (min-width: 721px) and (min-height: 700px) and (max-height: 820px) { .rs-stage { row-gap: 8px; } }
 /* THE CHASE rides the stage's empty BOTTOM-LEFT corner, out of the flow (the reel's height is never traded for it) */
 .rsx-chase { display: none; position: absolute; z-index: 4; bottom: 18px; left: 26px; grid-auto-flow: column; align-items: center; gap: 18px; pointer-events: none; }
 .rsx-chase-k { order: 2; writing-mode: horizontal-tb; max-width: 7ch; line-height: 1.3; }
