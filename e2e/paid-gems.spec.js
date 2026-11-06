@@ -150,7 +150,7 @@ for (const vp of VIEWS) {
     const before = await panel.locator('.pg-pack[data-pack="pouch"]').boundingBox();
     await panel.locator('.pg-pack[data-pack="hoard"]').click();
     await expect(page.getByTestId('pay-note')).toContainText('LIMIT');
-    expect((await panel.locator('.pg-pack[data-pack="pouch"]').boundingBox()).y).toBe(before.y);
+    expect(Math.abs((await panel.locator('.pg-pack[data-pack="pouch"]').boundingBox()).y - before.y)).toBeLessThan(1); // sub-pixel centring aside
     await expectPanelFits(panel);
     expect(calls.checkout.length).toBe(0);
 
