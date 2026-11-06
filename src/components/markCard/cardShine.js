@@ -31,6 +31,7 @@ export function dueHosts(list, t, isVisible, cap = MAX_PER_TICK) {
 function sweep(clip, h, t) {
   // jitter the next one so cards of a tier drift apart instead of syncing up
   h.due = t + every(h.tier) * (0.85 + Math.random() * 0.3);
+  if (h.onSweep) h.onSweep();
   const band = h.band;
   if (!band || typeof band.animate !== 'function') return;
   band.style.willChange = 'transform';
@@ -62,10 +63,10 @@ export function shineNow(clip) {
 }
 
 /** Register a card's shine clip + band; returns the unregister. */
-export function shineHost(clip, band, tier) {
+export function shineHost(clip, band, tier, onSweep) {
   if (!clip || !band) return () => {};
   const t = now();
-  hosts.set(clip, { band, tier, due: t + 400 + Math.random() * every(tier) * 0.6, run: null });
+  hosts.set(clip, { band, tier, onSweep, due: t + 400 + Math.random() * every(tier) * 0.6, run: null });
   if (typeof IntersectionObserver === 'function') {
     if (!io) io = new IntersectionObserver((es) => { for (const e of es) { if (e.isIntersecting) visible.add(e.target); else visible.delete(e.target); } });
     io.observe(clip);
