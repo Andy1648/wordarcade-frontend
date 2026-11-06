@@ -17,6 +17,8 @@
 // NEED tag are single pooled nodes.
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
+import { GemsPlus } from '../gems/GemsPlus.jsx';
+import { PAYMENTS_ON } from '../../payments/flag.js';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
 import { FX, fx, fxOrShow, kitPlay } from './motion.js';
 import { formatNum, formatShort } from '../../format.js';
@@ -43,6 +45,7 @@ export function fitScale(len, cw, avail) {
 
 export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, label, icon, tone, className, ariaLabel }, ref) {
   const k = PILL_KINDS[kind] || PILL_KINDS.gems;
+  const plus = PAYMENTS_ON && kind === 'gems'; // the buy-gems "+" (GemsPlus): the shrink-to-fit below measures around it
   const rootRef = useRef(null);
   const bodyRef = useRef(null);
   const numRef = useRef(null);
@@ -204,7 +207,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
 
   const name = label || k.label;
   return (
-    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`} data-value={value}>
+    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${plus ? ' has-plus' : ''}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`} data-value={value}>
       <div className="kp-name" aria-hidden="true">{name}</div>
       <div ref={bodyRef} className="kp-body">
         <div className="kp-box">
@@ -225,6 +228,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
             </div>
           </div>
         </div>
+        {plus ? <GemsPlus /> : null}
       </div>
       <div ref={popRef} className="kp-pop" aria-hidden="true">
         <span ref={popTextRef} className="kp-pop-t" />
