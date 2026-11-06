@@ -1,6 +1,6 @@
 // e2e/locked-silhouettes.spec.js — design research move 20 (nov2): what you DON'T own yet reads as a tease, never a blank
-// box — in the hero collection (CUSTOMIZE → HERO) and the gear INDEX, every locked item is a dark SILHOUETTE of its REAL
-// art (the painted hero / gear, blacked out) wearing a lock chip. LOCK_SHOTS=<dir> saves screenshots.
+// box — in the hero collection (CUSTOMIZE → HERO) every locked hero is a dark SILHOUETTE of its REAL art wearing a lock chip.
+// Locked GEARS keep showing their design (Andy oct11 "show the design for all the cards", marks.spec). LOCK_SHOTS=<dir> saves screenshots.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
@@ -37,7 +37,6 @@ function lockedReport(page, itemSel, artSel, chipSel) {
     return {
       id: el.dataset.hero || el.dataset.mark || el.getAttribute('aria-label') || '?',
       art: !!art && (art.tagName === 'IMG' ? !!art.getAttribute('src') : true),
-      // dark: blacked out (a hero) or shadowed to <= 40% (a gear sticker, whose own lines must still read)
       dark: (() => { const m = /brightness\(([\d.]+)\)/.exec(f); return !!m && Number(m[1]) <= 0.4; })(),
       chip: !!(cb && cb.width >= 16 && cb.height >= 16),
     };
@@ -57,15 +56,4 @@ for (const [vn, vp] of [['1366', { width: 1366, height: 768 }], ['1920', { width
     expect(rows.filter((r) => !(r.art && r.dark && r.chip))).toEqual([]);
   });
 
-  test(`@${vn} the gear INDEX: every gear you don't own is its silhouette + a lock chip`, async ({ page }) => {
-    await boot(page, vp);
-    await page.locator('[data-nav="gears"]').first().click();
-    await page.locator('[data-testid="roll-index"]').click();
-    await expect(page.locator('.mx-tile.is-locked').first()).toBeVisible();
-    await page.waitForTimeout(800);
-    if (SHOTS) await page.screenshot({ path: `${SHOTS}/index-${vn}.png` });
-    const rows = await lockedReport(page, '.mx-tile.is-locked', '.mc-badge .mx-sil', '.mc-lockchip');
-    expect(rows.length).toBeGreaterThan(3);
-    expect(rows.filter((r) => !(r.art && r.dark && r.chip))).toEqual([]);
-  });
 }
