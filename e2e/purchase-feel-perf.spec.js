@@ -59,6 +59,7 @@ async function measure(page, tier) {
   }
 
   const res = await page.evaluate(() => {
+    if (!window.__frames) return null; // this document never started the recorder: the page reloaded during the run
     cancelAnimationFrame(window.__raf);
     const f = window.__frames.slice(5).sort((a, b) => a - b); // drop warmup frames
     const median = f.length ? f[Math.floor(f.length / 2)] : 0;
@@ -66,6 +67,26 @@ async function measure(page, tier) {
     return { median, p95, peakAnims: window.__peakAnims, infinite: window.__infinite, keys: window.__frames.length };
   });
   return res;
+}
+
+// A LOST RECORDER (main b8beed2c, once on CI, not reproduced in 8 local runs under load): window.__frames was gone after the
+// typing, so the page had reloaded mid-run, and the run crashed on undefined.slice. Redo that run once and log what
+// happened, so the next hit names its cause; losing it twice in a row still fails.
+async function measureOnce(page, tier) {
+  const seen = [];
+  const onNav = (f) => { if (f === page.mainFrame()) seen.push(`navigated ${f.url()}`); };
+  const onConsole = (m) => { if (m.type() === 'error' || /chunk|reload|worker/i.test(m.text())) seen.push(`console ${m.text().slice(0, 160)}`); };
+  page.on('framenavigated', onNav);
+  page.on('console', onConsole);
+  const first = await measure(page, tier);
+  page.off('framenavigated', onNav);
+  page.off('console', onConsole);
+  if (first) return first;
+  // eslint-disable-next-line no-console
+  console.log(`PERF | T${tier} | page reloaded during the run, redoing it | ${seen.slice(-8).join(' | ')}`);
+  const again = await measure(page, tier);
+  expect(again, `T${tier}: the page reloaded during two runs in a row`).not.toBeNull();
+  return again;
 }
 
 test('perf: frame time + animation counts per KEY TIER tier', async ({ page }) => {
@@ -79,7 +100,7 @@ test('perf: frame time + animation counts per KEY TIER tier', async ({ page }) =
   const rows = [];
   for (const tier of [0, 3, 5]) {
     const runs = [];
-    for (let r = 0; r < 2; r += 1) runs.push(await measure(page, tier));
+    for (let r = 0; r < 2; r += 1) runs.push(await measureOnce(page, tier));
     const medians = runs.map((x) => x.median).sort((a, b) => a - b);
     const med = medians[Math.floor(medians.length / 2)];
     const peak = Math.max(...runs.map((x) => x.peakAnims));

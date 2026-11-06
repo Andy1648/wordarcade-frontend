@@ -12,7 +12,7 @@ import { menuReady, navControl } from './support/menu.js';
 const SECRET = 'd'.repeat(48);
 
 // signedIn: a SIGN IN WITH GOOGLE session (085 — buying needs one; the packs show only then)
-async function boot(page, { query = '', gems = 40, signedIn = true, pending = { rows: [], spent_cents: 0, cap_cents: 2000, flagged: false, profile: true } } = {}) {
+async function boot(page, { query = '', gems = 40, firstBuy = false, signedIn = true, pending = { rows: [], spent_cents: 0, cap_cents: 2000, flagged: false, profile: true } } = {}) {
   await installBackendMock(page);
   const calls = { checkout: [], pending: 0, ack: [] };
   await page.route('**/api/checkout', async (route) => {
@@ -25,6 +25,9 @@ async function boot(page, { query = '', gems = 40, signedIn = true, pending = { 
     const body = typeof pending === 'function' ? pending(calls.pending) : pending;
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
+  await page.route('**/rest/v1/rpc/pay_first_buy_open', (route) => (firstBuy
+    ? route.fulfill({ status: 200, contentType: 'application/json', body: 'true' })
+    : route.fulfill({ status: 404, contentType: 'application/json', body: '{"code":"PGRST202"}' }))); // 088 not run yet
   await page.route('**/rest/v1/rpc/pay_gems_ack', async (route) => {
     calls.ack.push(route.request().postDataJSON());
     await route.fulfill({ status: 200, contentType: 'application/json', body: '1' });
@@ -229,6 +232,52 @@ test('the + is on every gem pill: the shop and the roll screen open the same pan
   const again = await openPanel(page);
   await expect(again).toBeVisible();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/plus-from-roll-1366.png` });
+});
+
+// FIRST BUY ×2 (088): the stamp follows the server's answer; before 088 has run (404) there is no stamp and no promise
+for (const vp of VIEWS) {
+  for (const signedIn of [true, false]) {
+    test(`@${vp.width}x${vp.height}: FIRST BUY stamp, ${signedIn ? 'signed in' : 'signed out'}: honest amounts on every pack, and it fits`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      const calls = await boot(page, { query: '&payments=1&google=1', firstBuy: true, signedIn });
+      const panel = await openPanel(page);
+      await expect(panel.getByTestId('pay-first')).toHaveCount(4);
+      for (const [id, n] of Object.entries({ pouch: '1,000', pile: '3,000', chest: '7,000', hoard: '16,000' })) {
+        await expect(page.getByTestId(`pay-bonus-${id}`)).toHaveText(`+${n} BONUS`);
+        await expect(panel.locator(`.pg-pack[data-pack="${id}"] .pg-gems`)).toHaveText(n);
+      }
+      await expect(page.getByTestId('pay-refund')).toContainText('First buy doubles, once per Google account');
+      await expectPanelFits(panel);
+      // each stamp stays on screen and off its pack's numbers
+      expect(await panel.evaluate((el) => [...el.querySelectorAll('.pg-pack')].filter((p) => {
+        const s = p.querySelector('.pg-first').getBoundingClientRect();
+        const hit = (q) => Math.min(s.right, q.right) - Math.max(s.left, q.left) > 1 && Math.min(s.bottom, q.bottom) - Math.max(s.top, q.top) > 1;
+        return ['.pg-gems', '.pg-bonus', '.pg-price'].some((c) => hit(p.querySelector(c).getBoundingClientRect())) || s.left < 0 || s.top < 0;
+      }).length)).toBe(0);
+      if (SHOTS) await page.screenshot({ path: `${SHOTS}/first-buy-${signedIn ? 'in' : 'out'}-${vp.width}.png` });
+      expect(calls.checkout.length).toBe(0);
+    });
+  }
+}
+
+test('before 088 has run: no stamp, no bonus line, and the panel works as before', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await boot(page, { query: '&payments=1', firstBuy: false });
+  const panel = await openPanel(page);
+  await expect(panel.locator('.pg-pack')).toHaveCount(4);
+  await expect(panel.getByTestId('pay-first')).toHaveCount(0);
+  await expect(panel.locator('.pg-bonus')).toHaveCount(0);
+  await expect(page.getByTestId('pay-refund')).not.toContainText('First buy');
+  await expect(panel.locator('.pg-pack[data-pack="pouch"]')).toHaveAttribute('aria-label', /1000 gems for \$1\.99/);
+});
+
+test('a client can\'t claim the bonus: checkout still sends only the pack', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const calls = await boot(page, { query: '&payments=1', firstBuy: true });
+  const panel = await openPanel(page);
+  await panel.locator('.pg-pack[data-pack="pouch"]').click();
+  await expect.poll(() => calls.checkout.length).toBe(1);
+  expect(calls.checkout[0]).toEqual({ pack: 'pouch', secret: SECRET, access: 'e2e-access-token' });
 });
 
 test('back from Stripe (?paid=1): polls until the webhook lands, grants once, acks, and flies the gems in (a re-sent row is never paid twice: payClient.test.js)', async ({ page }) => {
