@@ -12,7 +12,7 @@ import { bootMenu } from './support/screens.js';
 import { revealMode, navControl, menuReady } from './support/menu.js';
 import { installBackendMock } from './support/backendMock.js';
 import { layoutDefects } from './support/overlap.js';
-import { boot as bootWheel } from './support/wheelBoot.js';
+import { boot as bootWheel, openWheel } from './support/wheelBoot.js';
 import { GAMES } from '../src/gameData.js';
 
 const SHOTS = process.env.DA_SHOTS || '';
@@ -183,7 +183,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     await page.route('https://lb.e2e.invalid/**/rpc/lb_wheel_state', (route) => (fail
       ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false }) })
       : route.fallback()));
-    await page.locator('[data-nav="wheel"]:visible').first().click();
+    await openWheel(page); // the wheel lives in UPGRADES (Andy nov5)
     const wheel = page.getByTestId('daily-wheel');
     await expect(wheel.getByTestId('wheel-off')).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(300);
