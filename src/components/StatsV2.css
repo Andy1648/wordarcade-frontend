@@ -927,7 +927,6 @@
 /* nothing running (nov6): the where-from guide becomes the page instead of a void beside a thin column */
 .st2-boosts.is-empty { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; }
 .st2-boosts.is-empty .st2-bl-none { align-self: end; text-align: center; }
-.st2-boosts.is-empty .st2-where { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.st2-boosts.is-empty .st2-where { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 32px; } /* two columns: each source stays on one line */
 .st2-boosts.is-empty .st2-where-h { grid-column: 1 / -1; }
 .st2--narrow .st2-boosts.is-empty .st2-where { grid-template-columns: minmax(0, 1fr); }
-.st2-boosts.is-empty .st2-where-row { flex-direction: column; align-items: flex-start; gap: 4px; }
