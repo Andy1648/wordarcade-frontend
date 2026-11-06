@@ -37,7 +37,7 @@ export default function RedeemCodes() {
         : r.kind === 'gems'
         ? `+${formatNum(r.gems)} GEMS — ADDED`
         : r.kind === 'overdrive'
-          ? `OVERDRIVE ×${r.mult || 5} · ${r.min} MIN — STARTED`
+          ? `OVERDRIVE ×${r.mult} · ${r.min} MIN — STARTED`
           : r.kind === 'boost'
         ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
