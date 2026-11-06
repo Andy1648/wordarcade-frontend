@@ -13,7 +13,7 @@
      Achievements tabs) is rendered with .view-screen zoom forced to 1 (App.jsx), so this fixed
      inset:0 overlay is sized to the REAL viewport. The old reciprocal cancelled only in headless;
      recent real Chrome left it at --app-scale. See ShopScreen.css. */
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
