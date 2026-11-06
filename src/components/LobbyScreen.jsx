@@ -20,8 +20,8 @@ export default function LobbyScreen({ mode, defaultPublic = false, onBack, onCon
   // storage is unavailable. We keep the stored copy in sync as they edit.
   const [name, setName] = useState(() => getStoredName());
   const [error, setError] = useState('');
-  // Create-room visibility. Private (default) = code-only, matching the original
-  // behavior; public lists the room in the browser / makes it quick-play-able.
+  // Create-room visibility. Public (App's default, useRoom.goToLobby) lists the room in the
+  // browser / makes it quick-play-able and lets lobby bots in; private = code-only.
   // Only meaningful when creating a room (ignored in join mode).
   const [isPublic, setIsPublic] = useState(defaultPublic);
   const { sound } = useSound();
