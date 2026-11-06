@@ -52,8 +52,8 @@ function printed(text) {
   return n;
 }
 
-test('the pool: 60 gears (JACKPOT joined; oct18 +5; oct21 +15; nov2 +12), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
-  assert.equal(ROLL_MARKS.length, 60);
+test('the pool: 60 gears (JACKPOT joined; oct18 +5; oct21 +15; nov2 +12; nov3 +5), no COMMON; no two share a MAIN stat (kind AND value), nor a printed line', () => {
+  assert.equal(ROLL_MARKS.length, 65);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
   for (const id of [...REMOVED_COMMON_IDS, ...RETIRED_COMMON_IDS]) assert.ok(!ROLL_MARKS.some((m) => m.id === id), id);
   const keys = ROLL_MARKS.map((m) => `${m.stat.kind}:${m.stat.value}`);
@@ -160,7 +160,7 @@ test('one-mode WINS: every mode has its gear; HEADMASTER ×5 in SAT RUSH (season
   for (const mode of Object.keys(MODE_WINS_KINDS)) assert.ok(ROLL_MARKS.some((m) => m.stat.kind === MODE_WINS_KINDS[mode]), mode);
 });
 
-test('FREE OVERDRIVE (every MYTHIC+): 60 s of ×10 after 15 min of play while worn; never while a mythic is not worn', () => {
+test('FREE OVERDRIVE (every MYTHIC+): 60 s of OVERDRIVE after 15 min of play while worn; never while a mythic is not worn', () => {
   assert.equal(FREE_OD_SEC, 60);
   assert.equal(FREE_OD_EVERY_MIN, 15);
   for (const m of ROLL_MARKS) assert.equal(m.perks.includes('freeOd'), tierRank(m.tier) >= tierRank('mythic'), m.id);

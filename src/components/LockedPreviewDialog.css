@@ -12,7 +12,7 @@
 .lp-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(13, 6, 24, 0.72);
+  background: var(--scrim);
 }
 .lp-panel {
   position: relative;

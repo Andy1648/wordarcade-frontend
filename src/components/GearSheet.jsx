@@ -86,7 +86,6 @@ export default function GearSheet({ e, have, on, view, howTo, onSet, onClose, pe
             <div className="mx-main is-locked" data-testid="mark-main">
               <span className="mx-main-kick">LOCKED</span>
               <span className="mx-main-num">{c.odds}</span>
-              <span className="mx-main-kind">ROLL TO UNLOCK</span>
             </div>
           ) : (
             <div className="mx-main is-locked is-word" data-testid="mark-main">

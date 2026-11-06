@@ -5,7 +5,7 @@ import { createRejectLog, BATCH_MAX, MAX_FLUSHES } from './rejectLog.js';
 function rig() {
   const calls = [];
   let pending = null;
-  const log = createRejectLog({ send: (mode, words) => { calls.push([mode, words]); return Promise.resolve(); }, setTimer: (fn) => { pending = fn; return 1; }, clearTimer: () => { pending = null; } });
+  const log = createRejectLog({ send: (mode, words, ctx) => { calls.push(ctx ? [mode, words, ctx] : [mode, words]); return Promise.resolve(); }, setTimer: (fn) => { pending = fn; return 1; }, clearTimer: () => { pending = null; } });
   return { log, calls, tick: () => { const f = pending; pending = null; if (f) f(); } };
 }
 
@@ -15,7 +15,7 @@ test('only valid a–z words of the solo modes are queued, once each', () => {
   assert.equal(log.note('zyzzyva', 'fuse'), false, 'deduped');
   assert.equal(log.note('a', 'fuse'), false, 'too short');
   assert.equal(log.note('hello123', 'fuse'), false, 'not a–z');
-  assert.equal(log.note('word', 'word-bomb'), false, 'not a solo mode');
+  assert.equal(log.note('word', 'miner'), false, 'not a logged mode');
   assert.equal(log.note('zyzzyva', 'chain'), true, 'per mode');
 });
 
@@ -45,4 +45,19 @@ test('a failing sender is swallowed', () => {
   const log = createRejectLog({ send: () => Promise.reject(new Error('offline')), setTimer: () => 1, clearTimer: () => {} });
   log.note('offline', 'fuse');
   assert.doesNotThrow(() => log.flush());
+});
+
+test('Word Bomb logs single words; Blitz logs up to 3-word answers per category, and needs the category', () => {
+  const { log, calls, tick } = rig();
+  assert.equal(log.note('zyzzyva', 'word-bomb'), true);
+  assert.equal(log.note('two words', 'word-bomb'), false, 'Word Bomb answers are one word');
+  assert.equal(log.note('dead guy', 'blitz', 'Things at a funeral'), true);
+  assert.equal(log.note('dead guy', 'blitz', 'Things at a funeral'), false, 'once per category');
+  assert.equal(log.note('dead guy', 'blitz', 'Things in a cave'), true, 'another category is its own row');
+  assert.equal(log.note('dead guy', 'blitz'), false, 'useless without its category');
+  assert.equal(log.note('one two three four', 'blitz', 'Things at a funeral'), false, 'too long');
+  assert.equal(log.note('call 555', 'blitz', 'Things at a funeral'), false, 'letters only');
+  tick();
+  assert.deepEqual(calls.find((c) => c[0] === 'word-bomb'), ['word-bomb', ['zyzzyva']]);
+  assert.deepEqual(calls.find((c) => c[2] === 'Things in a cave'), ['blitz', ['dead guy'], 'Things in a cave']);
 });

@@ -9,7 +9,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(13, 6, 24, 0.55); /* flat #0d0618 scrim */
+  background: var(--scrim); /* flat #0d0618 scrim */
   cursor: pointer;
 }
 .sticker {
