@@ -270,6 +270,11 @@ export async function mockBoard(page, seed = [], { caps = false, shared = null, 
       // the players just passed (BoardClimb's fetchRowsBelow): `rank=gt.N&order=rank.asc`
       const gt = /^gt\.(\d+)$/.exec(url.searchParams.get('rank') || '');
       if (gt) seen = seen.filter((r) => r.rank > Number(gt[1]));
+      // the rows around a rank (fetchAround: MY LEAGUE): `rank=gte.A&rank=lte.B&order=rank.asc`
+      for (const f of url.searchParams.getAll('rank')) {
+        const m = /^(gte|lte)\.(\d+)$/.exec(f);
+        if (m) seen = seen.filter((r) => (m[1] === 'gte' ? r.rank >= Number(m[2]) : r.rank <= Number(m[2])));
+      }
       if (url.searchParams.get('order') === 'rank.desc') seen = seen.slice().reverse();
       return json(200, id ? all.filter((r) => `eq.${r.id}` === id) : seen.slice(0, Number(url.searchParams.get('limit') || 100)));
     }
