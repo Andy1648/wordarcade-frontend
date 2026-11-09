@@ -935,3 +935,22 @@ html[data-beat='true'] .room-leave-btn {
 @media (max-width: 480px) {
   .room-start-btn { width: calc(100% - 60px); }
 }
+
+/* AUTO-START (nov9 house rooms): where WAITING FOR HOST sat - the lobby starts on its own. Static: the number changes
+   once a second, nothing loops. */
+.room-autostart {
+  margin: 0 auto 14px;
+  padding: 8px 16px;
+  width: fit-content;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 3px solid #b8a21a;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  text-align: center;
+}
+.room-autostart b { font-size: var(--fs-k24); }

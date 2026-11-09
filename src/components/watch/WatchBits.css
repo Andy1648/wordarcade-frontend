@@ -1,0 +1,50 @@
+/* WatchBits.css — SPECTATING badge, the watcher's input-slot line, and the N WATCHING chip. Flat, outlined in a darker
+   shade of the fill, hard black offset shadow. Static. */
+.watch-pill,
+.watch-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+.watch-pill {
+  color: #0d0618;
+  background: #FF4FA3;
+  border: 3px solid #b8206e;
+}
+.watch-count {
+  color: #2EFFE0;
+  background: #1a0b2e;
+  border: 3px solid #1a8f80;
+}
+.watch-count b { color: #fff; }
+.watch-bar {
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: #FF4FA3;
+  background: #1a0b2e;
+  border: 3px solid #b8206e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
