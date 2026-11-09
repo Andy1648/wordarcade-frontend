@@ -173,6 +173,21 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }, [room]);
   useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
+  // AUTO-START (nov9 house rooms): the server starts this lobby on its own (room_update.autoStartInMs, re-sent with every
+  // roster change) - count it down here, once a second, only while it runs. Nobody waits on a host who never presses.
+  const autoMs = room && Number.isFinite(room.autoStartInMs) ? room.autoStartInMs : null;
+  const [autoAt, setAutoAt] = useState(null);
+  const [autoNow, setAutoNow] = useState(0);
+  useEffect(() => {
+    if (autoMs == null) { setAutoAt(null); return undefined; }
+    const t = Date.now();
+    setAutoAt(t + autoMs);
+    setAutoNow(t);
+    const id = setInterval(() => setAutoNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [room, autoMs]);
+  const autoSec = autoAt == null ? null : Math.max(0, Math.ceil((autoAt - autoNow) / 1000));
+
   // (Andy oct21: no COPY INVITE LINK / SHARE row — the code tiles copy the code; heroes get the room instead.)
   // R3 oct8: the CODE itself is copyable — tap the tiles, get the five letters (a friend on a call wants the code). Same brief ✓ beat, its own timer.
   const [codeCopied, setCodeCopied] = useState(false);
@@ -504,6 +519,11 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
           <div className="room-error" role="alert">{serverError}</div>
         )}
 
+        {autoSec != null ? (
+          <div className="room-autostart" role="status" data-testid="room-autostart">
+            {autoSec > 0 ? <>STARTS IN <b>{autoSec}</b></> : 'STARTING…'}
+          </div>
+        ) : null}
         {isHost ? (
           <button
             className="room-start-btn"
@@ -521,7 +541,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
               : 'START GAME'}
             {SEASON2 && canStart && !startPending ? <span className="room-start-mode">{gameTypeLabel(room.gameType)}</span> : null}
           </button>
-        ) : (
+        ) : autoSec != null ? null : (
           <div className="room-waiting-msg">WAITING FOR HOST...</div>
         )}
         </div>

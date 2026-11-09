@@ -75,6 +75,7 @@ import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
 import { usePlayClock } from '../progress/playClock.js';
+import { WatchPill, WatchersChip } from './watch/WatchBits.jsx';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -1512,6 +1513,7 @@ export default function GameScreen({
   lastLanding = null,
   // SPECTATE (nov4): watching a public game from the room list - never a player; no input, no rematch
   watchOnly = false,
+  watchers = 0, // SPECTATE (nov9): how many are watching this game (room_update.watchers) - every screen says so
 }) {
   // YOUR seat shows YOUR equipped hero (oct18, Andy: cosmetics should show "in game as well so people get the full
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
@@ -2810,6 +2812,7 @@ export default function GameScreen({
         winnerPay={winnerPay}
         lastLanding={lastLanding}
         watchOnly={watchOnly}
+        watchers={watchers}
       />
     );
   }
@@ -3251,6 +3254,7 @@ export default function GameScreen({
               {watchOnly && (
                 <span className="game-watch-pill" role="status" data-testid="watch-chip">SPECTATING</span>
               )}
+              <WatchersChip n={watchers} />
               {roomCode && (
                 <span className="game-room-code" title="Friends can join with this code — they're dealt in next turn">
                   ROOM <b>{roomCode}</b>
@@ -4403,6 +4407,7 @@ function CategoryBlitzScreen({
   winnerPay = null,
   lastLanding = null,
   watchOnly = false, // SPECTATE: see GameScreen's prop
+  watchers = 0,
 }) {
   // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
   // state is not in scope here, and referencing it compiled fine while being undefined at runtime.
@@ -5027,6 +5032,8 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
+              {watchOnly ? <WatchPill /> : null}
+              <WatchersChip n={watchers} />
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -5316,6 +5323,8 @@ function CategoryBlitzScreen({
               <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-actions">
+              {watchOnly ? <WatchPill /> : null}
+              <WatchersChip n={watchers} />
               {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE

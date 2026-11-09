@@ -17,6 +17,9 @@ import './PublicRoomsScreen.css';
 import './kit/tokens.css';
 import './PublicRoomsScreenV2.css';
 import { SEASON2 } from '../progress/season';
+import { isHeroId } from '../cast/mainFace.js';
+import { groupRooms, rowAction } from '../lib/roomList.js';
+import useRoomsClock from '../hooks/useRoomsClock.js';
 
 const MAX_NAME_LENGTH = 20;
 const ROOM_CODE_LENGTH = 5;
@@ -25,7 +28,7 @@ const AUTO_REFRESH_MS = 5000;
 // gameType -> display label + accent colour, derived from the homepage game data
 // so names/colours stay in sync with the cards. Unknown types fall back gracefully.
 const GAME_INFO = GAMES.reduce((acc, g) => {
-  acc[g.id] = { label: g.name.replace('\n', ' '), color: g.baseColor };
+  acc[g.id] = { label: g.name.replace('\n', ' '), color: g.baseColor, art: g.artLayers ? g.artLayers.hero : null };
   return acc;
 }, {});
 
@@ -34,6 +37,53 @@ function gameLabel(type) {
 }
 function gameColor(type) {
   return GAME_INFO[type]?.color || '#2EFFE0';
+}
+
+/** One public room: the host's face, who + what, how full, and what pressing it does (roomList.rowAction). Every
+ *  column has a fixed track (no row indents its own way); a long host name wraps, never ellipsized. */
+function RoomRow({ room, action, joining, locked, onPick }) {
+  const hero = room.hostHero && isHeroId(room.hostHero) ? room.hostHero : null;
+  const art = GAME_INFO[room.gameType]?.art || null;
+  const label = gameLabel(room.gameType);
+  const who = room.hostName || label;
+  const live = room.status === 'playing';
+  const watchers = Number(room.spectators) || 0;
+  return (
+    <li>
+      <button
+        type="button"
+        className={`browser-row is-${action.kind}${live ? ' is-live' : ''}${action.verb === 'FULL' ? ' is-full' : ''}`}
+        style={{ '--row-accent': gameColor(room.gameType) }}
+        onClick={() => onPick(room)}
+        disabled={locked || action.kind === 'none'}
+        data-testid="browser-room-row"
+        data-status={live ? 'playing' : 'waiting'}
+        data-code={room.code}
+        aria-label={`${action.verb === 'JOIN' || action.verb === 'SPECTATE' ? action.verb.toLowerCase() : action.verb.toLowerCase() + ':'} ${who}'s ${label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players${watchers ? `, ${watchers} watching` : ''}`}
+      >
+        <span className={`browser-row-face${hero ? ' is-hero' : ''}`} aria-hidden="true">
+          {hero
+            ? <img src={`/cast/${hero}-hero.webp`} alt="" width="512" height="512" loading="lazy" decoding="async" draggable="false" />
+            : art ? <img src={art} alt="" loading="lazy" decoding="async" draggable="false" /> : <span>{label.slice(0, 2)}</span>}
+        </span>
+        <span className="browser-row-main">
+          <span className="browser-row-host" data-col="name">{who}</span>
+          <span className="browser-row-sub">
+            <span className="browser-row-game">{label}</span>
+            <span className="browser-row-code">#{room.code}</span>
+            {watchers > 0 ? <span className="browser-row-watch">{watchers} WATCHING</span> : null}
+          </span>
+        </span>
+        <span className={`browser-row-count${room.playerCount >= room.maxPlayers ? ' full' : ''}`} data-col="count">
+          {room.playerCount}/{room.maxPlayers}
+        </span>
+        <span className="browser-row-act" data-col="action">
+          <span className="browser-row-state">{action.status}</span>
+          <span className="browser-row-status">{joining ? (live ? 'OPENING…' : 'JOINING…') : action.verb}</span>
+        </span>
+      </button>
+    </li>
+  );
 }
 
 export default function PublicRoomsScreen({
@@ -143,11 +193,28 @@ export default function PublicRoomsScreen({
   }
 
   const error = localError || serverError;
-  // lobbies first, then live games (each group in the server's order)
-  const list = (rooms || []).map((r, i) => ({ r, i }))
-    .sort((a, b) => ((a.r.status === 'playing') - (b.r.status === 'playing')) || a.i - b.i)
-    .map((x) => x.r);
-  const isEmpty = list.length === 0;
+  // TWO GROUPS (nov9, roomList.js): lobbies (starting soonest, then fullest), then live games (watchable first)
+  const { lobbies, live } = groupRooms(rooms, { keepFull: true });
+  const clock = useRoomsClock(rooms);
+  const isEmpty = lobbies.length + live.length === 0;
+  const pick = (room) => handleJoin(room.code, room.status === 'playing');
+  const group = (key, title, list) => (list.length ? (
+    <section className={`browser-group is-${key}`} data-testid="browser-group" aria-label={`${title}: ${list.length}`}>
+      <h3 className="browser-group-head">{title} <b>{list.length}</b></h3>
+      <ul className="browser-group-list">
+        {list.map((room) => (
+          <RoomRow
+            key={room.code}
+            room={room}
+            action={rowAction(room, clock)}
+            joining={joiningCode === room.code}
+            locked={!!joiningCode || (room.status === 'playing' && !onWatch)}
+            onPick={pick}
+          />
+        ))}
+      </ul>
+    </section>
+  ) : null);
 
   return (
     <div className="browser-wrap" data-skin={SEASON2 ? 'v2' : undefined}>
@@ -278,42 +345,11 @@ export default function PublicRoomsScreen({
             </div>
           </div>
         ) : (
-          <ul className="browser-list">
-            {list.map((room) => {
-              const joining = joiningCode === room.code;
-              const live = room.status === 'playing';
-              const full = !live && room.playerCount >= room.maxPlayers;
-              const watchable = live && room.canSpectate !== false && !!onWatch;
-              const action = full ? 'FULL' : live ? (watchable ? 'SPECTATE' : 'NO SEATS') : 'JOIN';
-              return (
-                <li key={room.code}>
-                  <button
-                    className={`browser-row${full ? ' is-full' : ''}${live ? ' is-live' : ''}`}
-                    style={{ '--row-accent': gameColor(room.gameType) }}
-                    onClick={() => handleJoin(room.code, live)}
-                    disabled={!!joiningCode || full || (live && !watchable)}
-                    data-testid="browser-room-row"
-                    data-status={live ? 'playing' : 'waiting'}
-                  >
-                    <span className="browser-row-main">
-                      <span className="browser-row-game">{gameLabel(room.gameType)}</span>
-                      <span className="browser-row-code">
-                        #{room.code} · <span className={`browser-row-state${live ? ' is-live' : ''}`}>{live ? 'PLAYING' : 'IN LOBBY'}</span>
-                      </span>
-                    </span>
-                    <span className="browser-row-meta">
-                      <span className={`browser-row-count${full ? ' full' : ''}`}>
-                        {room.playerCount}/{room.maxPlayers}
-                      </span>
-                      <span className="browser-row-status">
-                        {joining ? (live ? 'OPENING…' : 'JOINING…') : action}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          // ONLY THE LIST SCROLLS: the box keeps its header + code form in view, the groups scroll under sticky heads
+          <div className="browser-list" data-testid="browser-list">
+            {group('lobby', 'IN LOBBY', lobbies)}
+            {group('live', 'PLAYING', live)}
+          </div>
         )}
         </div>
       </div>

@@ -23,7 +23,12 @@ import { GAMES } from '../gameData';
 import { isHeroId } from '../cast/mainFace.js';
 import { activeBoosts } from '../progress/liveBoost.js';
 import { useSound } from '../contexts/SoundContext';
+import { isLive, sortRooms, rowAction } from '../lib/roomList.js';
+import useRoomsClock from '../hooks/useRoomsClock.js';
 import './MenuRooms.css';
+
+// the order + what a row says live in lib/roomList.js (shared with the JOIN ROOM list); re-exported for older imports
+export { isLive, sortRooms };
 
 const MODE = GAMES.reduce((acc, g) => {
   acc[g.id] = { label: g.name.replace('\n', ' '), color: g.baseColor, art: g.artLayers ? g.artLayers.hero : null };
@@ -31,26 +36,14 @@ const MODE = GAMES.reduce((acc, g) => {
 }, {});
 const modeOf = (type) => MODE[type] || { label: String(type || 'GAME').replace(/-/g, ' ').toUpperCase(), color: '#2EFFE0', art: null };
 
-/** A live game (watch it) rather than a lobby (join it). Pure. */
-export const isLive = (r) => !!r && r.status === 'playing';
-
-/** Lobbies first, fullest first (the same order Quick Play fills in), then live games; ties keep the server's order.
- *  A full LOBBY is dropped (the server never lists one; belt and braces); a live game is listed full or not. Pure. */
-export function sortRooms(rooms) {
-  return (Array.isArray(rooms) ? rooms : [])
-    .filter((r) => r && r.code && (isLive(r) || !(r.maxPlayers && r.playerCount >= r.maxPlayers)))
-    .map((r, i) => ({ r, i }))
-    .sort((a, b) => (isLive(a.r) - isLive(b.r)) || (b.r.playerCount || 0) - (a.r.playerCount || 0) || a.i - b.i)
-    .map((x) => x.r);
-}
-
-function RoomRow({ room, joining, onJoin, delay }) {
+function RoomRow({ room, joining, onJoin, delay, clock }) {
   const mode = modeOf(room.gameType);
   const hero = room.hostHero && isHeroId(room.hostHero) ? room.hostHero : null;
   const who = room.hostName || mode.label;
   const busy = joining === room.code;
   const live = isLive(room);
-  const action = live ? 'SPECTATE' : 'JOIN';
+  const act = rowAction(room, clock);
+  const action = act.verb;
   return (
     <li className={`mr-row${live ? ' is-live' : ''}`} style={{ '--mr-accent': mode.color, '--mr-delay': `${delay}ms` }} data-testid="menu-room-row" data-code={room.code}>
       <span className={`mr-face${hero ? ' is-hero' : ' is-mode'}`} aria-hidden="true">
@@ -60,27 +53,24 @@ function RoomRow({ room, joining, onJoin, delay }) {
             ? <img src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" />
             : <span className="mr-face-tag">{mode.label.slice(0, 2)}</span>}
       </span>
-      <span className="mr-host">{who}</span>
-      {/* line 2 (the narrow column had left the mode ~9px — coordinator nov2): the face, then a mode chip (the mode's
-          art when the face is a hero — the face already IS the mode art otherwise — + its name, ≥13px, never shrunk;
-          a long name wraps) and a big x/max */}
+      <span className="mr-host" data-col="name">{who}</span>
+      {/* line 2 (nov9): the mode (its art when the face is a hero) + the x/max, wrapping under each other in the space the
+          fixed-width button leaves - never squeezed into a chip that can't hold its name */}
       <span className="mr-meta">
-        <span className="mr-modechip">
-          {hero && mode.art ? <img className="mr-modeico" src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" /> : null}
-          <span className="mr-mode">{mode.label}</span>
-        </span>
+        <span className="mr-mode">{mode.label}</span>{' '}
         <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
       </span>
       <button
         type="button"
-        className={`mr-join${live ? ' is-watch' : ''}`}
-        disabled={!!joining || (live && room.canSpectate === false)}
+        className={`mr-join is-${act.kind}${live ? ' is-watch' : ''}`}
+        data-col="action"
+        disabled={!!joining || act.kind === 'none'}
         onClick={() => onJoin(room)}
-        aria-label={`${live ? 'Spectate' : 'Join'} ${who}'s ${mode.label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players`}
+        aria-label={`${act.kind === 'none' ? `${action}:` : live ? 'Spectate' : 'Join'} ${who}'s ${mode.label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players`}
       >
         {/* the row's state rides in the button (no third line: the panel's height is the column's budget) */}
-        <span className="mr-status" data-testid="menu-room-status">{live ? 'PLAYING' : 'IN LOBBY'}</span>
-        <span className="mr-action">{busy ? '…' : action}</span>
+        <span className="mr-status" data-testid="menu-room-status">{act.status.replace('STARTS IN ', 'STARTS ')}</span>
+        <span className={`mr-action${act.kind === 'none' ? ' is-why' : ''}`}>{busy ? '…' : action}</span>
       </button>
     </li>
   );
@@ -117,6 +107,7 @@ export default function MenuRooms({
   // a dropped socket can never answer the join — unlock the rows so a reconnect can try again
   useEffect(() => { if (!online) setJoining(null); }, [online]);
   const list = sortRooms(rooms);
+  const clock = useRoomsClock(rooms);
 
   if (variant === 'chip') {
     if (!heard || list.length === 0) return null; // hides at zero (Andy nov2)
@@ -169,7 +160,7 @@ export default function MenuRooms({
           {shown.length > 0 && (
             <ul className="mr-list">
               {shown.map((room, i) => (
-                <RoomRow key={room.code} room={room} joining={joining} onJoin={handleJoin} delay={i * 40} />
+                <RoomRow key={room.code} room={room} joining={joining} onJoin={handleJoin} delay={i * 40} clock={clock} />
               ))}
             </ul>
           )}

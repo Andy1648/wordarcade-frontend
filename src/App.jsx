@@ -738,7 +738,7 @@ function App() {
       const watched = watchingRef.current; // SPECTATE: a watcher comes back as a watcher (spectate_room), never a seat
       if (watched && watched.code) {
         rejoinPendingRef.current = true;
-        send('spectate_room', { code: watched.code, name: watched.name || playerName || resolvePlayerName() });
+        send('spectate_room', { code: watched.code, name: watched.name || playerName || resolvePlayerName(), watchAll: true });
         if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = setTimeout(reconnectGiveUp, 6000);
       } else if (reconnectRoomRef.current) {
@@ -2698,6 +2698,8 @@ function App() {
         onLocalReject={(result) => dispatchMiner({ type: 'local', result })}
         onAgain={handleMinerAgain}
         onLeave={handleLeaveRequest}
+        watchOnly={!!watching}
+        watchers={room ? room.watchers || 0 : 0}
       />
     );
   } else if (view === 'game' && gameType === WORD_RACE_ID) {
@@ -2723,6 +2725,8 @@ function App() {
         onLocalReject={(result) => dispatchRace({ type: 'local', result })}
         onRematch={handleRematch}
         onLeave={handleLeaveRequest}
+        watchOnly={!!watching}
+        watchers={room ? room.watchers || 0 : 0}
       />
     );
   } else if (view === 'game') {
@@ -2787,6 +2791,7 @@ function App() {
         onRerollCategory={handleRerollCategory}
         // SPECTATE: a watcher sees the live board read-only (no input, no rematch)
         watchOnly={!!watching}
+        watchers={room ? room.watchers || 0 : 0}
         rematchPending={rematchPending}
         rerollPending={rerollPending}
         musicSetVolume={music.setVolume}
