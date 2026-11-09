@@ -76,6 +76,7 @@ import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
 import { usePlayClock } from '../progress/playClock.js';
 import { WatchPill, WatchersChip } from './watch/WatchBits.jsx';
+import FitText from './kit/FitText.jsx';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -3476,7 +3477,7 @@ export default function GameScreen({
                   })()}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="game-player-name-text" translate="no">{player.name}</span>
+                    <FitText className="game-player-name-text" translate="no">{player.name}</FitText>
                     {isMe && <span className="game-player-you">YOU</span>}
                     {/* Hearts live INSIDE the card, on the name row (right side). */}
                     <div className="game-player-hearts">
@@ -4885,7 +4886,7 @@ function CategoryBlitzScreen({
                   <span className="cb-score-rank">{i + 1}</span>
                   <span className="cb-score-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-score-name-text" translate="no">{s.name}</span>
+                    <FitText className="cb-score-name-text" translate="no">{s.name}</FitText>
                     {s.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-score-pts">
@@ -5290,7 +5291,7 @@ function CategoryBlitzScreen({
                   >
                     <span className="cb-progress-name">
                       <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                      <span className="cb-progress-name-text" translate="no">{p.name}</span>
+                      <FitText className="cb-progress-name-text" translate="no">{p.name}</FitText>
                     </span>
                     <span className="cb-progress-count">
                       {playerProgress[p.id] || 0}
@@ -5363,7 +5364,7 @@ function CategoryBlitzScreen({
                 <div className="cb-result-head">
                   <span className="cb-result-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-result-name-text" translate="no">{pr.name}</span>
+                    <FitText className="cb-result-name-text" translate="no">{pr.name}</FitText>
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">

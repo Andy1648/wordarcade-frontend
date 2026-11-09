@@ -20,6 +20,7 @@ import { SEASON2 } from '../progress/season';
 import { isHeroId } from '../cast/mainFace.js';
 import { groupRooms, rowAction } from '../lib/roomList.js';
 import useRoomsClock from '../hooks/useRoomsClock.js';
+import FitText from './kit/FitText.jsx';
 
 const MAX_NAME_LENGTH = 20;
 const ROOM_CODE_LENGTH = 5;
@@ -67,7 +68,7 @@ function RoomRow({ room, action, joining, locked, onPick }) {
             : art ? <img src={art} alt="" loading="lazy" decoding="async" draggable="false" /> : <span>{label.slice(0, 2)}</span>}
         </span>
         <span className="browser-row-main">
-          <span className="browser-row-host" data-col="name">{who}</span>
+          <FitText className="browser-row-host" data-col="name" translate="no">{who}</FitText>
           <span className="browser-row-sub">
             <span className="browser-row-game">{label}</span>
             <span className="browser-row-code">#{room.code}</span>

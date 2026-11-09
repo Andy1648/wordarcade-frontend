@@ -839,7 +839,7 @@ html[data-beat='true'] .room-leave-btn {
 /* A BIG ROOM GOES TWO-UP — at EVERY width (fix/join-screens-scale). Past four players the roster is
    the tallest thing on the screen: on a 390x844 phone an 8-player room pushed DIFFICULTY and START
    ~200px below the fold with nothing to scroll, and on a 625px laptop it did the same to the last
-   row. Two chips per row, tighter rows, long names ellipsised; the type is unchanged. */
+   row. Two chips per row, tighter rows, long names scale down (FitText); the type is unchanged. */
 .room-players-list:has(> :nth-child(5)) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -857,7 +857,7 @@ html[data-beat='true'] .room-leave-btn {
 .room-players-list:has(> :nth-child(5)) .room-player-name {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -954,3 +954,8 @@ html[data-beat='true'] .room-leave-btn {
   text-align: center;
 }
 .room-autostart b { font-size: var(--fs-k24); }
+
+/* nov9: a name is ONE line through FitText (never broken mid-word, never ellipsized) - the rename button and its FitText
+   must be allowed to shrink to the seat, or a long name runs out of it instead of scaling down */
+.room-rename-btn { min-width: 0; max-width: 100%; }
+.room-rename-btn > .fit-box { flex: 1 1 auto; min-width: 0; }

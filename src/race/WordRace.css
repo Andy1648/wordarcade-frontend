@@ -148,7 +148,7 @@
 }
 .wr-lane-name-txt {
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
 }
 .wr-tag {
@@ -530,7 +530,7 @@
 }
 .wr-roster-name {
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
 }
 .wr-status {

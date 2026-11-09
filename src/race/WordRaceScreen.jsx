@@ -48,6 +48,7 @@ import { otherSeatIds } from '../progress/seats';
 import { minWordsFor } from '../progress/wins';
 import { usePlayClock } from '../progress/playClock.js';
 import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
+import FitText from '../components/kit/FitText.jsx';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -334,7 +335,7 @@ export default function WordRaceScreen({
               data-racer-index={r.index}
             >
               <span className="wr-lane-name">
-                <span className="wr-lane-name-txt">{r.name}</span>
+                <FitText className="wr-lane-name-txt" translate="no">{r.name}</FitText>
                 {isMe && <span className="wr-tag wr-tag-me">YOU</span>}
                 {r.isBot && <span className="wr-tag">BOT</span>}
                 {r.left && <span className="wr-tag">LEFT</span>}
@@ -474,10 +475,7 @@ export default function WordRaceScreen({
             {standings.map((s) => (
               <li key={s.id} className={s.id === myId ? 'is-me' : ''} data-standing-id={s.id}>
                 <span className="wr-st-place">{ordinal(s.place)}</span>
-                <span className="wr-st-name">
-                  {s.name}
-                  {s.isBot ? ' (BOT)' : ''}
-                </span>
+                <FitText className="wr-st-name" translate="no">{`${s.name}${s.isBot ? ' (BOT)' : ''}`}</FitText>
                 <span className="wr-st-words">{plural(s.words, 'WORD')}</span>
               </li>
             ))}

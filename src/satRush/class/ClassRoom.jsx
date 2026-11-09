@@ -24,6 +24,7 @@ import { withArticle, speakFr, canSpeak, setAutoSpeak } from '../speak';
 import { formatNum } from '../../format';
 import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
+import FitText from '../../components/kit/FitText.jsx';
 
 const LENGTHS = [10, 20, 30];
 const MODES = [
@@ -281,9 +282,7 @@ function Chips({ names, onKick, tone = '', empty = '—', size = 0 }) {
         <li key={p.id || `${p.name}-${i}`} className={p.away ? 'away' : ''}>
           {onKick ? (
             <button type="button" className="fr-class-chip" onClick={() => kick(p)} aria-label={`remove ${p.name}`} title="remove from the class">
-              <span className="fr-class-chip-name" title={p.name}>
-                {p.name}
-              </span>
+              <FitText className="fr-class-chip-name" title={p.name} translate="no">{p.name}</FitText>
               {p.away && <span className="fr-class-away">away</span>}
               <span className="fr-class-chip-x" aria-hidden="true">
                 ✕
@@ -291,9 +290,7 @@ function Chips({ names, onKick, tone = '', empty = '—', size = 0 }) {
             </button>
           ) : (
             <span className="fr-class-chip">
-              <span className="fr-class-chip-name" title={p.name}>
-                {p.name}
-              </span>
+              <FitText className="fr-class-chip-name" title={p.name} translate="no">{p.name}</FitText>
             </span>
           )}
         </li>
