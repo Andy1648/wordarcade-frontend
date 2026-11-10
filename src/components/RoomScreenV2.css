@@ -219,9 +219,9 @@
   .room-wrap[data-skin="v2"] .room-difficulty-desc { display: none; }
 }
 
-/* nov9 ("nothing tiny", 11px floor): on the narrowest phones a FULL lobby goes one seat per row. Two-up, a 360px seat
-   left a name ~92px - a 16-letter bot name drew at 10px. One-up, the seat is wide enough to keep its hero lane AND give
-   the name ~160px. The roster is a list and already scrolled at this size; nothing else moves. */
-@media (max-width: 380px) {
+/* nov9 ("nothing tiny", 11px floor): on a phone a FULL lobby goes one seat per row. Two-up, a 360-390px seat left a
+   name 92-107px - a 16-letter bot name drew at 10-11px (10.8 on CI's fonts). One-up, the seat is wide enough to keep
+   its hero lane AND give the name ~160px. The roster is a list and already scrolled at this size; nothing else moves. */
+@media (max-width: 480px) {
   .room-wrap[data-skin="v2"] .room-players-list:has(> :nth-child(5)) { grid-template-columns: minmax(0, 1fr); }
 }
