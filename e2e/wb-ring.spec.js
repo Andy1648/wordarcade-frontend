@@ -219,10 +219,10 @@ for (const vp of VIEWPORTS) {
         expect(m.n, 'every player has a seat').toBe(n);
         // (1) no seat is more than twice its own content
         expect(m.maxRatio, `widest seat vs its content at n=${n}`).toBeLessThanOrEqual(2);
-        // (2) evenly spaced: every gap within 2deg of every other - on the RING. A phone's 6+ seat board is not a ring
+        // (2) evenly spaced: every gap within 2deg of every other - on the RING. A 6+ seat board is not a ring (any width, nov10)
         // (nov9 SEAT PLATES: the bomb over a two-column grid of plates, so every name holds >= 11px): there the seats are
         // checked as that grid instead - two columns, every plate the same size
-        if (vp.width <= 700 && n >= 6) {
+        if (n >= 6) {
           const cols = await page.$$eval('.wb-seat', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width), Math.round(r.height)]; }));
           expect(new Set(cols.map((c) => c[0])).size, `two plate columns at n=${n}`).toBe(2);
           expect(new Set(cols.map((c) => c[1])).size, `every plate the same width at n=${n}`).toBe(1);
