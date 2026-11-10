@@ -1751,6 +1751,15 @@ export default function GameScreen({
           }
           const gap = u.top - ringBottom;
           if (gap >= REACT_H) lift = Math.round(u.height);
+          // SEAT PLATES (a phone's 6+ seat board, nov9): the plates fill the ring row's whole width down to the used
+          // strip, so there is no band under them - the reaction lands just ABOVE the plates instead, in the bomb's
+          // row (written as the same offset; measured on resize only, never per frame)
+          const bar = wbBarRef.current;
+          if (ringEl.classList.contains('wb-ring-6up') && bar) {
+            let seatsTop = Infinity;
+            for (const st of stage.querySelectorAll('.wb-seat')) seatsTop = Math.min(seatsTop, st.getBoundingClientRect().top);
+            if (Number.isFinite(seatsTop)) lift = Math.max(0, Math.round(bar.getBoundingClientRect().top - seatsTop - 6));
+          }
         }
         stage.style.setProperty('--wb-usedh', `${lift}px`);
         setRailMetrics(
@@ -3374,6 +3383,7 @@ export default function GameScreen({
           className={[
             'wb-ring',
             players.length >= 5 ? 'wb-ring-crowd' : '',
+            players.length >= 6 ? 'wb-ring-6up' : '', // phones: the ring becomes the bomb over a grid of SEAT PLATES (GameScreen.css)
             players.length === 2 ? 'wb-ring--pair' : '',
           ].filter(Boolean).join(' ')}
           style={{ '--n': players.length, '--wb-start': players.length === 2 ? '90deg' : '0deg' }}

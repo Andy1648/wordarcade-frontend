@@ -54,7 +54,7 @@
 /* a NARROW seat (phones, a 1024 laptop — under ~200px): the hero stands ON TOP of the text, stepping up over the seat's
    top edge, never beside or over it; the name gets the seat's whole width */
 @container seat (max-width: 199px) {
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-top: 0; padding-right: 10px; align-content: flex-start; }
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-top: 0; padding-right: 6px; padding-left: 10px; align-content: flex-start; }
   /* "BOT · MEDIUM" is ~140px of Space Mono in a ~130px column (CI's metrics ran it 13px out of a 1024 seat): the badge
      keeps to the seat's width — tighter tracking, and if it still can't fit it breaks once at a space ("BOT ·" /
      "MEDIUM"), never letter by letter into the old three-line pillar */

@@ -2,6 +2,7 @@
 // Clash shape: your league's own standings in their own view, with the next league as the goal, and the main board untouched).
 // PURE: which board places your league spans, how far you are from the next one, and which rows to show.
 import { LEAGUES, leagueOf } from './leagues.js';
+import { leagueRange } from './leagueRange.js';
 
 /** How many places either side of you the tab asks for (a wide league like SILVER is 800 places: you see your stretch of it). */
 export const LEAGUE_SPAN = 25;
@@ -18,8 +19,7 @@ export function leagueBand(rank, total = null) {
   if (!league) return null;
   const i = LEAGUES.indexOf(league);
   const next = i > 0 ? LEAGUES[i - 1] : null;
-  const lo = next ? next.top + 1 : 1;
-  const hi = Number.isFinite(league.top) ? league.top : null;
+  const { lo, hi } = leagueRange(league);
   const floor = hi != null ? hi : Math.max(r, Number(total) || 0);
   const size = floor - lo;
   const fill = !next ? 1 : hi == null && !(Number(total) >= r) ? 0 : size <= 0 ? 1 : Math.min(1, Math.max(0, (floor - r) / size));

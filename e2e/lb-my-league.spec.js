@@ -132,3 +132,29 @@ test('no place on the board: no MY LEAGUE tab', async ({ page }) => {
   await expect(lb.locator('.lb2-tab[data-tab="all"]')).toBeVisible();
   await expect(lb.locator('.lb2-tab[data-tab="league"]')).toHaveCount(0);
 });
+
+// LEAGUES v2 (Andy nov9: "let the players be able to see what league is from ranks blank to blank"): every league's span is
+// written where the league shows (the card, the cut lines) and ALL LEAGUES opens the whole ladder, best first, yours marked.
+// A board row wears its own league's badge, so the icon on the left always matches the league it sits in.
+const RANGES = ['RANK 1', 'RANKS 2–10', 'RANKS 11–50', 'RANKS 51–100', 'RANKS 101–300', 'RANKS 301–800', 'RANKS 801–1,600', 'RANKS 1,601+'];
+for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
+  test(`${vp.width}: the ladder of all leagues, each with its ranks; rows wear their league`, async ({ page }) => {
+    test.setTimeout(90_000);
+    const lb = await boot(page, vp, 150);
+    // ALL TIME: the cut lines name their ranks, and each row's badge is its league's
+    await expect(lb.locator('.lb2-sep.is-league[data-league="titan"] .lg-badge-range')).toHaveText('RANKS 11–50', { timeout: 20_000 });
+    for (const [rank, key] of [[4, 'champion'], [30, 'titan'], [75, 'master']]) {
+      await expect(lb.locator(`.lb2-row[data-rank="${rank}"] .lb2-seal`)).toHaveAttribute('data-league', key);
+    }
+    await lb.locator('.lb2-tab[data-tab="league"]').click();
+    await expect(lb.getByTestId('lb2-league-range')).toHaveText('RANKS 101–300');
+    await lb.getByTestId('lb2-league-all').click();
+    const ladder = page.getByTestId('league-ladder');
+    await expect(ladder).toBeVisible();
+    await expect(ladder.locator('.lgl-range')).toHaveText(RANGES);
+    await expect(ladder.locator('.lgl-row.is-me')).toHaveAttribute('data-league', 'crystal');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    await ladder.getByRole('button', { name: 'Close leagues' }).click();
+    await expect(ladder).toHaveCount(0);
+  });
+}
