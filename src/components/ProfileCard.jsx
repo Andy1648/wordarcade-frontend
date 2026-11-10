@@ -22,7 +22,7 @@ import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 import RankSeal from '../leaderboard/RankSeal.jsx';
-import { nameTier } from '../leaderboard/nameTier.js';
+import { leagueOf } from '../leaderboard/leagues.js';
 
 // a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small.
 // Someone else's gear that YOU don't own opens LOCKED (Andy oct22: no stats from other people's profiles) — PeekGearSheet.
@@ -235,11 +235,11 @@ export default function ProfileCard({ row, mine = false, onClose }) {
       >
         <button ref={closeRef} type="button" className="pc-x" onClick={onClose} aria-label="Close profile">✕</button>
         <div className="pc-head">
-          {/* a top-50 player's card wears the same painted numbered seal as their board row (nameTier.js) */}
-          {nameTier(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
+          {/* the card wears the same league badge, place on its plate, as the player's board row (RankSeal) */}
+          {leagueOf(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
           {/* names are never cut (FitText shrinks a long one beside the rank plate instead of an ellipsis) */}
           <FitText className="pc-name" min={0.5}>{row.username}</FitText>
-          <LeagueBadge rank={row.rank} className="pc-plate pc-league" />
+          <LeagueBadge rank={row.rank} art={false} className="pc-plate pc-league" />
         </div>
         <div className="pc-sub">
           <span className="pc-sub-c"><KitIcon name="rebirth" size={26} shadow={1} extras={false} /> R{formatNum(Number(row.rebirths) || 0)}</span>
