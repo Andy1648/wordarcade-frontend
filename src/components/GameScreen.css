@@ -7226,3 +7226,116 @@ html[data-beat='true'] .wb-belly {
   box-shadow: 3px 3px 0 #000;
   white-space: nowrap;
 }
+
+/* ===== SEAT PLATES (nov9: "nothing tiny" — 11px minimum, "make room instead of shrinking") =====
+   On a PHONE a 6+ seat ring has no room for names: eight labels around a ~250px circle drew at 6-7px. So on the phone
+   stack the 6+ seat ring stops being a circle: the bomb sits on top and the seats become PLATES in a two-column grid
+   under it - a seat-colour stripe, the name (one line, FitText, never broken, never "…") over the hearts - in seat order,
+   the seat on the clock lit in the Word Bomb accent, a knocked-out seat dimmed. (No hero face on a plate: a 360px plate
+   is 136px, and a 28px face left a 16-letter name 90px = 8.7px. The heroes stand in every seat everywhere else.) It lives in the SAME ring box (the grid row wbRingSize sizes),
+   and the bomb takes what the plates leave (--wb-bomb-w below), so the board's other bands never move. No turn wedge
+   (a grid has no angle to point along) and no floating flags or status lines (they hung off a circle's seat). */
+@media (max-width: 700px) {
+  .game-stage--wb .wb-ring.wb-ring-6up {
+    /* the plates: 4 rows x 32px + 3 gaps of 4px = 140px, + 6px to the bomb */
+    --wb-bomb-w: clamp(56px, calc((var(--wb-size) - 120px) / 1.15), 110px);
+    width: 100%;
+    height: auto;
+    justify-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-pointer { display: none; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-core {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    order: -1;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-ring-seats {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    min-width: 0;
+    transform: none;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 1px 4px 1px 5px;
+    border-radius: 6px;
+    border: 2px solid var(--pc-dark, #3d2a5c);
+    border-left: 5px solid var(--pc, #2EFFE0);
+    background: #1a0b2e;
+    transform: none;
+    overflow: hidden;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.current {
+    background: var(--wb-accent, #ff6b3d);
+    border-color: #b8431f;
+    transform: none;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.eliminated { opacity: 0.45; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat-char { display: none; }
+  /* name over hearts, beside the face */
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat--name-out-up .game-player-name-text {
+    display: block;
+    visibility: visible;
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-label);
+    letter-spacing: 0;
+    line-height: 1.15;
+    color: var(--pc, #fff);
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.current .game-player-name-text { color: #0d0618; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card .game-player-name { align-items: flex-start; text-align: left; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text .fit-in { transform-origin: left center; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char .game-player-hearts {
+    position: static;
+    transform: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    --wb-hs: 1;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts svg,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts > * { width: 10px; height: 10px; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-your-turn,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .player-typing,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .player-status,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-lastlife { display: none; }
+}
