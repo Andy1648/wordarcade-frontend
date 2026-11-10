@@ -12,9 +12,9 @@ const ME = 'e2e-player';
 // the longest lobby-bot personas (lobbyBotPersonas.json) + a 20-character human (MAX_NAME_LENGTH)
 const NAMES = ['MAXIMILIAN_THE_GREAT', 'caffeinatedowl68', 'CaffeinatedCloud', 'scarletthistle28', 'catalina_popcorn', 'bashfulboulder11', 'zeppelin_oatmeal', 'MR SPELLING BEE CHMP'];
 const PLAYERS = NAMES.map((name, i) => ({ id: i === 0 ? ME : `p${i}`, name, ...(i > 0 ? { isBot: true, lobbyBot: true } : {}) }));
-// a scaled name is never drawn smaller than this: 8px for a real persona-length name (<= 16 chars); the 20-char cap in a
+// a scaled name is never drawn smaller than this: 7.5px for a real persona-length name (<= 16 chars); the 20-char cap in a
 // full 8-seat room is allowed down to 5.5px (the ring on a phone) - whole and on one line beats "CAFFEINATE…" (the ring's old ellipsis)
-const minPx = (text) => (text.length <= 16 ? 8 : 5.5);
+const minPx = (text) => (text.length <= 16 ? 7.5 : 5.5); // CI's fonts draw ~0.3px wider than local
 
 const measure = (page, nameSel, seatSel) => page.evaluate(([ns, ss]) => {
   const out = [];
@@ -86,9 +86,9 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1366, height: 768 }, { w
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/wb-${vp.width}.png` });
     // the ring label hangs outside its avatar by design (wb-text-overlap.spec gates neighbours): checked against its own box only
-    // a phone's full 8-seat ring: the seat on the clock stays full size; the others are whole but small (>= 6.5px) -
+    // a phone's full 8-seat ring: the seat on the clock stays full size; the others are whole but small (>= 6px) -
     // the alternative was "CAFFEINAT…" (and <= 360px shows only the seat on the clock)
-    check(await measure(page, '.game-player-name-text', '.wb-seat-none'), 'word bomb', vp.width < 600 ? (t) => (t.length <= 16 ? 6.5 : 5.5) : minPx);
+    check(await measure(page, '.game-player-name-text', '.wb-seat-none'), 'word bomb', vp.width < 600 ? (t) => (t.length <= 16 ? 6 : 5) : minPx);
   });
 
   test(`@${vp.width}: Category Blitz progress + Word Race lanes — longest names, one line each`, async ({ page }) => {

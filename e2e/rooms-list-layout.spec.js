@@ -60,7 +60,13 @@ const geometry = (page, rowSel) => page.evaluate((sel) => {
     return { row: { l: r.left, r: r.right, t: r.top, b: r.bottom, h: r.height }, name: box('[data-col="name"]'), count: box('[data-col="count"]'), act: box('[data-col="action"]') };
   });
   const tiny = [...document.querySelectorAll(`${sel} *`)].filter((el) => el.childElementCount === 0 && el.textContent.trim() && parseFloat(getComputedStyle(el).fontSize) < 12).map((el) => el.textContent.trim());
-  const clipped = [...document.querySelectorAll(`${sel} [data-col="name"]`)].filter((el) => el.scrollWidth > el.clientWidth + 1 || getComputedStyle(el).textOverflow === 'ellipsis').map((el) => el.textContent);
+  // the DRAWN text (FitText's scaled .fit-in) inside its box, and no ellipsis; scrollWidth misreads a scaled child
+  const clipped = [...document.querySelectorAll(`${sel} [data-col="name"]`)].filter((el) => {
+    const inner = el.querySelector('.fit-in') || el;
+    const a = el.getBoundingClientRect();
+    const b = inner.getBoundingClientRect();
+    return b.left < a.left - 1 || b.right > a.right + 1 || getComputedStyle(el).textOverflow === 'ellipsis';
+  }).map((el) => el.textContent);
   const doc = document.scrollingElement;
   return { rows, tiny, clipped, pageScrolls: doc.scrollHeight > window.innerHeight + 1 || doc.scrollWidth > window.innerWidth + 1 };
 }, rowSel);
