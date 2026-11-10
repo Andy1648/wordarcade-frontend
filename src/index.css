@@ -136,10 +136,6 @@ html[data-view='game'] .screen-flash {
   inset: 0;
   overflow: hidden;
 }
-/* THE PHONE KEYBOARD (lib/viewportKeyboard.js): iOS keeps the page at full height under the keyboard and only the visual
-   viewport shrinks, so while the keyboard is up the app is the height the player can see (Android already shrinks the page;
-   there --vvh equals it). Only while a field is focused: a pinch zoom also shrinks the visual viewport. */
-html[data-kb] .app-viewport { bottom: auto; height: var(--vvh, 100%); }
 
 .app-shake {
   width: 100%;

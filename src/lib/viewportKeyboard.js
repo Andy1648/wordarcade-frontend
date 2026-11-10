@@ -20,11 +20,13 @@ export function keyboardUp(h, tallest, editing) {
 const isField = (el) => !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
   && !/^(button|checkbox|radio|range|submit|reset|file|color|image|hidden)$/i.test(el.type || '');
 
-export function installViewportKeyboard(win = typeof window !== 'undefined' ? window : null) {
+/** `seedTall`: the visible height at boot. This loads lazily on the first focus, when the keyboard may already be up. */
+export function installViewportKeyboard(win = typeof window !== 'undefined' ? window : null, seedTall = 0) {
   if (!win || !win.document) return () => {};
   const root = win.document.documentElement;
   const vv = win.visualViewport;
   const tallest = new Map(); // width -> tallest visible height seen (a rotation is a new width)
+  if (seedTall > 0) tallest.set(Math.round(win.innerWidth), Math.round(seedTall));
   let pending = false;
   let raf = 0;
   const apply = () => {

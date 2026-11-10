@@ -329,7 +329,7 @@
 }
 .fr-app .sr-bank {
   width: min(760px, var(--fr-page-w));
-  max-height: calc(var(--vvh, 100dvh) - 2 * clamp(14px, 3vh, 40px));
+  max-height: calc(100dvh - 2 * clamp(14px, 3vh, 40px));
 }
 @media (min-width: 1000px) {
   .fr-app .sr-brief-page,
