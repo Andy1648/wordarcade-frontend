@@ -26,6 +26,7 @@ import { useSound } from '../contexts/SoundContext';
 import { isLive, sortRooms, rowAction } from '../lib/roomList.js';
 import useRoomsClock from '../hooks/useRoomsClock.js';
 import './MenuRooms.css';
+import FitText from './kit/FitText.jsx';
 
 // the order + what a row says live in lib/roomList.js (shared with the JOIN ROOM list); re-exported for older imports
 export { isLive, sortRooms };
@@ -53,7 +54,7 @@ function RoomRow({ room, joining, onJoin, delay, clock }) {
             ? <img src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" />
             : <span className="mr-face-tag">{mode.label.slice(0, 2)}</span>}
       </span>
-      <span className="mr-host" data-col="name">{who}</span>
+      <FitText className="mr-host" data-col="name" translate="no">{who}</FitText>
       {/* line 2 (nov9): the mode (its art when the face is a hero) + the x/max, wrapping under each other in the space the
           fixed-width button leaves - never squeezed into a chip that can't hold its name */}
       <span className="mr-meta">

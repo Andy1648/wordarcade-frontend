@@ -30,6 +30,7 @@ import { resolvePlayerColor } from '../../playerColors';
 import { castFor, castByColor, castSrc, hasPose, castFrames } from '../../cast/cast.js';
 import AvatarFrame from '../../cast/AvatarFrame.jsx';
 import CastArt from '../../cast/CastArt.jsx';
+import FitText from '../kit/FitText.jsx';
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -431,7 +432,7 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
               {p.me
                 ? <AvatarFrame src={castSrc(rowCast(p).id, 'hero')} className="rs2-pav"><img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" /></AvatarFrame>
                 : <img className="rs2-pav" src={castSrc(rowCast(p).id, 'hero')} width="64" height="64" alt="" aria-hidden="true" draggable="false" />}
-              <span className="rs2-pname" translate="no">{p.name}</span>
+              <FitText className="rs2-pname" translate="no">{p.name}</FitText>
               {p.me ? <span className="rs2-you">YOU</span> : null}
               <span className="rs2-pw">{formatNum(p.words)}</span>
             </li>

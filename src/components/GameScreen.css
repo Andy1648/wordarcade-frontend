@@ -5231,8 +5231,8 @@ html[data-beat='true'] .cb-category-display {
       calc((var(--wb-r) - var(--wb-bomb-w) * 0.75) * 2)
     )
   );
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible; /* FitText scales the name to the cap; a name too long even at its floor shows whole (never "RIVA…") */
+  text-overflow: clip;
   white-space: nowrap;
   font-size: var(--fs-label);
   color: var(--v-ink-dim);
@@ -7052,9 +7052,9 @@ html[data-beat='true'] .wb-belly {
 }
 @keyframes cb-count-pop { from { transform: scale(1.35); } to { transform: scale(1); } }
 @media (min-width: 900px) {
-  /* a long name ellipsises instead of running into its count */
+  /* a long name scales down (FitText) instead of running into its count */
   .cb-round .cb-progress-name { min-width: 0; flex: 1 1 auto; }
-  .cb-round .cb-progress-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .cb-round .cb-progress-name-text { overflow: hidden; text-overflow: clip; white-space: nowrap; min-width: 0; }
   .cb-round .cb-progress-count { white-space: nowrap; }
 }
 
@@ -7088,7 +7088,7 @@ html[data-beat='true'] .wb-belly {
   .cb-round .cb-progress > .cb-section-label { display: none; }
   .cb-round .cb-progress-row { flex: 1 1 0; min-width: 88px; margin-bottom: 0; padding: 6px 8px; gap: 6px; }
   .cb-round .cb-progress-name { flex: 1 1 auto; min-width: 0; }
-  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: clip; }
   .cb-round .cb-progress-unit { display: none; }
 }
 

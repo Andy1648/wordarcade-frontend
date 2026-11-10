@@ -25,7 +25,7 @@
 }
 .rj-name {
   font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-label);
-  letter-spacing: 0.04em; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  letter-spacing: 0.04em; color: #fff; overflow: hidden; text-overflow: clip; white-space: nowrap; min-width: 0;
 }
 .rj-track { height: 10px; background: #0d0618; border: 2px solid #000; border-radius: 6px; overflow: hidden; }
 .rj-fill {

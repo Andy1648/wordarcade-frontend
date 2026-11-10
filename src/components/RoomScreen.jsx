@@ -18,6 +18,7 @@ import './kit/tokens.css';
 
 const MAX_NAME_LENGTH = 20; // same cap as the lobby / browser name fields
 import './RoomScreenV2.css';
+import FitText from './kit/FitText.jsx';
 
 // P9c/9d (claude/mockups/v2/RoomSettings.dc.html LOBBY): the SEASON2 skin — the code as LETTER TILES, an 8-SEAT grid
 // (empty seats drawn as open slots), a big START. Same handlers, same server messages; live (flag OFF) is untouched.
@@ -112,7 +113,7 @@ function RenameName({ name, onRename, host = false }) {
           aria-label="Change your name"
           title="Change your name"
         >
-          {name}
+          <FitText>{name}</FitText>
         </button>
         {tags}
       </>
@@ -354,7 +355,7 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
                   {player.id === myId && onRename ? (
                     <RenameName name={player.name} onRename={onRename} host={player.id === room.hostId} />
                   ) : (
-                    <span className="room-player-name" translate="no">{player.name}</span>
+                    <FitText className="room-player-name" translate="no">{player.name}</FitText>
                   )}
                   {player.id === room.hostId && !(player.id === myId && onRename) && <span className="room-host-badge">HOST</span>}
                   {SEASON2 && player.id === myId ? <span className="room-you-badge">YOU</span> : null}

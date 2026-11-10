@@ -8,6 +8,7 @@ import LayeredWord from '../components/LayeredWord';
 import Mascot from '../components/Mascot';
 import { RACE_WORDS } from './config';
 import './WordRace.css';
+import FitText from '../components/kit/FitText.jsx';
 
 const MAX_RACERS = 5;
 
@@ -65,7 +66,7 @@ export default function WordRaceLobby({
         {players.map((p) => (
           <li key={p.id} className={p.id === myId ? 'is-me' : ''}>
             <Mascot pose="idle" size={32} className="wr-roster-mascot" />
-            <span className="wr-roster-name">{p.name}</span>
+            <FitText className="wr-roster-name" translate="no">{p.name}</FitText>
             {p.id === myId && <span className="wr-tag wr-tag-me">YOU</span>}
             {p.isBot && <span className="wr-tag">BOT</span>}
             {p.id === room.hostId && !queue && <span className="wr-tag">HOST</span>}
