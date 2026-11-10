@@ -40,11 +40,23 @@ test('a road frame: never for sale, earned by claiming its node', () => withStor
   assert.equal(JSON.parse(store.get(KIT_KEY)).frame, 'chain');
 }));
 
-test('ARCADE waits for REBIRTH 2, then costs gems', () => withStorage({ 'taw.s2.gems': JSON.stringify({ bal: 5000 }) }, () => {
-  assert.equal(buyKit('arcade').reason, 'locked');
+test('nov9: ARCADE is gems only (no rebirth): short = unaffordable, enough = bought at R0', () => withStorage({ 'taw.s2.kit.gf3': '1', 'taw.gems': JSON.stringify({ v: 1, bal: 5000, peak: 1, streak: 0, mig: 1 }) }, (map) => {
+  assert.equal(buyKit('arcade').reason, 'unaffordable');
+  map.set('taw.gems', JSON.stringify({ v: 1, bal: 9000, peak: 1, streak: 0, mig: 1 }));
+  assert.deepEqual(buyKit('arcade'), { ok: true });
+  assert.equal(ownsKit('arcade'), true);
 }));
 
-test('WIN FX are retired (nov2): no id is a piece any more, the fx slot never holds one', () => withStorage({ 'taw.s2.count': JSON.stringify({ mp: 300 }), [KIT_KEY]: JSON.stringify({ own: ['firework'], fx: 'firework' }) }, () => {
+test('nov9: wins no longer earn a frame; frames the OLD rules had earned stay owned', () => {
+  withStorage({ 'taw.s2.kit.gf3': '1', 'taw.s2.count': JSON.stringify({ mp: 300 }) }, () => assert.equal(ownsKit('frost'), false));
+  withStorage({ 'taw.s2.count': JSON.stringify({ mp: 75 }) }, (map) => {
+    assert.equal(ownsKit('frost') && ownsKit('graffiti'), true, '75 wins had earned FROST + GRAFFITI');
+    assert.equal(ownsKit('flame'), false);
+    assert.equal(map.get('taw.s2.kit.gf3'), '1');
+  });
+});
+
+test('WIN FX are retired (nov2): no id is a piece any more, the fx slot never holds one', () => withStorage({ 'taw.s2.kit.gf3': '1', 'taw.s2.count': JSON.stringify({ mp: 300 }), [KIT_KEY]: JSON.stringify({ own: ['firework'], fx: 'firework' }) }, () => {
   assert.equal(ownsKit('firework'), false);
   assert.equal(wearKit('fx', 'firework'), false);
   assert.equal(readKit().fx, null);
