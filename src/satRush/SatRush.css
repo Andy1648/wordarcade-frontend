@@ -3624,3 +3624,112 @@ body:has(.sr-app) .wpm-hud {
   .fr-app .sr-respage > .sr-keepmissing { max-height: clamp(80px, 18vh, 160px); }
   .fr-app .sr-respage > * { margin-bottom: 8px; }
 }
+
+/* =====================================================================
+   TAP-TO-ANSWER (feat/sat-tap). Andy: "SAT rush doesnt need typing just tapping the right answer
+   is enough". Every word's suspects are BUTTONS now (engine buildChoices): on a touch device they
+   are the input (no field, no slots, the keyboard never opens — .sr-poster.tap); on a desktop a
+   click or the chip's number key (1-N) answers beside typing. The chip keeps its mugshot card —
+   ruled paper, ink border, its static tilt — and the button is its whole face. Feedback is a
+   finite one-shot on the BUTTON (transform only), never a loop; state reads by shape + ink, red
+   ink only for the wrong pick (danger), per the retro-print register.
+   ===================================================================== */
+.sr-suspect:has(.sr-suspect-btn) { padding: 0; }
+.sr-suspect-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px; /* a desktop click target too — the touch floor */
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.sr-suspect-btn:disabled { cursor: default; color: inherit; }
+.sr-suspect-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: -6px; }
+.sr-suspect-btn:active:not(:disabled) { transform: translate(2px, 2px); }
+/* the desktop key badge: which digit picks this suspect */
+.sr-suspect-key {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  line-height: 1;
+  opacity: 0.55;
+}
+.sr-suspect.cleared .sr-suspect-key { opacity: 0.2; }
+/* the pick: CAPTURED = the chip printed solid ink (a short punch); WRONG = red ink + a jolt */
+.sr-suspect.picked.ok { background: var(--ink); }
+.sr-suspect.picked.ok .sr-suspect-word,
+.sr-suspect.picked.ok .sr-suspect-key { color: var(--paper); opacity: 1; }
+.sr-suspect.picked.ok .sr-suspect-btn { animation: sr-pick-ok 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both; }
+.sr-suspect.picked.bad {
+  border-color: var(--redink, #c8321e);
+  box-shadow: 3px 3px 0 var(--redink, #c8321e);
+}
+.sr-suspect.picked.bad .sr-suspect-word { color: var(--redink, #c8321e); text-decoration: line-through; }
+.sr-suspect.picked.bad .sr-suspect-btn { animation: sr-pick-bad 300ms cubic-bezier(0.3, 0.7, 0.3, 1) both; }
+@keyframes sr-pick-ok {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes sr-pick-bad {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  55% { transform: translateX(4px); }
+  80% { transform: translateX(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-suspect.picked.ok .sr-suspect-btn,
+  .sr-suspect.picked.bad .sr-suspect-btn { animation: none; }
+}
+
+/* DESKTOP BRIEFING now has choices too: on the short-landscape spread they take the right column
+   beside the clue (the clue gave up the full width only because that column used to be empty). */
+@media (min-width: 900px) and (max-height: 820px) {
+  .sr-card.briefing .sr-cardframe:has(.sr-lineup) .sr-fields { grid-column: 1; }
+  .sr-card.briefing .sr-lineup { grid-column: 2; grid-row: 2; align-self: start; }
+}
+
+/* THE TAP POSTER (touch devices). The slots and the field are gone, so the choices take that room:
+   every choice stays on screen (no scroll inside the lineup — the old phone rules shrank it to one
+   row because the keyboard and the slots needed the height), each a >= 64px thumb target with 16px+
+   type, two to a row. The clue fields are the region that gives way (they already fit-ladder). */
+.sr-card.tap .sr-cardframe .sr-lineup {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  margin-top: 8px;
+}
+.sr-card.tap .sr-lineup-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-bottom: 4px;
+}
+.sr-card.tap .sr-suspect { min-height: 64px; }
+.sr-card.tap .sr-suspect-btn { min-height: 64px; padding: 8px 6px; }
+.sr-card.tap .sr-suspect-word { font-size: max(16px, min(var(--fs-body), calc(100cqi / (var(--len, 8) * 0.68)))); }
+@media (max-width: 400px) {
+  .sr-card.tap .sr-suspect-word { font-size: var(--fs-body); }
+}
+.sr-card.tap .sr-fields { flex: 1 1 auto; min-height: 0; }
+/* short phones (<=700 tall): the caption row stays cut (the chips cross out in place), gaps tighten */
+@media (max-width: 520px) and (max-height: 700px) {
+  .sr-card.tap .sr-cardframe .sr-lineup { margin-top: 4px; }
+  .sr-card.tap .sr-lineup-grid { gap: 6px; }
+}

@@ -18,6 +18,10 @@
 //      miserable; a bespoke on-screen key grid is probably the real answer, and
 //      that's a design project of its own.
 // So: playable + laid out on mobile, but input is desktop-keyboard only for now.
+// UPDATE (feat/sat-tap): SOLVED BY NOT TYPING. Andy: "SAT rush doesnt need typing just tapping the
+// right answer is enough". A touch device answers by tapping one of the card's choices (engine.js
+// buildChoices) — no field is mounted, so the keyboard never opens; eliminations replace the
+// spell-along. A desktop still types, with the same choices clickable / on keys 1-N.
 // ────────────────────────────────────────────────────────────────────────────
 import { useGameXpRunMark } from '../components/xp/XpEarned';
 import { useEffect, useRef, useState } from 'react';
@@ -269,12 +273,14 @@ export default function SatRushGame({ onExit, musicSetVolume, offerMenu = false,
             <div className="sr-body">
               {/* The ante row + word panel are now ONE bounty poster (WordCard);
                   the multiplier lives in its REWARD footer. */}
-              <WordCard view={view} />
+              <WordCard view={view} onPick={game.pickChoice} onContinue={game.continueRun} />
               {/* GEMS: the drop pop on the poster — one pooled node inside this positioned body */}
               <GemPop />
               {/* The typing affordance. A phone has no physical keyboard, so without this the
                   board renders perfectly and cannot be played at all — see SatKeyInput. */}
-              <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
+              {/* TAP-TO-ANSWER: a touch device answers by tapping a choice, so no field is mounted and
+                  the soft keyboard can never open (feat/sat-tap). */}
+              {view.answerMode !== 'tap' && <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />}
             </div>
           </>
         )}

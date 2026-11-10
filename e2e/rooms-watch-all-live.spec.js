@@ -3,12 +3,13 @@
 //   1. MINER and WORD RACE: a host opens a public room and starts; a viewer on the menu sees it flip to PLAYING →
 //      SPECTATE, watches read-only (SPECTATING, no input, a watch line where the input sits, the board moving), and the
 //      HOST's screen says 1 WATCHING - which drops when the watcher leaves.
-//   2. HOUSE ROOM: with nobody else around, the menu lists a lobby hosted by a persona; JOIN puts the viewer in a lobby
-//      that counts down (STARTS IN) and starts on its own - nobody presses START.
+//   2. HOUSE ROOM (houseRooms.js has the rule): with nobody else around the list shows a small lobby hosted by a persona;
+//      two humans join it, the roster grows one player at a time, and the host starts it - no countdown, nobody presses
+//      START - with both humans in the game.
 // No page errors, no red console errors.
 //
 // OPT-IN (a running backend + a build pointed at it):
-//   HOUSE_START_MS=6000 HOUSE_TICK_MS=1000 PORT=3912 node server.js                    (chain-reaction-backend)
+//   HOUSE_TIME_SCALE=0.5 HOUSE_TICK_MS=1000 PORT=3912 node server.js                   (chain-reaction-backend)
 //   VITE_BACKEND_WS_URL=ws://localhost:3912 npx vite build --outDir dist-live && npx vite preview --outDir dist-live --port 4395
 //   LIVE_BASE=http://localhost:4395 npx playwright test e2e/rooms-watch-all-live.spec.js --workers=1
 import { test, expect } from '@playwright/test';
@@ -120,22 +121,47 @@ for (const { mode, lobby, start, input, label } of [
   });
 }
 
-test('HOUSE ROOM: a persona-hosted lobby is always there, counts down once you sit, and starts on its own', async ({ browser }) => {
-  test.setTimeout(180000);
-  const viewer = await viewerOnMenu(browser, 'HOUSEGUEST');
-  await openList(viewer);
-  const row = viewer.locator('[data-testid="browser-room-row"][data-status="waiting"]').first();
-  await expect(row).toBeVisible({ timeout: 30000 });
+test('HOUSE ROOM reads as a real room: small while waiting, players drift in one at a time, the host starts it (no countdown), two humans play together', async ({ browser }) => {
+  test.setTimeout(240000);
+  const a = await viewerOnMenu(browser, 'HOUSEGUEST');
+  const b = await freshPage(browser, 'phone', 'HOUSEPAL', { width: 390, height: 844 });
+  await b.goto('/?portal=1&season2=1');
+  await menuReady(b);
+  await openList(a);
+  // a house lobby is listed: its host + at most one more (never a room full of bots waiting for you)
+  const row = a.locator('[data-testid="browser-room-row"][data-status="waiting"]').first();
+  await expect(row).toBeVisible({ timeout: 60000 });
   const code = await row.getAttribute('data-code');
-  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/house-list.png` });
+  const listed = Number(((await row.locator('[data-col="count"]').textContent()) || '').split('/')[0]);
+  expect(listed, 'an unvisited house room is small').toBeLessThanOrEqual(2);
+  await expect(row.locator('[data-col="action"]')).not.toContainText(/STARTS/);
+  if (SHOTS) await a.screenshot({ path: `${SHOTS}/house-list.png` });
+  // the second human is on the list too, ready to join the same room
+  await openList(b);
+  const rowB = b.locator(`[data-testid="browser-room-row"][data-code="${code}"]`);
+  await expect(rowB).toBeVisible({ timeout: 30000 });
+
   await row.click();
-  await viewer.locator('.room-wrap').waitFor({ timeout: 30000 });
-  await expect(viewer.getByTestId('room-autostart')).toContainText(/STARTS IN|STARTING/, { timeout: 15000 });
-  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/house-countdown.png` });
-  // nobody presses START: the game begins by itself
-  await expect(viewer.locator('.room-wrap')).toHaveCount(0, { timeout: 30000 });
-  expect(code).toMatch(/^[A-Z0-9]{5}$/);
-  if (SHOTS) { await viewer.waitForTimeout(4000); await viewer.screenshot({ path: `${SHOTS}/house-started.png` }); }
-  await viewer.locator('.game-leave-btn').first().click();
-  expect(viewer.errors, 'no page errors, no red console errors').toEqual([]);
+  await a.locator('.room-wrap').waitFor({ timeout: 30000 });
+  await rowB.click();
+  await b.locator('.room-wrap').waitFor({ timeout: 30000 });
+  // a lobby like any other: WAITING FOR HOST, no countdown
+  await expect(a.getByText('WAITING FOR HOST')).toBeVisible();
+  await expect(a.getByTestId('room-autostart')).toHaveCount(0);
+  if (SHOTS) await a.screenshot({ path: `${SHOTS}/house-waiting.png` });
+  // watch the roster until the game starts: it only ever grows by one at a time
+  const counts = [];
+  for (let i = 0; i < 240; i += 1) {
+    if (!(await a.locator('.room-wrap').count())) break;
+    counts.push(await a.locator('.room-player-chip').count());
+    await a.waitForTimeout(250);
+  }
+  for (let i = 1; i < counts.length; i += 1) expect(counts[i] - counts[i - 1], `the roster grows one at a time (${counts.join(',')})`).toBeLessThanOrEqual(1);
+  // nobody pressed START: the host started it, with both humans in the game
+  await expect(a.locator('.room-wrap')).toHaveCount(0, { timeout: 60000 });
+  await expect(b.locator('.room-wrap')).toHaveCount(0, { timeout: 15000 });
+  if (SHOTS) { await a.waitForTimeout(4000); await a.screenshot({ path: `${SHOTS}/house-started.png` }); await b.screenshot({ path: `${SHOTS}/house-started-390.png` }); }
+  await a.locator('.game-leave-btn').first().click();
+  await b.locator('.game-leave-btn').first().click();
+  for (const p of [a, b]) expect(p.errors, 'no page errors, no red console errors').toEqual([]);
 });

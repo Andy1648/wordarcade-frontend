@@ -268,3 +268,32 @@ export function suspectsStanding(lineup, stage) {
   if (!lineup) return 0;
   return lineup.filter((s) => s.eliminatedAtStage == null || s.eliminatedAtStage > stage).length;
 }
+
+/**
+ * TAP-TO-ANSWER (feat/sat-tap): the distractor CANDIDATES for an answer, under the same honesty
+ * rules the lineup uses (passesCore: not an alt, not same-root, no shared 5-substring, no synonym
+ * gloss) — same letter count first, widened by +/-1 then +/-2 only when the exact length is dry.
+ * Unique by word (a pool with a duplicated row can never put the same word on two buttons). Pure;
+ * no ranking here — the engine's buildChoices ranks by part of speech + tier.
+ */
+//
+// STRICT SYNONYM GUARD (the choices ARE the answer set, not a recognition aid): a candidate whose
+// gloss shares even ONE content word with the answer's, or that lists the answer among its own alts,
+// sits out — measured on the first play-test card: "A fallen tree began to ___ traffic" offered
+// IMPEDE / STYMIE / HINDER (glosses "block progress" / "block, thwart" / "progress difficult"), three
+// right answers. Relaxed back to the lineup's >= 2 rule only if the strict pool is too thin.
+export function distractorCandidates(answer, pool = []) {
+  const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
+  const strict = (d) =>
+    !(d.gloss && answer.gloss && glossOverlap(d.gloss, answer.gloss) >= 1) &&
+    !(d.alts || []).some((a) => String(a).toLowerCase() === answer.word);
+  let out = [];
+  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol).filter(strict);
+  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol);
+  const seen = new Set([answer.word]);
+  return out.filter((d) => {
+    if (seen.has(d.word)) return false;
+    seen.add(d.word);
+    return true;
+  });
+}
