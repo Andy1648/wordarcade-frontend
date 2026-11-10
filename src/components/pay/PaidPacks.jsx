@@ -15,18 +15,22 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import '../kit/tokens.css';
-import '../BuyGems.css'; // the sign-in ask, the limit line and the fine print are the + panel's own
 import '../rollScreen/RatesPop.css';
 import './PaidPacks.css';
 import { GoogleButton } from '../account/GoogleAccount.jsx';
-import VesselArt from '../rollScreen/VesselArt';
 import { lazyWithReload } from '../../lib/chunkReload';
+// CHUNKING (e2e/payload-budget.spec.js): this module imports the ticket client AND the canister exactly like the roll screen,
+// the shop and the sealed reveal do, so the bundler keeps them in their one shared chunk — a different importer set split
+// them into extra files, and every file name rides the menu's first-load chunk map.
+import { listTickets } from '../../leaderboard/serverTickets';
+import VesselArt from '../rollScreen/VesselArt';
 import { ROLL_PACKS, formatUsd } from '../../payments/packs.js';
 import { packOdds, pct, PACK_SHINY } from '../../payments/packOdds.js';
-import { listTickets } from '../../leaderboard/serverTickets';
 import { CARD_RAR } from '../markCard/palette.js';
 import { MARK_TIERS } from '../../progress/marks';
-import { usePayBuy } from './usePayBuy.js';
+// the ONE buy flow lives in the + panel's chunk (BuyGems.jsx): importing it from there brings the panel's styles (the sign-in
+// ask, the limit line, the fine print) and adds no new shared chunk to the menu's chunk map (e2e/payload-budget.spec.js)
+import { usePayBuy } from '../BuyGems.jsx';
 
 const SealedRollReveal = lazyWithReload(() => import('../rollScreen/SealedRollReveal'), 'SealedRollReveal');
 const REFUND_EMAIL = (import.meta.env && import.meta.env.VITE_REFUND_EMAIL) || '';
@@ -171,6 +175,12 @@ export function usePackTickets() {
   return [tickets, refresh];
 }
 
+/** The + panel's PACKS tab (BuyGems.jsx, lazy): the panel's own buy flow; OPEN closes the panel and opens the pack. */
+export function PacksTab({ pay, onClose }) {
+  const [tickets] = usePackTickets();
+  return <PacksPane pay={pay} tickets={tickets} onOpen={(t) => { onClose(); mountPackOpen(t); }} />;
+}
+
 /** The shop's PACKS shelf: buy, see the odds, open what you own, in place. */
 export default function PacksShelf() {
   const pay = usePayBuy();
@@ -189,6 +199,18 @@ export default function PacksShelf() {
       ) : null}
     </div>
   );
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Back from Stripe (payReturn.js): poll the server's tickets for an unopened PAID pack of `tier`, then open it. -> it, or null. */
+export async function openPaidPack(tier, { tries = 20, everyMs = 2000, list = listTickets, open = mountPackOpen } = {}) {
+  for (let i = 0; i < tries; i += 1) {
+    if (i) await wait(everyMs);
+    const l = await list().catch(() => []);
+    const t = (Array.isArray(l) ? l : []).find((x) => x.source === 'pay' && x.tier === tier);
+    if (t) { open(t); return t; }
+  }
+  return null;
 }
 
 let opening = false;

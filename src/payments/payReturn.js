@@ -14,23 +14,6 @@ import { bootSearch } from '../lib/featureFlags.js';
 // Stripe sends the payer back to /?paid=1 (api/_lib/pay.js success_url) — read as the page LOADED (the app tidies the bar).
 export const paidReturn = (search = bootSearch()) => /[?&]paid=1(?:&|$)/.test(search);
 
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-/** Poll the server's tickets for an unopened PAID pack of `tier`, then open it. -> the ticket, or null. */
-export async function openPaidPack(tier, { tries = 20, everyMs = 2000, list, open } = {}) {
-  const listFn = list || (async () => (await import('../leaderboard/serverTickets.js')).listTickets());
-  for (let i = 0; i < tries; i += 1) {
-    if (i) await wait(everyMs);
-    const l = await listFn().catch(() => []);
-    const t = (Array.isArray(l) ? l : []).find((x) => x.source === 'pay' && x.tier === tier);
-    if (t) {
-      const openFn = open || (await import('../components/pay/PaidPacks.jsx')).mountPackOpen;
-      openFn(t);
-      return t;
-    }
-  }
-  return null;
-}
-
 export default function pickUpPaid(setGemsInFlight, setGemFly, poll = paidReturn()) {
   const fly = (amount) => {
     setGemsInFlight((n) => n + amount);
@@ -50,7 +33,7 @@ export default function pickUpPaid(setGemsInFlight, setGemFly, poll = paidReturn
   const pack = poll ? packById(readPackCheckout()) : null;
   if (pack) {
     notePackCheckout(null);
-    openPaidPack(pack.tier);
+    import('../components/pay/PaidPacks.jsx').then((m) => m.openPaidPack(pack.tier)).catch(() => {}); // it waits in PACKS / GEARS otherwise
     return collectPaid({ poll: false, onCredit: fly }); // a pack is never gems: one quiet fetch for anything else waiting
   }
   return collectPaid({ poll, onCredit: fly });
