@@ -71,24 +71,40 @@ async function boot(page, vp) {
 }
 const settle = async (page) => { await page.evaluate(() => document.fonts && document.fonts.ready); await page.waitForTimeout(500); };
 
-for (const vp of [{ width: 390, height: 844 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
   test(`@${vp.width}: room lobby + Word Bomb seats — 8 longest names, one line each`, async ({ page }) => {
     const mock = await boot(page, vp);
     mock.pushToClient({ type: 'room_update', payload: { code: 'LONGN', gameType: 'word-bomb', hostId: 'p1', difficultyKey: 'medium', players: PLAYERS } });
     await page.locator('.room-wrap').waitFor();
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/room-${vp.width}.png`, fullPage: true });
-    check(await measure(page, '.room-player-name', '.room-player-chip'), 'room');
+    check(await measure(page, '.room-player-name', '.room-player-chip'), 'room', (t) => (t.length <= 16 ? 11 : 8.5));
 
     mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
     mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: 'p2', players: PLAYERS.map((p) => ({ ...p, lives: 3, eliminated: false })), combo: 'ing', usedWords: [], timerSeconds: 20, maxLives: 3 } });
-    await expect(page.locator('.game-player-name-text').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.wb-seat').first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(3500); // past the 3-2-1, so the shot shows the board
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/wb-${vp.width}.png` });
     // the ring label hangs outside its avatar by design (wb-text-overlap.spec gates neighbours): checked against its own box only
-    // a phone's full 8-seat ring: the seat on the clock stays full size; the others are whole but small (>= 6px) -
-    // the alternative was "CAFFEINAT…" (and <= 360px shows only the seat on the clock)
-    check(await measure(page, '.game-player-name-text', '.wb-seat-none'), 'word bomb', vp.width < 600 ? (t) => (t.length <= 16 ? 6 : 5) : minPx);
+    if (vp.width <= 700) {
+      // A PHONE'S 6+ SEAT RING becomes the bomb over a grid of SEAT PLATES: every name whole, one line, inside its plate
+      // and never under 11px ("nothing tiny") - for every bot persona; the board still fits the phone
+      await expect(page.locator('.wb-ring-6up')).toBeVisible();
+      check(await measure(page, '.game-player-name-text', '.wb-seat'), 'word bomb plates', (t) => (t.length <= 16 ? 11 : 10));
+      const scroll = await page.evaluate(() => document.scrollingElement.scrollHeight - window.innerHeight);
+      expect(scroll, 'the board still fits the phone').toBeLessThanOrEqual(1);
+      const bomb = await page.locator('.wb-core').boundingBox();
+      expect(bomb && bomb.width, 'the bomb keeps a real size').toBeGreaterThanOrEqual(56);
+      // the plates and the bomb stay inside the ring row: nothing collides with the prompt above or the input below
+      const boxes = await page.evaluate(() => {
+        const r = (q) => { const e = document.querySelector(q); return e ? e.getBoundingClientRect() : null; };
+        const seats = [...document.querySelectorAll('.wb-seat')].map((e) => e.getBoundingClientRect());
+        return { top: r('.wb-top'), bottom: r('.wb-bottom'), seatsTop: Math.min(...seats.map((s) => s.top)), seatsBottom: Math.max(...seats.map((s) => s.bottom)), core: r('.wb-core') };
+      });
+      expect(boxes.core.top, 'bomb below the prompt').toBeGreaterThanOrEqual(boxes.top.bottom - 1);
+      expect(boxes.seatsBottom, 'plates above the bottom stack').toBeLessThanOrEqual(boxes.bottom.top + 1);
+    }
   });
 
   test(`@${vp.width}: Category Blitz progress + Word Race lanes — longest names, one line each`, async ({ page }) => {
