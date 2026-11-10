@@ -7355,7 +7355,7 @@ html[data-beat='true'] .wb-belly {
   }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-ring-seats { width: 100%; margin-inline: 0; gap: 6px; }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card,
-  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char { height: 40px; padding: 2px 8px 2px 8px; border-left-width: 6px; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char { height: auto; min-height: 40px; padding: 2px 8px 2px 8px; border-left-width: 6px; }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text,
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat--name-out-up .game-player-name-text { font-size: var(--fs-body); }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts svg,
