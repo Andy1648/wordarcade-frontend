@@ -17,3 +17,14 @@
   position: absolute; z-index: 1; display: block; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0;
   translate: none; transform: none; object-fit: contain; filter: none; pointer-events: none;
 }
+/* the KIT (frameKit.js): a box the size of the ring, every part placed in % of it. The bar segment is painted horizontal;
+   the side bars turn it 90° inside their own (tall) box. Flips mirror the one painted corner to all four. */
+.avf.avf .avf-box { position: absolute; z-index: 1; display: block; pointer-events: none; }
+.avf.avf .avf-kit { position: absolute; inset: 0; display: block; }
+.avf.avf .avf-kit img { position: absolute; display: block; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; filter: none; pointer-events: none; }
+.avf.avf .avf-bar { position: absolute; display: block; }
+.avf.avf .avf-bar > img { object-fit: fill; }
+.avf.avf .avf-corner.is-fliph { scale: -1 1; }
+.avf.avf .avf-corner.is-flipv { scale: 1 -1; }
+.avf.avf .avf-corner.is-fliph.is-flipv { scale: -1 -1; }
+.avf.avf .avf-prop { height: auto; }
