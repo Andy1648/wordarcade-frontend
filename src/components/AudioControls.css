@@ -173,3 +173,7 @@ html[data-view='credits'] .audio-ctrl:not(.audio-ctrl--inline) { display: none; 
   .homepage-stage[data-paged] .hp-rail:has(.audio-ctrl--rail) { --hp-tile-h: max(76px, calc(clamp(104px, calc(124 * var(--u)), calc(38vh - 100px)) - 28px)); }
   .hp-rail .hp-settings-btn { min-height: 44px; }
 }
+
+/* THE PHONE KEYBOARD (html[data-kb]): the floating cog steps aside while the player types; it sat on the field's right edge.
+   The keyboard closing brings it back. Inline cogs (rails, headers) are not floating and stay. */
+html[data-kb] .audio-ctrl:not(.audio-ctrl--inline) { display: none; }

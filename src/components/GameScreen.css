@@ -24,7 +24,7 @@
      (App.jsx), like the menu and solo — a plain one-screen fill (no /scale to compensate).
      WB/BLITZ get a wide-aspect two-zone reflow below so the stage fills width AND fits a
      short window without the zoom that used to compress them. */
-  min-height: 100dvh;
+  min-height: var(--vvh, 100dvh);
   display: flex;
   /* Center the stage vertically within the one-screen fill so a stage shorter
      than the viewport sits centered instead of leaving dead space below it.
@@ -122,8 +122,8 @@
      absolute against THIS box so it can never take height from the ring. */
   position: relative;
   /* The pinned box. `100dvh` (not vh) so a phone's collapsing URL bar moves it. */
-  height: calc(100dvh - 2 * var(--wrap-pad-y));
-  max-height: calc(100dvh - 2 * var(--wrap-pad-y));
+  height: calc(var(--vvh, 100dvh) - 2 * var(--wrap-pad-y));
+  max-height: calc(var(--vvh, 100dvh) - 2 * var(--wrap-pad-y));
   /* Vertical padding is height taken from the ring, so the board spends less of it
      than the generic stage does. The TOP value is not decoration: the header now sits
      in flow at the top of the board at EVERY width, and the fixed WINS pill (top:12px,
@@ -7174,7 +7174,7 @@ html[data-beat='true'] .wb-belly {
 /* the round fills the laptop screen instead of floating with ~130px empty above and below (1366x768): the answers rail
    is the part that needs the height. Top clearance for the fixed WINS pill stays (the board still starts below it). */
 @media (min-width: 900px) and (min-height: 600px) {
-  .game-stage--blitz .cb-round { min-height: calc(100dvh - 270px); }
+  .game-stage--blitz .cb-round { min-height: calc(var(--vvh, 100dvh) - 270px); }
 }
 
 /* SPECTATE (nov4): a watcher's static line where the input would be (in the bottom bar's flow, never fixed), and the
@@ -7226,3 +7226,17 @@ html[data-beat='true'] .wb-belly {
   box-shadow: 3px 3px 0 #000;
   white-space: nowrap;
 }
+
+/* ===== THE PHONE KEYBOARD (html[data-kb], lib/viewportKeyboard.js) =====
+   While the keyboard is up the board is the strip above it: the prompt, the timer and your field stay, the rest steps aside.
+   Static display toggles, nothing animates. Same rules on Android (the page shrinks) and iOS (only the visible height does). */
+html[data-kb] .game-stage--wb .game-your-turn,
+html[data-kb] .game-stage--wb .game-used-label { display: none; }
+html[data-kb] .game-stage--blitz .cb-reroll-row,
+html[data-kb] .game-stage--blitz .cb-cat-mascot,
+html[data-kb] .game-stage--blitz .cb-category-label,
+html[data-kb] .game-stage--blitz .rj-race { display: none; }
+html[data-kb] .game-stage--blitz .cb-category-display { min-height: 0; padding-top: 6px; padding-bottom: 6px; }
+html[data-kb] .game-stage--blitz .cb-round { min-height: 0; }
+/* a phone so short the keyboard leaves a strip: the seat ring steps aside (it is your turn: the field says so), its space kept */
+html[data-kb='short'] .game-stage--wb .wb-ring { visibility: hidden; }

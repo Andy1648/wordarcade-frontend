@@ -26,6 +26,7 @@ import './theme/artSlots.css'
 import { initTheme } from './theme/themes'
 import { initReduceMotion } from './lib/reduceMotion'
 import { installArtLoad } from './lib/artLoad'
+import { installViewportKeyboard } from './lib/viewportKeyboard'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
@@ -60,6 +61,8 @@ import { getStreak } from './progress/streak'
 try { installChunkReloadGuard() } catch { /* never block startup */ }
 // Before the first render, so every art slot's load event is seen (lib/artLoad.js).
 try { installArtLoad() } catch { /* never block startup */ }
+// The phone keyboard: --vvh (what the player can see) + data-kb while it is up (lib/viewportKeyboard.js).
+try { installViewportKeyboard() } catch { /* never block startup */ }
 // A service worker that just updated is still showing the previous deploy — reload onto the new one at once
 // (anywhere that is not a round in progress), and ask for a new worker whenever the tab comes back. See lib/swUpdate.js.
 try { installSwUpdateReload() } catch { /* never block startup */ }

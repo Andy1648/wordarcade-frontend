@@ -51,7 +51,7 @@
      Without it the card can grow taller than the window, the page scrolls, and the exit
      scrolls off the top with it: at 320x640 with the keyboard raised the way out measured
      y = -199px, i.e. completely unreachable. The card must stay inside the window. */
-  max-height: calc(100dvh - 16px);
+  max-height: calc(var(--vvh, 100dvh) - 16px);
   margin: auto;
   box-sizing: border-box;
   border: 4px solid #000;
@@ -1791,3 +1791,13 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 .solo-deathcard.is-bare .solo-death-actions > .solo-restart { min-height: 56px; font-size: var(--fs-k20); }
 .solo-deathcard.is-bare .solo-death-reward,
 .solo-deathcard.is-bare .solo-death-actions { align-self: stretch; width: 100%; }
+
+/* THE PHONE KEYBOARD (html[data-kb], lib/viewportKeyboard.js): the how-to strip steps aside and the ring shrinks, so the clock never
+   sits on the field. Static, nothing animates. */
+html[data-kb] .solo-root .teach-strip { display: none; }
+html[data-kb] .solo-root { --solo-hero: 112px; }
+html[data-kb] .solo-stage { gap: 8px; }
+html[data-kb='short'] .solo-root { --solo-hero: 84px; }
+/* the ring keeps its own height (its row collapsed to 23px and the ring spilled onto the field); the per-word rate pays for it */
+html[data-kb='short'] .solo-hud-stack { display: none; }
+html[data-kb='short'] .solo-primary { flex: 0 0 auto; min-height: calc(var(--solo-hero) + 10px); }

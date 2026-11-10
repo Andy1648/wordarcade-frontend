@@ -2866,7 +2866,7 @@ body:has(.sr-app) .wpm-hud {
    bar to scroll up and down the ENTIRE screen, keep the scroll within"): the page fits the window; its head and the
    Start button stay put and only the card LIST scrolls, inside the paper. */
 .sr-brief-screen { overflow: hidden; align-items: center; }
-.sr-brief-page { max-height: calc(100dvh - 2 * clamp(12px, 2.5vh, 32px)); box-sizing: border-box; min-height: 0; }
+.sr-brief-page { max-height: calc(var(--vvh, 100dvh) - 2 * clamp(12px, 2.5vh, 32px)); box-sizing: border-box; min-height: 0; }
 .sr-brief-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 4px 6px 4px; }
 .sr-brief-head, .sr-brief-actions { flex: none; }
 .sr-brief-page > .sr-brief-exit { position: absolute; width: auto; }
@@ -2877,7 +2877,7 @@ body:has(.sr-app) .wpm-hud {
    cap counts it. The head and START stay put; only the card list (the one scroller) gives up the height. */
 @media (max-width: 760px) {
   .sr-brief-screen { --sr-cog-room: 76px; padding-bottom: var(--sr-cog-room); }
-  .sr-brief-page { max-height: calc(100dvh - clamp(12px, 2.5vh, 32px) - var(--sr-cog-room)); }
+  .sr-brief-page { max-height: calc(var(--vvh, 100dvh) - clamp(12px, 2.5vh, 32px) - var(--sr-cog-room)); }
 }
 
 /* =====================================================================================================
@@ -3390,7 +3390,7 @@ body:has(.sr-app) .wpm-hud {
 .sr-bank {
   position: relative;
   width: min(760px, 94vw);
-  max-height: calc(100dvh - 24px);
+  max-height: calc(var(--vvh, 100dvh) - 24px);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -3589,7 +3589,7 @@ body:has(.sr-app) .wpm-hud {
     grid-column: 2;
     grid-row: 1 / span 12;
     /* viewport − the overlay's block padding − the page's own padding + border (≤ 2×44 + 8) */
-    max-height: calc(100dvh - 2 * clamp(16px, 3vh, 40px) - 100px);
+    max-height: calc(var(--vvh, 100dvh) - 2 * clamp(16px, 3vh, 40px) - 100px);
     overflow-y: auto;
     overscroll-behavior: contain;
   }
