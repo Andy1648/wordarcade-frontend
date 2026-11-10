@@ -1,0 +1,122 @@
+/* PaidPacks.css — the PAID ROLL PACKS (089): the shop's PACKS shelf and the + panel's PACKS tab. House style: flat fills,
+   thick outlines in a darker shade of the fill (the tier's own edge colour), hard black offset shadows, 8px corners. Every
+   target ≥ 44px, no text under 14px. Motion: hover / press transforms only — nothing loops, nothing animates at rest. */
+.pk { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 0 6px 6px 0; }
+.pk-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  background: #0d0618;
+  color: #fff;
+  border: 5px solid var(--pk-edge);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+  text-align: center;
+}
+.pk-card.is-over .pk-art-stand, .pk-card.is-over .pk-art-img { opacity: 0.45; }
+
+/* the picture: the painted pack once it lands (packs.js artSlot), else the tier's frame around the sealed canister */
+.pk-art-img { width: 100%; max-width: 150px; aspect-ratio: 1 / 1; height: auto; object-fit: contain; }
+.pk-art-stand { position: relative; display: block; width: 100%; max-width: 116px; aspect-ratio: 512 / 800; }
+.pk-art-win { position: absolute; left: 18%; right: 17%; top: 14%; bottom: 14%; background: var(--pk-fill); border-radius: 8px; }
+.pk-art-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pk-art-stand .pk-vessel { position: absolute; left: 10%; top: 22%; width: 80%; height: auto; aspect-ratio: 1 / 1; }
+
+.pk-name {
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k22);
+  line-height: 1.05;
+  color: var(--pk-line);
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.pk-what { font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k15); font-weight: 700; color: #c9b8e8; text-transform: uppercase; }
+.pk-floor { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); color: #fff; text-transform: uppercase; line-height: 1.1; }
+
+.pk-buy {
+  align-self: stretch;
+  margin-top: auto;
+  min-height: 48px;
+  background: #FFE94A;
+  color: #0d0618;
+  border: 4px solid #F2A900;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k22);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.pk-card.is-over .pk-buy { background: #3a2560; border-color: #241640; color: #c9b8e8; }
+@media (hover: hover) { .pk-buy:hover:not(:disabled), .pk-open:hover, .pk-odds:hover { transform: translate(-2px, -2px); } }
+.pk-buy:active:not(:disabled), .pk-open:active, .pk-odds:active { transform: translate(4px, 4px); box-shadow: 0 0 0 #000; }
+.pk-buy:disabled { cursor: default; }
+.pk-row { align-self: stretch; display: flex; gap: 8px; }
+.pk-odds, .pk-open {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k16);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.pk-odds { background: #1a0b2e; color: #fff; border: 4px solid #5c0fa3; }
+.pk-odds .rs-rates-i { font-size: var(--fs-k14); }
+.pk-open { background: #2EFFE0; color: #0d0618; border: 4px solid #12A99A; }
+.pk-buy:focus-visible, .pk-odds:focus-visible, .pk-open:focus-visible { outline: 4px solid #2EFFE0; outline-offset: 3px; }
+.pk-foot { display: flex; align-items: center; gap: 6px 16px; flex-wrap: wrap; }
+.pk-signin { min-height: 0; }
+
+/* the odds popup: the roll screen's RATES look (RatesPop.css), each tier then its gears. A list: it may scroll when short */
+.pk-odds-pop { width: min(440px, 100%); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; }
+.pk-odds-lede { margin: -4px 0 10px; font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k15); font-weight: 700; color: #c9b8e8; }
+.pk-odds-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding-right: 4px; }
+.pk-odds-tier .rs-rates-row { min-height: 44px; }
+.pk-odds-items { list-style: none; margin: 6px 0 0; padding: 0 0 0 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 14px; }
+.pk-odds-item { display: flex; justify-content: space-between; gap: 8px; font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k14); font-weight: 700; color: #fff; }
+.pk-odds-name { min-width: 0; overflow-wrap: anywhere; }
+.pk-odds-p { color: var(--rs-tier); white-space: nowrap; }
+.pk-odds-fine { margin: 10px 0 0; font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k14); line-height: 1.35; color: #c9b8e8; }
+
+/* the shop shelf: the packs stand side by side and the foot sits under them */
+.pk-shelf { flex: 1 1 auto; min-height: 0; padding: 10px 9px 9px 0; }
+.pk-shelf .pk-grid { gap: 18px; }
+.pk-shelf .pk-art-stand { max-width: 140px; }
+
+@media (max-width: 759px) {
+  .pk-grid { gap: 8px; padding: 0 5px 5px 0; }
+  .pk-card { padding: 6px; border-width: 4px; box-shadow: 4px 4px 0 #000; }
+  .pk-name { font-size: var(--fs-k18); -webkit-text-stroke: 3px #000; }
+  .pk-floor { font-size: var(--fs-k14); }
+  .pk-what { font-size: var(--fs-k14); }
+  .pk-buy { font-size: var(--fs-k20); min-height: 44px; }
+  .pk-row { flex-direction: column; gap: 6px; }
+  .pk-art-stand { max-width: 84px; }
+  .pk-odds-items { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 759px) and (max-height: 700px) {
+  .pk-art-stand { max-width: 58px; }
+}
+@media (min-width: 760px) and (max-height: 700px) {
+  .pk-art-stand { max-width: 92px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pk-buy, .pk-open, .pk-odds { transition: none; }
+}

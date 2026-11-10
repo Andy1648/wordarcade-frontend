@@ -38,6 +38,7 @@ import { SHOP_ITEM_ART } from '../progress/boostArt.js';
 import { lastSpunDay, wheelNeed, WHEEL_CHANGE } from '../progress/wheelDot.js';
 import { localDayIndex } from '../progress/streak.js';
 import { lifetimeGameWords } from '../progress/rebirthWords.js';
+import { PAYMENTS_ON } from '../payments/flag.js';
 
 const SHELF_ORDER = (stock) => [...stock.filter((it) => it.ticket), ...stock.filter((it) => !it.ticket)];
 const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel');
@@ -46,8 +47,15 @@ const SealedRollReveal = lazyWithReload(() => import('./rollScreen/SealedRollRev
 // instead of just shop screen"): the COSMETICS tab is a shelf like BOOSTS — the ONE CUSTOMIZE menu (the same component
 // PROFILE shows, same stores) laid inline, pop styles first. Lazy: the pickers stay out of the idle-prefetched shop chunk.
 const ShopCosmetics = lazyWithReload(() => import('./profile/ShopCosmetics.jsx'), 'ShopCosmetics');
+// PACKS (089, Andy nov9): the paid MYTHIC / SECRET roll packs, a shelf like the others — only while payments are on
+// (payments/flag.js); lazy, so the buy flow stays out of the shop chunk.
+const PacksShelf = lazyWithReload(() => import('./pay/PaidPacks.jsx'), 'PaidPacks');
 // the shelf tabs, each with its painted icon (Andy oct28 "give icons for boosts")
-const SHELVES = [['boosts', 'BOOSTS', SHOP_ITEM_ART.extend], ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp']]; // CODES moved to SETTINGS (Andy nov4)
+const SHELVES = [
+  ['boosts', 'BOOSTS', SHOP_ITEM_ART.extend],
+  ['cosmetics', 'COSMETICS', '/shop/pop/chrome.webp'],
+  ...(PAYMENTS_ON ? [['packs', 'PACKS', '/rolls/vessel-legendary-base.webp']] : []),
+]; // CODES moved to SETTINGS (Andy nov4)
 
 // PAINTED SHOP ART (Andy oct16 "items in shop have horrendous design … nothing themed to the main page"; art run P1
 // SET A, art-run/ART-RUN.md). An item listed here shows its painted product art instead of the kit icon — add a line as
@@ -256,6 +264,7 @@ export default function ShopV2({ onBack }) {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
       if (sealedRef.current) return; // the SEALED ROLL opening owns the screen until NICE
+      if (document.querySelector('[data-testid="sealed-roll"], [data-testid="pack-odds-pop"]')) return; // 089: a pack opening / its odds (PACKS shelf)
       if (ladderRef.current) { setLadder(false); plateRef.current?.focus(); } // Esc closes the power forms first
       else if (spinRef.current) return; // the wheel has its own Esc (never mid-spin)
       else onBackRef.current();
@@ -452,6 +461,7 @@ export default function ShopV2({ onBack }) {
           </div>
           {/* nov2 (Andy: labels and names only): no explanatory sub-line under the shelf tabs — RESTOCK and the cards say it */}
           {shelf === 'cosmetics' ? <div className="sp2-shelf sp2-shelf-cz" data-testid="shop-cosmetics"><Suspense fallback={null}><ShopCosmetics tab0="pop" /></Suspense></div> : null}
+          {shelf === 'packs' ? <div className="sp2-shelf sp2-shelf-packs" data-testid="shop-packs"><Suspense fallback={null}><PacksShelf /></Suspense></div> : null}
           <div className="sp2-grid" hidden={shelf !== 'boosts'}>
             <div className="sp2-cell is-chest">
               <DailySpinCard now={now} onOpen={() => { sndPurchase(); setSpin(true); }} />
