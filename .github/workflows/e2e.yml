@@ -74,7 +74,7 @@ jobs:
 
       - name: E2E perf (alone, one worker)
         if: ${{ matrix.shard == 'perf' }}
-        run: npx playwright test --project=perf --workers=1 --repeat-each=20 --reporter=list,blob # TEMP: the 20x proof (dropped before merge)
+        run: npx playwright test --project=perf --workers=1 --reporter=list,blob
 
       - name: Upload blob report
         if: ${{ !cancelled() }}
