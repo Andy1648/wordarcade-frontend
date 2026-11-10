@@ -137,7 +137,7 @@
 .room-seat-tags .room-host-badge { margin-left: 0; }
 .room-rename-hint {
   cursor: pointer;
-  font-size: var(--fs-k14);
+  font-size: var(--fs-k15); /* nov9: 15, so the 1280x551 lobby fit-zoom never draws it under the 13px floor */
   letter-spacing: 1px;
   color: #fff;
   background: var(--pc-dark, #6b5a86);

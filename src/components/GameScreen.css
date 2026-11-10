@@ -7260,10 +7260,10 @@ html[data-beat='true'] .wb-belly {
     inset: auto;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 4px;
-    /* the plates use 10px of the board's 14px side padding: a 20-character name holds >= 11px at 360 (nov9) */
-    width: calc(100% + 20px);
-    margin-inline: -10px;
+    gap: 4px 3px;
+    /* the plates use 12px of the board's 14px side padding: a 20-character name holds >= 11px at 360 (nov9) */
+    width: calc(100% + 24px);
+    margin-inline: -12px;
   }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat {
     position: relative;
@@ -7283,10 +7283,10 @@ html[data-beat='true'] .wb-belly {
     align-items: center;
     justify-content: flex-start;
     gap: 6px;
-    padding: 1px 4px 1px 5px;
+    padding: 1px 3px 1px 4px;
     border-radius: 6px;
     border: 2px solid var(--pc-dark, #3d2a5c);
-    border-left: 5px solid var(--pc, #2EFFE0);
+    border-left: 4px solid var(--pc, #2EFFE0);
     background: #1a0b2e;
     transform: none;
     overflow: hidden;
