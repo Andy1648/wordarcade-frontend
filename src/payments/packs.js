@@ -43,8 +43,8 @@ export const PACKS = Object.freeze([
 // ART: `art` is null until the painted pack lands at `artSlot` (public/ art is immutable-cached: add the file, run
 // `node scripts/art-manifest.mjs`, then set art = artSlot). Until then the card draws the tier's existing art.
 export const ROLL_PACKS = Object.freeze([
-  Object.freeze({ id: 'mythic-pack', kind: 'roll', name: 'MYTHIC PACK', tier: 'mythic', cents: 499, debtGems: 4000, art: null, artSlot: '/shop/pack-mythic-v1.webp' }),
-  Object.freeze({ id: 'secret-pack', kind: 'roll', name: 'SECRET PACK', tier: 'secret', cents: 1499, debtGems: 12000, art: null, artSlot: '/shop/pack-secret-v1.webp' }),
+  Object.freeze({ id: 'mythic-pack', kind: 'roll', name: 'MYTHIC PACK', tier: 'mythic', cents: 499, debtGems: 4000, art: '/shop/pack-mythic-v1.webp', artSlot: '/shop/pack-mythic-v1.webp' }),
+  Object.freeze({ id: 'secret-pack', kind: 'roll', name: 'SECRET PACK', tier: 'secret', cents: 1499, debtGems: 12000, art: '/shop/pack-secret-v1.webp', artSlot: '/shop/pack-secret-v1.webp' }),
 ]);
 /** Every pack the checkout sells (gems + roll packs): pay.js charges from this table and nothing else. */
 export const ALL_PACKS = Object.freeze([...PACKS, ...ROLL_PACKS]);

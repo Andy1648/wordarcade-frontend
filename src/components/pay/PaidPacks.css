@@ -99,6 +99,7 @@
 .pk-shelf { flex: 1 1 auto; min-height: 0; padding: 10px 9px 9px 0; }
 .pk-shelf .pk-grid { gap: 18px; }
 .pk-shelf .pk-art-stand { max-width: 140px; }
+@media (min-width: 760px) { .pk-shelf .pk-art-img { max-width: 190px; } }
 
 @media (max-width: 759px) {
   .pk-grid { gap: 8px; padding: 0 5px 5px 0; }
@@ -109,13 +110,16 @@
   .pk-buy { font-size: var(--fs-k20); min-height: 44px; }
   .pk-row { flex-direction: column; gap: 6px; }
   .pk-art-stand { max-width: 84px; }
+  .pk-art-img { max-width: 124px; }
   .pk-odds-items { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 759px) and (max-height: 700px) {
   .pk-art-stand { max-width: 58px; }
+  .pk-art-img { max-width: 88px; }
 }
 @media (min-width: 760px) and (max-height: 700px) {
   .pk-art-stand { max-width: 92px; }
+  .pk-art-img { max-width: 130px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pk-buy, .pk-open, .pk-odds { transition: none; }
