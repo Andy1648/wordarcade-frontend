@@ -46,7 +46,8 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
   // auto-refresh interval without re-subscribing every render.
   // withLive: live public games stay listed as 'playing' (SPECTATE); an older server ignores the flag.
   const handleRefreshPublicRooms = useCallback(() => {
-    send('list_public_rooms', { withLive: true });
+    // watchAll (nov9): this client can draw a Word Race / MINER watch view too - the server offers SPECTATE on them
+    send('list_public_rooms', { withLive: true, watchAll: true });
   }, [send]);
 
   // Join a specific public room from the browser — the SAME join-by-code path as the Join Room screen.
@@ -63,7 +64,7 @@ export function useRoom({ send, setView, setPlayerName, goHome }) {
     setPlayerName(name);
     setServerError('');
     watchingRef.current = { code, name }; // the name re-used to take a seat on a rematch; `watching` is set on room_spectating
-    send('spectate_room', { code, name });
+    send('spectate_room', { code, name, watchAll: true });
     track('room_watched', {}); // fire-and-forget; no name/PII
   }
 

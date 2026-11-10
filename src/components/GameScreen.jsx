@@ -75,6 +75,8 @@ import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import { reduceMotion } from '../lib/reduceMotion';
 import { usePlayClock } from '../progress/playClock.js';
+import { WatchPill, WatchersChip } from './watch/WatchBits.jsx';
+import FitText from './kit/FitText.jsx';
 
 // H4: the WINNER popup (amount counting up) — its own lazy chunk, fetched only when a win happens.
 const WinnerPopup = lazyWithReload(() => import('./WinnerPopup'), 'WinnerPopup');
@@ -1512,6 +1514,7 @@ export default function GameScreen({
   lastLanding = null,
   // SPECTATE (nov4): watching a public game from the room list - never a player; no input, no rematch
   watchOnly = false,
+  watchers = 0, // SPECTATE (nov9): how many are watching this game (room_update.watchers) - every screen says so
 }) {
   // YOUR seat shows YOUR equipped hero (oct18, Andy: cosmetics should show "in game as well so people get the full
   // addictive use"): read once per game; the other seats keep the cast member of their colour.
@@ -1748,6 +1751,15 @@ export default function GameScreen({
           }
           const gap = u.top - ringBottom;
           if (gap >= REACT_H) lift = Math.round(u.height);
+          // SEAT PLATES (a phone's 6+ seat board, nov9): the plates fill the ring row's whole width down to the used
+          // strip, so there is no band under them - the reaction lands just ABOVE the plates instead, in the bomb's
+          // row (written as the same offset; measured on resize only, never per frame)
+          const bar = wbBarRef.current;
+          if (ringEl.classList.contains('wb-ring-6up') && bar) {
+            let seatsTop = Infinity;
+            for (const st of stage.querySelectorAll('.wb-seat')) seatsTop = Math.min(seatsTop, st.getBoundingClientRect().top);
+            if (Number.isFinite(seatsTop)) lift = Math.max(0, Math.round(bar.getBoundingClientRect().top - seatsTop - 6));
+          }
         }
         stage.style.setProperty('--wb-usedh', `${lift}px`);
         setRailMetrics(
@@ -2810,6 +2822,7 @@ export default function GameScreen({
         winnerPay={winnerPay}
         lastLanding={lastLanding}
         watchOnly={watchOnly}
+        watchers={watchers}
       />
     );
   }
@@ -3251,6 +3264,7 @@ export default function GameScreen({
               {watchOnly && (
                 <span className="game-watch-pill" role="status" data-testid="watch-chip">SPECTATING</span>
               )}
+              <WatchersChip n={watchers} />
               {roomCode && (
                 <span className="game-room-code" title="Friends can join with this code — they're dealt in next turn">
                   ROOM <b>{roomCode}</b>
@@ -3369,6 +3383,7 @@ export default function GameScreen({
           className={[
             'wb-ring',
             players.length >= 5 ? 'wb-ring-crowd' : '',
+            players.length >= 6 ? 'wb-ring-6up' : '', // phones: the ring becomes the bomb over a grid of SEAT PLATES (GameScreen.css)
             players.length === 2 ? 'wb-ring--pair' : '',
           ].filter(Boolean).join(' ')}
           style={{ '--n': players.length, '--wb-start': players.length === 2 ? '90deg' : '0deg' }}
@@ -3472,7 +3487,7 @@ export default function GameScreen({
                   })()}
                   <div className="game-player-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="game-player-name-text" translate="no">{player.name}</span>
+                    <FitText className="game-player-name-text" translate="no">{player.name}</FitText>
                     {isMe && <span className="game-player-you">YOU</span>}
                     {/* Hearts live INSIDE the card, on the name row (right side). */}
                     <div className="game-player-hearts">
@@ -4403,6 +4418,7 @@ function CategoryBlitzScreen({
   winnerPay = null,
   lastLanding = null,
   watchOnly = false, // SPECTATE: see GameScreen's prop
+  watchers = 0,
 }) {
   // PAUSE TO LEARN (Blitz). This screen is its OWN component — the main GameScreen's missed-word
   // state is not in scope here, and referencing it compiled fine while being undefined at runtime.
@@ -4880,7 +4896,7 @@ function CategoryBlitzScreen({
                   <span className="cb-score-rank">{i + 1}</span>
                   <span className="cb-score-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-score-name-text" translate="no">{s.name}</span>
+                    <FitText className="cb-score-name-text" translate="no">{s.name}</FitText>
                     {s.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-score-pts">
@@ -5027,6 +5043,8 @@ function CategoryBlitzScreen({
                   </span>
                 )}
               </div>
+              {watchOnly ? <WatchPill /> : null}
+              <WatchersChip n={watchers} />
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
               </button>
@@ -5283,7 +5301,7 @@ function CategoryBlitzScreen({
                   >
                     <span className="cb-progress-name">
                       <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                      <span className="cb-progress-name-text" translate="no">{p.name}</span>
+                      <FitText className="cb-progress-name-text" translate="no">{p.name}</FitText>
                     </span>
                     <span className="cb-progress-count">
                       {playerProgress[p.id] || 0}
@@ -5316,6 +5334,8 @@ function CategoryBlitzScreen({
               <SprayReveal>CATEGORY BLITZ</SprayReveal>
             </div>
             <div className="game-header-actions">
+              {watchOnly ? <WatchPill /> : null}
+              <WatchersChip n={watchers} />
               {audioSlot}
               <button className="game-leave-btn" onClick={onLeave}>
                 LEAVE
@@ -5354,7 +5374,7 @@ function CategoryBlitzScreen({
                 <div className="cb-result-head">
                   <span className="cb-result-name">
                     <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                    <span className="cb-result-name-text" translate="no">{pr.name}</span>
+                    <FitText className="cb-result-name-text" translate="no">{pr.name}</FitText>
                     {pr.id === myId && <span className="game-player-you">YOU</span>}
                   </span>
                   <span className="cb-result-scores">

@@ -1,0 +1,109 @@
+/* LeagueLadder — the sheet of all eight leagues over the board. Flat panel, black ink, hard shadow; each row in its league's
+   colour. The rows rise in once (a finite stagger); reduced motion shows them still. */
+.lgl {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(13, 6, 24, 0.82);
+}
+.lgl-sheet {
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 14px 16px 16px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 #000;
+}
+.lgl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.lgl-title {
+  margin: 0;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: var(--fs-k32);
+  line-height: 1;
+  color: #FFE94A;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.lgl-x {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 3px solid #000;
+  border-radius: 8px;
+  background: #FF4FA3;
+  color: #000;
+  font-size: var(--fs-k20);
+  font-weight: 700;
+  box-shadow: 3px 3px 0 #000;
+  cursor: pointer;
+}
+.lgl-x:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.lgl-x:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
+.lgl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.lgl-row {
+  --lc: #8a7aa8;
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 60px;
+  padding: 2px 12px 2px 6px;
+  background: #12081f;
+  border: 3px solid #000;
+  border-left: 8px solid var(--lc);
+  border-radius: 8px;
+  animation: lgl-rise 260ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  animation-delay: calc(var(--i) * 40ms);
+}
+@keyframes lgl-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.lgl-art { width: 58px; height: 58px; object-fit: contain; }
+.lgl-name {
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  text-transform: uppercase;
+  font-size: var(--fs-k22);
+  line-height: 1;
+  color: var(--lc);
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+.lgl-range { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k16); color: #fff; white-space: nowrap; text-align: right; }
+.lgl-row.is-me { background: #2a1647; box-shadow: 0 0 0 3px #FFE94A; }
+.lgl-you {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  padding: 1px 8px;
+  background: #FFE94A;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 6px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-k13);
+}
+.lgl-row[data-league='legend'] { --lc: #FFE94A; }
+.lgl-row[data-league='champion'] { --lc: #FF4FA3; }
+.lgl-row[data-league='titan'] { --lc: #FF6B3D; }
+.lgl-row[data-league='master'] { --lc: #C08BFF; }
+.lgl-row[data-league='crystal'] { --lc: #2EFFE0; }
+.lgl-row[data-league='gold'] { --lc: #FFC23D; }
+.lgl-row[data-league='silver'] { --lc: #D4DAE3; }
+.lgl-row[data-league='bronze'] { --lc: #D98A4E; }
+@media (max-width: 420px) {
+  .lgl { padding: 10px; }
+  .lgl-sheet { padding: 10px 10px 12px; }
+  .lgl-row { grid-template-columns: 50px 1fr auto; gap: 2px 8px; min-height: 56px; }
+  .lgl-art { width: 50px; height: 50px; }
+  .lgl-name { font-size: var(--fs-k18); }
+  .lgl-range { font-size: var(--fs-k14); }
+}
+@media (prefers-reduced-motion: reduce) { .lgl-row { animation: none; } }
