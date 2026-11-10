@@ -26,7 +26,7 @@ import EnglishLine from './EnglishLine';
 // with the answer filled in and highlighted (the same encode step as the
 // briefing), the definition, and ONE cousin from the root if there is one. Held
 // for the between-word pause, or dismissed early by any key (handled in the hook).
-function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
+function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
   const { word, pos, gender, falseFriend, context, contextEn, gloss, cousin, kind } = data;
   const [before, after] = context.split(/_+/);
   const review = (ui && ui.review) || {};
@@ -45,7 +45,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
     if (selfPaced && contRef.current) contRef.current.focus({ preventScroll: true });
   }, [selfPaced]);
   return (
-    <div className={`sr-reencode ${kind}`} role="status">
+    <div className={`sr-reencode ${kind}`} role="status" onClick={tap && !selfPaced && onContinue ? () => onContinue() : undefined}>
       <div className="sr-reencode-tag">{tag}</div>
       <div className="sr-reencode-word">
         {speak ? withArticle(word, pos, gender) : word}
@@ -75,26 +75,24 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue }) {
           Continue <span className="sr-kbd" aria-hidden="true">⏎</span>
         </button>
       ) : (
-        <div className="sr-reencode-hint" aria-hidden="true">press any key</div>
+        <div className="sr-reencode-hint" aria-hidden="true">{tap ? 'tap to skip' : 'press any key'}</div>
       )}
     </div>
   );
 }
 
-// The SUSPECT LINEUP (LINEUP mode only). Every word is served with a lineup of
-// same-length suspects, one of which is the fugitive; the player still TYPES the
-// answer into the slots — this is a recognition aid, not the input. The lineup
-// NARROWS with the ante (6 → 4 → 2), which is the whole point: it makes the
-// multiplier visible, so answering early literally means answering with more
-// suspects still standing. Eliminated suspects are crossed out IN PLACE with a
-// CLEARED alibi treatment (a strikethrough + stamp; positions never move). No copy
-// explains any of this — the narrowing does.
-function SuspectLineup({ suspects, ui }) {
+// The SUSPECT LINEUP — and, since feat/sat-tap, THE ANSWER CHOICES. Every word carries a fixed set
+// of choices (engine buildChoices): LINEUP's 6/4/2 same-length suspects, BRIEFING's 4. They NARROW
+// with the ante, which is the whole point: answering early literally means answering with more
+// suspects still standing. Eliminated suspects are crossed out IN PLACE with a CLEARED alibi
+// (positions never move). With `onPick` each suspect is a BUTTON: on a touch device it is THE way to
+// answer (no text field), on a desktop a click or its number key (1-N) is a shortcut beside typing.
+function SuspectLineup({ suspects, ui, onPick, picked, keyed, disabled }) {
   const { lineup, standing, count } = suspects;
   const L = (ui && ui.lineup) || {};
   const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
   return (
-    <div className="sr-lineup">
+    <div className={`sr-lineup${onPick ? ' pickable' : ''}`}>
       <div className="sr-lineup-head">
         <span className="sr-lineup-label" aria-hidden="true">{L.label || 'Suspects'}</span>
         <span className="sr-lineup-count" aria-label={`${standing} ${L.label ? 'choices left' : 'suspects still standing'}`}>
@@ -102,18 +100,34 @@ function SuspectLineup({ suspects, ui }) {
         </span>
       </div>
       <ul className="sr-lineup-grid" style={{ '--cols': cols }}>
-        {lineup.map((s) => (
-          <li
-            key={s.word}
-            className={`sr-suspect${s.eliminated ? ' cleared' : ''}`}
-            style={{ '--len': s.word.length }}
-          >
-            <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
-            {s.eliminated && (
-              <span className="sr-suspect-alibi" aria-hidden="true">{L.cleared || 'CLEARED'}</span>
-            )}
-          </li>
-        ))}
+        {lineup.map((s, i) => {
+          const mine = picked && picked.word === s.word ? (picked.ok ? ' picked ok' : ' picked bad') : '';
+          return (
+            <li
+              key={s.word}
+              className={`sr-suspect${s.eliminated ? ' cleared' : ''}${mine}`}
+              style={{ '--len': s.word.length }}
+            >
+              {onPick ? (
+                <button
+                  type="button"
+                  className="sr-suspect-btn"
+                  onClick={() => onPick(s.word)}
+                  disabled={disabled || s.eliminated}
+                  aria-label={keyed ? `${i + 1}: ${s.word}` : s.word}
+                >
+                  {keyed && <span className="sr-suspect-key" aria-hidden="true">{i + 1}</span>}
+                  <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
+                </button>
+              ) : (
+                <span className="sr-suspect-word">{s.word.toUpperCase()}</span>
+              )}
+              {s.eliminated && (
+                <span className="sr-suspect-alibi" aria-hidden="true">{L.cleared || 'CLEARED'}</span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -197,9 +211,17 @@ function FieldRow({ type, visible, view }) {
   return null;
 }
 
-export default function WordCard({ view, onHint, onSkip, onContinue }) {
-  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects } = view;
+export default function WordCard({ view, onHint, onSkip, onContinue, onPick }) {
+  const { fx, msg, stamp, atFinal, deepCut, revenant, missCount, reEncode, mode, suspects, choices } = view;
   const isLineup = mode === 'lineup';
+  // TAP-TO-ANSWER: on a touch device the choices ARE the input — no slots, no field, no keyboard.
+  const tap = view.answerMode === 'tap' && !!choices;
+  // the lineup the poster shows: the pickable choice set when there is one, else LINEUP's suspects
+  const lineupData = choices
+    ? { count: choices.count, standing: choices.standing, lineup: choices.list }
+    : isLineup && suspects
+      ? suspects
+      : null;
   // the poster's words come from the pack (WANTED / RECHERCHÉ); SAT is the default
   const UI = (view.pack && view.pack.ui) || { wanted: 'WANTED', mostWanted: 'MOST WANTED' };
 
@@ -246,7 +268,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
     // bearing (juice centres bursts on it; the wrong-key shake keys off .sr-card.shake).
     // key on the shake counter so the shake animation restarts on each wrong key.
     <div
-      className={`sr-card sr-poster${isLineup ? ' lineup' : ' briefing'}${deepCut ? ' deep' : ''}${revenant ? ' revenant' : ''}${
+      className={`sr-card sr-poster${isLineup ? ' lineup' : ' briefing'}${tap ? ' tap' : ''}${deepCut ? ' deep' : ''}${revenant ? ' revenant' : ''}${
         atFinal ? ' atfinal' : ''
       }${fx.shake ? ' shake' : ''}`}
       key={`card-${fx.shake}`}
@@ -305,8 +327,8 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
         ))}
       </div>
 
-      {/* Mugshot slots, centred. */}
-      <div className="sr-slotwrap">
+      {/* Mugshot slots, centred. (TAP: nothing is typed, so no slots — the choices below take the room.) */}
+      {!tap && <div className="sr-slotwrap">
         <UnlistedSlot />
         {/* wrong key: a tiny "TCH!" tick near the typing row (re-keyed per reject) */}
         {fx.badKey ? (
@@ -315,11 +337,20 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
           </span>
         ) : null}
         <Slots slots={view.slots} badIndex={fx.badIndex} badKey={fx.badKey} />
-      </div>
+      </div>}
 
       {/* LINEUP mode: the suspect lineup, narrowing with the ante. Replaces the
           spell-along block (lineup has no spell-along — the lineup is the aid). */}
-      {isLineup && suspects && <SuspectLineup suspects={suspects} ui={UI} />}
+      {lineupData && (
+        <SuspectLineup
+          suspects={lineupData}
+          ui={UI}
+          onPick={choices && onPick ? onPick : null}
+          picked={view.picked}
+          keyed={!tap}
+          disabled={view.pending !== 'idle'}
+        />
+      )}
 
       {/* HINT / SKIP (FRENCH RUSH): the player drives the clues — no clock needed. Enter = hint,
           Escape = skip on a keyboard; on a phone these are the only way (no Escape key). */}
@@ -336,7 +367,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
 
       {/* Spell-along endgame (BRIEFING mode only): the fugitive's mugshot prints
           itself out for scraps. Never in a self-paced run (no clock). */}
-      {!isLineup && atFinal && view.pace !== 'self' && UI.wanted && (
+      {!isLineup && !tap && atFinal && view.pace !== 'self' && UI.wanted && (
         <div className="sr-spell">
           <div className="sr-spell-head">
             <span className="sr-spell-label">MUGSHOT PRINTING…</span>
@@ -381,6 +412,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue }) {
           speak={!!(view.pack && view.pack.lang === 'fr')}
           selfPaced={view.pace === 'self'}
           onContinue={onContinue}
+          tap={tap}
         />
       )}
     </div>
