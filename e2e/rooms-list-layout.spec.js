@@ -13,7 +13,8 @@ import { installBackendMock, freezeAnimations } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 
 const SHOTS = process.env.RL_SHOTS || '';
-const host = (i) => ['GLOWWORM', 'A VERY LONG HOST NAME INDEED', 'ZED', 'NOVA_KID', 'MR. SPELLING BEE CHAMPION', 'Q'][i % 6];
+// names at the real cap (20 chars, MAX_NAME_LENGTH) and the longest lobby-bot persona (16)
+const host = (i) => ['GLOWWORM', 'A VERY LONG HOSTNAME', 'ZED', 'caffeinatedowl68', 'MR SPELLING BEE CHMP', 'Q'][i % 6];
 const HEROES = ['mecha', 'riot-elite', null];
 const MODES = ['word-bomb', 'category-blitz', 'word-race', 'miner'];
 
