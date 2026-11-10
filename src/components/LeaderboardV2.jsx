@@ -18,7 +18,9 @@ import './kit/tokens.css';
 import './LeaderboardV2.css';
 import { kitPlay } from './kit/motion.js';
 import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
-import { leagueOf, nextLeague, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { leagueOf, leagueMove, nextLeague, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { rangeLabel } from '../leaderboard/leagueRange.js';
+import LeagueLadder from '../leaderboard/LeagueLadder.jsx';
 import { leagueBand, leagueRows, LEAGUE_SPAN } from '../leaderboard/leagueView.js';
 import {
   boardCaps,
@@ -52,7 +54,6 @@ import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import { weekPrize } from '../leaderboard/weekPrizes.js';
 import RankSeal from '../leaderboard/RankSeal.jsx';
-import { nameTier, enteredTier } from '../leaderboard/nameTier.js';
 import { gapTo } from '../leaderboard/gap.js';
 import { lazyWithReload } from '../lib/chunkReload';
 
@@ -195,7 +196,7 @@ const DROP = [
   { transform: 'translateY(0) scale(1, 1)', opacity: 1 },
 ];
 // NAME PRESTIGE (Andy oct21 "make people feel even better for being top"): every top-50 name wears a painted NUMBERED
-// seal (nameTier.js). On arrival each seal STAMPS down once (rows stagger top-down); the climb INTO a better tier since
+// league badge (RankSeal, leagues.js). On arrival each seal STAMPS down once (rows stagger top-down); the climb INTO a better tier since
 // your last look gets the big slam + a NEW · TOP 10 tag on your own row. One-shots on existing nodes; nothing loops.
 // every board seal sits at the board's left edge (a phone's screen edge): a gentle 1.4x stamp keeps every frame on screen
 // (a 1.9x stamp put a phone row's seal off-screen mid-flight - CI's slower runner caught it: v2-leaderboard @390, nov3)
@@ -344,6 +345,9 @@ export default function LeaderboardV2({ onBack }) {
   peekRef.current = peek;
   const [all, setAll] = useState({ rows: [], me: null, loaded: false, error: false, moves: {} });
   const [week, setWeek] = useState({ rows: [], me: null, loaded: false, error: false, moves: {}, gains: true });
+  const [ladder, setLadder] = useState(false); // the ALL LEAGUES sheet (LeagueLadder)
+  const ladderRef = useRef(false);
+  ladderRef.current = ladder;
   const [lg, setLg] = useState({ rows: [], loaded: false }); // MY LEAGUE (leagueView.js): your stretch of your league
 
   const loadAll = useCallback(async () => {
@@ -385,7 +389,7 @@ export default function LeaderboardV2({ onBack }) {
     loadAll();
     rootRef.current?.focus();
     const onKey = (e) => {
-      if (e.key === 'Escape') { if (peekRef.current) setPeek(null); else onBackRef.current(); } // the card closes first
+      if (e.key === 'Escape') { if (ladderRef.current) setLadder(false); else if (peekRef.current) setPeek(null); else onBackRef.current(); } // a sheet closes first
     };
     window.addEventListener('keydown', onKey);
     return () => {
@@ -470,7 +474,9 @@ export default function LeaderboardV2({ onBack }) {
   const myPct = !wk && meRow ? topPercent(meRow.rank, data.total) : null;
   // THE CLIMB INTO A TIER since your last look on this tab (a first look is not a climb)
   const myMove = meRow ? Number(data.moves[meRow.id] || 0) : 0;
-  const newTier = meRow && myMove > 0 ? enteredTier(Number(meRow.rank) + myMove, meRow.rank) : null;
+  // ALL TIME only: a climb INTO a better league (the week board's places are not league places)
+  const promo = !wk && meRow && myMove > 0 ? leagueMove(Number(meRow.rank) + myMove, meRow.rank) : null;
+  const newTier = promo && promo.dir === 'up' ? { label: promo.league.name } : null;
   // YOUR CLIMB: the player ranked right above you (on the board, or your neighbourhood past it) and the gap to pass them
   const climbTo = meRow && Number(meRow.rank) > 1 ? rows.find((r) => Number(r.rank) === Number(meRow.rank) - 1) || rightAbove : null;
   const climbGap = climbTo ? gapTo(meRow, climbTo, tab, gains) : null;
@@ -613,9 +619,10 @@ export default function LeaderboardV2({ onBack }) {
             rows ≈ 11% of the board; the room the podium took goes to YOUR CLIMB below them. */}
         {band ? (
           <div className="lb2-lg lb2-slide" data-league={band.league.key} data-testid="lb2-league">
-            <img className="lb2-lg-art" src={LEAGUE_ART[band.league.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" />
+            <img className="lb2-lg-art" src={LEAGUE_ART[band.league.key]} width="320" height="320" alt="" aria-hidden="true" draggable="false" />
             <span className="lb2-lg-mid">
               <span className="lb2-lg-name">{band.league.name}</span>
+              <span className="lb2-lg-range" data-testid="lb2-league-range">{rangeLabel(band.league)}</span>
               {band.next ? (
                 <>
                   <span className="lb2-lg-goal" data-testid="lb2-league-goal"><b>{fmt(band.toNext)}</b> {band.toNext === 1 ? 'PLACE' : 'PLACES'} TO {band.next.name}</span>
@@ -624,7 +631,8 @@ export default function LeaderboardV2({ onBack }) {
               ) : <span className="lb2-lg-goal" data-testid="lb2-league-goal">THE TOP OF THE BOARD</span>}
             </span>
             <b className="lb2-lg-rank">#{fmt(meRow.rank)}</b>
-            {band.next ? <img className="lb2-lg-next" src={LEAGUE_ART[band.next.key]} width="512" height="512" alt={`Next: ${band.next.name}`} draggable="false" /> : null}
+            {band.next ? <img className="lb2-lg-next" src={LEAGUE_ART[band.next.key]} width="320" height="320" alt={`Next: ${band.next.name}`} draggable="false" /> : null}
+            <button type="button" className="lb2-lg-open lb2-lg-all" onClick={() => setLadder(true)} data-testid="lb2-league-all">ALL LEAGUES</button>
           </div>
         ) : !isLeague ? (
         <div className="lb2-top3" aria-label="Top three">
@@ -635,8 +643,8 @@ export default function LeaderboardV2({ onBack }) {
             const who = podCast[place - 1];
             const name = p ? p.username : (data.loaded ? 'YOUR NAME HERE?' : '…'); // nov6: a loading board is not an empty one
             return (
-              <div key={place} className={`lb2-col lb2-col--${place} lb2-slide${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p ? nameTier(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
-                {p ? <RankSeal rank={place} className="lb2-pod-seal" /> : <span className="lb2-t3-open">{place}</span>}
+              <div key={place} className={`lb2-col lb2-col--${place} lb2-slide${mine ? ' is-me' : ''}${p ? ' is-peek' : ' is-open'}`} data-place={place} data-tier={p && !wk ? leagueOf(place).key : undefined} data-id={p ? p.id : ''} data-cast={who.id} {...peekProps(p, setPeek)}>
+                {p && !wk ? <RankSeal rank={place} className="lb2-pod-seal" /> : <span className="lb2-t3-open">{place}</span>}
                 <span className="lb2-t3-face" aria-hidden="true"><img className="lb2-buddy" src={castSrc(who.id)} alt="" draggable="false" decoding="async" /></span>
                 <span className="lb2-t3-who">
                   <span className="lb2-t3-line">
@@ -645,7 +653,7 @@ export default function LeaderboardV2({ onBack }) {
                     <span className="lb2-pod-name-t" title={name} style={{ '--nl': nameEms(name) }}>{softBreak(name)}</span>
                   </span>
                   <span className="lb2-t3-sub">
-                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p && !wk ? <LeagueBadge rank={place} className="lb2-pod-plate lb2-pod-league" /> : null}
+                    {mine && newTier ? <span className="lb2-new-tier is-pod">NEW · {newTier.label}</span> : p && !wk ? <LeagueBadge rank={place} art={false} className="lb2-pod-plate lb2-pod-league" /> : null}
                     {wk ? <Prize rank={place} pod /> : null}
                   </span>
                 </span>
@@ -669,9 +677,13 @@ export default function LeaderboardV2({ onBack }) {
               <div className="lb2-climb-me">
                 <span className="lb2-climb-hero" aria-hidden="true"><CastArt className="lb2-climb-cast" id={heroById(heroes[meRow.id]) ? heroes[meRow.id] : castFor(meRow.id, true).id} live /></span>
                 <span className="lb2-climb-rank">
-                  {nameTier(meRow.rank) ? <RankSeal rank={meRow.rank} className="lb2-climb-seal" /> : <b className="lb2-climb-n">#{fmt(meRow.rank)}</b>}
+                  {!wk ? <RankSeal rank={meRow.rank} className="lb2-climb-seal" /> : <b className="lb2-climb-n">#{fmt(meRow.rank)}</b>}
                   {myPct ? <span className="lb2-climb-pct">TOP {myPct}%</span> : null}
-                  {!wk ? <LeagueBadge rank={meRow.rank} className="lb2-climb-league" data-testid="lb2-climb-league" /> : null}
+                  {!wk ? (
+                    <button type="button" className="lb2-lg-open lb2-climb-open" onClick={() => setLadder(true)} aria-label="See all leagues">
+                      <LeagueBadge rank={meRow.rank} art={false} range className="lb2-climb-league" data-testid="lb2-climb-league" />
+                    </button>
+                  ) : null}
                 </span>
               </div>
             ) : (
@@ -722,7 +734,7 @@ export default function LeaderboardV2({ onBack }) {
             // BANDS (Andy oct14): a divider where a band starts — TOP 10 (the list opens on it), TOP 25, TOP 50 — and
             // past the board, the pinned YOU row gets its own. The rank number wears its band's colour.
             const rowBand = rankBand(r.rank);
-            const tier = nameTier(r.rank);
+            const tier = wk ? null : leagueOf(r.rank); // ALL TIME: every row wears its league's badge, its place on the plate
             const prevBand = k > 0 ? rankBand(list[k - 1].rank) : null;
             // ALL TIME: the cut lines are the RANK LEAGUE boundaries (leagues.js - CHAMPION, TITAN at #11, MASTER at #51, and
             // past the board YOUR league over your row), read from leagueOf so the dividers can never drift from the badges.
@@ -736,7 +748,7 @@ export default function LeaderboardV2({ onBack }) {
               {/* the cut line: a slim flat divider - the league badge (or the week's band name), then a rule in its colour
                   (Andy nov2: the painted ribbons "look horrendous") */}
               {sep && (league
-                ? <div className="lb2-sep is-league" data-league={league.key} aria-hidden="true"><LeagueBadge rank={r.rank} className="lb2-sep-league" /></div>
+                ? <button type="button" className="lb2-sep is-league" data-league={league.key} onClick={() => setLadder(true)} aria-label={`${league.name}, ${rangeLabel(league).toLowerCase()}. See all leagues`}><LeagueBadge rank={r.rank} range className="lb2-sep-league" /></button>
                 : <div className="lb2-sep" data-band={rowBand ? rowBand.tone : 'you'} aria-hidden="true"><span className="lb2-sep-name">{sep}</span></div>)}
               <div className={`lb2-row is-peek${mine ? ' is-me' : ''}${isRival ? ' is-rival' : ''}${isNear(r) ? ' is-near' : ''}${k % 2 ? ' is-odd' : ''}`} data-rank={r.rank} data-band={band ? band.tone : undefined} data-tier={tier ? tier.key : undefined} data-id={r.id} {...peekProps(r, setPeek)}>
                 {/* a 4+ digit rank (#1,000 … #99,999, Andy nov2 "rankings in 1000's overlap") steps its number down a size per
@@ -785,6 +797,7 @@ export default function LeaderboardV2({ onBack }) {
         </div></div>
 
       </div>
+      {ladder ? <LeagueLadder rank={allMe ? allMe.rank : null} onClose={() => setLadder(false)} /> : null}
       {peek ? <Suspense fallback={null}><ProfileCard row={peek} mine={!!(myId && peek.id === myId)} onClose={() => setPeek(null)} /></Suspense> : null}
     </div>
   );

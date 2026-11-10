@@ -230,9 +230,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await page.waitForTimeout(200);
     const pin = await page.evaluate(() => { const s = document.querySelector('.lb2-scroll').getBoundingClientRect(); const m = document.querySelector('.lb2-row.is-me').getBoundingClientRect(); return { inside: m.top >= s.top - 1 && m.bottom <= s.bottom + 1, rows: document.querySelectorAll('.lb2-row.is-me').length }; });
     expect(pin).toEqual({ inside: true, rows: 1 });
-    // the TOP 100 tier wears its painted stone seal (51-100). The cut lines are SLIM FLAT dividers (Andy nov2: the
+    // a row wears its league's badge, its place on the plate (MASTER, 51-100). The cut lines are SLIM FLAT dividers (Andy nov2: the
     // painted ribbons "look horrendous"): no ribbon art, a readable name, no taller than a third of a row
-    await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
+    await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-league', 'master');
     const seps = await lb.locator('.lb2-sep').evaluateAll((els) => els.map((e) => {
       const name = e.querySelector('.lb2-sep-name, .lg-badge-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
       const art = [e, ...e.querySelectorAll('*')].some((x) => ['', '::before', '::after'].some((p) => /url\(/.test(getComputedStyle(x, p || null).backgroundImage) || /url\(/.test(getComputedStyle(x, p || null).maskImage || '')));
@@ -314,11 +314,11 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   });
 }
 
-// POST-ACTION (anti-slop checklist): you just climbed from #5 INTO the top 3 - your own medal row wears YOU + the NEW tier
-// news, the panel follows you, and nothing overlaps mid-climb or after
+// POST-ACTION (anti-slop checklist): you just climbed from #12 (TITAN) INTO the top 3 (CHAMPION) - your own medal row wears YOU
+// + the NEW league news (nov9: the news is a LEAGUE crossed; #5 -> #2 stays in CHAMPION), the panel follows you, and nothing overlaps mid-climb or after
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   test(`@${vp.width} climbing into the top 3: your medal row + the tier news, no overlaps`, async ({ page }) => {
-    const lb = await boot(page, vp, { level: 895, rebirths: 40, stars: 4, seenAt: 5 });
+    const lb = await boot(page, vp, { level: 895, rebirths: 40, stars: 4, seenAt: 12 });
     const mine = lb.locator('.lb2-top3 .lb2-col.is-me');
     await expect(mine).toHaveAttribute('data-place', '2');
     await expect(mine.locator('.lb2-you')).toBeVisible();

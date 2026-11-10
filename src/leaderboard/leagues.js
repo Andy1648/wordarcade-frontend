@@ -2,8 +2,9 @@
 // (this idea is from clash of clans but instead of trophies its just levels)"). Your league is the band your BOARD rank
 // sits in — the board already orders ★ → R → LV, so it is "levels, not trophies". Fixed cutoffs sized for the live
 // board (~650 claimed players + ~1850 bots ≈ 2500 rows): the top bands are scarce, the bottom ones wide.
-// They COMPLEMENT the painted numbered seals (nameTier.js, #1–100): the seal prints your exact place, the league names
-// the band — a board row wears the seal in the top 100 and the league badge past it, never both.
+// ONE badge per league (Andy nov9: "there's a certain rank but then the icon on the left … just doesn't look like it. make
+// it match"): every place a rank shows — a board row, the podium, the dividers, MY LEAGUE, the profile — wears its
+// league's badge, and a row prints its exact place on the badge's empty plate. The old TOP 50 / TOP 25 seals are gone.
 // Pure (no DOM): the menu plate, the profile, the board, the results and the tests all read it.
 
 // best first: a lower index is a higher league. `top` = the last board place inside it.
@@ -18,9 +19,10 @@ export const LEAGUES = [
   { key: 'bronze', name: 'BRONZE', top: Infinity },
 ];
 
-// The painted league badge set (fx-components nov2: ONE ChatGPT chat, one style, escalating — fire from TITAN; Andy "stop
-// with the single AI giveaway art"). Immutable art: a repaint gets a new filename (art-manifest).
-export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league-${l.key}-v1.webp`]));
+// The painted league badge set v2 (nov9, ONE ChatGPT chat, best of four each, escalating: a bronze medallion → a silver
+// shield → gold laurels → crystal spikes → an amethyst star → a horned iron crest → pink wings → the gold winged crown).
+// Every badge carries an EMPTY glossy plate for a number. Immutable art: a repaint gets a new filename (art-manifest).
+export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league2-${l.key}-v1.webp`]));
 
 /** The league a board rank sits in, or null with no rank (an unclaimed name is UNRANKED). */
 export function leagueOf(rank) {

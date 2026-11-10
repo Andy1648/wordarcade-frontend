@@ -20,7 +20,7 @@
 // tier-4/5 gloss<->root flip is GONE — gloss and root co-reveal at stage 1, so
 // "answer early = more points" (and AVG ANTE) survives, just coarser.
 
-import { generateSuspects } from './suspects.js';
+import { generateSuspects, distractorCandidates } from './suspects.js';
 
 export const DEFAULT_CONFIG = {
   // MODE — the two ways to play, chosen at mode-select:
@@ -85,6 +85,9 @@ export const DEFAULT_CONFIG = {
   requeueShaky: false,
   shakyRevealMin: 2,
   maxRequeues: 2,
+  // TAP-TO-ANSWER (feat/sat-tap): attach a fixed choice set to every word (see buildChoices). Off by
+  // default so the endless tests' seeded draws are untouched; the hook turns it on for real runs.
+  choices: false,
 };
 
 export const REVEAL_META = 'meta';
@@ -208,6 +211,104 @@ export function spamPaidFraction(length, spamReveals) {
   if (!L) return 0;
   if (n * 2 >= L) return 0;
   return (L - n) / L;
+}
+
+// --- TAP-TO-ANSWER (feat/sat-tap) --------------------------------------------
+// Andy: "SAT rush doesnt need typing just tapping the right answer is enough" — the phone keyboard
+// covered half the poster. So every word can carry a fixed set of CHOICES (the answer + same-pool
+// distractors) that a player taps (or clicks / presses 1-N on a keyboard). The skill is still
+// answering EARLY: the stage multiplier decays exactly as before, and the spell-along's job — the
+// net that makes waiting cost you — is done by ELIMINATING choices instead of revealing letters:
+//
+//   BRIEFING (4 choices)   stage 0  5x   4 standing
+//                          stage 1  3x   4 standing   (the definition is the stage-1 help)
+//                          stage 2  1x   3 standing   (one FREE elimination = the free first letter)
+//                          endgame       2 standing   (one per spell-along tick, never below 2)
+//                          final hold → a "walked away" miss
+//   LINEUP (its 6/4/2)     the suspect lineup's own stage eliminations (6 → 4 → 2), then the
+//                          lineup's last-call window → a walked-away miss. No ticks.
+//
+// Two standing is the floor, like the last TWO letters never auto-revealing: the player always
+// makes the final call. A wrong pick is a MISS (life, heat zero, revenant) — a tap cannot be undone
+// or spammed. Heat mirrors heatMaxRevealed: a tap clear's `revealed` is the number of HELP
+// eliminations it saw — those that land at the final stage or in the endgame — so a pick with the
+// free stage-2 elimination still heats (as the free first letter does), one that waited for a tick
+// does not (and, like a clear that leaned on the letters, it is shaky → a second look).
+//
+// WHY 4 IN BRIEFING: the player has just studied these words, so the question is recall — four is
+// the smallest set where a blind guess is still a bad bet (25%, and 1-in-3 even after the free
+// elimination), and four 64px buttons fit a 360x640 phone in a 2x2 grid with the clue still fully
+// readable. Six (lineup's recognition count) needs a third row the briefing clue cannot spare.
+export const TAP_CHOICES_BRIEFING = 4;
+
+/**
+ * Build the choice set for one word. PURE (the RNG is injected); computed ONCE per presentation so
+ * the order is stable for the whole card (positions never move — eliminated choices are crossed
+ * out in place). Every word appears once; the answer appears exactly once.
+ *
+ * LINEUP reuses the word's suspect lineup verbatim (same 6/4/2 count, same order, same stage
+ * eliminations — the survivor differs at the first letter). BRIEFING draws its distractors with the
+ * lineup's honesty rules (suspects.distractorCandidates: same length first, never an alt, a same-root
+ * word or a synonym), RANKED by similarity — same part of speech first, then nearest tier — with a
+ * random tie-break. The MOST similar distractor survives to the end; the least similar is the free
+ * stage-2 elimination; the rest fall one per endgame tick.
+ *
+ * @returns {{ count:number, tickElims:number, choices:{word:string,isAnswer:boolean,out:null|{stage:number}|{tick:number}}[] }}
+ */
+export function buildChoices({ answer, pool = [], rng = Math.random, mode = 'briefing', suspects = null, finalStage = 2, size = TAP_CHOICES_BRIEFING } = {}) {
+  if (mode === 'lineup' && suspects && Array.isArray(suspects.lineup)) {
+    const choices = suspects.lineup.map((s) => ({
+      word: s.word,
+      isAnswer: !!s.isAnswer,
+      out: s.eliminatedAtStage == null ? null : { stage: s.eliminatedAtStage },
+    }));
+    return { count: choices.length, tickElims: 0, choices };
+  }
+  const cands = distractorCandidates(answer, pool);
+  const tierOf = (r) => (Number.isFinite(r.tier) ? r.tier : 3);
+  const ranked = shuffle(cands, rng)
+    .map((d, i) => ({ d, i, pos: d.pos === answer.pos ? 0 : 1, tier: Math.abs(tierOf(d) - tierOf(answer)) }))
+    .sort((a, b) => a.pos - b.pos || a.tier - b.tier || a.i - b.i)
+    .slice(0, Math.max(1, size - 1))
+    .map((x) => x.d);
+  // ranked[0] = the closest (the survivor); the LAST is the least similar = the free stage-2 cut;
+  // the ones between fall one per endgame tick, least similar first.
+  const distractors = ranked.map((d, i) => {
+    if (i === 0) return { word: d.word, isAnswer: false, out: null };
+    if (i === ranked.length - 1) return { word: d.word, isAnswer: false, out: { stage: finalStage } };
+    return { word: d.word, isAnswer: false, out: { tick: ranked.length - 1 - i } };
+  });
+  const tickElims = Math.max(0, ranked.length - 2);
+  const choices = shuffle([...distractors, { word: answer.word, isAnswer: true, out: null }], rng);
+  return { count: choices.length, tickElims, choices };
+}
+
+/** Is this choice crossed out at (stage, ticks)? */
+export function choiceEliminated(choice, stage, ticks = 0) {
+  const o = choice && choice.out;
+  if (!o) return false;
+  if (o.stage != null) return stage >= o.stage;
+  if (o.tick != null) return ticks >= o.tick;
+  return false;
+}
+
+/** How many choices are still standing at (stage, ticks). */
+export function choicesStanding(choices, stage, ticks = 0) {
+  if (!Array.isArray(choices)) return 0;
+  return choices.filter((c) => !choiceEliminated(c, stage, ticks)).length;
+}
+
+/**
+ * The tap analogue of "letters revealed" (it feeds submitCorrect's heat gate + the shaky rule): the
+ * HELP eliminations standing on the card — those at the final stage or in the endgame. Lineup's
+ * stage-1 cut is not help (the 3x multiplier already prices it), exactly as the stage-1 definition
+ * is not a revealed letter.
+ */
+export function tapRevealed(choices, stage, ticks = 0, finalStage = 2) {
+  if (!Array.isArray(choices)) return 0;
+  return choices.filter(
+    (c) => choiceEliminated(c, stage, ticks) && c.out && (c.out.tick != null || c.out.stage >= finalStage)
+  ).length;
 }
 
 export function createSatRushEngine({
@@ -348,6 +449,17 @@ export function createSatRushEngine({
     { isRevenant, isDeepCut, missCount = 0, isBriefed = false, isReturn = false, requeues = 0 }
   ) {
     const length = row.word.length;
+    const suspects = cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng }) : null;
+    const choices = cfg.choices
+      ? buildChoices({
+          answer: row,
+          pool: words,
+          rng,
+          mode: cfg.mode,
+          suspects,
+          finalStage: cfg.stageMultipliers.length - 1,
+        })
+      : null;
     return {
       row,
       word: row.word,
@@ -365,7 +477,11 @@ export function createSatRushEngine({
       // LINEUP mode only: the suspect lineup for this word (answer + distractors),
       // narrowing with the stage. Pure — generated from the same word pool with the
       // injected RNG. null in briefing mode. Attached to every word (revenants too).
-      suspects: cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng }) : null,
+      suspects,
+      // TAP-TO-ANSWER: the fixed choice set (null unless cfg.choices) + how many endgame ticks have
+      // eliminated a choice so far (advanced by eliminateNext, the spell-along's tap twin).
+      choices,
+      elimTicks: 0,
       isRevenant,
       isDeepCut,
       isBriefed,
@@ -541,6 +657,65 @@ export function createSatRushEngine({
       autoRevealMax: Math.max(1, cw.length - 2),
       finalHoldMs: 2 * tickMs,
     };
+  }
+
+  /**
+   * TAP-TO-ANSWER endgame, as pure data (the hook owns the clock) — the spell-along's twin. At the
+   * final stage one choice is eliminated every `tickMs` until `autoElimMax` endgame cuts have
+   * landed (two choices always stay standing), then `finalHoldMs`, then a walked-away miss. Same
+   * cadence as the spell-along (never deep-cut scaled). null without a choice set.
+   */
+  function tapEndgame() {
+    const cw = state.current;
+    if (!cw || !cw.choices) return null;
+    const tickMs = cfg.spellAlongMs;
+    return { tickMs, autoElimMax: cw.choices.tickElims, finalHoldMs: 2 * tickMs };
+  }
+
+  /** One endgame tick: cross out the next choice (final stage only, capped at autoElimMax). */
+  function eliminateNext() {
+    const cw = state.current;
+    if (!cw || cw.resolved || !cw.choices) return { eliminated: false, ticks: 0, standing: 0 };
+    const last = cfg.stageMultipliers.length - 1;
+    let eliminated = false;
+    if (cw.stage >= last && cw.elimTicks < cw.choices.tickElims) {
+      cw.elimTicks += 1;
+      eliminated = true;
+    }
+    return {
+      eliminated,
+      ticks: cw.elimTicks,
+      standing: choicesStanding(cw.choices.choices, cw.stage, cw.elimTicks),
+      exhausted: cw.elimTicks >= cw.choices.tickElims,
+    };
+  }
+
+  /**
+   * Judge a picked choice WITHOUT resolving it (the hook then runs its normal clear / miss path, so
+   * the juice, lexicon and analytics stay in one place). `valid` is false for a word that is not on
+   * the card or is already crossed out — such a pick is ignored, never a miss. `revealed` is the
+   * tap analogue of letters revealed (tapRevealed), to pass to submitCorrect.
+   */
+  function judgeChoice(word) {
+    const cw = state.current;
+    if (!cw || cw.resolved || !cw.choices) return { valid: false, correct: false, revealed: 0 };
+    const w = String(word || '');
+    const c = cw.choices.choices.find((x) => x.word === w);
+    if (!c || choiceEliminated(c, cw.stage, cw.elimTicks)) return { valid: false, correct: false, revealed: 0 };
+    const last = cfg.stageMultipliers.length - 1;
+    return {
+      valid: true,
+      correct: c.isAnswer,
+      revealed: tapRevealed(cw.choices.choices, cw.stage, cw.elimTicks, last),
+    };
+  }
+
+  /** The choices as the view shows them (display order, crossed-out flags). isAnswer is NOT exposed. */
+  function choiceView() {
+    const cw = state.current;
+    if (!cw || !cw.choices) return null;
+    const list = cw.choices.choices.map((c) => ({ word: c.word, eliminated: choiceEliminated(c, cw.stage, cw.elimTicks) }));
+    return { count: list.length, standing: list.filter((c) => !c.eliminated).length, list };
   }
 
   /** Reveals visible at the current stage: the { type, stage } entries whose
@@ -782,6 +957,10 @@ export function createSatRushEngine({
     currentMultiplier,
     stageIntervalMs,
     endgame,
+    tapEndgame,
+    eliminateNext,
+    judgeChoice,
+    choiceView,
     visibleReveals,
     submitCorrect,
     registerWrongKeystroke,
