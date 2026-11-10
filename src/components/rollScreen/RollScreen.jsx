@@ -314,7 +314,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const t = bestTicket(tickets);
     if (!t) return;
     stopAuto();
-    if (SEALED_TIERS.includes(t.tier)) { if (pending.current) commit(pending.current); setSealed(t); return; }
+    // 089: a PAID pack (source 'pay') always opens as a pack — the sealed reveal at its tier, never the reel (so it never
+    // rolls the CHASE drop either: chase heroes stay drop-only from gem-paid gear rolls; packOdds.js says so on the card)
+    if (SEALED_TIERS.includes(t.tier) || t.source === 'pay') { if (pending.current) commit(pending.current); setSealed(t); return; }
     setTicketBusy(true);
     const pick = t.pick || (await rollTicket(t));
     if (!live.current.mounted) return;

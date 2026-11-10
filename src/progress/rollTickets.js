@@ -8,7 +8,8 @@
 //                            tiers below the floor removed) — the reel strip is drawn from exactly these
 import { ROLL_MARKS, tierRank } from './markRollsCore.js';
 
-export const TICKET_TIERS = ['rare', 'epic', 'legendary', 'mythic'];
+// 089: + SECRET (a PAID SECRET PACK's floor: it can only land SECRET)
+export const TICKET_TIERS = ['rare', 'epic', 'legendary', 'mythic', 'secret'];
 /**
  * 065/069 SEALED ROLL in the SHOP — the server's price table (069_shop_epic_only.sql private.ticket_shop), mirrored so the
  * card can show the price. The SERVER decides the price, the stock and the floor; this copy only draws the card
@@ -25,8 +26,8 @@ const STATES = ['owned', 'reserved'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MARK_IDS = new Set(ROLL_MARKS.map((m) => m.id));
 
-/** "LEGENDARY+" */
-export const ticketLabel = (tier) => `${String(tier || '').toUpperCase()}+`;
+/** "LEGENDARY+" (SECRET is the top tier: no "+") */
+export const ticketLabel = (tier) => (tier === 'secret' ? 'SECRET' : `${String(tier || '').toUpperCase()}+`);
 
 function pickOf(p) {
   if (!p || typeof p !== 'object' || !MARK_IDS.has(p.mark)) return null;
