@@ -4,7 +4,7 @@
 // button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
 // TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
 import { useEffect, useRef, useState } from 'react';
-import { FRAMES, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+import { FRAMES, kitById, kitSrc, ownsKit, kitProgress, buyKit, wearKit } from './kit.js';
 import HeroShowcase from './HeroShowcase.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -48,8 +48,6 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
     cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />WON ON THE DAILY WHEEL</span>;
   } else if (s.road) {
     cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />ON THE {s.tag.replace(/ MASTERY$/, '')} MASTERY ROAD</span>;
-  } else if (!kitGateMet(s.id)) {
-    cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />REBIRTH {s.reb}, THEN {formatNum(s.price)} GEMS</span>;
   } else {
     cta = (
       <KitHoldButton tone="gold" width={300} labelSize={gems >= s.price ? 28 : 22} label={gems >= s.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}

@@ -103,7 +103,7 @@
      >= 11px in every seat at every size - same colour, caps, weight. */
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   text-transform: uppercase;
   font-size: var(--fs-k16); /* R3 oct8: was k14 — at the 0.96 fit-zoom of a 1280x551 laptop that rendered 13.4px,
                                0.07 from the suite's 13px floor (the v2-rooms "settings/size" flake): 16 × 0.96 = 15.4 */
@@ -224,4 +224,12 @@
    its hero lane AND give the name ~160px. The roster is a list and already scrolled at this size; nothing else moves. */
 @media (max-width: 480px) {
   .room-wrap[data-skin="v2"] .room-players-list:has(> :nth-child(5)) { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* nov9 ("nothing tiny" holds for EVERY name, 20 characters included): on a desktop lobby the PLAYERS column gets more of
+   the box than the setup column (which never needed half), and a seat's left edge is trimmed - so a 20-character name
+   holds >= 11px in a two-up seat at 1280 without shrinking the heroes. */
+@media (min-width: 900px) and (orientation: landscape) {
+  .room-wrap[data-skin="v2"] .room-box { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .room-wrap[data-skin="v2"] .room-player-chip { padding-left: 12px; border-left-width: 8px; }
 }

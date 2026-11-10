@@ -1,0 +1,57 @@
+/* viewportKeyboard.css — THE PHONE KEYBOARD (Andy nov9: "the game is very not mobile friendly bc of the keyboard on mobile").
+   Every keyboard rule lives here, in the lazy chunk viewportKeyboard.js pulls in on the first field focus on a touch device, so none
+   of it rides the first paint. html[data-kb] is on while a field is focused and the visible height has collapsed; --vvh is that
+   visible height in px. While it is up every screen is the strip above the keyboard: the prompt, the timer and the field stay, the
+   rest steps aside. Static toggles only, nothing animates. */
+
+/* iOS keeps the page at full height under the keyboard and only the visual viewport shrinks, so the app is the height the player
+   can see (Android already shrinks the page; there --vvh equals it). Only while a field is focused: a pinch zoom shrinks it too. */
+html[data-kb] .app-viewport { bottom: auto; height: var(--vvh, 100%); }
+
+/* the floating cog sat on the field's right edge; inline cogs (rails, headers) are not floating and stay */
+html[data-kb] .audio-ctrl:not(.audio-ctrl--inline) { display: none; }
+
+/* WORD BOMB + CATEGORY BLITZ */
+html[data-kb] .game-wrap { min-height: var(--vvh); }
+html[data-kb] .game-stage--wb { height: calc(var(--vvh) - 2 * var(--wrap-pad-y)); max-height: calc(var(--vvh) - 2 * var(--wrap-pad-y)); }
+html[data-kb] .game-stage--wb .game-your-turn,
+html[data-kb] .game-stage--wb .game-used-label { display: none; }
+html[data-kb] .game-stage--blitz .cb-reroll-row,
+html[data-kb] .game-stage--blitz .cb-cat-mascot,
+html[data-kb] .game-stage--blitz .cb-category-label,
+html[data-kb] .game-stage--blitz .rj-race { display: none; }
+html[data-kb] .game-stage--blitz .cb-category-display { min-height: 0; padding-top: 6px; padding-bottom: 6px; }
+html[data-kb] .game-stage--blitz .cb-round { min-height: 0; }
+/* a phone so short the keyboard leaves a strip: the seat ring steps aside (it is your turn: the field says so), its space kept */
+html[data-kb='short'] .game-stage--wb .wb-ring { visibility: hidden; }
+
+/* CHAIN + FUSE: the how-to strip steps aside and the ring shrinks, so the clock never sits on the field */
+html[data-kb] .solo-root { max-height: calc(var(--vvh) - 16px); --solo-hero: 112px; }
+html[data-kb] .solo-root .teach-strip { display: none; }
+html[data-kb] .solo-stage { gap: 8px; }
+html[data-kb='short'] .solo-root { --solo-hero: 84px; }
+/* the ring keeps its own height (its row collapsed to 23px and the ring spilled onto the field); the per-word rate pays for it */
+html[data-kb='short'] .solo-hud-stack { display: none; }
+html[data-kb='short'] .solo-primary { flex: 0 0 auto; min-height: calc(var(--solo-hero) + 10px); }
+
+/* WORD RACE: the word to type, the clock and your field stay; the queue of next words steps aside, and on a short strip only YOUR
+   lane stays */
+html[data-kb] .wr-root { max-height: calc(var(--vvh) - 8px); gap: 6px; padding-top: 8px; padding-bottom: 8px; }
+html[data-kb] .wr-hero { min-height: 0; }
+html[data-kb] .wr-upcoming { display: none; }
+html[data-kb='short'] .wr-hero-sub,
+html[data-kb='short'] .wr-lane:not(.is-me) { display: none; }
+
+/* MINER */
+html[data-kb] .mn-root { height: calc(var(--vvh) - 16px); }
+@media (max-width: 760px), (max-aspect-ratio: 4/5) {
+  html[data-kb] .mn-root { height: var(--vvh); }
+}
+
+/* SAT / FRENCH RUSH: the pages cap at what the player can see */
+html[data-kb] .sr-brief-page { max-height: calc(var(--vvh) - 2 * clamp(12px, 2.5vh, 32px)); }
+@media (max-width: 760px) {
+  html[data-kb] .sr-brief-page { max-height: calc(var(--vvh) - clamp(12px, 2.5vh, 32px) - var(--sr-cog-room)); }
+}
+html[data-kb] .sr-bank { max-height: calc(var(--vvh) - 24px); }
+html[data-kb] .fr-app .sr-bank { max-height: calc(var(--vvh) - 2 * clamp(14px, 3vh, 40px)); }

@@ -50,6 +50,25 @@ export function readPayResume() {
   } catch { return null; }
 }
 
+// 089 ROLL PACKS: the pack this tab just left for Stripe with, so the return (?paid=1) knows to wait for its TICKET (a pack
+// is never gems) and open it. Only a hint for the menu: the ticket itself is whatever the server lists (lb_tickets).
+export const PACK_OPEN_KEY = 'taw.pay.packOpen';
+const PACK_OPEN_MS = 60 * 60 * 1000;
+/** Remember (or with null, forget) the roll pack this tab is buying. */
+export function notePackCheckout(id) {
+  try {
+    if (id) sessionStorage.setItem(PACK_OPEN_KEY, JSON.stringify({ pack: id, at: Date.now() }));
+    else sessionStorage.removeItem(PACK_OPEN_KEY);
+  } catch { /* private mode: the pack still waits in the shop's PACKS shelf */ }
+}
+/** The roll pack id this tab left for Stripe with (the last hour), or null. */
+export function readPackCheckout() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(PACK_OPEN_KEY) || 'null');
+    return r && typeof r.pack === 'string' && Date.now() - r.at < PACK_OPEN_MS ? r.pack : null;
+  } catch { return null; }
+}
+
 /** Does this browser have a board profile the gems can land on? (the server re-checks: pay_reserve 'no_profile') */
 export function hasProfile() {
   return !!(peekSecret() && getMyProfile());
