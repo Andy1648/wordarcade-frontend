@@ -110,9 +110,9 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
       expect(boxes.core.top, 'bomb below the prompt').toBeGreaterThanOrEqual(boxes.top.bottom - 1);
       expect(boxes.seatsBottom, 'plates above the bottom stack').toBeLessThanOrEqual(boxes.bottom.top + 1);
     } else {
-      // OPEN ITEM (reported, not fixed here): the DESKTOP 8-seat ring gives a name ~90px of arc, so long names draw at
-      // 6-11px; it needs a desktop layout decision. Held at a floor that only catches a regression from today.
-      check(await measure(page, '.game-player-name-text', '.wb-seat-none'), 'word bomb ring', () => 5);
+      // DESKTOP (nov10): a 6+ seat board is plates too - every name >= 11px
+      await expect(page.locator('.wb-ring-6up')).toBeVisible();
+      check(await measure(page, '.game-player-name-text', '.wb-seat'), 'word bomb plates', () => 11);
     }
   });
 
@@ -137,5 +137,24 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/race-${vp.width}.png` });
     check(await measure(page, '.wr-lane-name-txt', '.wr-lane'), 'word race', () => 11);
+  });
+}
+
+// EIGHT 20-CHARACTER NAMES (the name cap, every seat) on the desktop Word Bomb board: all >= 11px, one line, in their plates
+const LONG20 = ['MAXIMILIAN_THE_GREAT', 'ABCDEFGHIJKLMNOPQRST', 'WWWWWWWWWWWWWWWWWWWW', 'MR SPELLING BEE CHMP', 'QUEEN_OF_THE_LETTERS', 'ZZZZZZZZZZZZZZZZZZZZ', 'the_longest_name_yes', 'MMMMMMMMMMMMMMMMMMMM'];
+for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
+  test(`@${vp.width}: Word Bomb with 8 x 20-character names - every plate name >= 11px`, async ({ page }) => {
+    const mock = await boot(page, vp);
+    const players = LONG20.map((name, i) => ({ id: i === 0 ? ME : `p${i}`, name }));
+    mock.pushToClient({ type: 'room_update', payload: { code: 'LONGW', gameType: 'word-bomb', hostId: ME, players } });
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
+    mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: 'p3', players: players.map((p) => ({ ...p, lives: 3, eliminated: false })), combo: 'ing', usedWords: [], timerSeconds: 20, maxLives: 3 } });
+    await expect(page.locator('.wb-ring-6up')).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(3500);
+    await settle(page);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/wb20-${vp.width}.png` });
+    check(await measure(page, '.game-player-name-text', '.wb-seat'), 'word bomb plates (8 x 20)', () => 11);
+    const scroll = await page.evaluate(() => document.scrollingElement.scrollHeight - window.innerHeight);
+    expect(scroll, 'the board still fits the screen').toBeLessThanOrEqual(1);
   });
 }
