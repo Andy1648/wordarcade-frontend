@@ -534,3 +534,12 @@
 @media (max-width: 480px) {
   .hp-m-rail .kb-rface .kit-icon.kb-rart { width: 34px; height: 34px; margin: -4px 0; }
 }
+
+/* ONLY THE MODES SCROLL (Andy nov9: "the screen requires scrolling - only scroll inside (such as for the game modes)"). The oct21
+   column scroll moved the whole menu; now the menu holds still and the mode rows scroll in their own box. Rows keep their 64px tap
+   target; on a phone tall enough for every row nothing scrolls at all. */
+@media (max-width: 480px) {
+  .hp-m { overflow: hidden; }
+  .hp-m-modes { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+  .hp-m-modes > .hp-m-row { flex: 0 0 auto; }
+}
