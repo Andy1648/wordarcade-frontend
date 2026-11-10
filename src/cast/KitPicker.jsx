@@ -1,43 +1,52 @@
-// KitPicker.jsx — CUSTOMIZE inside the PROFILE popup (kit.js): two tabs, FRAME and WIN FX. Left: YOUR hero with the
-// piece you're looking at already on it (your hero as a card in that frame, or the burst behind its WIN) — you try it on
-// before you wear it, with whatever you wear in the other slot. Right: the pieces as painted tiles (the art is the
-// button), and under them exactly how you get the one you're looking at: WEAR, its WINS bar, its MASTERY ROAD, or HOLD
-// TO BUY with gems (never a loot box — you see what you buy). TAKE OFF clears the slot.
-import { useEffect, useRef, useState } from 'react';
-import { FRAMES, kitById, kitSrc, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
+// KitPicker.jsx — CUSTOMIZE → FRAME (kit.js, Andy "still gotta rework that interface"). Left: you, trying on the frame you're
+// looking at: your hero as a card in it, and your menu PROFILE plate wearing it, exactly as the menu will draw it. Right: every
+// frame ON YOUR FACE, split by tier (the art's own structure, avatarFrame.js), and how you get the one you're looking at.
+// One tap: a frame you own goes on at once; TAKE OFF clears it. A frame you don't own shows its WINS bar, its MASTERY ROAD, or
+// HOLD TO BUY with gems (never a loot box — you see what you buy). Static at rest; JACKPOT's coins play in the try-on only.
+import { useEffect, useState } from 'react';
+import { FRAMES, kitById, ownsKit, kitGateMet, kitProgress, buyKit, wearKit } from './kit.js';
 import HeroShowcase from './HeroShowcase.jsx';
-import CastArt from './CastArt.jsx';
-import { kitPlay } from '../components/kit/motion.js';
 import FramedCard from './FramedCard.jsx';
 import AvatarFrame from './AvatarFrame.jsx';
 import { heroById, CAST, castSrc } from './cast.js';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
 import FitText from '../components/kit/FitText.jsx';
+import { getLastRank } from '../leaderboard/client.js';
+import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
 import { getGems, subscribeGems } from '../progress/gemsCore';
 import { formatNum } from '../format';
 import { sndPurchase } from '../audio/gameSounds';
 import './KitPicker.css';
 
-const TABS = [['frame', 'FRAME', FRAMES]]; // WIN FX retired nov2 (cosmeticsRetire.js)
+// the tiers differ in STRUCTURE, not just colour (avatarFrame.js): plain band < band + corner brackets < the art breaks the frame
+const TIERS = [
+  ['STARTER', ['frost', 'graffiti', 'flame']],
+  ['MASTERY', ['bomb', 'bolt', 'scholar', 'chain', 'defuser']],
+  ['RARE', ['arcade', 'jackpot']],
+];
 
-/** @param hero your MAIN's id · @param kit { frame, fx } worn · @param onKit(slot, id|null) a slot changed
- *  @param slot0 the tab to open on · @param bare no tab strip of its own (CUSTOMIZE's strip picks the slot) */
-export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = false }) {
-  const [slot, setSlot] = useState(TABS.some((t) => t[0] === slot0) ? slot0 : 'frame');
-  const list = (TABS.find((t) => t[0] === slot) || TABS[0])[2];
-  const [look, setLook] = useState({ frame: kit.frame || FRAMES[0].id });
+/** @param hero your MAIN's id · @param kit { frame } worn · @param onKit('frame', id|null) what you wear changed */
+export default function KitPicker({ hero, kit, onKit }) {
+  const [look, setLook] = useState(kit.frame || FRAMES[0].id);
   const [gems, setGems] = useState(getGems);
   const [, bump] = useState(0);
+  const [league] = useState(() => leagueOf(getLastRank()));
+  const [holdW] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 380 ? 250 : 300)); // the small phone's panel is 280 wide
   useEffect(() => subscribeGems(setGems), []);
-  const s = kitById(look[slot]) || list[0];
-  const worn = kit[slot];
+  const s = kitById(look) || FRAMES[0];
+  const worn = kit.frame;
   const own = ownsKit(s.id);
   const prog = own ? null : kitProgress(s.id);
   const h = heroById(hero) || CAST[0];
-  const wear = (id) => { if (wearKit(slot, id)) onKit(slot, id); };
+  const face = castSrc(h.id, 'hero');
+  const wear = (id) => { if (wearKit('frame', id)) onKit('frame', id); };
+  const pick = (id) => {
+    setLook(id);
+    if (ownsKit(id) && id !== worn) wear(id); // a frame you own goes on at once: no second tap
+  };
   const buy = () => {
     const r = buyKit(s.id);
-    if (r.ok) { try { sndPurchase(); } catch { /* audio blocked */ } onKit(slot, s.id); bump((n) => n + 1); }
+    if (r.ok) { try { sndPurchase(); } catch { /* audio blocked */ } onKit('frame', s.id); bump((n) => n + 1); }
   };
   let cta;
   if (own) {
@@ -52,44 +61,29 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
     cta = <span className="skp-locked"><KitIcon name="lock" size={24} shadow={1} extras={false} />REBIRTH {s.reb}, THEN {formatNum(s.price)} GEMS</span>;
   } else {
     cta = (
-      <KitHoldButton tone="gold" width={300} labelSize={gems >= s.price ? 28 : 22} label={gems >= s.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
+      <KitHoldButton tone="gold" width={holdW} labelSize={gems >= s.price ? 28 : 22} label={gems >= s.price ? 'HOLD TO BUY' : 'NOT ENOUGH GEMS'}
         sub={gems >= s.price ? `${formatNum(s.price)} GEMS` : `NEED ${formatNum(s.price - gems)} MORE`}
         disabled={gems < s.price} confirmText="YOURS!" onConfirm={buy} ariaLabel={`Hold to buy ${s.name} for ${formatNum(s.price)} gems`} />
     );
   }
-  // the try-on: the piece you're looking at, plus whatever you wear in the other slot
-  const frame = slot === 'frame' ? s.id : kit.frame;
-  const stage = <HeroShowcase id={hero} />;
   return (
-    <div className={`skp is-${slot}`} style={{ '--sk-c': s.color }} data-testid="kit-picker">
+    <div className="skp is-frame" style={{ '--sk-c': s.color }} data-testid="kit-picker">
       <div className="skp-stage">
-        {frame ? <FramedCard frame={frame} hero={h} className="skp-card">{stage}</FramedCard> : stage}
-        {/* oct26: the same frame as your round PORTRAIT (menu profile plate, your results row) */}
-        {slot === 'frame' ? <AvatarFrame preview={s.id} src={castSrc(h.id, 'hero')} bg={h.color} className="skp-avatar" /> : null}
+        <FramedCard frame={s.id} hero={h} className="skp-card"><HeroShowcase id={hero} /></FramedCard>
+        <span className="skp-plate" data-testid="kit-plate-preview" aria-label={`Your menu profile plate wearing ${s.name}`}>
+          <AvatarFrame preview={s.id} src={face} bg={h.color} className="skp-plate-face" />
+          <span className="skp-plate-t" aria-hidden="true">
+            <span className="skp-plate-k">PROFILE</span>
+            <span className="skp-plate-n">
+              {league ? <img className="skp-plate-league" src={LEAGUE_ART[league.key]} width="512" height="512" alt="" draggable="false" /> : null}
+              {league ? league.name : 'UNRANKED'}
+            </span>
+          </span>
+        </span>
       </div>
       <div className="skp-side">
-        {bare ? null : <div className="skp-tabs" role="tablist" aria-label="Customize">
-          {TABS.map(([k, label]) => (
-            <button key={k} type="button" role="tab" aria-selected={k === slot} className={`skp-tab${k === slot ? ' is-on' : ''}`} onClick={() => setSlot(k)}>{label}</button>
-          ))}
-        </div>}
-        <div className={`skp-grid${slot === 'frame' ? ' is-frames' : ''}`} role="radiogroup" aria-label={slot === 'frame' ? 'Frames' : 'Win effects'}>
-          {list.map((k) => {
-            const mine = ownsKit(k.id);
-            return (
-              <button key={k.id} type="button" role="radio" aria-checked={k.id === s.id}
-                className={`skp-tile${k.id === s.id ? ' is-look' : ''}${k.id === worn ? ' is-worn' : ''}${mine ? '' : ' is-locked'}${k.rare ? ' is-rare' : ''}`}
-                style={{ '--t-c': k.color }} onClick={() => setLook((l) => ({ ...l, [slot]: k.id }))} aria-label={`${k.name}${k.id === worn ? ', worn' : mine ? '' : ', locked'}`}>
-                <img src={kitSrc(k.id)} alt="" aria-hidden="true" draggable="false" />
-                {!mine ? <span className="skp-lock"><KitIcon name="lock" size={18} shadow={1} extras={false} /></span> : null}
-                {k.id === worn ? <span className="skp-worn">WORN</span> : null}
-              </button>
-            );
-          })}
-        </div>
         <div className="skp-info">
           <FitText className="skp-name">{s.name}</FitText>
-          {s.rare ? <span className="skp-tag">RARE</span> : null}{/* nov2: no tagline — a label, only when there is one */}
           {prog ? (
             <span className="skp-prog" aria-label={`${prog.have} of ${prog.need} ${prog.label.toLowerCase()}`}>
               <span className="skp-prog-bar"><span className="skp-prog-fill" style={{ transform: `scaleX(${Math.min(1, prog.have / prog.need)})` }} /></span>
@@ -100,6 +94,28 @@ export default function KitPicker({ hero, kit, onKit, slot0 = 'frame', bare = fa
             {cta}
             {!own && !s.road && !s.wheel ? <span className="skp-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span> : null}
           </div>
+        </div>
+        <div className="skp-tiers" role="radiogroup" aria-label="Frames">
+          {TIERS.map(([label, ids]) => (
+            <div key={label} className="skp-tier" data-tier={label}>
+              <span className="skp-tier-k">{label}</span>
+              <div className="skp-tier-row">
+                {ids.map((id) => {
+                  const k = kitById(id);
+                  const mine = ownsKit(id);
+                  return (
+                    <button key={id} type="button" role="radio" aria-checked={id === s.id}
+                      className={`skp-tile${id === s.id ? ' is-look' : ''}${id === worn ? ' is-worn' : ''}${mine ? '' : ' is-locked'}`}
+                      style={{ '--t-c': k.color }} onClick={() => pick(id)} data-frame-tile={id} aria-label={`${k.name}${id === worn ? ', worn' : mine ? '' : ', locked'}`}>
+                      <AvatarFrame preview={id} src={face} bg={h.color} className="skp-tile-face" grow={1} still />
+                      {!mine ? <span className="skp-lock"><KitIcon name="lock" size={18} shadow={1} extras={false} /></span> : null}
+                      {id === worn ? <span className="skp-worn">WORN</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

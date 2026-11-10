@@ -31,24 +31,12 @@
 .pf.is-customize { display: flex; flex-direction: column; height: min(900px, calc(100dvh - 32px)); overflow: hidden; }
 .pf.is-customize .cz { flex: 1 1 auto; min-height: 0; }
 .pf.is-customize .cz-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 10px 10px 2px; }
-.cz.is-frame .cz-body, .cz.is-fx .cz-body { display: flex; flex-direction: column; }
+.cz.is-frame .cz-body { display: flex; flex-direction: column; }
 /* centred by auto margins, never justify-content: a try-on taller than the room then starts at the top and the list
    scrolls — a centred flex child overflowed UPWARD, under the tabs (e2e/customize-fit.spec.js caught it) */
-.cz.is-frame .cz-body > *, .cz.is-fx .cz-body > * { margin-block: auto; }
+.cz.is-frame .cz-body > * { margin-block: auto; }
 /* a hero's PREVIEW is a page of its own (it has ‹ ALL HEROES): the tab strip steps aside so it fits without a scroll */
 .cz:has(.hpv) .cz-tabs { display: none; }
-/* the try-on was sized for a card with no tab strip: inside CUSTOMIZE it gives back the strip's row (~64px), so FRAME /
-   WIN FX fit whole on a laptop, HOLD TO BUY in view (e2e/customize-fit.spec.js) */
-@media (min-width: 761px) {
-  .cz .skp-stage .hs { max-width: min(400px, calc(100dvh - 300px)); }
-  .cz .skp-stage .fc { width: min(300px, calc((100dvh - 320px) * .6)); }
-}
-@media (min-width: 761px) {
-  .cz .skp-grid.is-frames { grid-template-columns: repeat(7, minmax(0, 1fr)); } /* 10 frames in two shorter rows */
-}
-@media (min-width: 761px) {
-  .cz .skp-grid:not(.is-frames) { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; } /* WIN FX: one short block */
-}
 /* the phone: looks two to a row (a 150px floor left SOUND at one giant card a row) */
 @media (max-width: 760px) {
   .cz .sp2-looks-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -62,36 +50,23 @@
   .sp2-shelf-cz { overflow: visible; }
   .sp2-shelf-cz .cz-body { overflow: visible; }
 }
-/* on the shop shelf the try-on gets the shelf's height, not the profile card's: the stage + the buy button fit with no
-   scroll (the shop's stage is 1280×720 scaled — so sizes are in its own px) */
+/* on the shop shelf the try-on gets the shelf's height, not the profile card's: smaller card + tiles, the buy button in view
+   (the shop's stage is 1280×720 scaled — so sizes are in its own px) */
 @media (min-width: 1000px) {
-  .sp2-shelf-cz .skp-stage .hs { max-width: 300px; }
-  .sp2-shelf-cz .skp-stage .fc { width: 200px; }
-  .sp2-shelf-cz .skp-stage .skp-avatar { width: 64px; height: 64px; }
   .sp2-shelf-cz .skp { gap: 16px; }
-}
-@media (min-width: 1000px) {
-  /* the shelf's try-on: the 10 frames on ONE row (a second row of tall tiles pushed HOLD TO BUY under the shelf) */
-  .sp2-shelf-cz .skp { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
-  .sp2-shelf-cz .skp-grid.is-frames { grid-template-columns: repeat(10, minmax(44px, 1fr)); gap: 4px; }
-  .sp2-shelf-cz .skp-grid.is-frames .skp-tile { padding: 2px; }
-}
-@media (min-width: 1000px) and (max-height: 640px) {
-  /* a short laptop window: the try-on and the piece's own lines tighten one more step */
-  .sp2-shelf-cz .skp-stage .hs { max-width: 200px; }
-  .sp2-shelf-cz .skp-stage .fc { width: 130px; }
-  .sp2-shelf-cz .skp-stage .skp-avatar { width: 48px; height: 48px; }
-  .sp2-shelf-cz .skp-info { gap: 2px; }
+  .sp2-shelf-cz .skp-stage { gap: 8px; }
+  .sp2-shelf-cz .skp-stage .fc { width: 150px; }
+  .sp2-shelf-cz .skp-side { gap: 10px; }
+  .sp2-shelf-cz .skp-tiers { gap: 8px 14px; }
+  .sp2-shelf-cz .skp-tile { --skp-t: 58px; }
+  .sp2-shelf-cz .skp-name { font-size: var(--fs-k30); }
 }
 @media (min-width: 1000px) and (max-height: 640px) {
   .sp2-stock:has(.sp2-shelf-cz) .sp2-shelf-sub { display: none; } /* the tabs say where you are; the try-on needs the row */
   .sp2-shelf-cz .cz { gap: 8px; }
   .sp2-shelf-cz .cz-tab { min-height: 44px; font-size: var(--fs-k16); }
-  .sp2-shelf-cz .skp-name { font-size: var(--fs-k30); }
-  .sp2-shelf-cz .skp-prog-bar { height: 18px; }
-  .sp2-shelf-cz .skp-grid { gap: 6px; }
-}
-@media (min-width: 1000px) and (max-height: 580px) {
-  .sp2-shelf-cz .skp-grid:not(.is-frames) { grid-template-columns: repeat(6, minmax(0, 1fr)); } /* WIN FX: the 5 tiles shorter */
-  .sp2-shelf-cz .skp-info { gap: 4px; }
+  .sp2-shelf-cz .skp-stage .fc { width: 104px; }
+  .sp2-shelf-cz .skp-prog-bar { height: 16px; }
+  .sp2-shelf-cz .skp-tile { --skp-t: 50px; }
+  .sp2-shelf-cz .skp-info { gap: 2px; }
 }
