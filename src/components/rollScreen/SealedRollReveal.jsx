@@ -38,7 +38,7 @@ import { sndRollTell, sndRollCharge, sndShardBurst, sndRollSting, sndReelTick, s
 import { sndWordRejected } from '../../audio/gameSounds';
 import { kitPlay } from '../kit/motion';
 import { useReduceMotion } from '../../lib/useReduceMotion';
-import VesselArt, { vesselArt, SHARD_ART } from './VesselArt';
+import VesselArt, { vesselArt, SHARD_ART, VESSEL_ART } from './VesselArt';
 import { holdBeats } from '../../hooks/useBeatSync';
 
 const NOTCHES = 3; // taps to open (each turns the cog a third)
@@ -352,7 +352,7 @@ export default function SealedRollReveal({ ticket, onDone }) {
             {SHARDS.map((sh, i) => <img key={i} className="srr-shard" ref={(el) => { shardRefs.current[i] = el; }} src={sh.src} alt="" draggable="false" />)}
           </span>
           <button type="button" className="srr-vessel" ref={vesselRef} onClick={tap} disabled={!ready || !(phase === 'sealed' || phase === 'opening')} aria-label={`Open the ${ticketLabel(floor)} roll`} tabIndex={-1}>
-            <VesselArt tier={vTier} size={hero.v} refs={{ lid: lidRef, cog: cogRef }} />
+            <VesselArt tier={VESSEL_ART[floor] ? floor : vTier} size={hero.v} refs={{ lid: lidRef, cog: cogRef }} />
           </button>
           {res ? (
             <div className="srr-card" ref={cardRef} data-testid="sealed-roll-card">

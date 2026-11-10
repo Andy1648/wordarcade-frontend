@@ -109,7 +109,7 @@ test('client: only well-formed server rows are drawn — forged tiers, ids, pick
   assert.deepEqual(normalizeTickets({ ok: false, tickets: [{ id: ID, tier: 'legendary', state: 'owned' }] }), []);
   const rows = normalizeTickets({ ok: true, tickets: [
     { id: ID, tier: 'legendary', state: 'owned', source: 'streak' },
-    { id: ID, tier: 'secret', state: 'owned' }, // no SECRET+ tickets exist
+    { id: ID, tier: 'ultra', state: 'owned' }, // not a tier (089: a SECRET floor IS one now — the paid SECRET PACK)
     { id: 'not-a-uuid', tier: 'mythic', state: 'owned' },
     { id: ID, tier: 'legendary', state: 'spent' }, // spent never shows
     { id: ID, tier: 'legendary', state: 'reserved', pick: { mark: RARE.id, tier: 'rare' } }, // below its floor
@@ -122,6 +122,20 @@ test('client: only well-formed server rows are drawn — forged tiers, ids, pick
   assert.equal(bestTicket(rows), rows[1], 'a reserved ticket finishes first');
   assert.equal(countOf(rows, 'legendary'), 1);
   assert.equal(ticketLabel('legendary'), 'LEGENDARY+');
+  // 089: a paid SECRET PACK's ticket is a SECRET floor; it carries its source so the roll screen opens it as a pack
+  const paid = normalizeTickets({ ok: true, tickets: [{ id: ID, tier: 'secret', state: 'owned', source: 'pay' }] });
+  assert.deepEqual(paid.map((t) => [t.tier, t.source]), [['secret', 'pay']]);
+  assert.equal(ticketLabel('secret'), 'SECRET');
+  assert.deepEqual(Object.keys(ticketTierOdds('secret')), ['secret']);
+});
+
+test('089: tickets take a SECRET floor (the paid SECRET PACK) through the same mint and pick', () => {
+  const s89 = read('089_paid_packs.sql');
+  assert.ok(s89.includes("check (tier in ('rare', 'epic', 'legendary', 'mythic', 'secret'))"));
+  assert.ok(s89.includes("p_tier not in ('rare', 'epic', 'legendary', 'mythic', 'secret') then raise exception 'bad_ticket'"));
+  assert.ok(s89.includes('if fr < 0 or fr > 4 then raise exception'));
+  assert.ok(s89.includes('order by (exists (select 1 from private.gear_owned'), 'still an unowned gear first');
+  assert.ok(s89.includes("private.grant_ticket(pid, p_tier, 'pay', 'pay:' || p_session, p_pack)"), 'grant key = the checkout session');
 });
 
 test('client: a spend reply below the ticket\'s floor lands nothing', () => {
