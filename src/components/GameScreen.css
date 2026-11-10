@@ -7261,7 +7261,9 @@ html[data-beat='true'] .wb-belly {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
-    width: 100%;
+    /* the plates use 10px of the board's 14px side padding: a 20-character name holds >= 11px at 360 (nov9) */
+    width: calc(100% + 20px);
+    margin-inline: -10px;
   }
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat {
     position: relative;

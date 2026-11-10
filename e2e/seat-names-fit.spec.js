@@ -1,7 +1,7 @@
 // e2e/seat-names-fit.spec.js — PLAYER NAMES NEVER BREAK MID-WORD, NEVER ELLIPSIZE (nov9: a lobby-bot persona read
 // "RUSTYKNIGH / T" on a waiting-room seat). Every seat / roster surface draws a name through FitText: ONE line, scaled
 // down only when it is wider than its box. Mocked socket, the longest names (16-char personas + a 20-char human, the
-// name cap) at 390 / 1366 / 1920 on: the room lobby, Word Bomb seats, Category Blitz progress, Word Race lanes.
+// name cap) at 360 / 390 / 1280 / 1366 / 1920 on: the room lobby, Word Bomb seats, Category Blitz progress, Word Race lanes.
 // For every name: one line, inside its seat, no ellipsis, never scaled below the readable floor.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
@@ -29,6 +29,8 @@ const measure = (page, nameSel, seatSel) => page.evaluate(([ns, ss]) => {
     const s = seat ? seat.getBoundingClientRect() : null;
     const m = /scale\(([\d.]+)\)/.exec(inner ? inner.style.transform : '');
     const k = m ? Number(m[1]) : 1;
+    // the size it is DRAWN at: FitText's scale x any zoom on the way up (the lobby fit-zooms its box on a big screen)
+    const z = box.offsetWidth ? b.width / box.offsetWidth : 1;
     const fs = parseFloat(getComputedStyle(inner || box).fontSize);
     const lh = parseFloat(getComputedStyle(inner || box).lineHeight) || fs * 1.4;
     out.push({
@@ -38,7 +40,7 @@ const measure = (page, nameSel, seatSel) => page.evaluate(([ns, ss]) => {
       oneLine: r.height < fs * k * 1.9, // .fit-in is nowrap: a second line would double the drawn height
       inBox: r.left >= b.left - 1 && r.right <= b.right + 1,
       inSeat: !s || (b.left >= s.left - 1 && b.right <= s.right + 1),
-      px: +(fs * k).toFixed(1), k, ...(s ? { sl: Math.round(s.left), sr: Math.round(s.right), bl: Math.round(b.left), br: Math.round(b.right) } : {}), bw: Math.round(b.width), rw: Math.round(r.width), sw: box.scrollWidth, cw: box.clientWidth, rh: Math.round(r.height), lh: Math.round(lh),
+      px: +(fs * k * z).toFixed(1), k, ...(s ? { sl: Math.round(s.left), sr: Math.round(s.right), bl: Math.round(b.left), br: Math.round(b.right) } : {}), bw: Math.round(b.width), rw: Math.round(r.width), sw: box.scrollWidth, cw: box.clientWidth, rh: Math.round(r.height), lh: Math.round(lh),
     });
   }
   return out;
@@ -46,6 +48,8 @@ const measure = (page, nameSel, seatSel) => page.evaluate(([ns, ss]) => {
 
 function check(rows, where, floor = minPx) {
   expect(rows.length, `${where}: names drawn`).toBeGreaterThan(0);
+  // eslint-disable-next-line no-console
+  console.log(`NAMES | ${where} | ${JSON.stringify(rows.map((r) => [r.text.slice(0, 8), r.px]))}`);
   for (const r of rows) {
     expect(r.fit, `${where} "${r.text}" goes through FitText ${JSON.stringify(r)}`).toBe(true);
     expect(r.oneLine, `${where} "${r.text}" is one line (never broken mid-word) ${JSON.stringify(r)}`).toBe(true);
@@ -71,14 +75,15 @@ async function boot(page, vp) {
 }
 const settle = async (page) => { await page.evaluate(() => document.fonts && document.fonts.ready); await page.waitForTimeout(500); };
 
-for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1280, height: 720 }, { width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
   test(`@${vp.width}: room lobby + Word Bomb seats — 8 longest names, one line each`, async ({ page }) => {
     const mock = await boot(page, vp);
     mock.pushToClient({ type: 'room_update', payload: { code: 'LONGN', gameType: 'word-bomb', hostId: 'p1', difficultyKey: 'medium', players: PLAYERS } });
     await page.locator('.room-wrap').waitFor();
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/room-${vp.width}.png`, fullPage: true });
-    check(await measure(page, '.room-player-name', '.room-player-chip'), 'room', (t) => (t.length <= 16 ? 11 : 8.5));
+    // "nothing tiny": EVERY name in a lobby seat - the 20-character cap included - is drawn at >= 11px
+    check(await measure(page, '.room-player-name', '.room-player-chip'), 'room', () => 11);
 
     mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-bomb' } });
     mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: 'p2', players: PLAYERS.map((p) => ({ ...p, lives: 3, eliminated: false })), combo: 'ing', usedWords: [], timerSeconds: 20, maxLives: 3 } });
@@ -91,7 +96,7 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
       // A PHONE'S 6+ SEAT RING becomes the bomb over a grid of SEAT PLATES: every name whole, one line, inside its plate
       // and never under 11px ("nothing tiny") - for every bot persona; the board still fits the phone
       await expect(page.locator('.wb-ring-6up')).toBeVisible();
-      check(await measure(page, '.game-player-name-text', '.wb-seat'), 'word bomb plates', (t) => (t.length <= 16 ? 11 : 10));
+      check(await measure(page, '.game-player-name-text', '.wb-seat'), 'word bomb plates', () => 11);
       const scroll = await page.evaluate(() => document.scrollingElement.scrollHeight - window.innerHeight);
       expect(scroll, 'the board still fits the phone').toBeLessThanOrEqual(1);
       const bomb = await page.locator('.wb-core').boundingBox();
@@ -104,6 +109,8 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
       });
       expect(boxes.core.top, 'bomb below the prompt').toBeGreaterThanOrEqual(boxes.top.bottom - 1);
       expect(boxes.seatsBottom, 'plates above the bottom stack').toBeLessThanOrEqual(boxes.bottom.top + 1);
+    } else {
+      check(await measure(page, '.game-player-name-text', '.wb-seat-none'), 'word bomb ring');
     }
   });
 
@@ -117,7 +124,7 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     await expect(page.locator('.rj-name, .cb-progress-name-text').first()).toBeVisible({ timeout: 15000 });
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/blitz-${vp.width}.png` });
-    check(await measure(page, '.rj-name, .cb-progress-name-text', '.rj-row, .cb-progress-row'), 'blitz');
+    check(await measure(page, '.rj-name, .cb-progress-name-text', '.rj-row, .cb-progress-row'), 'blitz', () => 11);
 
     const racers = PLAYERS.slice(0, 5).map((p) => ({ id: p.id, name: p.name, isBot: !!p.isBot }));
     mock.pushToClient({ type: 'room_update', payload: { code: 'LONGR', gameType: 'word-race', hostId: ME, players: PLAYERS.slice(0, 5) } });
@@ -127,6 +134,6 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     await expect(page.locator('.wr-lane-name-txt').first()).toBeVisible({ timeout: 15000 });
     await settle(page);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/race-${vp.width}.png` });
-    check(await measure(page, '.wr-lane-name-txt', '.wr-lane'), 'word race');
+    check(await measure(page, '.wr-lane-name-txt', '.wr-lane'), 'word race', () => 11);
   });
 }
