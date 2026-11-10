@@ -53,8 +53,17 @@ async function boot(page, vp, me) {
   return lb;
 }
 
-/** Every pair of boxes in `groups` (each a list of rects) that overlaps by more than `tol` px. */
-function overlapsIn(page) {
+/** Every pair of boxes in `groups` (each a list of rects) that overlaps by more than `tol` px — measured on the SETTLED
+ *  board. THE CI FLAKE (nov10, "@390 climbing into the top 3", podium 2: seal x face): the board's arrival one-shots are
+ *  still running when the spec reaches its check, and a box read mid-flight includes the transform. Your own seal's
+ *  SLAM (a NEW league) starts 2.66 s after the board lands at scale 3.2: frozen 40 ms in, it is drawn ~2.9x at 63%
+ *  opacity and its box overlaps the face by 5.8 px, while at rest the two sit 6.6 px apart. A check that happened to land
+ *  in those frames failed a layout that is fine. So every finite animation on the board finishes first (they all end;
+ *  nothing loops at rest), then the boxes are read — the same rules, on the layout the player actually looks at. */
+async function overlapsIn(page) {
+  await page.evaluate(() => Promise.all(document.getAnimations()
+    .filter((a) => { const el = a.effect && a.effect.target; return el && el.closest && el.closest('.lb2') && Number.isFinite(a.effect.getComputedTiming().endTime); })
+    .map((a) => a.finished.catch(() => {}))));
   return page.evaluate(() => {
     const out = [];
     const box = (el) => el.getBoundingClientRect();
