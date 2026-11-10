@@ -15,11 +15,24 @@ import './AvatarFrame.css';
 
 const pct = (n) => `${Math.round(n * 100) / 100}%`;
 const box = (p) => ({ left: pct(p.x), top: pct(p.y), width: pct(p.w), height: pct(p.h) });
-// the bar is painted horizontal: a side bar turns it 90° inside its tall box (width / height swapped through %), and the
-// bottom / right bars mirror it so its shadow side faces out like the top / left ones
-const barImg = (q) => (q.rot
+// the bar is painted horizontal: a side bar turns its strip 90° inside its tall box (width / height swapped through %), and
+// a flipped bar mirrors it so the painted outer edge faces out. The strip is never stretched (no image off its own ratio,
+// e2e/shop-aspect): it holds enough copies of the bar AT ITS NATIVE RATIO (barAR) to cover the run, every other one
+// mirrored so each join meets its own pixels, centred, the overhang cropped under the corner caps.
+const barStrip = (q) => (q.rot
   ? { left: '50%', top: '50%', width: pct((q.h / q.w) * 100), height: pct((q.w / q.h) * 100), transform: `translate(-50%, -50%) rotate(90deg)${q.flipV ? ' scaleY(-1)' : ''}` }
   : { left: 0, top: 0, width: '100%', height: '100%', transform: q.flipV ? 'scaleY(-1)' : undefined });
+function Bar({ q, kit }) {
+  const run = q.rot ? q.h / q.w : q.w / q.h; // the strip's length over its thickness
+  const n = Math.max(1, Math.ceil(run / kit.barAR));
+  return (
+    <span className="avf-bar" style={box(q)}>
+      <span className="avf-bar-strip" style={barStrip(q)}>
+        {Array.from({ length: n }, (_, k) => <img key={k} className={k % 2 ? 'is-fliph' : undefined} src={kit.bar} alt="" draggable="false" />)}
+      </span>
+    </span>
+  );
+}
 
 function play(el, act, delay = 0) {
   const a = FRAME_ACTS[act];
@@ -52,7 +65,7 @@ function Kit({ id, kit, still }) {
     <span className="avf-ring avf-kit" ref={root} aria-hidden="true">
       {kit.parts.filter((p) => p.z === 'under').map((p) => <Prop key={p.src} p={p} />)}
       {pieces.map((q, k) => (q.kind === 'bar'
-        ? <span key={k} className="avf-bar" style={box(q)}><img src={kit.bar} alt="" draggable="false" style={barImg(q)} /></span>
+        ? <Bar key={k} q={q} kit={kit} />
         : <img key={k} className={`avf-corner${q.flipH ? ' is-fliph' : ''}${q.flipV ? ' is-flipv' : ''}`} src={q.b ? kit.cornerB : kit.corner} style={box(q)} alt="" draggable="false" />))}
       {kit.parts.filter((p) => p.z !== 'under').map((p) => <Prop key={p.src} p={p} />)}
     </span>

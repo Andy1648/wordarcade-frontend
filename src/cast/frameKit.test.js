@@ -17,6 +17,7 @@ test('every frame has a kit: its own corner, bar and props, all painted', () => 
     assert.ok(k.parts.length >= 1, `${f.id} has no prop of its own`);
     assert.ok(!corners.has(k.corner), `${f.id} reuses another frame's corner`); corners.add(k.corner);
     if (k.cornerB) assert.ok(k.geoB, `${f.id} cornerB without geoB`);
+    assert.ok(k.barAR > 1 && k.barAR < 8, `${f.id} barAR (the bar's native w/h — bars are tiled at it, never stretched)`);
   }
   assert.equal(frameKitOf('../evil'), null);
 });

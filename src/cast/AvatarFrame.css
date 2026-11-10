@@ -23,7 +23,9 @@
 .avf.avf .avf-kit { position: absolute; inset: 0; display: block; }
 .avf.avf .avf-kit img { position: absolute; display: block; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; filter: none; pointer-events: none; }
 .avf.avf .avf-bar { position: absolute; display: block; }
-.avf.avf .avf-bar > img { object-fit: fill; }
+.avf.avf .avf-bar-strip { position: absolute; display: flex; justify-content: center; overflow: hidden; }
+.avf.avf .avf-kit .avf-bar-strip > img { position: static; flex: none; width: auto; height: 100%; }
+.avf.avf .avf-kit .avf-bar-strip > img.is-fliph { scale: -1 1; }
 .avf.avf .avf-corner.is-fliph { scale: -1 1; }
 .avf.avf .avf-corner.is-flipv { scale: 1 -1; }
 .avf.avf .avf-corner.is-fliph.is-flipv { scale: -1 -1; }
