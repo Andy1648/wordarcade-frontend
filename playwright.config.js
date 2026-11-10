@@ -52,7 +52,16 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       // The music test needs autoplay allowed (see the autoplay project below);
       // keep it out of the default project so it only runs where that flag is on.
-      testIgnore: /repeat-visitor-music\.spec\.js/,
+      testIgnore: [/repeat-visitor-music\.spec\.js/, /\.perf\.spec\.js$/],
+    },
+    {
+      // FRAME-TIME MEASUREMENTS run ALONE (nov10): a 4x-CPU 60fps check that shares the machine with another busy
+      // worker measures the neighbour, not the app (roll-smooth.perf.spec.js has the numbers). One worker here, and
+      // CI runs this project in its own job (e2e.yml, the `perf` matrix entry) — never inside a shard.
+      name: 'perf',
+      testMatch: /\.perf\.spec\.js$/,
+      workers: 1,
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       // Playwright launch args are per-PROJECT, not per-spec, so the one spec that

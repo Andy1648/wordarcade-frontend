@@ -1052,3 +1052,9 @@ button.sp2-plate:focus-visible { outline: 3px solid var(--k-cyan); outline-offse
 
 .sp2-card.is-busy { opacity: 0.6; cursor: progress; transition: opacity 120ms ease-out 150ms; }
 @media (prefers-reduced-motion: reduce) { .sp2-card.is-busy { transition: none; } }
+
+/* THE HEADER HOLDS STILL (Andy nov9: "only scroll inside"). The stacked shop is taller than a phone, so the shelves scroll under a
+   sticky header (back, title, wallet) instead of the whole screen sliding away. Static, nothing animates. */
+@media (max-width: 999px) {
+  .sp2-head { position: sticky; top: 0; z-index: 6; margin: -10px -16px 0; padding: 10px 16px 8px; background: var(--k-bg); }
+}

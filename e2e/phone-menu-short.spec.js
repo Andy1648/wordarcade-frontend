@@ -69,10 +69,19 @@ for (const [w, h] of SIZES) {
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
         const m = document.querySelector('.hp-m');
-        const box = (el) => { const b = el.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, n: el.className.split(' ').slice(0, 2).join('.') }; };
+        // nov9 (Andy "only scroll inside (such as for the game modes)"): the mode rows scroll in their own box, so a row is
+        // judged by the part of it that box shows — a row scrolled out of view is clipped, not overlapping what sits below.
+        const modes = document.querySelector('.hp-m-modes');
+        const mv = modes && modes.getBoundingClientRect();
+        const box = (el) => {
+          const b = el.getBoundingClientRect();
+          const o = { l: b.left, t: b.top, r: b.right, b: b.bottom, n: el.className.split(' ').slice(0, 2).join('.') };
+          if (mv && modes.contains(el)) { o.t = Math.max(o.t, mv.top); o.b = Math.min(o.b, mv.bottom); }
+          return o;
+        };
         const bands = [
           ...document.querySelectorAll('.hp-m-top, .hp-m-xp, .hp-m-per, .hp-m-row, .hp-m-solo-btn, .menu-wins-chip, .menu-gems-chip, .hp-m-credits, .hp-m-rail .kb-rwrap'),
-        ].filter((el) => el.getBoundingClientRect().height > 0).map(box);
+        ].filter((el) => el.getBoundingClientRect().height > 0).map(box).filter((x) => x.b - x.t > 0);
         const hits = [];
         for (let i = 0; i < bands.length; i++) for (let j = i + 1; j < bands.length; j++) {
           const a = bands[i], b = bands[j];

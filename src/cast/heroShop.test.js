@@ -4,7 +4,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ELITE, ELITE_PRICE, CAST_BEATS, ownsHero, readMain, castFor, castSrc, HEROES_KEY } from './cast.js';
 import { buyHero } from './heroShop.js';
-import { heroEarned } from './cast.js';
 import { REBIRTH_KEY as REBIRTH_KEY_FOR_TEST } from '../progress/xp.js';
 import * as G from '../progress/gems.js';
 import * as CASTMOD from './cast.js';
@@ -65,17 +64,16 @@ test('grandfathered: already playing HEX when it became priced → it is yours (
   assert.equal(readMain(), 'riot');
 }));
 
-test('skipping the wait on a crew member: 300 gems, owned, equipped', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(350) }, () => {
+test('a crew member is bought with gems only', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(CASTMOD.HERO_PRICE.glitch + 50) }, () => {
   assert.deepEqual(buyHero('glitch'), { ok: true });
   assert.equal(G.getGems(), 50);
   assert.equal(readMain(), 'glitch');
 }));
 
-test('earned free: GLITCH at the first rebirth, HEX at level 20 (no gems)', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
-  assert.equal(ownsHero('glitch'), false);
-  map.set(REBIRTH_KEY_FOR_TEST, '1');
-  assert.equal(ownsHero('glitch'), true, 'a rebirth earns GLITCH');
-  assert.equal(heroEarned('hex'), false);
+test('nov9: no hero is earned by WINS, LEVEL or REBIRTH any more (a fresh save after the switch)', () => withStorage({ 'taw.s2.heroes.gf': '1', 'taw.s2.heroes.gf2': '1', 'taw.s2.heroes.gf3': '1' }, (map) => {
+  map.set(REBIRTH_KEY_FOR_TEST, '20');
+  map.set('taw.s2.count', JSON.stringify({ mp: 500, bots: 500 }));
+  for (const id of ['glitch', 'hex', 'shh', 'dud', 'zip', 'boo', 'nova']) assert.equal(ownsHero(id), false, id);
 }));
 
 test('NEW FACES + LEGEND: painted, priced, never handed out as another player\'s seat member', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
@@ -118,29 +116,29 @@ test('GOLD: earned with 100 wins on its member (bots + online), never sold; a wi
   });
 });
 
-test('oct19: DUD / LEXI / SHH / SIZZLE are earned at a WINS count (bots + online) or bought; DUD costs the most', () => withStorage({ 'taw.s2.heroes.gf': '1' }, (map) => {
-  const { HERO_PRICE, HERO_UNLOCK } = CASTMOD;
-  assert.ok(HERO_PRICE.dud > HERO_PRICE.lexi && HERO_PRICE.dud > HERO_PRICE.sizzle);
-  for (const id of ['dud', 'lexi', 'shh', 'sizzle', 'quill', 'jinx', 'salty', 'buzz', 'zip']) assert.ok(HERO_UNLOCK[id].wins > 0 && HERO_PRICE[id] > 0 && !HERO_UNLOCK[id].gate);
-  map.set('taw.s2.count', JSON.stringify({ mp: 20, bots: 19 }));
-  assert.equal(ownsHero('shh'), false);
-  map.set('taw.s2.count', JSON.stringify({ mp: 20, bots: 20 }));
-  assert.equal(ownsHero('shh'), true, '40 wins, bots + online');
-  assert.equal(ownsHero('dud'), false);
+test('nov9: every priced hero is GEMS ONLY — no requirement, no rebirth gate; tiers climb', () => withStorage({ 'taw.s2.heroes.gf': '1', 'taw.s2.heroes.gf3': '1', [G.GEMS_KEY]: gems(30000) }, () => {
+  const { HERO_PRICE, HERO_UNLOCK, heroGateMet } = CASTMOD;
+  for (const id of Object.keys(HERO_PRICE)) {
+    const u = HERO_UNLOCK[id];
+    assert.ok(!u || (u.wins == null && u.lv == null && u.reb == null), `${id} has no wins / level / rebirth requirement`);
+    if (id !== 'hollow') assert.equal(heroGateMet(id), true, id);
+  }
+  assert.ok(HERO_PRICE.hex >= 2500 && HERO_PRICE.zip > HERO_PRICE.dud && HERO_PRICE.dud > HERO_PRICE.lexi && HERO_PRICE.lexi > HERO_PRICE.shh);
+  assert.ok(CASTMOD.ELITE_PRICE > HERO_PRICE.zip && HERO_PRICE.boo > CASTMOD.ELITE_PRICE && HERO_PRICE.mecha > HERO_PRICE.boo && HERO_PRICE.nova > HERO_PRICE.mecha);
+  assert.deepEqual(buyHero('mecha'), { ok: true }, 'a LEGEND needs no rebirth now — R0 buys it');
+  assert.equal(G.getGems(), 30000 - HERO_PRICE.mecha);
+  assert.equal(ownsHero('mecha'), true);
 }));
 
-test('oct19: a LEGEND needs its rebirth AND gems — locked (no gems taken) until the rebirth, then bought', () => withStorage({ 'taw.s2.heroes.gf': '1', [G.GEMS_KEY]: gems(20000) }, (map) => {
-  const { HERO_PRICE, heroGateMet } = CASTMOD;
-  assert.ok(HERO_PRICE.boo > 5000 && HERO_PRICE.mecha > HERO_PRICE.boo && HERO_PRICE.nova > HERO_PRICE.mecha);
-  map.set(REBIRTH_KEY_FOR_TEST, '9');
-  assert.equal(heroGateMet('mecha'), false);
-  assert.deepEqual(buyHero('mecha'), { ok: false, reason: 'locked' });
-  assert.equal(G.getGems(), 20000);
-  map.set(REBIRTH_KEY_FOR_TEST, '10');
-  assert.equal(ownsHero('mecha'), false, 'the rebirth alone does not earn it');
-  assert.deepEqual(buyHero('mecha'), { ok: true });
-  assert.equal(G.getGems(), 20000 - HERO_PRICE.mecha);
-  assert.equal(ownsHero('mecha'), true);
+test('nov9 grandfathered: whatever the OLD rules had earned stays owned (once, written into the owned list)', () => withStorage({ 'taw.s2.heroes.gf': '1', 'taw.s2.heroes.gf2': '1', [REBIRTH_KEY_FOR_TEST]: '1', 'taw.s2.count': JSON.stringify({ mp: 30, bots: 35 }) }, (map) => {
+  assert.equal(ownsHero('glitch'), true, 'REBIRTH 1 had earned GLITCH');
+  assert.equal(ownsHero('shh'), true, '65 wins had earned SHH');
+  assert.equal(ownsHero('lexi'), true, '65 wins had earned LEXI');
+  assert.equal(ownsHero('dud'), false, 'DUD needed 100');
+  assert.equal(map.get('taw.s2.heroes.gf3'), '1');
+  map.set('taw.s2.count', JSON.stringify({ mp: 500, bots: 500 }));
+  assert.equal(ownsHero('dud'), false, 'wins after the switch earn nothing');
+  assert.equal(ownsHero('glitch'), true, 'and nothing earned is ever taken back');
 }));
 
 test('oct19 grandfathered: a save that met the OLD free rules keeps BOO / MECHA / DUD (once)', () => withStorage({ 'taw.s2.heroes.gf': '1', [REBIRTH_KEY_FOR_TEST]: '10' }, (map) => {

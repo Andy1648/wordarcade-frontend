@@ -9,7 +9,7 @@ import { HERO_UNLOCK, HERO_PRICE, HOLLOW_UNTIL, heroById, heroGateMet, limitedDa
 test('HOLLOW is a priced LIMITED legend with all three poses painted on disk', () => {
   const h = heroById('hollow');
   assert.ok(h && h.legend && h.limited);
-  assert.equal(HERO_PRICE.hollow, 1500);
+  assert.equal(HERO_PRICE.hollow, 15000);
   assert.equal(HERO_UNLOCK.hollow.until, HOLLOW_UNTIL);
   for (const pose of ['hero', 'win', 'ko']) {
     assert.ok(hasPose('hollow', pose), pose);

@@ -10,7 +10,7 @@
 }
 .rj-row {
   position: absolute; left: 0; right: 0; top: 0; height: var(--rh);
-  display: grid; grid-template-columns: 22px minmax(0, 7.5em) minmax(40px, 1fr) 2.2em; align-items: center; gap: 8px;
+  display: grid; grid-template-columns: 22px minmax(0, 11em) minmax(40px, 1fr) 2.2em; /* nov9: 11em holds a 20-char name at >= 11px */ align-items: center; gap: 8px;
   padding: 0 10px 0 8px; box-sizing: border-box;
   background: #1a0b2e; border: 3px solid #3d1d66; border-radius: 8px; box-shadow: 2px 2px 0 #000;
   transform: translateY(calc(var(--slot) * (var(--rh) + var(--rg))));
@@ -25,7 +25,7 @@
 }
 .rj-name {
   font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; font-size: var(--fs-label);
-  letter-spacing: 0.04em; color: #fff; overflow: hidden; text-overflow: clip; white-space: nowrap; min-width: 0;
+  letter-spacing: 0; color: #fff; overflow: hidden; text-overflow: clip; white-space: nowrap; min-width: 0;
 }
 .rj-track { height: 10px; background: #0d0618; border: 2px solid #000; border-radius: 6px; overflow: hidden; }
 .rj-fill {
