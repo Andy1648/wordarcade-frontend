@@ -31,6 +31,7 @@ import {
 import * as juice from './juice';
 import { formatNum, formatMultExact } from '../format';
 import { noteLetters } from '../progress/letterXp.js';
+import { detectTapMode } from './tapMode';
 
 // The pack this mode plays (packs.js). FRENCH RUSH will pass its own id through the RunSpec.
 // The SAT pack is the default; FRENCH RUSH passes { packId: 'fr' } (its words are attached by its
@@ -134,6 +135,15 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // to the teacher (classAdvance), never to the student. null = a normal solo run.
   const classRef = useRef(null);
   const hintsRef = useRef(0); // HINTs used on the current word (CLASS ROOM's clean / hinted split)
+  // TAP-TO-ANSWER (feat/sat-tap): a touch device answers by tapping a choice — no text field, no
+  // letter reveals, and the endgame ELIMINATES choices instead of spelling the word (engine.js
+  // buildChoices / tapEndgame). Fixed for the hook's lifetime. A desktop types, with the same
+  // choices clickable / on keys 1-N.
+  const tapRef = useRef(null);
+  if (tapRef.current === null) tapRef.current = detectTapMode();
+  const isTap = () => tapRef.current === true;
+  // The choice the player picked on this word ({ word, ok }) — the button's own one-shot feedback.
+  const pickedRef = useRef(null);
 
   // Dev-tunable settings. Stage/spell intervals seed from the config defaults (the
   // stage interval also honours the ?stage= override) and can be changed live
@@ -233,6 +243,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     }
     inputRef.current = createSlotInput({ target: cur.word, accentFold: packRef.current.accentFold });
     hintsRef.current = 0;
+    pickedRef.current = null;
     pendingRef.current = 'idle';
     msgRef.current = null;
     reEncodeRef.current = null; // a fresh word clears the previous re-encode beat
@@ -254,8 +265,11 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // re-render that state.cleared triggers, adding no render of its own.
   const lastClearedRef = useRef({ word: '', id: 0 });
 
+  // `opts.revealed` overrides the letters-revealed count for a PICKED clear (a choice tapped / clicked
+  // / keyed): its "revealed" is the help eliminations it saw (engine tapRevealed), not letters.
   const resolveClear = useCallback(
-    () => {
+    (opts) => {
+      const picked = !!(opts && Number.isFinite(opts.revealed));
       const eng = engineRef.current;
       const cw = eng.getState().current;
       const word = cw ? cw.word : '';
@@ -266,13 +280,14 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       lastClearedRef.current = { word, id: lastClearedRef.current.id + 1, stage: cw ? cw.stage : null };
       // How many letters were revealed at completion — gates the heat bump in the
       // engine, and tells PostHog whether players ante early or ride the spell-along.
-      const revealed = inputRef.current ? inputRef.current.getState().revealed : 0;
+      const revealed = picked ? opts.revealed : inputRef.current ? inputRef.current.getState().revealed : 0;
       const r = eng.submitCorrect({ revealed });
       if (!r) return;
       // What this clear actually earned (fix/sat-spam): letters revealed by wrong keys pay nothing.
       lastClearedRef.current = { ...lastClearedRef.current, paid: r.paidFraction };
       // THE UNLISTED (oct20): a word YOU spelled (at most the free first letter shown) is an accepted word, any mode.
-      if (revealed <= 1) noteAcceptedWord(word, { mode: ulModeRef.current });
+      // (a PICKED word was recognised, not spelled — it is not an accepted word)
+      if (revealed <= 1 && !picked) noteAcceptedWord(word, { mode: ulModeRef.current });
       // Lifetime WORDS TYPED: a cleared word is the local player's own accepted
       // word (SAT Rush is solo). Same spot the word_resolved analytic fires below.
       addWords('sat-rush');
@@ -295,6 +310,8 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         suspectsStanding: cw && cw.suspects ? suspectsStanding(cw.suspects.lineup, r.breakdown.stage) : null,
         multiplier: r.breakdown.effectiveMultiplier,
         outcome: 'exact', // only the target's own letters can complete a word now
+        via: picked ? 'pick' : 'type', // TAP-TO-ANSWER: answered by a choice, or typed out
+        answerMode: isTap() ? 'tap' : 'type',
         wasBriefed,
         box: rec ? rec.box : 0,
       });
@@ -448,15 +465,22 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     // then a walked-away miss — and the free first letter is NOT revealed (it would
     // give away which of the two remaining suspects is the answer).
     const spellAlong = modeRef.current !== 'lineup';
+    // TAP-TO-ANSWER: the spell-along's job is done by eliminating choices (engine tapEndgame).
+    const tap = isTap() && !!c.choices;
 
     // The whole spell-along drain window from RIGHT NOW: one final-hold plus one
     // tick per remaining auto-reveal. Fixed into graceMsRef at final-stage entry
     // so the AnteMeter drain bar spans the endgame in a single sweep. tickMs is
     // the live spell cadence (never deep-cut-scaled).
     const spellWindowMs = () => {
+      const tickMs = cfgRef.current.spellMs;
+      if (tap) {
+        const tg = eng.tapEndgame();
+        const ticks = eng.getState().current ? eng.getState().current.elimTicks : 0;
+        return tg ? Math.max(0, tg.autoElimMax - ticks) * tickMs + 2 * tickMs : 0;
+      }
       const eg = eng.endgame();
       if (!eg) return 0;
-      const tickMs = cfgRef.current.spellMs;
       const revealedNow = inputRef.current ? inputRef.current.getState().revealed : 0;
       return Math.max(0, eg.autoRevealMax - revealedNow) * tickMs + 2 * tickMs;
     };
@@ -464,7 +488,8 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     // typing time, so long fugitives are still reachable once you've spotted them.
     // CRITICAL: computed from the UNSCALED base cfgRef.current.stageMs — the
     // lineupScale must never stretch the last-call coin flip (a 3x window = 12s+).
-    const lineupWindow = (len) => lineupWindowMs(cfgRef.current.stageMs, len);
+    // (TAP: no letters to type once the suspect is spotted, so no per-letter typing allowance)
+    const lineupWindow = (len) => lineupWindowMs(cfgRef.current.stageMs, tap ? 0 : len);
 
     if (c.stage < lastStage) {
       stageTimer.current = setTimeout(() => {
@@ -477,7 +502,9 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         // does not (see above).
         if (now.stage >= lastStage) {
           if (spellAlong) {
-            if (inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
+            // TAP: no letters at all (a revealed letter would pick the answer out of same-length
+            // choices) — the free help is the stage-2 elimination the engine's schedule already made
+            if (!tap && inputRef.current.getState().revealed === 0) inputRef.current.revealNextLetter();
             graceMsRef.current = spellWindowMs();
           } else {
             graceMsRef.current = lineupWindow(now.length);
@@ -491,6 +518,23 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       // Escape still skips. No auto-reveal.
       graceMsRef.current = lineupWindow(c.length);
       stageTimer.current = setTimeout(doMiss, graceMsRef.current);
+    } else if (tap) {
+      // Final stage, TAP — the spell-along's twin: cross out one choice every tickMs until only two
+      // stand (engine.eliminateNext caps it), one final hold, then a "walked away" miss. A pick at
+      // any point runs pickChoice; the multiplier is already 1x, and a pick that waited for a cut
+      // does not heat (engine tapRevealed).
+      graceMsRef.current = spellWindowMs();
+      const tickMs = cfgRef.current.spellMs;
+      const finalHoldMs = 2 * tickMs;
+      const elimTick = () => {
+        if (pendingRef.current !== 'idle') return;
+        const t = eng.eliminateNext();
+        force();
+        stageTimer.current = t.exhausted ? setTimeout(doMiss, finalHoldMs) : setTimeout(elimTick, tickMs);
+      };
+      const tg = eng.tapEndgame();
+      const ticksNow = eng.getState().current.elimTicks;
+      stageTimer.current = tg && ticksNow < tg.autoElimMax ? setTimeout(elimTick, tickMs) : setTimeout(doMiss, finalHoldMs);
     } else {
       // Final stage — the SPELL-ALONG endgame. Instead of a silent grace then a
       // miss, keep auto-revealing one letter every tickMs until only the last
@@ -507,6 +551,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         const input = inputRef.current;
         if (!input) return;
         const rev = input.revealNextLetter(); // locks the next target letter
+        eng.eliminateNext(); // the choices beside the slots narrow on the same beat (desktop)
         force();
         if (rev.complete) {
           resolveClear();
@@ -557,17 +602,42 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       eng.advanceStage();
       const now = eng.getState().current;
       juice.multiplierDrop(now.stage, lastStage);
-      if (now.stage >= lastStage && modeRef.current !== 'lineup' && input.getState().revealed === 0) {
+      if (now.stage >= lastStage && modeRef.current !== 'lineup' && !isTap() && input.getState().revealed === 0) {
         input.revealNextLetter(); // the free first letter, as on the clock
       }
       force();
       return;
     }
+    if (isTap() && c.choices) {
+      // TAP: the final-stage hint crosses out a choice (never below two) instead of a letter
+      if (eng.eliminateNext().eliminated) {
+        hintsRef.current += 1;
+        force();
+      }
+      return;
+    }
     hintsRef.current += 1;
     const rev = input.revealNextLetter();
+    eng.eliminateNext();
     if (rev.complete) resolveClear();
     else force();
   }, [resolveClear]);
+  // PICK A CHOICE (tap / click / keys 1-N): the engine judges it, then the normal clear or miss path
+  // runs — a wrong pick is a MISS (a life, heat zeroed, the word comes back as a revenant). A pick on
+  // a crossed-out choice, or between words, does nothing.
+  const pickChoice = useCallback((word) => {
+    if (phaseRef.current !== 'playing' || pendingRef.current !== 'idle') return;
+    const eng = engineRef.current;
+    if (!eng) return;
+    juice.unlockAudio();
+    const j = eng.judgeChoice(word);
+    if (!j.valid) return;
+    pickedRef.current = { word, ok: j.correct };
+    if (j.correct) resolveClear({ revealed: j.revealed });
+    else doMiss();
+  }, [resolveClear, doMiss]);
+  const pickRef = useRef(pickChoice);
+  pickRef.current = pickChoice;
   // SKIP: give up on this word — see the answer now (a miss: it comes back later in the run).
   const skip = useCallback(() => {
     if (phaseRef.current !== 'playing' || pendingRef.current !== 'idle') return;
@@ -626,6 +696,15 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       if (e.key === 'Backspace') {
         input.backspace();
         force();
+        return;
+      }
+      // keys 1-N pick the Nth choice on the card (its number badge)
+      if (/^[1-9]$/.test(e.key) && c.choices) {
+        const ch = c.choices.choices[Number(e.key) - 1];
+        if (ch) {
+          e.preventDefault();
+          pickRef.current(ch.word);
+        }
         return;
       }
       if (!/^\p{L}$/u.test(e.key)) return;
@@ -728,6 +807,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         playRoot: packRef.current.playRoot !== false, // FRENCH RUSH keeps word families for the review
         ...(finite ? { revenantOffset: Math.min(revGap, FINITE_RETURN_GAP) } : {}),
         mode, // 'briefing' (spell-along net) | 'lineup' (suspect lineup, no spell-along)
+        choices: true, // TAP-TO-ANSWER: every word carries its choice set (tapped on touch, clickable / 1-N on desktop)
         stageIntervalMs: stageMs,
         spellAlongMs: spellMs,
         lineupStageScale: lineupScale, // LINEUP stage-cadence multiplier (mode-agnostic in the engine)
@@ -1160,11 +1240,14 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     setupPrefs: lexRef.current.setup || null,
     pack: packRef.current,
     pace: paceRef.current,
+    answerMode: tapRef.current ? 'tap' : 'type',
+    picked: pickedRef.current,
   });
 
   return {
     view,
     typeKey,
+    pickChoice,
     startGame,
     chooseMode,
     confirmSetup,
@@ -1268,6 +1351,7 @@ function buildView(state, cur, eng, input, extra) {
     lastClearedStage: extra.lastCleared && Number.isFinite(extra.lastCleared.stage) ? extra.lastCleared.stage : null, // DAILY CONTRACTS (5x = stage 0)
     spec: extra.spec, // the run's RunSpec (CASE SETUP / results)
     pace: extra.pace, // 'self' (no clock: HINT / CONTINUE) | 'timed'
+    answerMode: extra.answerMode, // 'tap' (touch: pick a choice, no field) | 'type' (keyboard + clickable choices)
     setupPrefs: extra.setupPrefs, // remembered CASE SETUP choices (preselect)
     knownCount: lexicon.masteredCount(extra.lex), // words at the mastery box (CASE SETUP line)
     packSize: extra.pack.words.length,
@@ -1354,6 +1438,10 @@ function buildView(state, cur, eng, input, extra) {
           })),
         }
       : null,
+    // TAP-TO-ANSWER: the card's choices in their fixed display order, crossed out as the stage /
+    // endgame narrows them (isAnswer stays inside the engine), + the pick this word got.
+    choices: eng.choiceView(),
+    picked: extra.picked,
     // Results carry the mastered count (box ≥ 3) so the end screen can headline it
     // as the number that makes the mode legibly a study tool, and the persistent
     // WORDS YOU KEEP MISSING list (top sticky misses) so the end screen can point

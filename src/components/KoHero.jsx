@@ -16,6 +16,7 @@
 import Mascot from './Mascot';
 import LayeredWord from './LayeredWord';
 import './KoHero.css';
+import FitText from './kit/FitText.jsx';
 
 export default function KoHero({ winnerName }) {
   const who = winnerName ? `${winnerName.toUpperCase()} WINS` : 'NO WINNER';
@@ -28,7 +29,7 @@ export default function KoHero({ winnerName }) {
         <LayeredWord className="ko-hero-word" text="K.O." accent="#2EFFE0" />
       </div>
       <div className="ko-hero-strip" aria-hidden="true">
-        <span className="ko-hero-strip-who" translate="no">{who}</span>
+        <FitText className="ko-hero-strip-who" translate="no">{who}</FitText>
       </div>
     </div>
   );

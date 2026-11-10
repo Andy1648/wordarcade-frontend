@@ -17,6 +17,7 @@
 // a finite one-shot (zero new infinite animations); repeated effects re-use their node; no layout reads per event.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './BlitzRivalJuice.css';
+import FitText from './kit/FitText.jsx';
 
 const CROWN = '/fx/blitz-crown.webp';
 const FLAME = '/fx/blitz-flame.webp';
@@ -112,7 +113,7 @@ function RaceRow({ row, slot, hidden, me, top, hot, color }) {
   return (
     <li className={`rj-row${me ? ' is-me' : ''}${row.leads ? ' is-lead' : ''}${hidden ? ' is-out' : ''}`} style={{ '--slot': slot, '--pc': color }} aria-hidden={hidden || undefined}>
       <span className="rj-rank">{row.rank + 1}</span>
-      <span className="rj-name" translate="no">{me ? 'YOU' : row.name}</span>
+      <FitText className="rj-name" translate="no">{me ? 'YOU' : row.name}</FitText>
       <span className="rj-track" aria-hidden="true"><span className="rj-fill" style={{ transform: `scaleX(${frac})` }} /></span>
       <span className="rj-count">{row.count}</span>
       {row.leads && <img className="rj-crown" src={CROWN} alt="" aria-hidden="true" key={`c-${row.id}`} />}
@@ -270,7 +271,7 @@ export function RevealBoard({ results, myId, colorOf, totals, sound, PlayerDot, 
             <div className="rj-res-head">
               <span className="cb-result-name">
                 <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                <span className="cb-result-name-text" translate="no">{pr.name}</span>
+                <FitText className="cb-result-name-text" translate="no">{pr.name}</FitText>
                 {pr.id === myId && <span className="game-player-you">YOU</span>}
               </span>
               {pr.unique.size > 0 && !solo && (

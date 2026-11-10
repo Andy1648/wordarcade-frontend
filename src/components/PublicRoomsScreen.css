@@ -25,7 +25,7 @@
   width: 100%;
   max-width: clamp(380px, 52vw, 640px);
   position: relative;
-  transform: rotate(-0.5deg);
+  /* nov9: no tilt - a rotated box stepped every row sideways ("stupid indentations") */
 }
 
 .browser-header {
@@ -230,119 +230,166 @@
   white-space: nowrap;
 }
 
-/* ---- Room list ---- */
-
+/* ---- Room list (nov9: "stupid indentations, when multiple public rooms eventually stack up") ----
+   ONLY THE LIST SCROLLS. Two groups (IN LOBBY, PLAYING) under sticky heads. Every row is one grid with FIXED tracks
+   (face | who + what | x/max | action), so every column starts at the same x on every row - nothing indents its own
+   way. A long host name wraps (never ellipsized). Static: hover / press only. */
 .browser-list {
+  margin: 12px 0 0;
+  padding: 0 6px 6px 0; /* room for the rows' hard shadow inside the scroller */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 560px; /* natural px: useFitZoom scales the whole box to the window */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+.browser-group { display: flex; flex-direction: column; gap: 8px; }
+.browser-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.12em;
+  color: #2EFFE0;
+  background: #12071f;
+}
+.browser-group.is-live .browser-group-head { color: #FF4FA3; }
+.browser-group-head {
+  margin-right: -6px; /* covers the list's shadow gutter too, so a row scrolling under never peeks out beside it */
+  padding-right: 6px;
+}
+.browser-group-head b {
+  min-width: 26px;
+  padding: 1px 6px;
+  text-align: center;
+  color: #0d0618;
+  background: #2EFFE0;
+  border: 2px solid #1a8f80;
+  border-radius: 6px;
+}
+.browser-group.is-live .browser-group-head b { background: #FF4FA3; border-color: #b8206e; }
+.browser-group-list {
   list-style: none;
-  margin: 16px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  /* Cap height so a long list scrolls WITHIN the box instead of pushing the
-     page; the box itself never scrolls horizontally. */
-  max-height: min(46vh, 420px);
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .browser-row {
   width: 100%;
-  display: flex;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 60px 128px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  column-gap: 12px;
   text-align: left;
   font-family: 'Space Mono', monospace;
+  color: #fff;
   background: #0d0618;
   border: 3px solid var(--row-accent, #2EFFE0);
-  border-left-width: 8px;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 8px 10px;
   cursor: pointer;
   box-shadow: 4px 4px 0 #000;
   transition: transform 0.1s, box-shadow 0.1s;
-  min-height: 44px;
+  min-height: 64px;
 }
+.browser-row:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
+.browser-row:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+.browser-row:disabled { cursor: not-allowed; }
+.browser-row:disabled:hover, .browser-row:disabled:active { transform: none; box-shadow: 4px 4px 0 #000; }
 
-.browser-row:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 #000;
-}
-
-.browser-row:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 #000;
-}
-
-.browser-row:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.browser-row-main {
+.browser-row-face {
+  width: 48px;
+  height: 48px;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.browser-row-game {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #1a0b2e;
+  border: 3px solid var(--row-accent, #2EFFE0);
+  border-radius: 8px;
+  box-sizing: border-box;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: var(--fs-body);
+  font-size: var(--fs-label);
   color: var(--row-accent, #2EFFE0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
+.browser-row-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* a hero is a full figure: crop to the head, the same framing the menu panel uses */
+.browser-row-face.is-hero img { object-position: 50% 18%; transform: scale(1.35); transform-origin: 50% 20%; }
 
-.browser-row-code {
-  font-size: var(--fs-body);
+.browser-row-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.browser-row-host {
   font-weight: 700;
-  letter-spacing: 1px;
-  color: #8a7bb0;
+  font-size: var(--fs-body);
+  line-height: 1.15;
+  color: #fff;
+  overflow-wrap: anywhere;
 }
-
-.browser-row-meta {
+.browser-row-sub {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
 }
+.browser-row-game { color: var(--row-accent, #2EFFE0); }
+.browser-row-code { color: #8a7bb0; }
+.browser-row-watch { color: #FF4FA3; }
 
 .browser-row-count {
-  /* was Bungee, below the 28px display floor: small UI text is a mono label */
-  font-family: 'Space Mono', monospace;
   font-weight: 700;
-  letter-spacing: 0.08em;
   font-size: var(--fs-body);
+  letter-spacing: 0.04em;
+  text-align: center;
   color: #2EFFE0;
 }
+.browser-row-count.full { color: #FF5C5C; }
 
-.browser-row-count.full {
-  color: #FF5C5C;
+/* the action column: what the room is doing over what pressing it does */
+.browser-row-act {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  text-align: center;
 }
-
-.browser-row-status {
-  font-size: var(--fs-body);
+.browser-row-state {
   font-weight: 700;
-  letter-spacing: 1px;
-  color: #FFE94A;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #2EFFE0;
 }
-/* A full room is disabled (dimmed by :disabled) and its status reads FULL in red so it's
-   clearly not joinable, instead of a joinable-looking WAITING that the server would reject. */
-.browser-row.is-full .browser-row-status {
-  color: #FF5C5C;
+.browser-row.is-live .browser-row-state { color: #FF4FA3; }
+.browser-row-status {
+  display: block;
+  padding: 4px 6px;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 3px solid #b8a21a;
+  border-radius: 8px;
 }
-/* SPECTATE (nov4): IN LOBBY (cyan) / PLAYING (pink) after the code; a live row's action reads SPECTATE in pink */
-.browser-row-state { color: #2EFFE0; }
-.browser-row-state.is-live,
-.browser-row.is-live .browser-row-status { color: #FF4FA3; }
+.browser-row.is-watch .browser-row-status { background: #FF4FA3; border-color: #b8206e; }
+.browser-row.is-none .browser-row-status { color: #c9bde6; background: #1a0b2e; border-color: #3d2a5c; }
+.browser-row.is-none { border-color: #3d2a5c; }
 
 /* ---- Empty state ---- */
 
@@ -452,10 +499,22 @@
 /* ---- Responsive ---- */
 
 @media (max-width: 600px) {
-  .browser-wrap { padding: 16px; }
-  .browser-box { padding: 22px 16px; transform: none; }
+  .browser-wrap { padding: 16px; align-items: flex-start; }
+  /* the PAGE never scrolls: the box is capped at the screen and the list takes what's left */
+  .browser-box {
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
+    box-sizing: border-box;
+  }
   .browser-title { font-size: var(--fs-panel); }
-  .browser-list { max-height: 52vh; }
+  .browser-list { flex: 1 1 auto; min-height: 120px; max-height: none; }
+  .browser-row { grid-template-columns: 40px minmax(0, 1fr) 96px; grid-template-areas: 'face main act' 'face count act'; row-gap: 2px; padding: 8px; column-gap: 8px; }
+  .browser-row-face { grid-area: face; width: 40px; height: 40px; align-self: start; }
+  .browser-row-main { grid-area: main; }
+  .browser-row-count { grid-area: count; text-align: left; font-size: var(--fs-label); }
+  .browser-row-act { grid-area: act; }
 }
 
 
@@ -536,9 +595,10 @@
    the stacked screen ran off the bottom of the viewport; side by side — join-by-code on the left,
    the public list on the right — it fits at full size. */
 .browser-col { display: contents; }
-@media (min-width: 900px) and (orientation: landscape) and (max-height: 720px) {
+@media (min-width: 900px) and (orientation: landscape) {
   .browser-box {
-    max-width: clamp(380px, 80vw, 1000px);
+    max-width: 1040px;
+    width: 1040px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: clamp(20px, 2.5vw, 36px);

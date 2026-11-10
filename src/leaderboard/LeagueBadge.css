@@ -11,6 +11,8 @@
   background: var(--lg-bg); border: 3px solid var(--lg-rim); border-radius: 8px; box-shadow: 3px 3px 0 #000;
   padding: 3px 8px 2px; letter-spacing: 0.04em;
 }
+.lg-badge-range { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-k14); letter-spacing: 0.02em; color: var(--lg-bg); text-transform: none; }
+.lg-badge[data-league='legend'] .lg-badge-range { color: #FFE94A; }
 .lg-badge-n { font-size: inherit; font-weight: 400; color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
 
 .lg-badge[data-league='bronze'] { --lg-bg: #D98A4E; --lg-rim: #8a4f22; }

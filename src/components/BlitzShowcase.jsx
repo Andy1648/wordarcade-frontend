@@ -14,6 +14,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { formatNum } from '../format';
 import './BlitzShowcase.css';
+import FitText from './kit/FitText.jsx';
 
 const ART = {
   crown: '/fx/blitz-crown.webp',
@@ -224,7 +225,7 @@ export function ShowcaseBoard({ results, totals, myId, colorOf, sound, PlayerDot
                 </span>
                 <span className="sc-name">
                   <PlayerDot color={pc.color} dark={pc.dark} tier={pc.tier} />
-                  <span className="cb-result-name-text" translate="no">{r.name}</span>
+                  <FitText className="cb-result-name-text" translate="no">{r.name}</FitText>
                   {r.id === myId && <span className="game-player-you">YOU</span>}
                 </span>
               </div>
