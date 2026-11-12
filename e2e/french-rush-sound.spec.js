@@ -115,10 +115,10 @@ test('transitions make a sound; the 🔊 note shows once; the 🔊 says the word
   const row = await answerCurrent(page);
   const say = page.locator('.sr-reencode .sr-say');
   await expect(say).toBeVisible();
-  // the 🔊 is a real touch target
-  const box = await say.boundingBox();
-  expect(box.width).toBeGreaterThanOrEqual(44);
-  expect(box.height).toBeGreaterThanOrEqual(44);
+  // the 🔊 is a real touch target (layout size — the review card lands with a scale one-shot)
+  const [sw, sh] = await say.evaluate((el) => [el.offsetWidth, el.offsetHeight]);
+  expect(sw).toBeGreaterThanOrEqual(44);
+  expect(sh).toBeGreaterThanOrEqual(44);
   // FIRST 🔊 = the one-time note
   await expect(page.getByTestId('say-hint')).toBeVisible();
   await expect(page.getByTestId('say-hint')).toContainText('TAP 🔊 TO HEAR IT');
@@ -150,6 +150,89 @@ test('transitions make a sound; the 🔊 note shows once; the 🔊 says the word
   await expect(page.locator('.sr-cover')).toContainText('HEAR EVERY WORD');
   expect(await page.evaluate(() => localStorage.getItem('fr.sayHint.v1'))).toBe('1');
   expect(errors).toEqual([]);
+});
+
+test('the run header SOUND switch is the arcade mute: off = no transition sounds, no auto-read', async ({ page }) => {
+  await installBackendMock(page);
+  await page.addInitScript(stubAudioAndSpeech, FR_VOICES);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await startSelfPacedQuiz(page);
+
+  // it lives IN the run header strip, beside HOME — not a floating control
+  const sound = page.locator('.sr-hud .sr-hud-ctl .sr-hud-sound');
+  await expect(sound).toBeVisible();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  expect(await sound.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
+  const box = await sound.boundingBox();
+  expect(box.width).toBeGreaterThanOrEqual(44);
+  expect(box.height).toBeGreaterThanOrEqual(44);
+
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('taw.sfxEvents'))).toBe('0'); // the arcade's own mute
+
+  // muted: the capture + review card make no sound and the word is not read by itself…
+  const startsBefore = await page.evaluate(() => window.__snd.starts);
+  await answerCurrent(page);
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await expect(page.locator('.sr-reencode')).toHaveCount(0);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__snd.starts)).toBe(startsBefore);
+  expect(await page.evaluate(() => window.__snd.spoken.length)).toBe(0);
+
+  // …and back on, the transitions sound again
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('taw.sfxEvents'))).toBe('1');
+  await page.waitForTimeout(200);
+  const before2 = await page.evaluate(() => window.__snd.starts);
+  await page.getByRole('button', { name: /Hint/ }).click(); // the clue stage decays → an ink tick
+  await expect.poll(() => page.evaluate(() => window.__snd.starts)).toBeGreaterThan(before2);
+  expect(errors).toEqual([]);
+});
+
+test('SAT Rush gets the same SOUND switch in its run header', async ({ page }) => {
+  await installBackendMock(page);
+  await page.addInitScript(stubAudioAndSpeech, FR_VOICES);
+  await page.goto('/sat-rush/play');
+  const sound = page.locator('.sr-hud .sr-hud-ctl .sr-hud-sound');
+  await expect(sound).toBeVisible();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  await sound.click();
+  expect(await page.evaluate(() => localStorage.getItem('taw.sfxEvents'))).toBe('0');
+});
+
+test.describe('phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test('the 🔊 note sits under the 🔊 and points UP; header fits with no page scroll', async ({ page }) => {
+    await installBackendMock(page);
+    await page.addInitScript(stubAudioAndSpeech, FR_VOICES);
+    await page.goto('/french-rush');
+    await page.getByRole('button', { name: 'Play' }).click();
+    await page.getByRole('button', { name: /QUIZ/ }).click();
+    await page.getByRole('button', { name: /^theme/ }).click();
+    await page.getByRole('option', { name: /Families/i }).click();
+    await page.getByRole('button', { name: /^Start$/ }).click();
+    await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
+    const sound = page.locator('.sr-hud .sr-hud-sound');
+    await expect(sound).toBeVisible();
+    const sb = await sound.boundingBox();
+    expect(sb.width).toBeGreaterThanOrEqual(44);
+    expect(sb.height).toBeGreaterThanOrEqual(44);
+    const gloss = (await page.locator('.sr-gloss').innerText()).trim();
+    const row = WORDS.find((r) => r.category === 'familles' && r.gloss === gloss);
+    await page.locator('.sr-suspect-btn', { hasText: new RegExp(`^${row.word}$`, 'i') }).first().tap();
+    const hint = page.getByTestId('say-hint');
+    await expect(hint).toBeVisible();
+    await expect(hint.locator('.sr-say-hint-arrow.up')).toBeVisible();
+    await expect(hint.locator('.sr-say-hint-arrow.side')).toBeHidden();
+    const hb = await hint.boundingBox();
+    const btn = await page.locator('.sr-reencode .sr-say').boundingBox();
+    expect(hb.y).toBeGreaterThanOrEqual(btn.y + btn.height - 1); // under the 🔊
+    const s = await page.evaluate(() => ({ sh: document.scrollingElement.scrollHeight, ch: innerHeight }));
+    expect(s.sh).toBeLessThanOrEqual(s.ch + 1);
+  });
 });
 
 test('a device with no French voice shows no 🔊 and never speaks — and nothing breaks', async ({ page }) => {

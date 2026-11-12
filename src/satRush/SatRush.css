@@ -3733,3 +3733,54 @@ body:has(.sr-app) .wpm-hud {
   .sr-card.tap .sr-cardframe .sr-lineup { margin-top: 4px; }
   .sr-card.tap .sr-lineup-grid { gap: 6px; }
 }
+
+/* ---------- SOUND on/off — joins the strip's control end, beside the way out (feat/french-rush-sound) ----------
+   No new fixed element: the toggle and the exit share ONE group at the strip's far end, which takes the exit's old
+   place in every layout (desktop flex end; the phone grid's exit cell). Same paper + ink cell as the exit; muted
+   inverts nothing (state reads through the 🔊 / 🔇 glyph and aria-checked), hover inverts like the exit. */
+.sr-hud-ctl {
+  margin-left: auto;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+.sr-hud-ctl .sr-hud-exit { margin-left: 0; }
+.sr-hud-sound {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: none;
+  border-left: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--fs-body);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.sr-hud-sound:hover,
+.sr-hud-sound:focus-visible {
+  background: var(--ink);
+  outline: none;
+}
+.sr-hud .sr-hud-sound-inner { transform: skewX(6deg); }
+.sr-hud-sound.off .sr-hud-sound-inner { opacity: 0.6; }
+@media (max-width: 560px) {
+  /* SAT RUSH phone grid: the group takes the exit's cell (row 2, col 1), exit first like CHAIN / FUSE */
+  .sr-hud-ctl {
+    grid-area: 2 / 1;
+    margin-left: 0;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    border-right: 2px solid var(--ink);
+  }
+  .sr-hud-ctl .sr-hud-exit { border-right: 0; padding: 0 4px; }
+  .sr-hud-ctl .sr-hud-sound { border-left: 0; border-right: 0; padding: 0; }
+  /* FRENCH RUSH phone: STREAK + WORDS + [sound | HOME] on one row */
+  .fr-app .sr-hud .sr-hud-ctl { grid-area: 1 / 3; flex-direction: row; border-right: 0; }
+  .fr-app .sr-hud .sr-hud-ctl .sr-hud-sound { border-left: 0; border-right: 2px solid var(--ink); }
+}

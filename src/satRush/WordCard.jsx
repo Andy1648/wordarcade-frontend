@@ -20,6 +20,7 @@ import Slots from './Slots';
 import AnteMeter from './AnteMeter';
 import { speakFr, hasFrVoice, withArticle, autoSpeakOn } from './speak';
 import SayButton from './SayButton';
+import { rushSoundOn } from './rushMute';
 import EnglishLine from './EnglishLine';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
@@ -36,7 +37,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
   const said = useRef(false);
   useEffect(() => {
     // auto-say can be switched off (a CLASS ROOM teacher's choice); the 🔊 button always works
-    if (speak && !said.current && autoSpeakOn() && hasFrVoice()) {
+    if (speak && !said.current && autoSpeakOn() && rushSoundOn() && hasFrVoice()) {
       said.current = true;
       speakFr(word);
     }

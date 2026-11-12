@@ -24,7 +24,10 @@ export default function SayButton({ word, hint = false }) {
       </button>
       {showHint && (
         <span className="sr-say-hint" role="note" data-testid="say-hint">
-          <span aria-hidden="true">◀ </span>TAP 🔊 TO HEAR IT
+          {/* beside the 🔊 it points left; on a phone the note sits UNDER the 🔊 and points up (FrenchRush.css) */}
+          <span className="sr-say-hint-arrow side" aria-hidden="true">◀ </span>
+          <span className="sr-say-hint-arrow up" aria-hidden="true">▲ </span>
+          TAP 🔊 TO HEAR IT
         </span>
       )}
     </>
