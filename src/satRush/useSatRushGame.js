@@ -255,6 +255,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     // Entry juice (real play only — dev scenes set state without calling this).
     if (cur.isRevenant) juice.revenantEnter();
     else if (cur.isDeepCut) juice.deepCutEnter();
+    else juice.cardIn(); // a plain card slides onto the desk
     // A SECOND LOOK (a shaky clear brought back) says so — it is not a new word.
     if (cur.isReturn) msgRef.current = { text: 'second look — you leaned on the letters last time', kind: 'near' };
     force();
@@ -529,6 +530,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       const elimTick = () => {
         if (pendingRef.current !== 'idle') return;
         const t = eng.eliminateNext();
+        if (t.eliminated) juice.strike(); // a choice crossed out
         force();
         stageTimer.current = t.exhausted ? setTimeout(doMiss, finalHoldMs) : setTimeout(elimTick, tickMs);
       };
@@ -552,6 +554,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         if (!input) return;
         const rev = input.revealNextLetter(); // locks the next target letter
         eng.eliminateNext(); // the choices beside the slots narrow on the same beat (desktop)
+        if (!rev.complete) juice.strike(); // a letter pencilled in (a completing one gets the stamp)
         force();
         if (rev.complete) {
           resolveClear();
@@ -612,6 +615,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       // TAP: the final-stage hint crosses out a choice (never below two) instead of a letter
       if (eng.eliminateNext().eliminated) {
         hintsRef.current += 1;
+        juice.strike();
         force();
       }
       return;
@@ -620,7 +624,10 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
     const rev = input.revealNextLetter();
     eng.eliminateNext();
     if (rev.complete) resolveClear();
-    else force();
+    else {
+      juice.strike();
+      force();
+    }
   }, [resolveClear]);
   // PICK A CHOICE (tap / click / keys 1-N): the engine judges it, then the normal clear or miss path
   // runs — a wrong pick is a MISS (a life, heat zeroed, the word comes back as a revenant). A pick on

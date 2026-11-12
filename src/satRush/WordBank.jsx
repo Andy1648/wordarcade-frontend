@@ -4,7 +4,8 @@
 // Useful to a student before a test and to a teacher picking a set.
 import { useMemo, useState } from 'react';
 import PrintPicker from './PrintPicker';
-import { speakFr, canSpeak, withArticle } from './speak';
+import { withArticle } from './speak';
+import SayButton from './SayButton';
 
 const fold = (s) =>
   String(s || '')
@@ -89,11 +90,7 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
             <li key={r.word} className={`sr-bank-row ${r.status}`}>
               <div className="sr-bank-top">
                 <b className="sr-bank-word">{withArticle(r.word, r.pos, r.gender)}</b>
-                {canSpeak() && (
-                  <button type="button" className="sr-say" onClick={() => speakFr(r.word)} aria-label={`say ${r.word}`}>
-                    🔊
-                  </button>
-                )}
+                <SayButton word={r.word} />
                 <span className="sr-bank-gloss">{r.gloss}</span>
               </div>
               <div className="sr-bank-meta">

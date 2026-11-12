@@ -18,7 +18,9 @@ import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
 import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
-import { speakFr, canSpeak, withArticle, autoSpeakOn } from './speak';
+import { speakFr, hasFrVoice, withArticle, autoSpeakOn } from './speak';
+import SayButton from './SayButton';
+import { rushSoundOn } from './rushMute';
 import EnglishLine from './EnglishLine';
 
 // The re-encode BEAT (a miss, or a clear that leaned on the spell-along). The old
@@ -35,7 +37,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
   const said = useRef(false);
   useEffect(() => {
     // auto-say can be switched off (a CLASS ROOM teacher's choice); the 🔊 button always works
-    if (speak && !said.current && autoSpeakOn()) {
+    if (speak && !said.current && autoSpeakOn() && rushSoundOn() && hasFrVoice()) {
       said.current = true;
       speakFr(word);
     }
@@ -49,11 +51,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
       <div className="sr-reencode-tag">{tag}</div>
       <div className="sr-reencode-word">
         {speak ? withArticle(word, pos, gender) : word}
-        {speak && canSpeak() && (
-          <button type="button" className="sr-say" onClick={() => speakFr(word)} aria-label={`say ${word}`}>
-            🔊
-          </button>
-        )}
+        {speak && <SayButton word={word} hint />}
       </div>
       {/* oct17 (Andy): the DEFINITION is plain text; the EXAMPLE is the quote. */}
       <p className="sr-reencode-def">{gloss}</p>
