@@ -187,3 +187,19 @@
     to { opacity: 0; }
   }
 }
+
+/* WORD BOMB (nov6): the streak beside the fragment, anchored to the prompt's centre (the box itself is stage-wide), its size
+   climbing with the tier. Font size is a static per-tier value; the per-hit pop is the same keyed transform as ever. */
+.combo-meter--wb { top: 50%; right: calc(50% + 120px); flex-direction: column; align-items: flex-end; transform: translateY(-50%); }
+.combo-meter--wb .combo-badge { transform-origin: right center; }
+.combo-meter--wb .combo-count { font-size: var(--fs-panel); }
+.combo-meter--wb .combo-fire .combo-count { font-size: var(--fs-h2); }
+.combo-meter--wb .combo-max .combo-count { font-size: var(--fs-h1); }
+@media (max-width: 560px) {
+  .combo-meter--wb { right: calc(50% + 74px); }
+  .combo-meter--wb .combo-badge { padding: 3px 6px; }
+  .combo-meter--wb .combo-label, .combo-meter--wb .fx-lvchip { display: none; } /* the count alone: the phone's room beside the fragment is about 80px */
+  .combo-meter--wb .combo-count,
+  .combo-meter--wb .combo-fire .combo-count,
+  .combo-meter--wb .combo-max .combo-count { font-size: var(--fs-panel); }
+}

@@ -1,11 +1,13 @@
-// chaseHeroes.test.js — the CHASE heroes (oct28, Andy: "a few SUPER-RARE chase heroes"): DRAKE + MAGMA (MYTHIC) and
-// FACET (SECRET) are never sold and never earned on a counter — only a gear roll can DROP one (CHASE_ODDS), and a drop is
-// kept forever. Every pose + idle frame is painted on disk.
+// chaseHeroes.test.js — the rarest heroes: DRAKE + MAGMA (MYTHIC) and FACET (SECRET). They dropped from gear rolls until
+// nov12 (Andy: "dont make any hero avatars rollable its confusing - just make them cost gems"): now they are BOUGHT with
+// gems like every other hero, priced over the LEGENDs, and anyone who rolled one keeps it. Every pose + idle frame is
+// painted on disk.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHASE, CHASE_ODDS, HERO_UNLOCK, CAST_BEATS, CAST_FRAMES, HEROES_KEY, heroById, ownsHero, heroGateMet, readMain, castFor, castSrc, hasPose, rollChaseDrop } from './cast.js';
+import * as CASTMOD from './cast.js';
+import { CHASE, HERO_PRICE, HERO_UNLOCK, CAST_BEATS, CAST_FRAMES, HEROES_KEY, heroById, ownsHero, heroGateMet, readMain, castFor, castSrc, hasPose } from './cast.js';
 import { buyHero } from './heroShop.js';
 import * as G from '../progress/gems.js';
 
@@ -17,13 +19,13 @@ function withStorage(seed, fn) {
 }
 const gems = (bal) => JSON.stringify({ v: 1, bal, peak: 1, streak: 0, mig: 1 });
 const IDS = ['drake', 'magma', 'facet'];
+const GF = { 'taw.s2.heroes.gf': '1', 'taw.s2.heroes.gf2': '1', 'taw.s2.heroes.gf3': '1' };
 
-test('three CHASE heroes: two MYTHIC, one SECRET (the rarest), all painted — HERO / WIN / K.O. + a 6-frame idle', () => {
+test('three top-tier heroes: two MYTHIC, one SECRET (the rarest), all painted — HERO / WIN / K.O. + a 6-frame idle', () => {
   assert.deepEqual(CHASE.map((h) => h.id), IDS);
   assert.deepEqual(CHASE.map((h) => h.chase), ['mythic', 'mythic', 'secret']);
-  assert.ok(CHASE_ODDS.facet > CHASE_ODDS.drake && CHASE_ODDS.drake === CHASE_ODDS.magma);
   for (const id of IDS) {
-    assert.ok(heroById(id) && heroById(id).legend && !heroById(id).price, id);
+    assert.ok(heroById(id) && heroById(id).legend, id);
     for (const pose of ['hero', 'win', 'ko']) {
       assert.ok(hasPose(id, pose), `${id} ${pose}`);
       assert.equal(castSrc(id, pose), `/cast/${id}-${pose}.webp`);
@@ -32,45 +34,44 @@ test('three CHASE heroes: two MYTHIC, one SECRET (the rarest), all painted — H
     assert.equal(CAST_FRAMES[id].n, 6);
     for (let i = 0; i < 6; i += 1) assert.ok(existsSync(join(process.cwd(), 'public', 'cast', 'anim', `${id}-${i}.webp`)), `${id} frame ${i}`);
     assert.ok(CAST_BEATS[id]);
-    assert.equal(HERO_UNLOCK[id].label, `1 IN ${CHASE_ODDS[id]}`, 'the locked card prints its odds');
   }
 });
 
-test('never sold, never free: not owned, cannot be bought with any gems, cannot be your MAIN, never a stranger\'s seat', () => withStorage({ [G.GEMS_KEY]: gems(10_000_000), 'taw.main': 'facet' }, () => {
+test('nov12: never rolled — no drop, no odds, no gate; priced over every LEGEND, SECRET over MYTHIC', () => {
+  assert.equal(CASTMOD.rollChaseDrop, undefined, 'the roll drop is gone');
+  assert.equal(CASTMOD.CHASE_ODDS, undefined, 'no odds table');
+  const legendTop = Math.max(...['boo', 'mecha', 'nova'].map((id) => HERO_PRICE[id]));
   for (const id of IDS) {
-    assert.equal(ownsHero(id), false, id);
-    assert.equal(heroGateMet(id), false, id);
-    assert.deepEqual(buyHero(id), { ok: false, reason: 'locked' }, id);
+    assert.equal(HERO_UNLOCK[id], undefined, `${id} has no drop / lock entry`);
+    assert.equal(heroGateMet(id), true, id);
+    assert.equal(heroById(id).price, HERO_PRICE[id]);
+    assert.ok(HERO_PRICE[id] > legendTop, `${id} ${HERO_PRICE[id]} > ${legendTop}`);
   }
-  assert.equal(G.getGems(), 10_000_000, 'no gems taken');
-  assert.equal(readMain(), 'riot', 'a hand-edited main falls back');
-  for (let i = 0; i < 200; i++) assert.ok(!IDS.includes(castFor(`p${i}`).id));
+  assert.equal(HERO_PRICE.drake, HERO_PRICE.magma);
+  assert.ok(HERO_PRICE.facet > HERO_PRICE.drake);
+});
+
+test('bought with gems: short = nothing taken; enough = owned, equipped, and never charged twice', () => withStorage({ ...GF, [G.GEMS_KEY]: gems(HERO_PRICE.facet - 1) }, (map) => {
+  assert.equal(ownsHero('facet'), false);
+  assert.deepEqual(buyHero('facet'), { ok: false, reason: 'unaffordable' });
+  assert.equal(G.getGems(), HERO_PRICE.facet - 1);
+  map.set(G.GEMS_KEY, gems(HERO_PRICE.facet + 5));
+  assert.deepEqual(buyHero('facet'), { ok: true });
+  assert.equal(G.getGems(), 5);
+  assert.equal(ownsHero('facet'), true);
+  assert.equal(readMain(), 'facet');
+  assert.deepEqual(buyHero('facet'), { ok: true });
+  assert.equal(G.getGems(), 5, 'owned: equipping again is free');
 }));
 
-test('THE DROP: a lucky roll keeps the hero (owned, equippable) and never drops one you already have', () => withStorage({}, (map) => {
-  assert.equal(rollChaseDrop(() => 0.5), null, 'a normal roll drops nothing');
-  // a draw under 1 / 500 hits the first hero not owned yet
-  assert.equal(rollChaseDrop(() => 0.0001), 'drake');
+test('one rolled before nov12 stays owned (it is in the owned list, like a bought hero), and is free to equip', () => withStorage({ ...GF, [HEROES_KEY]: JSON.stringify(['drake']), [G.GEMS_KEY]: gems(0) }, () => {
   assert.equal(ownsHero('drake'), true);
-  assert.deepEqual(JSON.parse(map.get(HEROES_KEY)), ['drake']);
-  assert.deepEqual(buyHero('drake'), { ok: true }, 'an owned CHASE hero just equips');
+  assert.deepEqual(buyHero('drake'), { ok: true });
   assert.equal(readMain(), 'drake');
-  assert.equal(rollChaseDrop(() => 0.0001), 'magma', 'DRAKE is owned, so the same luck lands MAGMA');
-  assert.equal(rollChaseDrop(() => 0.0001), 'facet');
-  assert.equal(rollChaseDrop(() => 0), null, 'all three owned: nothing left to drop');
+  assert.equal(ownsHero('magma'), false);
 }));
 
-test('the odds hold: over many rolls each hero drops at about 1 IN N', () => withStorage({}, (map) => {
-  let seed = 7;
-  const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const hits = { drake: 0, magma: 0, facet: 0 };
-  const N = 400_000;
-  for (let i = 0; i < N; i++) {
-    const id = rollChaseDrop(rand);
-    if (id) { hits[id] += 1; map.delete(HEROES_KEY); } // forget it, so every roll is a fresh chance
-  }
-  for (const id of IDS) {
-    const want = N / CHASE_ODDS[id];
-    assert.ok(Math.abs(hits[id] - want) < want * 0.2, `${id}: ${hits[id]} vs ~${Math.round(want)}`);
-  }
+test('a hand-edited main without owning it falls back to RIOT; never a stranger\'s seat', () => withStorage({ ...GF, 'taw.main': 'facet' }, () => {
+  assert.equal(readMain(), 'riot');
+  for (let i = 0; i < 200; i++) assert.ok(!IDS.includes(castFor(`p${i}`).id));
 }));

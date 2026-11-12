@@ -7,6 +7,7 @@ import { MINER_MAX } from './config';
 import FitText from '../components/kit/FitText.jsx';
 import CastArt from '../cast/CastArt.jsx';
 import { castFor, heroById } from '../cast/cast.js';
+import useAnnounceHero from '../cast/useAnnounceHero.js';
 import './Miner.css';
 import useAutoStartSec from '../hooks/useAutoStartSec.js';
 
@@ -15,7 +16,8 @@ import useAutoStartSec from '../hooks/useAutoStartSec.js';
 const heroOf = (p, me) => (p && heroById(p.hero) ? p.hero : castFor(p ? p.id : '', me).id);
 const BOT_FILL_TO = 3; // mirrors the backend minerMode.js BOT_FILL_TO
 
-export default function MinerLobby({ room, myId, miner, audioSlot, serverError, startPending, botPending, onStart, onAddBot, onLeave }) {
+export default function MinerLobby({ room, myId, miner, audioSlot, serverError, startPending, botPending, onStart, onAddBot, onLeave, onSetHero }) {
+  useAnnounceHero(room, myId, onSetHero); // the other miners draw ME as my hero (nov12)
   const isHost = room.hostId === myId;
   const autoSec = useAutoStartSec(room); // a public lobby starts on its own (server clock)
   const queue = miner && miner.status === 'queue' && miner.code === room.code ? miner : null;
