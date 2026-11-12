@@ -18,7 +18,8 @@ import { MORE_MODES } from '../gameData';
 import { GemsEarnedLine } from '../components/gems/Gems';
 import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine } from '../components/xp/XpEarned';
-import { speakFr, canSpeak, withArticle } from './speak';
+import { withArticle } from './speak';
+import SayButton from './SayButton';
 
 const C = JUICE.CELEBRATION;
 
@@ -48,11 +49,7 @@ function CaseFileRow({ c, outcomes, speak }) {
       <div className="sr-casefile-top">
         <b className="sr-casefile-word">
           {speak ? withArticle(c.word, c.rawPos, c.gender) : c.word}
-          {speak && canSpeak() && (
-            <button type="button" className="sr-say" onClick={() => speakFr(c.word)} aria-label={`say ${c.word}`}>
-              🔊
-            </button>
-          )}
+          {speak && <SayButton word={c.word} />}
         </b>
         <span className={`sr-casefile-mastery ${c.mastery}`}>{MASTERY[c.mastery]}</span>
         <span className={`sr-casefile-out ${c.outcome}`}>{(outcomes || OUTCOME)[c.outcome]}</span>

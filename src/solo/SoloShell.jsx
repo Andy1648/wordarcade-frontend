@@ -25,8 +25,9 @@ import SoloExit from './SoloExit.jsx';
 import RebirthReadyButton from '../components/RebirthReadyButton.jsx';
 import { MORE_MODES } from '../gameData';
 import { heatTier } from '../juice/ladder';
-import { TierSlam, SlotTags, LevelUpChip } from '../components/FeelLadder';
-import { ComboShatter } from '../components/ComboMeter';
+import { TierSlam, SlotTags } from '../components/FeelLadder';
+import ComboMeter, { ComboShatter } from '../components/ComboMeter';
+import { recordBestStreak } from './bestStreak.js';
 import { noteTypedLetters } from '../progress/letterXp.js';
 import { GemPop, GemsEarnedLine, useGemsRunMark } from '../components/gems/Gems';
 import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
@@ -41,6 +42,9 @@ import useFitCard from '../hooks/useFitCard.js';
 // Ring geometry (viewBox 120): r=44, a 15px BLACK outline circle under a #241536 track under
 // the 9px accent arc. The `state` ring (r=53.5, dashed) is the OUT tile's old FEW LEFT /
 // DEAD END signal, re-homed onto the hero's rim.
+// the streak meter beside the hero never plays its own break (SoloShell shows the shatter once, for T2+)
+const NO_BREAK = Object.freeze({ key: 0, count: 0 });
+
 function HeroRing({ remaining, tMax, redZone, armed }) {
   const R = 44;
   const C = 2 * Math.PI * R;
@@ -201,6 +205,13 @@ export default function SoloShell({
   // COMBO BREAK at T2+ (4+ in a row): the same shatter Word Bomb's meter plays, so a lost streak is
   // never silent here either. `comboBreaks` bumps on every break; the streak it ended is the one we
   // saw on the render before.
+  // BEST STREAK (nov12, Andy: "they need to feel benefits of playing"): this run's peak, kept per render (no effect, no
+  // state), reset when a new run starts; the death card names it and whether it beat the mode's all-time best.
+  const peakRef = useRef(0);
+  if (phase === 'playing' && comboStreak > peakRef.current) peakRef.current = comboStreak;
+  useEffect(() => { if (phase === 'playing') peakRef.current = comboStreak; }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [peak, setPeak] = useState(null);
+  useEffect(() => { setPeak(phase === 'over' ? recordBestStreak(mode, peakRef.current) : null); }, [phase, mode]);
   const lastStreakRef = useRef(comboStreak);
   const lastBreaksRef = useRef(comboBreaks);
   const [shatter, setShatter] = useState(null); // { key, count }
@@ -232,6 +243,7 @@ export default function SoloShell({
       <div className="solo-structure" aria-hidden="true">
         <div className="solo-band" />
         <div className="solo-facet" />
+        <div className="solo-heat" />
         <div className="solo-bandrule" />
         <div className="solo-bandedge" />
       </div>
@@ -286,6 +298,9 @@ export default function SoloShell({
           <div className={`solo-hero${outState ? ` is-${outState}` : ''}`}>
             <HeroRing {...clock} />
             <HeroLetter text={center} />
+            {/* THE STREAK rides the hero, where the eye already is, and grows with the tier (nov12, the Word Bomb pass). The
+                break says itself through the shatter below, so the meter gets no break of its own. */}
+            <div className="solo-streak"><ComboMeter count={comboStreak} brk={NO_BREAK} /></div>
             <div
               className={`solo-hero-heat${outHeat >= 0.36 ? ' is-hot' : ''}`}
               style={{ transform: `scaleX(${outHeat})`, opacity: outHeat > 0 ? 1 : 0 }}
@@ -416,6 +431,11 @@ export default function SoloShell({
               <div className="solo-scoreline">
                 <span>SCORE {formatNum(over.score)}</span>
                 <span>BEST {formatNum(over.best)}</span>
+                {peak && peak.run >= 2 ? (
+                  <span className="solo-peak" data-heat={heatTier(peak.run)} data-testid="solo-peak">
+                    <b>{formatNum(peak.run)}</b> BEST STREAK{peak.isNew ? <i> · NEW RECORD</i> : peak.best > peak.run ? <i>{` · RECORD ${formatNum(peak.best)}`}</i> : null}
+                  </span>
+                ) : null}
                 {/* the NEAR MISS: a run that ends within a quarter of the PB says exactly how close it came */}
                 {bestBefore > 0 && over.score > bestBefore ? (
                   <span className="solo-pbline is-new" data-testid="solo-pbline">NEW BEST · +{formatNum(over.score - bestBefore)}</span>
@@ -479,9 +499,6 @@ export default function SoloShell({
               <ComboShatter key={shatter.key} count={shatter.count} />
             </div>
           )}
-          <div className="solo-lv">
-            <LevelUpChip />
-          </div>
         </div>
       )}
 
