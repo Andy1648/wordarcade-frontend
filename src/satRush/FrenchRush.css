@@ -728,3 +728,31 @@
     font-size: min(var(--fs-body), calc(125cqw / var(--len, 8)));
   }
 }
+
+/* ---------------- the one-time 🔊 note (feat/french-rush-sound) ----------------
+   The first 🔊 a player meets carries a pasted ink label: "TAP 🔊 TO HEAR IT". Ink plate, paper type, hard
+   offset shadow, a slight paste-up tilt. It slaps on once (a finite one-shot, transform + opacity only) and
+   never loops; it is gone for good after its first showing (sayHint.js). */
+.sr-say-hint {
+  display: inline-block;
+  margin: 4px 0 0 10px;
+  padding: 4px 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--paper);
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink), inset 0 0 0 2px var(--ink), inset 0 0 0 3px var(--paper);
+  transform: rotate(-2deg);
+  animation: fr-say-hint-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes fr-say-hint-in {
+  0% { opacity: 0; transform: rotate(-6deg) scale(1.4); }
+  100% { opacity: 1; transform: rotate(-2deg) scale(1); }
+}
