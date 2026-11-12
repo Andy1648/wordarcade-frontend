@@ -10,7 +10,31 @@
 // who arrived on a /sat-rush/play link has never seen the menu, and this control is
 // the only door to the other five modes. It is now labelled with its destination at
 // >=44x44, in SAT RUSH's own paper-and-ink language — NOT the neon house chip.
+import { useEffect, useState } from 'react';
 import { formatNum } from '../format';
+import { rushSoundOn, setRushSound, syncRushSound } from './rushMute';
+
+// SOUND on/off (feat/french-rush-sound): a classroom of phones needs a way to go quiet. It JOINS this strip's
+// control end beside the way out (CLAUDE.md: no orphan fixed UI) and drives the arcade's own mute (rushMute.js).
+function SoundToggle() {
+  const [on, setOn] = useState(rushSoundOn);
+  useEffect(() => {
+    syncRushSound();
+  }, []);
+  return (
+    <button
+      type="button"
+      className={`sr-hud-sound${on ? '' : ' off'}`}
+      role="switch"
+      aria-checked={on}
+      aria-label="Sound"
+      title={on ? 'sound on — tap to mute' : 'sound off — tap to turn on'}
+      onClick={() => setOn(setRushSound(!on))}
+    >
+      <span className="sr-hud-sound-inner" aria-hidden="true">{on ? '🔊' : '🔇'}</span>
+    </button>
+  );
+}
 
 // The odometer pad is a style for SMALL scores only; from 10,000 the shared formatter takes over
 // (Andy oct3 #3: never raw long digits — a 1,343,513 score must not print "1343513").
@@ -59,12 +83,15 @@ export default function Hud({ score, streak, wordNumber, settled = 0, caseSize =
         </div>
       </div>}
       {onExit && (
-        <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit to menu">
-          {/* Counter-skewed like the .sr-hcell contents — .sr-hud is skewX(-6deg). */}
-          <span className="sr-hud-exit-inner">
-            <span aria-hidden="true">←</span> {exitLabel}
-          </span>
-        </button>
+        <div className="sr-hud-ctl">
+          <SoundToggle />
+          <button type="button" className="sr-hud-exit" onClick={onExit} aria-label="Exit to menu">
+            {/* Counter-skewed like the .sr-hcell contents — .sr-hud is skewX(-6deg). */}
+            <span className="sr-hud-exit-inner">
+              <span aria-hidden="true">←</span> {exitLabel}
+            </span>
+          </button>
+        </div>
       )}
     </div>
   );

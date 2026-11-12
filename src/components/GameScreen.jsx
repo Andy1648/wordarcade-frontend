@@ -1462,6 +1462,7 @@ export default function GameScreen({
   gameType,
   gameNonce,
   cgMode = false,
+  joinedLive = false, // game_started.spectator: joined a round already in progress - no intro 3-2-1
   // True ONLY for a visitor who landed here from a /word-bomb/play or /category-blitz/play deep
   // link and has never seen the menu (App: VS_BOT_LAUNCH && !hasSeenMenu()). Adds the one-line
   // run-over offer below REMATCH/LEAVE — the same offer CHAIN, FUSE and SAT RUSH make, for the
@@ -1545,7 +1546,10 @@ export default function GameScreen({
   // disabled until it finishes. On the CrazyGames path (cgMode) it's SKIPPED so
   // the server's ~3s pre-timer grace becomes free combo-reading time — the real
   // combo shows with the timer frozen at full instead of hidden behind 3-2-1.
-  const [showCountdown, setShowCountdown] = useState(!cgMode);
+  // A LIVE join (a spectator, or a code-joiner dealt in next turn) lands on a round that is already running:
+  // no 3-2-1 / match banner / GO! burst - the countdown is the players' start, not the audience's. Being dealt
+  // in later never replays it (this only seeds on mount; the YOUR TURN cue is the "you're in" beat).
+  const [showCountdown, setShowCountdown] = useState(!cgMode && !joinedLive && !watchOnly);
 
   // (Removed) The per-keystroke input "pulse" tell — it toggled a class that
   // scaled the focused field on every key, re-rasterising its text and lagging
@@ -1995,6 +1999,9 @@ export default function GameScreen({
   // existing accept/reject + life-loss events; no scoring/server/WS involvement.
   const streak = useCombo();
   comboRef.current = streak.count; // keep the accept-time combo read fresh
+  const peakStreakRef = useRef(0);
+  if (streak.count > peakStreakRef.current) peakStreakRef.current = streak.count;
+  useEffect(() => { peakStreakRef.current = 0; }, [gameNonce]);
   // The light-slot decision for the word that just landed (clutch / lucky / rare). The landing is
   // App's per-word record of MY accepted word; it arrives in the same render as its word_result.
   // The decision is LATCHED per landing (useLatched) so a later state change (a reject clearing the
@@ -3202,6 +3209,7 @@ export default function GameScreen({
         <div className="wb-structure" aria-hidden="true">
           <div className="wb-band" />
           <div className="wb-facet" />
+          <div className="wb-heat" />
           <div className="wb-bandrule" />
           <div className="wb-bandedge" />
         </div>
@@ -3321,6 +3329,8 @@ export default function GameScreen({
               )}
             </div>
           </div>
+          {/* The streak rides the prompt, where the eye already is, and grows with the tier (nov6). Nothing at a quiet 0-1. */}
+          {!isCategory ? <ComboMeter count={streak.count} brk={streak.brk} className="combo-meter--wb" /> : null}
         </div>
         {/* ===== THE COUNTDOWN (fix/wb-readability-and-timer) =====
             Measured on a live round: the remaining time drove CSS CLASSES ONLY - the
@@ -3732,8 +3742,6 @@ export default function GameScreen({
           </div>
         ) : (
           <div className="game-input-row drain-exempt" ref={inputRowRef}>
-            {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
             {/* THE RECEIPT for the word just accepted: base × every live multiplier = what you
                 were paid. It JOINS this cluster (CLAUDE.md: no orphan fixed UI) and is absolutely
                 positioned + pointer-events:none, exactly like the ComboMeter above it, so it never
@@ -4015,6 +4023,7 @@ export default function GameScreen({
                 of={Math.max(1, table.length)}
                 winnerName={winner ? winner.name : ''}
                 modeLabel="WORD BOMB"
+                peakStreak={peakStreakRef.current}
                 me={{ words: mine.length, letters: mine.reduce((a, w) => a + w.length, 0), best }}
                 xp={resultsXp}
                 ledger={payoutLedger}
