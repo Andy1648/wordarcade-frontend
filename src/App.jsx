@@ -472,6 +472,10 @@ function App() {
   // countdown - the round number stays 1 across solo games, so the screen can't
   // detect a new game from the round number alone.
   const [gameNonce, setGameNonce] = useState(0);
+  // SPECTATE / STEP 54: this game was joined LIVE (game_started.spectator - a code-join mid-round, dealt in next
+  // turn, or a SPECTATE watch). The round is already running, so the board skips its intro 3-2-1 (Andy nov12:
+  // "spectating a word bomb game gives that countdown as well"). Set from the same message as the view swap.
+  const [joinedLive, setJoinedLive] = useState(false);
 
   // Live "what is everyone typing" map (Word Bomb): playerId -> their current
   // in-progress text, streamed via typing_update keystroke relays. Reset to {}
@@ -1333,6 +1337,7 @@ function App() {
       setGameType(lastMessage.payload.gameType || 'word-bomb');
       setIsDailyGame(!!lastMessage.payload.daily);
       setGameNonce((n) => n + 1);
+      setJoinedLive(!!lastMessage.payload.spectator);
       setCategoryRerolls(null);
       setLastReroll(null);
       setGameOver(null);
@@ -2755,6 +2760,7 @@ function App() {
         gameState={gameState}
         gameType={gameType}
         gameNonce={gameNonce}
+        joinedLive={joinedLive}
         // cg entry skips the 3-2-1 so the server's ~3s pre-timer window becomes
         // free combo-reading time (timer frozen at full, clock not yet moving).
         cgMode={CG_ENTRY}

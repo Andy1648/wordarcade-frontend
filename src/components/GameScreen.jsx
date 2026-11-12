@@ -1462,6 +1462,7 @@ export default function GameScreen({
   gameType,
   gameNonce,
   cgMode = false,
+  joinedLive = false, // game_started.spectator: joined a round already in progress - no intro 3-2-1
   // True ONLY for a visitor who landed here from a /word-bomb/play or /category-blitz/play deep
   // link and has never seen the menu (App: VS_BOT_LAUNCH && !hasSeenMenu()). Adds the one-line
   // run-over offer below REMATCH/LEAVE — the same offer CHAIN, FUSE and SAT RUSH make, for the
@@ -1545,7 +1546,10 @@ export default function GameScreen({
   // disabled until it finishes. On the CrazyGames path (cgMode) it's SKIPPED so
   // the server's ~3s pre-timer grace becomes free combo-reading time — the real
   // combo shows with the timer frozen at full instead of hidden behind 3-2-1.
-  const [showCountdown, setShowCountdown] = useState(!cgMode);
+  // A LIVE join (a spectator, or a code-joiner dealt in next turn) lands on a round that is already running:
+  // no 3-2-1 / match banner / GO! burst - the countdown is the players' start, not the audience's. Being dealt
+  // in later never replays it (this only seeds on mount; the YOUR TURN cue is the "you're in" beat).
+  const [showCountdown, setShowCountdown] = useState(!cgMode && !joinedLive && !watchOnly);
 
   // (Removed) The per-keystroke input "pulse" tell — it toggled a class that
   // scaled the focused field on every key, re-rasterising its text and lagging
