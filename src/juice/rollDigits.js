@@ -47,6 +47,12 @@ export function rollDigits(el, text, { delay = 0, ms = ROLL_MS } = {}) {
     el.textContent = target;
     return;
   }
+  if (!el.hasAttribute('data-rolling') && el.textContent === target) {
+    // already showing it (a +0 tally line, a hidden zero bar): nothing to roll. No strips are built, and a roll still
+    // pending on this element is cancelled, so it lands on the figure it shows now.
+    el.__rollId = (el.__rollId || 0) + 1;
+    return;
+  }
   const plan = rollPlan(target, Math.min(ROLL_MS, ms));
   if (!plan.some((p) => p.digit)) {
     el.textContent = target;
