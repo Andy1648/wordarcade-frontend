@@ -589,3 +589,8 @@
   .wr-input { min-height: 64px; font-size: var(--fs-panel); }
   .wr-earn { font-size: var(--fs-panel); }
 }
+
+/* nov12: the runner is the racer's own hero (CastArt: an <img>, or a layered span with its rarity aura) - the same 36px
+   the mascot car had */
+.wr-runner { width: 36px; height: 36px; object-fit: contain; }
+.wr-runner.cast-layered { display: inline-block; }
