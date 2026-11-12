@@ -16,6 +16,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatNum, formatMultExact, formatShort } from '../../format';
 import { rollDigits, ROLL_MS } from '../../juice/rollDigits.js';
+import { heatTier } from '../../juice/ladder';
 import KitIcon from '../kit/KitIcon.jsx';
 import GainLayer from '../gains/GainLayer.jsx';
 import { countMs, BUMP_MS, BUMP_SCALE } from '../gains/gainPlan.js';
@@ -127,7 +128,7 @@ function N({ to, at, ms = T.count, prefix = '', className = '' }) {
  * @param {React.ReactNode} p.actions the exits row (PLAY AGAIN / MENU / offer)
  * @param {React.ReactNode} p.extras  rebirth-ready, claim prompt, near miss, try-a-mode
  */
-export default function ResultsCard({ cardRef, split = null, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
+export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
   const local = useRef(null);
   const root = cardRef || local;
   // ONE drawing (the mockup's 1366×657 sheet) scaled by --rs-k to the window; a phone gets its own stack.
@@ -327,6 +328,12 @@ export default function ResultsCard({ cardRef, split = null, iWon, place, of, wi
           {stamp.text ? (
             <div className={`rs2-stamp rs2-stamp--${stamp.tone}${iWon ? ' game-over-title win' : ''}`} data-rv="stamp" data-at="500">
               <span>{stamp.text}</span>
+            </div>
+          ) : null}
+          {peakStreak >= 2 ? (
+            <div className="rs2-peak" data-heat={heatTier(peakStreak)} data-rv="best" data-at={tEnd + 60}>
+              <span className="rs2-peak-n">{formatNum(peakStreak)}</span>
+              <span className="rs2-peak-k">BEST<br />STREAK</span>
             </div>
           ) : null}
           {me.best ? (
