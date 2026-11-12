@@ -27,7 +27,6 @@ const ALLOW = [
 // PHONES ONLY (<= 480 wide): long pages a phone scrolls instead of crushing (Andy oct21: taps, room, more scroll)
 const ALLOW_PHONE = [
   ['.hp-m-modes', 'the phone menu MODE ROWS (64px tap rows) — nov9: the menu holds still, only the modes scroll'],
-  ['.pf', 'the profile / hero preview page'],
   ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
   ['.sp2', 'the UPGRADES page (nov9: under a pinned header)'],
   ['.pn', 'the patch notes'],
