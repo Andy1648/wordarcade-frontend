@@ -227,9 +227,11 @@ test.describe('phone', () => {
     await expect(hint).toBeVisible();
     await expect(hint.locator('.sr-say-hint-arrow.up')).toBeVisible();
     await expect(hint.locator('.sr-say-hint-arrow.side')).toBeHidden();
+    // let the one-shot pop-in (scale + tilt) and the card's landing finish, then compare CENTRES (robust to the tilt)
+    await hint.evaluate((el) => Promise.all(document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => null))));
     const hb = await hint.boundingBox();
     const btn = await page.locator('.sr-reencode .sr-say').boundingBox();
-    expect(hb.y).toBeGreaterThanOrEqual(btn.y + btn.height - 1); // under the 🔊
+    expect(hb.y + hb.height / 2).toBeGreaterThan(btn.y + btn.height); // its middle sits below the 🔊 = under it
     const s = await page.evaluate(() => ({ sh: document.scrollingElement.scrollHeight, ch: innerHeight }));
     expect(s.sh).toBeLessThanOrEqual(s.ch + 1);
   });
