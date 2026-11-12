@@ -49,6 +49,10 @@ import { minWordsFor } from '../progress/wins';
 import { usePlayClock } from '../progress/playClock.js';
 import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
 import FitText from '../components/kit/FitText.jsx';
+import ComboMeter from '../components/ComboMeter';
+import { TierSlam } from '../components/FeelLadder';
+import { heatTier } from '../juice/ladder';
+import { recordBestStreak } from '../solo/bestStreak.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -120,6 +124,23 @@ export default function WordRaceScreen({
   const upcoming = wordsMode && race ? race.fragments.slice(myIndex + 1, myIndex + 5) : [];
   const used = useMemo(() => new Set(race?.myWords || []), [race?.myWords]);
 
+  // THE PERFECT STREAK (nov12, the Word Bomb pass — Andy: "they need to feel benefits of playing"): words in a row typed with
+  // no wrong letter and no reject. A typo or a reject breaks it (the shatter says so at 4+). Local and display-only: it pays
+  // nothing and never reaches the server. The race-over names the run's best and whether it beat your record.
+  const [streak, setStreak] = useState(0);
+  const [brk, setBrk] = useState({ key: 0, count: 0 });
+  const streakRef = useRef(0);
+  const dirtyRef = useRef(false); // a wrong letter was typed on the word in hand
+  const peakRef = useRef(0);
+  const setStreakTo = (n) => {
+    const had = streakRef.current;
+    streakRef.current = n;
+    if (n > peakRef.current) peakRef.current = n;
+    if (n === 0 && had >= 2) setBrk((b) => ({ key: b.key + 1, count: had }));
+    setStreak(n);
+  };
+  const breakStreak = () => { if (streakRef.current > 0) setStreakTo(0); };
+
   // CHALLENGE LINK (race/challenge.js, spec challenge-link.md v1). A RECEIVED challenge always works
   // (no flag): read once from the boot stash. It lives for ONE race — the race it was opened for —
   // and is display only: never a racer, never in standings, never a rival for the winner bonus.
@@ -139,6 +160,11 @@ export default function WordRaceScreen({
   useEffect(() => {
     setSentIndex(0);
     setText('');
+    streakRef.current = 0;
+    peakRef.current = 0;
+    dirtyRef.current = false;
+    setStreak(0);
+    setBrk({ key: 0, count: 0 });
   }, [seed]);
   // A rejected word (only possible if the race ended under it) hands the cursor back to the server.
   useEffect(() => {
@@ -154,7 +180,11 @@ export default function WordRaceScreen({
     if (result.accepted) {
       if (!result.local) noteAcceptedWord(result.word, { mode: 'race' }); // THE UNLISTED (oct20): any mode
       if (!wordsMode) setText('');
-    } else setShakeSeq((n) => n + 1);
+      if (!wordsMode && !result.local) setStreakTo(streakRef.current + 1); // ENTIRE WORDS count at the send (sendWord)
+    } else {
+      setShakeSeq((n) => n + 1);
+      breakStreak();
+    }
     // Only a NEW result should act — resultSeq is the event counter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultSeq]);
@@ -164,6 +194,8 @@ export default function WordRaceScreen({
   }, [live]);
 
   function sendWord(word) {
+    setStreakTo(dirtyRef.current ? 0 : streakRef.current + 1);
+    dirtyRef.current = false;
     setSentIndex(myIndex + 1);
     setText('');
     onSubmit(word);
@@ -180,6 +212,11 @@ export default function WordRaceScreen({
     if (live && !finished && fragment && clean.toLowerCase() === fragment) {
       sendWord(fragment);
       return;
+    }
+    // a wrong letter breaks the streak the moment it is typed (fixing it does not mend it)
+    if (live && fragment && clean && !fragment.startsWith(clean.toLowerCase()) && !dirtyRef.current) {
+      dirtyRef.current = true;
+      breakStreak();
     }
     setText(clean);
     if (hasBreak && clean) submitWord(clean);
@@ -218,6 +255,8 @@ export default function WordRaceScreen({
   const standings = over?.standings || [];
   const myPlace = standings.find((s) => s.id === myId)?.place || null;
   const iWon = !!over && over.winnerId === myId;
+  const [peak, setPeak] = useState(null);
+  useEffect(() => { setPeak(over && !watchOnly ? recordBestStreak('race', peakRef.current) : null); }, [!!over, watchOnly]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // GEMS (Andy oct5): this race's ledger mark (taken as each race goes live) and ONE payout at race over — the
   // standings rank everyone, a racer placed below me is beaten. READ-ONLY on the race (gems.payGameResult dedupes).
@@ -302,7 +341,8 @@ export default function WordRaceScreen({
     : null;
 
   return (
-    <div className="wr-root wall-surface" data-race-status={status}>
+    <div className="wr-root wall-surface" data-race-status={status} data-heat={live && !over ? heatTier(streak) : 0}>
+      <div className="wr-heat" aria-hidden="true" />
       <header className="wr-head">
         <span className="wr-chip">WORD RACE</span>
         {challenge && (
@@ -363,6 +403,13 @@ export default function WordRaceScreen({
           <div className="wr-hero" aria-live="polite">
             {/* GEMS: the drop pop — one pooled node inside this positioned hero (aria-hidden itself) */}
             <GemPop />
+            {/* THE STREAK rides the word to type and grows with the tier; one pooled tier slam above it */}
+            {!watchOnly && live && !finished ? (
+              <>
+                <div className="wr-streak"><ComboMeter count={streak} brk={brk} /></div>
+                <div className="wr-feel" aria-hidden="true"><TierSlam count={streak} /></div>
+              </>
+            ) : null}
             {counting ? (
               <>
                 <span className="wr-count" key={Math.ceil(goIn / 1000)}>
@@ -471,6 +518,11 @@ export default function WordRaceScreen({
               )}
             </div>
           </div>
+          {peak && peak.run >= 2 ? (
+            <p className="wr-peak" data-heat={heatTier(peak.run)} data-testid="race-peak">
+              <b>{formatNum(peak.run)}</b> PERFECT IN A ROW{peak.isNew ? <i> · NEW RECORD</i> : peak.best > peak.run ? <i>{` · RECORD ${formatNum(peak.best)}`}</i> : null}
+            </p>
+          ) : null}
           <ol className="wr-standings">
             {standings.map((s) => (
               <li key={s.id} className={s.id === myId ? 'is-me' : ''} data-standing-id={s.id}>
