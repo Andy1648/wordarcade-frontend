@@ -20,23 +20,24 @@ async function menu(page, level) {
 const card = (page, id) => revealMode(page, id); // feat/menu-centre: flips to the card's page first
 
 test.describe('item 2 — worked examples', () => {
-  test('WORD BOMB dialog shows TRA → TRAIN, the wins rate, and where its gems come from', async ({ page }) => {
+  // design audit nov2 #4: the UNLOCKED dialog is art + one hook line + the choices — its EXAMPLE box is gone. The
+  // worked example lives on where a player cannot play yet: the LOCKED preview (below).
+  test('WORD BOMB dialog is the painted art + one hook line, no EXAMPLE box', async ({ page }) => {
     await menu(page);
     await (await card(page, 'word-bomb')).click();
-    const ex = page.locator('.mode-dialog-shell .mode-ex');
-    await expect(ex).toBeVisible();
-    await expect(ex).toContainText('TRAIN');
-    await expect(ex.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
-    // Andy oct10: the round-length row is gone; season 1 (this spec) has no gem table, so no gem rows
+    const shell = page.locator('.mode-dialog-shell');
+    await expect(shell.locator('.mode-dialog-art')).toBeVisible();
+    await expect(shell.locator('.mode-dialog-liner')).toContainText('BEAT THE BOMB');
+    await expect(shell.locator('.mode-ex')).toHaveCount(0);
   });
 
-  test('CHAIN dialog shows the E → EAGLE → ELEPHANT → TIGER chain', async ({ page }) => {
+  test('CHAIN dialog is the painted art + its one-line rule, no EXAMPLE box', async ({ page }) => {
     await menu(page, 30); // past the LV25 gate → unlocked
     await (await card(page, 'chain')).click();
-    const ex = page.locator('.mode-dialog-shell .mode-ex');
-    await expect(ex).toBeVisible();
-    for (const w of ['EAGLE', 'ELEPHANT', 'TIGER']) await expect(ex).toContainText(w);
-    await expect(ex.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
+    const shell = page.locator('.mode-dialog-shell');
+    await expect(shell.locator('.mode-dialog-art')).toBeVisible();
+    await expect(shell.locator('.mode-dialog-liner')).toContainText("LAST ONE'S LETTER");
+    await expect(shell.locator('.mode-ex')).toHaveCount(0);
   });
 
   test('FUSE locked preview shows AIN → RAIN / AGAIN / MOUNTAIN', async ({ page }) => {

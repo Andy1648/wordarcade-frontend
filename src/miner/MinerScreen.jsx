@@ -27,6 +27,7 @@ import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import FitText from '../components/kit/FitText.jsx';
 import './Miner.css';
+import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
 
 const HERO = '/cards/miner-hero.webp';
 const WALL = '/cards/miner-bg.webp';
@@ -140,6 +141,8 @@ export default function MinerScreen({
   onLocalReject,
   onAgain,
   onLeave,
+  watchOnly = false, // SPECTATE (nov9): watching a public mine from the room list - never a miner
+  watchers = 0, // how many are watching (room_update.watchers)
 }) {
   usePlayClock();
   const [text, setText] = useState('');
@@ -195,7 +198,7 @@ export default function MinerScreen({
   const gemsSince = useGemsRunMark(playing);
   const xpSince = useGameXpRunMark(playing);
   useEffect(() => {
-    if (!over) return;
+    if (!over || watchOnly) return; // a watcher dug nothing: no result
     const mine = standings.find((s) => s.id === myId);
     const myDepth = mine ? mine.depth : 0;
     const rivals = standings
@@ -223,6 +226,8 @@ export default function MinerScreen({
         <span className="mn-chip">MINER</span>
         {round > 0 && status !== 'over' && <span className="mn-round">#{round}</span>}
         <div className="mn-head-actions">
+          {watchOnly ? <WatchPill /> : null}
+          <WatchersChip n={watchers} />
           {audioSlot}
           <button type="button" className="mn-btn mn-btn-ghost" onClick={onLeave}>
             LEAVE
@@ -249,7 +254,9 @@ export default function MinerScreen({
                   <span className="mn-bell-num">{left}</span>
                 </div>
               </div>
-              {myPick ? (
+              {watchOnly ? (
+                <WatchBar>YOU&apos;RE WATCHING · {lockedN}/{active.length} IN</WatchBar>
+              ) : myPick ? (
                 <div className="mn-find" data-testid="miner-locked" data-ore={myPick.ore}>
                   <OreIcon ore={myPick.ore} size="find" pop />
                   <span className="mn-find-word">{myPick.answer}</span>
@@ -337,7 +344,11 @@ export default function MinerScreen({
             <div className="mn-over" data-testid="miner-over">
               <div className="mn-over-hero">
                 <img className={`mn-over-digger${iWon ? ' is-win' : ''}`} src={HERO} alt="" draggable="false" />
-                <h2 className="mn-over-title">{iWon ? 'YOU HIT THE CORE!' : `${ordinal(myPlace || standings.length)} PLACE`}</h2>
+                <h2 className="mn-over-title">
+                  {watchOnly
+                    ? `${String(standings.find((s) => over.winnerIds.includes(s.id))?.name || 'NOBODY').toUpperCase()} HIT THE CORE`
+                    : iWon ? 'YOU HIT THE CORE!' : `${ordinal(myPlace || standings.length)} PLACE`}
+                </h2>
               </div>
               <ol className="mn-standings">
                 {standings.map((s, i) => (
@@ -361,10 +372,12 @@ export default function MinerScreen({
                 <ContractDoneLine since={gemsSince} />
               </div>
               <div className="mn-over-actions">
-                <RebirthReadyButton onGo={onLeave} />
-                <button type="button" className="mn-btn mn-btn-go" onClick={onAgain} disabled={againPending}>
-                  DIG AGAIN
-                </button>
+                {watchOnly ? null : <RebirthReadyButton onGo={onLeave} />}
+                {watchOnly ? null : (
+                  <button type="button" className="mn-btn mn-btn-go" onClick={onAgain} disabled={againPending}>
+                    DIG AGAIN
+                  </button>
+                )}
                 <button type="button" className="mn-btn mn-btn-ghost" onClick={onLeave}>
                   MENU
                 </button>

@@ -22,8 +22,10 @@ import './theme/themes.css'
 // component styles they decorate — this file only ever adds a treatment to a surface
 // that already exists, so it must win the cascade on equal specificity.
 import './theme/arcane.css'
+import './theme/artSlots.css'
 import { initTheme } from './theme/themes'
 import { initReduceMotion } from './lib/reduceMotion'
+import { installArtLoad } from './lib/artLoad'
 import { initAnalytics, initSentry, captureException } from './lib/analytics'
 import ErrorBoundary from './components/ErrorBoundary.js'
 import { installChunkReloadGuard, isStaleChunkError } from './lib/chunkReload'
@@ -35,6 +37,7 @@ import { forgeMigrateMomentum } from './progress/forge'
 import { migrateGems } from './progress/gemsMigrate'
 import { SEASON2 } from './progress/season'
 import { migrateRollSave } from './progress/markRollsCore'
+import { retireCosmetics } from './progress/cosmeticsRetire'
 
 // PROGRESSION v11 (stamp 11): convert a legacy level save ONCE (by shape), before any UI reads XP. Keeps
 // every level; a v10 save keeps its {lv, f} untouched (one fixed curve now — f keeps the bar position).
@@ -55,6 +58,20 @@ import { getStreak } from './progress/streak'
 // lazy screen it opens rejects with "Failed to fetch dynamically imported module". One reload
 // picks up the new index and fixes it; the guard inside caps that at one reload per tab.
 try { installChunkReloadGuard() } catch { /* never block startup */ }
+// Before the first render, so every art slot's load event is seen (lib/artLoad.js).
+try { installArtLoad() } catch { /* never block startup */ }
+// The phone keyboard (lib/viewportKeyboardLoad.js): --vvh + data-kb while it is up, loaded on the first field focus on a touch
+// screen so none of it is in the first paint. The boot height goes with it: by then the keyboard may already be up.
+try {
+  if (matchMedia('(pointer: coarse)').matches) {
+    const vh = innerHeight
+    addEventListener('focusin', function kb(e) {
+      if (!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return
+      removeEventListener('focusin', kb)
+      import('./lib/viewportKeyboardLoad').then((m) => m.default(vh), () => {})
+    })
+  }
+} catch { /* never block startup */ }
 // A service worker that just updated is still showing the previous deploy — reload onto the new one at once
 // (anywhere that is not a round in progress), and ask for a new worker whenever the tab comes back. See lib/swUpdate.js.
 try { installSwUpdateReload() } catch { /* never block startup */ }
@@ -209,7 +226,8 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // installed BEFORE the first render, so every season-2 read finds them. The live game never downloads it.
   // GEAR POOL v2 (Andy oct9): retire COMMON once per save — owned commons deleted + refunded in gems, a worn one taken
   // off — AFTER the season install (its gem key mapping) and BEFORE the first render reads a gear. Never blocks startup.
-  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } renderApp() }
+  // nov2 (Andy: "dont want win fx or sound"): WIN FX + SOUND PACKS retired once per save — paid ones refunded in gems
+  const boot = () => { try { migrateRollSave() } catch { /* never block startup */ } try { retireCosmetics() } catch { /* never block startup */ } renderApp() }
   if (SEASON2) import('./progress/v3/installUi.jsx').then(boot, boot)
   else boot()
 }

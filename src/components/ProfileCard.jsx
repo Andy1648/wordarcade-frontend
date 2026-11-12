@@ -1,5 +1,5 @@
 // ProfileCard.jsx — LEADERBOARD PROFILES (Andy oct10: "click anyone on leaderboard to see their stats (only fun ones
-// like gear(s), base, etc.)"). Tap a row or a podium spot → this card: the name + rank plate, the worn gear(s) as their
+// like gear(s), base, etc.)"). Tap a row or a podium spot → this card: the name + their RANK LEAGUE, the worn gear(s) as their
 // cog + glyph on a tier plate, then four stat tiles — BASE WINS / WORD, WINS / WORD, POWER, GEARS FOUND (with a bar).
 // Data: the board row (rank / rebirths / level) + public.profile_showcase (031, showcase.fetchShowcase). Before
 // 031 runs, or for a player whose game has not sent one yet, every unknown shows a "?" (Andy oct11) — never a made-up
@@ -13,17 +13,16 @@ import KitIcon from './kit/KitIcon.jsx';
 import FitText from './kit/FitText.jsx';
 import './kit/kitIconData.js'; // registers power / boost / index / levels / rebirth (the menu core set has only a few)
 import MarkBadge from './MarkBadge.jsx';
-import { KitRankPlate } from './kit/KitRankPlate.jsx';
+import LeagueBadge from '../leaderboard/LeagueBadge.jsx';
 import { kitPlay } from './kit/motion.js';
 import { CARD_RAR, cardTier } from './markCard/palette.js';
 import { rollMarkById } from '../progress/markRollsCore.js';
-import { rankPlate } from '../leaderboard/s2Board.js';
 import { fetchShowcase, saveBio, myBio, fetchUnlistedFinds } from '../leaderboard/showcase.js';
 import { unlistedById, unlistedArt } from '../unlisted/unlisted.js';
 import { bioVerdict, BIO_MAX } from '../leaderboard/nameFilter.js';
 import { formatNum } from '../format';
 import RankSeal from '../leaderboard/RankSeal.jsx';
-import { nameTier } from '../leaderboard/nameTier.js';
+import { leagueOf } from '../leaderboard/leagues.js';
 
 // a tap on a worn gear opens its GEAR SHEET (Andy oct12 "make the gears clickable") — lazy, so the board's profile chunk stays small.
 // Someone else's gear that YOU don't own opens LOCKED (Andy oct22: no stats from other people's profiles) — PeekGearSheet.
@@ -221,7 +220,6 @@ export default function ProfileCard({ row, mine = false, onClose }) {
     if (closeRef.current) closeRef.current.focus();
   }, []);
   const s = show || {};
-  const plate = rankPlate(row);
   const found = has(s.gears_found) && has(s.gears_total) && Number(s.gears_total) > 0 ? Number(s.gears_found) / Number(s.gears_total) : null;
   const loading = show === undefined;
   return (
@@ -237,11 +235,11 @@ export default function ProfileCard({ row, mine = false, onClose }) {
       >
         <button ref={closeRef} type="button" className="pc-x" onClick={onClose} aria-label="Close profile">✕</button>
         <div className="pc-head">
-          {/* a top-50 player's card wears the same painted numbered seal as their board row (nameTier.js) */}
-          {nameTier(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
+          {/* the card wears the same league badge, place on its plate, as the player's board row (RankSeal) */}
+          {leagueOf(row.rank) ? <RankSeal rank={row.rank} className="pc-seal" /> : <span className="pc-rank">#{formatNum(Number(row.rank) || 0)}</span>}
           {/* names are never cut (FitText shrinks a long one beside the rank plate instead of an ellipsis) */}
           <FitText className="pc-name" min={0.5}>{row.username}</FitText>
-          <KitRankPlate rank={plate.i} fit shine={false} className="pc-plate" />
+          <LeagueBadge rank={row.rank} art={false} className="pc-plate pc-league" />
         </div>
         <div className="pc-sub">
           <span className="pc-sub-c"><KitIcon name="rebirth" size={26} shadow={1} extras={false} /> R{formatNum(Number(row.rebirths) || 0)}</span>

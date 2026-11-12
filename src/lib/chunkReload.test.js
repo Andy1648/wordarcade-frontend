@@ -3,7 +3,7 @@
 // stand-in on globalThis first (same shape as visitHistory.test.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isStaleChunkError, reloadOnceForStaleChunk } from './chunkReload.js';
+import { isStaleChunkError, isOptionalChunkError, installChunkReloadGuard, reloadOnceForStaleChunk } from './chunkReload.js';
 
 function memStorage(seed = {}) {
   const map = new Map(Object.entries(seed));
@@ -106,4 +106,27 @@ test('OFFLINE: a failed chunk is not a stale build — no reload, and the one re
     Object.defineProperty(globalThis, 'navigator', { value: prev.nav, configurable: true, writable: true });
     globalThis.window = prev.win;
   }
+});
+
+// ---- a blocked analytics chunk is not a broken deploy (nov6) ----
+
+test('a blocked sentry chunk is optional; a game chunk is not', () => {
+  assert.equal(isOptionalChunkError(new TypeError('Failed to fetch dynamically imported module: https://typeaword.com/assets/sentry-DSWAZbUQ.js')), true);
+  assert.equal(isOptionalChunkError(new TypeError('Failed to fetch dynamically imported module: https://typeaword.com/assets/GameScreen-BT503Yfj.js')), false);
+  assert.equal(isOptionalChunkError(null), false);
+});
+
+test('the guard does not reload for a blocked sentry chunk, and still reloads for a game chunk', () => {
+  const calls = install(memStorage());
+  const handlers = {};
+  globalThis.window.addEventListener = (name, fn) => { handlers[name] = fn; };
+  installChunkReloadGuard();
+  let prevented = 0;
+  const ev = (url) => ({ payload: new TypeError(`Failed to fetch dynamically imported module: ${url}`), preventDefault: () => { prevented += 1; } });
+  handlers['vite:preloadError'](ev('https://typeaword.com/assets/sentry-DSWAZbUQ.js'));
+  handlers.unhandledrejection({ reason: new TypeError('Failed to fetch dynamically imported module: https://typeaword.com/assets/sentry-DSWAZbUQ.js') });
+  assert.equal(calls.reloads, 0);
+  assert.equal(prevented, 0); // it must reject, so initSentry's own catch runs
+  handlers['vite:preloadError'](ev('https://typeaword.com/assets/GameScreen-BT503Yfj.js'));
+  assert.equal(calls.reloads, 1);
 });

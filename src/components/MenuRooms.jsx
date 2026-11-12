@@ -15,13 +15,21 @@
 //    Hidden at zero rooms (Andy nov2).
 // LAZY (payload ratchet): Homepage loads this chunk only after the first public_rooms reply; the poll lives in
 // menuRoomsPoll.js (eager, tiny).
+// SPECTATE (nov4): a live public game stays listed (list_public_rooms { withLive }) as PLAYING → SPECTATE (App's
+// handleWatchPublicRoom, the read-only watch); a waiting room is IN LOBBY → JOIN. Lobbies first, then live games.
 // Motion: static at rest; a row's one-shot enter (transform/opacity) and hover/press only — no loops.
 import { useEffect, useState } from 'react';
 import { GAMES } from '../gameData';
 import { isHeroId } from '../cast/mainFace.js';
 import { activeBoosts } from '../progress/liveBoost.js';
 import { useSound } from '../contexts/SoundContext';
+import { isLive, sortRooms, rowAction } from '../lib/roomList.js';
+import useRoomsClock from '../hooks/useRoomsClock.js';
 import './MenuRooms.css';
+import FitText from './kit/FitText.jsx';
+
+// the order + what a row says live in lib/roomList.js (shared with the JOIN ROOM list); re-exported for older imports
+export { isLive, sortRooms };
 
 const MODE = GAMES.reduce((acc, g) => {
   acc[g.id] = { label: g.name.replace('\n', ' '), color: g.baseColor, art: g.artLayers ? g.artLayers.hero : null };
@@ -29,22 +37,16 @@ const MODE = GAMES.reduce((acc, g) => {
 }, {});
 const modeOf = (type) => MODE[type] || { label: String(type || 'GAME').replace(/-/g, ' ').toUpperCase(), color: '#2EFFE0', art: null };
 
-/** Fullest first (the same order Quick Play fills in), then the server's order. Pure. */
-export function sortRooms(rooms) {
-  return (Array.isArray(rooms) ? rooms : [])
-    .filter((r) => r && r.code && !(r.maxPlayers && r.playerCount >= r.maxPlayers)) // the server never lists a full room; belt and braces
-    .map((r, i) => ({ r, i }))
-    .sort((a, b) => (b.r.playerCount || 0) - (a.r.playerCount || 0) || a.i - b.i)
-    .map((x) => x.r);
-}
-
-function RoomRow({ room, joining, onJoin, delay }) {
+function RoomRow({ room, joining, onJoin, delay, clock }) {
   const mode = modeOf(room.gameType);
   const hero = room.hostHero && isHeroId(room.hostHero) ? room.hostHero : null;
   const who = room.hostName || mode.label;
   const busy = joining === room.code;
+  const live = isLive(room);
+  const act = rowAction(room, clock);
+  const action = act.verb;
   return (
-    <li className="mr-row" style={{ '--mr-accent': mode.color, '--mr-delay': `${delay}ms` }} data-testid="menu-room-row" data-code={room.code}>
+    <li className={`mr-row${live ? ' is-live' : ''}`} style={{ '--mr-accent': mode.color, '--mr-delay': `${delay}ms` }} data-testid="menu-room-row" data-code={room.code}>
       <span className={`mr-face${hero ? ' is-hero' : ' is-mode'}`} aria-hidden="true">
         {hero
           ? <img src={`/cast/${hero}-hero.webp`} alt="" width="512" height="512" decoding="async" draggable="false" />
@@ -52,25 +54,24 @@ function RoomRow({ room, joining, onJoin, delay }) {
             ? <img src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" />
             : <span className="mr-face-tag">{mode.label.slice(0, 2)}</span>}
       </span>
-      <span className="mr-host">{who}</span>
-      {/* line 2 (the narrow column had left the mode ~9px — coordinator nov2): the face, then a mode chip (the mode's
-          art when the face is a hero — the face already IS the mode art otherwise — + its name, ≥13px, never shrunk;
-          a long name wraps) and a big x/max */}
+      <FitText className="mr-host" data-col="name" translate="no">{who}</FitText>
+      {/* line 2 (nov9): the mode (its art when the face is a hero) + the x/max, wrapping under each other in the space the
+          fixed-width button leaves - never squeezed into a chip that can't hold its name */}
       <span className="mr-meta">
-        <span className="mr-modechip">
-          {hero && mode.art ? <img className="mr-modeico" src={mode.art} alt="" loading="lazy" decoding="async" draggable="false" /> : null}
-          <span className="mr-mode">{mode.label}</span>
-        </span>
+        <span className="mr-mode">{mode.label}</span>{' '}
         <span className="mr-count" aria-label={`${room.playerCount} of ${room.maxPlayers} players`}>{room.playerCount}/{room.maxPlayers}</span>
       </span>
       <button
         type="button"
-        className="mr-join"
-        disabled={!!joining}
-        onClick={() => onJoin(room.code)}
-        aria-label={`Join ${who}'s ${mode.label} room, ${room.playerCount} of ${room.maxPlayers} players`}
+        className={`mr-join is-${act.kind}${live ? ' is-watch' : ''}`}
+        data-col="action"
+        disabled={!!joining || act.kind === 'none'}
+        onClick={() => onJoin(room)}
+        aria-label={`${act.kind === 'none' ? `${action}:` : live ? 'Spectate' : 'Join'} ${who}'s ${mode.label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players`}
       >
-        {busy ? '…' : 'JOIN'}
+        {/* the row's state rides in the button (no third line: the panel's height is the column's budget) */}
+        <span className="mr-status" data-testid="menu-room-status">{act.status.replace('STARTS IN ', 'STARTS ')}</span>
+        <span className={`mr-action${act.kind === 'none' ? ' is-why' : ''}`}>{busy ? '…' : action}</span>
       </button>
     </li>
   );
@@ -83,6 +84,7 @@ export default function MenuRooms({
   maxRows = null, // null = by screen height (below); a number pins it (tests)
   name,
   onJoin,
+  onWatch,
   onCreate,
   onNavigate,
   onOpenAll,
@@ -106,6 +108,7 @@ export default function MenuRooms({
   // a dropped socket can never answer the join — unlock the rows so a reconnect can try again
   useEffect(() => { if (!online) setJoining(null); }, [online]);
   const list = sortRooms(rooms);
+  const clock = useRoomsClock(rooms);
 
   if (variant === 'chip') {
     if (!heard || list.length === 0) return null; // hides at zero (Andy nov2)
@@ -119,13 +122,17 @@ export default function MenuRooms({
   }
 
   // only App's EXISTING handlers (the ones JOIN ROOM uses); App owns every view change
-  const handleJoin = (code) => {
-    if (joining || navigating || !onJoin) return;
+  const handleJoin = (room) => {
+    const live = isLive(room);
+    const go = live ? onWatch : onJoin;
+    if (joining || navigating || !go) return;
     const n = (name || '').trim();
     if (!n) { if (onOpenAll) onOpenAll(); return; } // no name yet: the JOIN ROOM screen asks for one
     sound.click();
-    setJoining(code);
-    onJoin(code, n); // join_room → App's room_update path (functional setView) / failure → JOIN ROOM screen
+    setJoining(room.code);
+    // join_room → App's room_update path (functional setView) / spectate_room → App's watch path; a failure of
+    // either lands on the JOIN ROOM screen
+    go(room.code, n);
   };
   const handleCreate = () => {
     if (navigating || !onCreate) return;
@@ -154,7 +161,7 @@ export default function MenuRooms({
           {shown.length > 0 && (
             <ul className="mr-list">
               {shown.map((room, i) => (
-                <RoomRow key={room.code} room={room} joining={joining} onJoin={handleJoin} delay={i * 40} />
+                <RoomRow key={room.code} room={room} joining={joining} onJoin={handleJoin} delay={i * 40} clock={clock} />
               ))}
             </ul>
           )}

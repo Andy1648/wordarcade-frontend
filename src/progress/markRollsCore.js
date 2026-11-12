@@ -182,6 +182,10 @@ const RAW_POOL = [
   { id: 'mk-flashcards', name: 'FLASHCARDS', tier: 'rare', mode: 'satRush', stat: 'satWinsPct', subs: 'X1.5 L2.5' },
   { id: 'mk-firecracker', name: 'FIRECRACKER', tier: 'rare', mode: 'fuse', stat: 'fuseWinsPct', subs: 'C3 W2' },
   { id: 'mk-gumball', name: 'GUMBALL MACHINE', tier: 'rare', mode: null, stat: 'gemsPct', subs: 'L7.5 X.5' },
+  // NEW GEARS nov3 (batch 2, bombs + Newgrounds energy): three RARES on free (stat, tier) slots
+  { id: 'mk-cherrybomb', name: 'CHERRY BOMB', tier: 'rare', mode: null, stat: 'streakWinsPct', subs: 'C3 L5' },
+  { id: 'mk-spraycan', name: 'SPRAY CAN', tier: 'rare', mode: null, stat: 'longWinsPct', subs: 'P.25 G5' },
+  { id: 'mk-popcorn', name: 'POPCORN', tier: 'rare', mode: null, stat: 'gameXpPct', subs: 'W2 G5' },
   // ---- EPIC (7) ----
   { id: 'mk-pyro', name: 'CASH REGISTER', tier: 'epic', mode: 'fuse', legacy: true, stat: 'baseWins', subs: 'C6 L10 G10' },
   { id: 'mk-nova', name: 'BOOMBOX', tier: 'epic', mode: null, legacy: true, stat: 'winsPct', subs: 'C6 P1' },
@@ -196,6 +200,12 @@ const RAW_POOL = [
   { id: 'mk-fortune', name: 'FORTUNE COOKIE', tier: 'epic', mode: 'satRush', stat: 'satWinsPct', subs: 'L20 G10' },
   { id: 'mk-hoarder', name: 'MAGPIE', tier: 'epic', mode: null, stat: 'gemsPct', subs: 'L15 W4 X1' },
   { id: 'mk-domino', name: 'DOMINO', tier: 'epic', mode: 'wordBomb', stat: 'wbWinsPct', subs: 'C9 P.75' },
+  // NEW GEARS nov2 (Andy "make hella sick gears"): five EPICS on free (stat, tier) slots — painted in ChatGPT Plus
+  { id: 'mk-bullseye', name: 'BULLSEYE', tier: 'epic', mode: null, stat: 'gameXpPct', subs: 'C9 G15' },
+  { id: 'mk-rocketskates', name: 'ROCKET SKATES', tier: 'epic', mode: 'wordRace', stat: 'raceWinsPct', subs: 'C3 L10 X3' },
+  { id: 'mk-snowball', name: 'SNOWBALL', tier: 'epic', mode: null, stat: 'streakWinsPct', subs: 'W4 G10 O30' },
+  { id: 'mk-telescope', name: 'TELESCOPE', tier: 'epic', mode: null, stat: 'longWinsPct', subs: 'C6 P.5 L10' },
+  { id: 'mk-drumsticks', name: 'DRUMSTICKS', tier: 'epic', mode: null, stat: 'critEvery', subs: 'C6 W4 X2' },
   // ---- LEGENDARY (9) + perk ----
   { id: 'mk-leviathan', name: 'LEVIATHAN', tier: 'legendary', mode: null, stat: 'xpPct', subs: 'C9 X10 L15' },
   { id: 'mk-eclipse', name: 'ECLIPSE', tier: 'legendary', mode: null, stat: 'winsPct', subs: 'P1 W20 G15' },
@@ -213,6 +223,8 @@ const RAW_POOL = [
   { id: 'mk-longshot', name: 'LONGSHOT', tier: 'legendary', mode: null, stat: 'longWinsPct', subs: 'C13.5 P1 L22.5' },
   { id: 'mk-hothand', name: 'HOT HAND', tier: 'legendary', mode: null, stat: 'streakWinsPct', subs: 'P2.5 W15' },
   { id: 'mk-arcadestick', name: 'ARCADE STICK', tier: 'legendary', mode: null, stat: 'gameXpPct', subs: 'C18 L15 G15' },
+  // NEW GEARS nov2: four LEGENDARIES (each now 1 IN 130 x 16)
+
   // ---- MYTHIC (4) + perks (every MYTHIC+ gear also carries FREE OVERDRIVE — markPerks.js) ----
   { id: 'mk-singularity', name: 'SINGULARITY', tier: 'mythic', mode: null, stat: 'baseWins', subs: 'C14 P4 G25' },
   { id: 'mk-kraken', name: 'KRAKEN', tier: 'mythic', mode: null, stat: 'baseXp', subs: 'C14 W30 L50' },
@@ -220,9 +232,21 @@ const RAW_POOL = [
   { id: 'mk-chronos', name: 'CHRONOS', tier: 'mythic', mode: null, stat: 'xpPct', subs: 'X15 G25 O240' }, // oct18: bends time — every letter's XP
   { id: 'mk-firebird', name: 'FIREBIRD', tier: 'mythic', mode: null, stat: 'winsPct', subs: 'P3 L25 O180' }, // oct21: AFTERPARTY
   { id: 'mk-trident', name: 'TRIDENT', tier: 'mythic', mode: 'blitz', stat: 'blitzWinsPct', subs: 'C21 W30 G37.5' }, // oct21: TRIPLE THREAT
+  // NEW GEARS nov2: seven MYTHIC chase pieces (every LEGENDARY main slot is taken by a rolled or UNLISTED gear, so the big ones are MYTHIC)
+  { id: 'mk-anchor', name: 'ANCHOR', tier: 'mythic', mode: 'chain', stat: 'chainWinsPct', subs: 'W30 G25 O240' },
+  { id: 'mk-comet', name: 'COMET', tier: 'mythic', mode: 'wordRace', stat: 'raceWinsPct', subs: 'C14 X30 O120' },
+  { id: 'mk-meltdown', name: 'MELTDOWN', tier: 'mythic', mode: null, stat: 'longWinsPct', subs: 'C14 P2 W60' },
+  { id: 'mk-genie', name: 'GENIE', tier: 'mythic', mode: null, stat: 'luckPct', subs: 'P2 W30 G50' },
+  { id: 'mk-gauntlet', name: 'GAUNTLET', tier: 'mythic', mode: 'fuse', stat: 'fuseWinsPct', subs: 'C28 P2 X15' },
+  { id: 'mk-grimoire', name: 'GRIMOIRE', tier: 'mythic', mode: 'satRush', stat: 'satWinsPct', subs: 'L50 X15 O120' },
+  { id: 'mk-supernova', name: 'SUPERNOVA', tier: 'mythic', mode: null, stat: 'streakWinsPct', subs: 'C14 P4 O120' },
+  // NEW GEARS nov3 (batch 2, bombs + Newgrounds energy): one MYTHIC on free (stat, tier) slots
+  { id: 'mk-pinata', name: 'PINATA', tier: 'mythic', mode: null, stat: 'gemsPct', subs: 'C14 L50 X15' },
   // ---- SECRET (1) + game-changing perks ----
   { id: 'mk-origin', name: 'ORIGIN', tier: 'secret', mode: null, stat: 'winsPct', subs: 'C20 P3 W80 G50' },
   { id: 'mk-paradox', name: 'PARADOX', tier: 'secret', mode: null, stat: 'gemsPct', subs: 'C30 L60 O240' }, // oct21: TWIN SOULS
+  // NEW GEARS nov3 (batch 2, bombs + Newgrounds energy): a SECRET chase piece on free (stat, tier) slots
+  { id: 'mk-megaton', name: 'MEGATON', tier: 'secret', mode: null, stat: 'streakWinsPct', subs: 'P3 W80 L40 O240' },
 ];
 // GEAR POOL v2: the 12 COMMON gears that were removed (each owned copy refunds COMMON_REFUND_GEMS — migrateRollSave),
 // and the three marks.js-only COMMONS (the retired ALL-MODE marks) that went with them.
@@ -295,7 +319,8 @@ export function permanentMarkById(id) {
 /** Dupes per ★ pip, by tier (Andy oct5). */
 // DUPES → GEMS (gear card v4, Andy oct11: "no tiers/stars — duplicates pay gems"): a duplicate now pays its tier's gems
 // and never adds a ★. A save from before v4 keeps the ★ pips it had (frozen in the mark's `p`), so no gear ever got weaker.
-export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 });
+// nov5: a lucky duplicate paid 500 / 2,500 at once. private.gem_budget keeps the old table (a ceiling, never refuses an earned gem).
+export const DUPE_GEMS = Object.freeze({ rare: 5, epic: 25, legendary: 50, mythic: 100, secret: 200 });
 export const DUPES_PER_PIP = { rare: 5, epic: 3, legendary: 2, mythic: 1, secret: 1 };
 export const MAX_PIPS = 5;
 export const PIP_STEP = 0.2; // each pip +20% of the stat → ★5 = ×2

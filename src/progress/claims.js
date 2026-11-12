@@ -221,7 +221,7 @@ export function claimAll() {
 // A 'boost' claim starts (or extends) the BOOST timer: ×meta.mult on every mode for meta.min minutes.
 registerClaimHandler('boost', (c) => {
   const m = (c && c.meta) || {};
-  startBoost(m.mult, m.min);
+  startBoost(m.mult, m.min, undefined, !!m.od);
 });
 
 // ---- GEMS codes (Andy oct10, migration 030): pay through the one gem door ------------------------------------------

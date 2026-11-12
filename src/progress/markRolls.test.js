@@ -49,8 +49,8 @@ test('tiers: Andy\'s five tiers (no COMMON), odds and MAINs — and MARK_TIERS s
 test('pool: every tier has a mark, no COMMON; LEGENDARY+ carry a perk, below that only the oct21 EPICS; MYTHIC+ get FREE OVERDRIVE', () => {
   for (const t of TIERS) assert.ok(ROLL_MARKS.some((m) => m.tier === t), t);
   assert.ok(!ROLL_MARKS.some((m) => m.tier === 'common'));
-  assert.equal(ROLL_MARKS.length, 48, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION');
-  const EPIC_PERKS = ['mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino'];
+  assert.equal(ROLL_MARKS.length, 65, '29 − 12 commons + 10 new + JACKPOT + 5 oct18 (4 LEGENDARY, CHRONOS) + 15 oct21 GEAR EXPANSION + 12 nov2 NEW GEARS + 5 nov3 batch 2');
+  const EPIC_PERKS = ['mk-lavalamp', 'mk-alarmclock', 'mk-fortune', 'mk-hoarder', 'mk-domino', 'mk-snowball', 'mk-telescope', 'mk-drumsticks']; // + nov2
   for (const m of ROLL_MARKS) {
     const top = ['legendary', 'mythic', 'secret'].includes(m.tier) || EPIC_PERKS.includes(m.id);
     assert.equal(m.perks.length > 0, top, `${m.id} (${m.tier}) perk`);
@@ -74,11 +74,11 @@ test('odds: the table sums to 1; each rarer TIER is exactly 1 IN X; RARE (the fl
   }
   assert.ok(Math.abs(tierMass(t, 'rare') - (1 - (1 / 60 + 1 / 130 + 1 / 2000 + 1 / 15000))) < 1e-9);
   // GEAR EXPANSION (oct21): the TIER odds never move; each gear's share is its tier's split by the tier's size
-  assert.equal(oneInX('mk-origin'), 30000, 'two secrets (oct21: + PARADOX) split 1 IN 15,000');
+  assert.equal(oneInX('mk-origin'), 45000, 'three secrets (oct21: + PARADOX, nov3: + MEGATON) split 1 IN 15,000');
   assert.equal(oneInX('mk-leviathan'), 1560, 'twelve legendaries (oct18: +4, oct21: +3) split 1 IN 130 (oct22)');
-  assert.equal(oneInX('mk-nova'), 720, 'twelve epics (oct21: +5) split 1 IN 60');
-  assert.equal(oneInX('mk-hydra'), 12000, 'six mythics (oct18: + CHRONOS, oct21: + FIREBIRD, TRIDENT) split 1 IN 2,000');
-  assert.equal(oneInX('mk-smith'), 16, 'sixteen rares split 97.64%');
+  assert.equal(oneInX('mk-nova'), 1020, 'seventeen epics (oct21: +5, nov2: +5) split 1 IN 60');
+  assert.equal(oneInX('mk-hydra'), 28000, 'fourteen mythics (oct18: + CHRONOS, oct21: + FIREBIRD, TRIDENT, nov2: +7, nov3: + PINATA) split 1 IN 2,000');
+  assert.equal(oneInX('mk-smith'), 19, 'nineteen rares (nov3: + CHERRY BOMB, SPRAY CAN, POPCORN) split 97.64%');
 });
 
 test('luck: scales every chance above the RARE floor, RARE absorbs, sums stay 1', () => {
@@ -92,7 +92,7 @@ test('luck: scales every chance above the RARE floor, RARE absorbs, sums stay 1'
   assert.ok(Math.abs(t2.probs.get('mk-leviathan') / t1.probs.get('mk-leviathan') - 2) < 1e-9);
   assert.ok(Math.abs(t2.probs.get('mk-origin') / t1.probs.get('mk-origin') - 2) < 1e-9);
   assert.equal(yourOneInX('mk-leviathan', 2), 780);
-  assert.equal(yourOneInX('mk-smith', 2), 16, 'the floor is not luck-scaled');
+  assert.equal(yourOneInX('mk-smith', 2), 19, 'the floor is not luck-scaled');
   const big = rollTable(s, { permanentOwned: 1e6 });
   assert.equal(tierMass(big, 'rare'), 0);
   assert.ok(Math.abs(sumProbs(big) - 1) < 1e-9);

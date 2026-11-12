@@ -114,7 +114,7 @@ for (const vp of [{ width: 1536, height: 864 }, { width: 1366, height: 768 }, { 
       const gaps = tiles.slice(1).map((t, i) => t.left - tiles[i].right);
       return { n: tiles.length, gaps, right: tiles.length ? tiles[tiles.length - 1].right : 0, edge: box.getBoundingClientRect().right };
     });
-    expect(g.n).toBeGreaterThanOrEqual(3);
+    expect(g.n).toBeGreaterThanOrEqual(2); // board + trophy (the wheel moved to UPGRADES, Andy nov5)
     for (const gap of g.gaps) expect(gap, 'one small, even gap').toBeLessThanOrEqual(12);
     expect(Math.max(...g.gaps) - Math.min(...g.gaps)).toBeLessThanOrEqual(1);
     expect(Math.abs(g.edge - g.right), 'flush with the column edge').toBeLessThanOrEqual(14);

@@ -1,4 +1,4 @@
-// overdrive.js — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush", Andy oct3 20:08): ×5 on XP AND wins for 5 minutes.
+// overdrive.js — OVERDRIVE (PROGRESSION FINAL "Rebirth Rush", Andy oct3 20:08): ×3 on XP AND wins for 5 minutes.
 //
 // NO MORE RANDOM OVERDRIVE (Andy oct20: "i dont want it to randomly appear tho (if its part of gear fine but its
 // uncalled for)"). An OVERDRIVE now only ever starts from something the player chose: the OVERCLOCK gear perk (the
@@ -20,7 +20,11 @@ import { V3 } from './season.js'; // V3.unlocks: the R10 OVERDRIVE ×2 LONG unlo
 // here, its state under the season's own key (v3/hooks.js S2_KEYS maps taw.overdrive → taw.s2.overdrive).
 
 export const OVERDRIVE_KEY = 'taw.overdrive';
-export const OVERDRIVE_MULT = 5; // Andy oct11: ×5 (was ×10) — every OVERDRIVE (random, MYTHIC+ free, shop, codes, daily drop)
+// nov6 (Andy: he said "3x", #659 misread it as 3 × the old ×5): ×3 — every OVERDRIVE: the shop card, the daily drop's
+// MYTHIC, OVERDRIVE codes, the MYTHIC+ gears' free one and AFTERPARTY. The ONE number every door reads.
+export const OVERDRIVE_MULT = 3;
+// A boost slot written during the ×15 weeks: it keeps its clock and runs at ×3 (boost.js readBoostSlot).
+export const RETIRED_OVERDRIVE_MULT = 15;
 export const OVERDRIVE_MIN = 5;
 export const OVERDRIVE_EVERY_MIN = [30, 60]; // minutes of PLAY between OVERDRIVEs (uniform)
 export const PLAY_GAP_CAP_MS = 5000; // one flush gap never counts more than 5 s of play
@@ -85,7 +89,7 @@ export const FREE_OD_MS = FREE_OD_SEC * 1000;
 export function isOverdriveActive(now = Date.now()) {
   return overdriveRemaining(now) > 0;
 }
-/** ×10 while OVERDRIVE runs, else 1. */
+/** ×OVERDRIVE_MULT while OVERDRIVE runs, else 1. */
 export function overdriveMult(now = Date.now()) {
   return isOverdriveActive(now) ? OVERDRIVE_MULT : 1;
 }
@@ -116,7 +120,7 @@ export function notePlay(ms, now = Date.now(), rng) {
   // a trigger rolled before OVERCLOCK was worn is pulled in to the perk's window
   if (st.nextMs == null || st.nextMs > overdriveEveryMin()[1] * 60000) st.nextMs = rollNext(rng);
   // FREE OVERDRIVE (every MYTHIC+ gear, while it is the worn MAIN): its own clock counts every played ms; at 15 min it
-  // starts a 60 s ×10 OVERDRIVE as soon as none is running (one waiting at 15 min fires the moment the current ends)
+  // starts a 60 s OVERDRIVE as soon as none is running (one waiting at 15 min fires the moment the current ends)
   if (freeOverdriveOn()) {
     st.freeMs = Math.min(FREE_OD_EVERY_MS, (st.freeMs || 0) + add);
     if (st.freeMs >= FREE_OD_EVERY_MS && !(st.until > now)) {

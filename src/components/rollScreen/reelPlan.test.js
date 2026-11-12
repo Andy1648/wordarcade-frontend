@@ -172,6 +172,12 @@ test('ROLL v1 reveals are rarity-scaled: lite < EPIC (REVEAL v2), dim at EPIC, f
   for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t), 'full');
   assert.equal(revealKind('secret', 'short'), 'line');
   assert.equal(revealKind('legendary', 'none'), 'line');
+  // a common duplicate takes the short path; a dupe that steps a ★ pip up keeps its reveal; LEGENDARY+ always keeps it
+  assert.equal(revealKind('rare', 'full', { dupe: true }), 'line');
+  assert.equal(revealKind('epic', 'full', { dupe: true }), 'line');
+  assert.equal(revealKind('epic', 'full', { dupe: true, pipUp: true }), 'dim');
+  assert.equal(revealKind('epic', 'full', { dupe: false }), 'dim');
+  for (const t of ['legendary', 'mythic', 'secret']) assert.equal(revealKind(t, 'full', { dupe: true }), 'full');
 });
 
 test('the AUTO cycle: OFF → EPIC+ → LEGENDARY+ → OFF (GEAR POOL v2: RARE+ is every roll, so it is gone)', async () => {
@@ -223,6 +229,8 @@ test('the reveal card dominates (design audit nov2): ~65% of the height on deskt
   assert.ok(h({ vw: 1280, vh: 551 }) <= 551 - 200 + 1);
   // phone: ~75% of the width when the height allows, else what fits
   assert.equal(revealCardW({ vw: 390, vh: 844 }), Math.round(390 * 0.75));
+  // a MYTHIC / SECRET frame variant hangs outside the card: the phone card steps in so its horns stay on screen
+  assert.equal(revealCardW({ vw: 390, vh: 844, frame: true }), Math.round(390 * 0.64));
   assert.equal(revealCardW({ vw: 360, vh: 640 }), Math.round(360 * 0.75));
   assert.ok(h({ vw: 360, vh: 640, kind: 'full' }) <= 640 - 230 + 1);
   // a perk / dupe plate: beside the card on desktop (width room), under it on a phone (height room)

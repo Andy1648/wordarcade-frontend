@@ -62,6 +62,8 @@ const LEADS_CACHE = new WeakMap(); // accept → WeakMap(pools → Map(letter �
 // A shuffled bag over a fragment pool: draws WITHOUT REPLACEMENT, reshuffling only once the
 // bag is empty. So the first pool.length draws are a permutation (no repeat within a run
 // until the pool is exhausted). Plain random repeated a fragment within a run 95.6% of runs.
+// draw(avoid): skip fragments in `avoid` (the LAST run's — recentFrags.js) while the bag holds any other; only when
+// every fragment left is avoided does one come back. The order of the rest is untouched (still a fair shuffle).
 export function createFragmentBag(pool, rng = Math.random) {
   const base = pool.slice();
   let bag = [];
@@ -75,8 +77,18 @@ export function createFragmentBag(pool, rng = Math.random) {
     }
   };
   return {
-    draw() {
+    draw(avoid = null) {
       if (bag.length === 0) refill();
+      if (avoid && avoid.size && avoid.has(bag[bag.length - 1])) {
+        for (let i = bag.length - 2; i >= 0; i--) {
+          if (!avoid.has(bag[i])) {
+            const t = bag[i];
+            bag[i] = bag[bag.length - 1];
+            bag[bag.length - 1] = t;
+            break;
+          }
+        }
+      }
       return bag.pop();
     },
   };
@@ -87,8 +99,9 @@ export function createFragmentBag(pool, rng = Math.random) {
  * @param {Set<string>} opts.accept  the ACCEPT membership set
  * @param {{e:string[],m:string[],h:string[],b:string[]}} opts.pools  fragment pools by tier
  * @param {() => number} [opts.rng]  injected RNG in [0,1)
+ * @param {Set<string>} [opts.recent]  the LAST run's fragments (recentFrags.js) — skipped while any other is left
  */
-export function createFuseEngine({ accept, pools, rng = Math.random, steerP = STEER_P } = {}) {
+export function createFuseEngine({ accept, pools, rng = Math.random, steerP = STEER_P, recent = null } = {}) {
   if (!accept) throw new Error('createFuseEngine: accept set required');
   if (!pools) throw new Error('createFuseEngine: fragment pools required');
 
@@ -214,7 +227,10 @@ export function createFuseEngine({ accept, pools, rng = Math.random, steerP = ST
   function serve() {
     const tier = selectTier(state.wordsSolved, rng);
     state.tier = tier;
-    state.fragment = steerFragment(tier) || bags[tier].draw();
+    // the tiers SHARE fragments (1,115 pool entries, 710 distinct) and each has its own bag: without servedFrags here a
+    // fragment came back when the tier moved on (37% of 40-word runs repeated one)
+    const avoid = recent && recent.size ? new Set([...recent, ...state.servedFrags]) : state.servedFrags;
+    state.fragment = steerFragment(tier) || bags[tier].draw(avoid);
     state.servedFrags.add(state.fragment);
     state.shortPenalty = lenFactorNext < 1.0;
     state.shortFactor = lenFactorNext; // the exact factor applied (for a truthful UI readout)

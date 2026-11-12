@@ -1,0 +1,12 @@
+/* artSlots.css — the flat plate behind art that has not arrived yet (lib/artLoad.js holds the same list). Static: it only holds
+   the box, and the art fades in over it. */
+img.sp2-art:not([data-art]),
+img.sp2-chest-paint:not([data-art]),
+img.sp2-plate-art:not([data-art]),
+img.lb2-buddy:not([data-art]),
+.lb2-face img:not([data-art]),
+.hpv-ver-art img:not([data-art]),
+img[data-art='fail'] {
+  background: rgba(92, 15, 163, 0.28);
+  border-radius: 8px;
+}

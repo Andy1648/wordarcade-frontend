@@ -6,23 +6,22 @@
 //    reference) that turns your hero in the PROFILE into a framed card. Each frame's art + name-plate windows were
 //    measured off the cut (% of the frame). The five MODE frames are the MASTERY ROAD's frame node (masteryRoad.js
 //    ROAD_SHAPE[6]) made real: claim it on that mode's road and the frame is yours.
-//  · WIN FX — a painted burst (public/fx/win/<id>.webp, Gemini) that blasts behind your hero when you WIN (the results
-//    card's impact burst) — Rocket League's goal explosion.
-// Earned with WINS like the crew (gems skip the wait); the rare ones sit behind a rebirth, then gems. Looks only:
+//  · (WIN FX — retired nov2; the `fx` slot reads as empty on every save)
+// nov9 (Andy: heroes "cost pure gems", no WINS / rebirth requirements): the sold frames are GEMS ONLY, priced against the
+// heroes and the paid packs; road frames are claimed on a mastery road, JACKPOT is won on the wheel. Looks only:
 // nothing here changes how a game plays or pays.
 import { KIT_CHANGE } from './avatarFrame.js';
-import { getRebirths } from '../progress/xp.js';
 import { spendGems } from '../progress/gems.js';
 import { itemPurchased } from '../lib/events.js';
-import { totalWins } from './cast.js';
+import { totalWins } from './cast.js'; // only to grandfather frames earned with wins before nov9
 
 // art / plate = the frame's two windows [x, y, w, h], % of the frame image; ar = its width / height
 const F = (id, name, tag, color, ar, art, plate, more) => ({ id, name, tag, color, ar, art, plate, slot: 'frame', ...more });
 export const FRAMES = [
-  F('frost', 'FROST', 'COLD STREAK', '#2EFFE0', 477 / 855, [17.4, 14.85, 65.83, 53.1], [18.03, 73.22, 64.15, 9.12], { wins: 40, price: 600 }),
-  F('graffiti', 'GRAFFITI', 'TAGGED IT', '#FF4FA3', 485 / 821, [16.49, 16.57, 66.8, 55.18], [17.94, 77.22, 63.92, 8.89], { wins: 70, price: 800 }),
-  F('flame', 'FLAME', 'ON FIRE. LITERALLY.', '#FF6B3D', 489 / 803, [16.77, 16.94, 67.69, 56.41], [17.79, 78.95, 65.44, 9.59], { wins: 110, price: 1000 }),
-  F('arcade', 'ARCADE', 'INSERT COIN', '#9A1AFF', 535 / 866, [17.38, 21.25, 64.11, 51.39], [17.76, 76.91, 63.36, 8.66], { reb: 2, price: 1500, rare: true }),
+  F('frost', 'FROST', 'COLD STREAK', '#2EFFE0', 477 / 855, [17.4, 14.85, 65.83, 53.1], [18.03, 73.22, 64.15, 9.12], { price: 2000, oldWins: 40 }),
+  F('graffiti', 'GRAFFITI', 'TAGGED IT', '#FF4FA3', 485 / 821, [16.49, 16.57, 66.8, 55.18], [17.94, 77.22, 63.92, 8.89], { price: 3000, oldWins: 70 }),
+  F('flame', 'FLAME', 'ON FIRE. LITERALLY.', '#FF6B3D', 489 / 803, [16.77, 16.94, 67.69, 56.41], [17.79, 78.95, 65.44, 9.59], { price: 4000, oldWins: 110 }),
+  F('arcade', 'ARCADE', 'INSERT COIN', '#9A1AFF', 535 / 866, [17.38, 21.25, 64.11, 51.39], [17.76, 76.91, 63.36, 8.66], { price: 6000, rare: true }),
   // MASTERY ROAD frames: earned on that mode's road, never sold
   F('bomb', 'BOMB SQUAD', 'WORD BOMB MASTERY', '#FF6B3D', 497 / 826, [17.51, 21.43, 64.79, 52.91], [18.11, 79.66, 63.58, 9.44], { road: 'word-bomb' }),
   F('bolt', 'LIGHTNING', 'BLITZ MASTERY', '#3DA8FF', 499 / 766, [16.23, 14.88, 64.73, 55.35], [17.84, 75.98, 61.52, 10.18], { road: 'category-blitz' }),
@@ -32,28 +31,36 @@ export const FRAMES = [
   // DAILY WHEEL only — painted oct25; windows measured off the cut (its name plate is taller: FitText fills it)
   F('jackpot', 'JACKPOT', 'HIT THE BIG ONE', '#FFC23D', 462 / 866, [19.48, 12.14, 61.04, 52.49], [19.48, 70.52, 61.04, 18.38], { wheel: true, rare: true }),
 ];
-export const WIN_FX = [
-  { id: 'firework', name: 'FIREWORKS', tag: 'GRAND FINALE', color: '#FF4FA3', wins: 25, price: 500 },
-  { id: 'splat', name: 'INK SPLAT', tag: 'MESSY WINNER', color: '#9A1AFF', wins: 45, price: 700 },
-  { id: 'thunder', name: 'THUNDERSTRUCK', tag: 'STRUCK BY GREATNESS', color: '#FFE94A', wins: 90, price: 900 },
-  // the rare one: a bomb game's own finish
-  { id: 'blast', name: 'KABOOM', tag: 'THE ONLY WAY TO WIN', color: '#FF6B3D', reb: 3, price: 1500, rare: true },
-  // DAILY WHEEL only — PLACEHOLDER art (a copy of FIREWORKS)
-  { id: 'confetti', name: 'PRIZE SHOWER', tag: 'EVERYBODY WINS (MOSTLY YOU)', color: '#FFC23D', wheel: true, rare: true },
-].map((k) => ({ ...k, slot: 'fx' }));
-const ALL_KIT = [...FRAMES, ...WIN_FX];
+// WIN FX were retired nov2 (Andy: "dont want win fx or sound") — progress/cosmeticsRetire.js refunded the paid ones
+// and took them out of every save; the results card keeps its one default burst.
+const ALL_KIT = [...FRAMES];
 export const kitById = (id) => ALL_KIT.find((k) => k.id === id) || null;
 export const kitSrc = (id) => {
   const k = kitById(id);
   if (k && k.slot === 'frame') return `/cards/frame-${id}.webp`;
-  if (k && k.slot === 'fx') return `/fx/win/${id}.webp`;
   return null; // an unknown / retired id has no art
 };
 
 // a season-2 key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
 export const KIT_KEY = 'taw.s2.kit'; // = avatarFrame.js KIT_KEY
 const SLOT_OK = (slot, id) => { const k = kitById(id); return !!k && k.slot === slot; };
+// GRANDFATHERED (nov9, once per save): a frame earned with WINS under the old rules is written into the owned list
+const KIT_GF_NOV9 = 'taw.s2.kit.gf3';
+function grandfatherKitNov9() {
+  try {
+    if (localStorage.getItem(KIT_GF_NOV9)) return;
+    const w = totalWins();
+    const keep = FRAMES.filter((k) => k.oldWins != null && w >= k.oldWins).map((k) => k.id);
+    if (keep.length) {
+      const v = JSON.parse(localStorage.getItem(KIT_KEY) || '{}') || {};
+      const own = Array.isArray(v.own) ? v.own : [];
+      localStorage.setItem(KIT_KEY, JSON.stringify({ ...v, own: [...new Set([...own, ...keep])] }));
+    }
+    localStorage.setItem(KIT_GF_NOV9, '1');
+  } catch { /* blocked storage */ }
+}
 export function readKit() {
+  grandfatherKitNov9();
   try {
     const v = JSON.parse(localStorage.getItem(KIT_KEY) || '{}');
     const own = Array.isArray(v && v.own) ? v.own.filter((id) => kitById(id)) : [];
@@ -77,33 +84,23 @@ function roadClaimed(mode) {
   } catch { return false; }
 }
 
-/** Earned through play: free, its WINS count reached, or (a road frame) claimed on its mastery road. A rebirth-gated
- *  one is never earned — it is bought once the gate opens. */
+/** Earned through play: free, or (a road frame) claimed on its mastery road. A sold frame is only ever bought. */
 export function kitEarned(id) {
   const k = kitById(id);
   if (!k) return false;
   if (k.road) return roadClaimed(k.road);
   if (k.wheel) return false; // only ever won on the DAILY WHEEL (grantKit)
-  if (!k.price) return true;
-  try { return k.wins != null && totalWins() >= k.wins; } catch { return false; }
+  return !k.price;
 }
-/** Can it be bought yet? A road frame never can; a rebirth-gated one once its rebirth is reached. */
+/** Can it be bought? A road or wheel frame never can; every priced one always can. */
 export function kitGateMet(id) {
   const k = kitById(id);
-  if (!k || k.road || k.wheel) return false;
-  if (k.reb == null) return true;
-  try { return (getRebirths() || 0) >= k.reb; } catch { return false; }
+  return !!k && !k.road && !k.wheel;
 }
 export const ownsKit = (id) => !!kitById(id) && (kitEarned(id) || readKit().own.includes(id));
 
-/** Progress toward an earnable / gated one: { have, need, label, gate? } or null. */
-export function kitProgress(id) {
-  const k = kitById(id);
-  if (!k || !k.price) return null;
-  try {
-    if (k.reb != null) return { have: Math.min(getRebirths() || 0, k.reb), need: k.reb, label: 'REBIRTHS TO UNLOCK', gate: true };
-    if (k.wins != null) return { have: Math.min(totalWins(), k.wins), need: k.wins, label: 'WINS' };
-  } catch { /* a broken store reads as zero */ }
+/** Progress toward a frame: none any more (nov9: sold frames are gems only). Kept so callers need no change. */
+export function kitProgress() {
   return null;
 }
 
@@ -118,8 +115,6 @@ export function grantKit(id) {
 
 /** The frame you wear (null = none). */
 export const equippedFrame = () => readKit().frame;
-/** The WIN FX you wear (null = the default burst). */
-export const equippedFx = () => readKit().fx;
 /** Wear a component you own in its slot, or clear a slot ('frame' | 'fx', id null). Returns false when it isn't yours. */
 export function wearKit(slot, id) {
   if (id != null && (!SLOT_OK(slot, id) || !ownsKit(id))) return false;

@@ -1,6 +1,7 @@
 // Homepage.jsx
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
+import OverlaySkeleton from './OverlaySkeleton';
 import { rollsEnabled } from '../progress/rollsFlag';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
@@ -22,7 +23,7 @@ import { consumePendingRebirth, getRebirths, rebirthThreshold, needAt, loadProgr
 import { careerLevel } from '../progress/popGrowth';
 import { powerForm } from '../progress/powerArt.js';
 import { peekRebirthNow, takeRebirthNow, isRebirthReadyNow, nextRebirthStep } from '../progress/rebirthNow';
-import { rebirthWordsShort } from '../progress/rebirthWords';
+import { rebirthWordsShort, lifetimeGameWords } from '../progress/rebirthWords';
 import { setStatsTab } from '../lib/statsTab';
 import { getStreak } from '../progress/streak';
 import { modeOpened as evModeOpened, lockedModeClicked as evLockedModeClicked, firstWinsEarned as evFirstWinsEarned, streakDay as evStreakDay, refreshSessionProps } from '../lib/events.js';
@@ -70,7 +71,6 @@ const TOUR_GAP_MS = 1200;
 const TOUR_HOLD_MS = 700;
 let tourWaited = false; // the intro plays on the first menu of a page load only
 import BoostDock from '../frenzy/LazyBoostDock';
-import { shownPlateIndex } from '../progress/platePick';
 import AudioControls from './AudioControls';
 import ConnectingContent from './ConnectingContent';
 import MobileMenu from './MobileMenu';
@@ -114,10 +114,15 @@ const ClaimReveal = lazyWithReload(() => import('../claims/ClaimReveal.jsx'), 'C
 const TutorialHost = lazyWithReload(() => import('../tutorials/TutorialHost.jsx'), 'TutorialHost');
 const PatchNotesHost = lazyWithReload(() => import('./patchNotes/PatchNotesHost.jsx'), 'PatchNotesHost');
 const PatchNotesReplay = lazyWithReload(() => import('./patchNotes/PatchNotes.jsx'), 'PatchNotes');
-const DailyWheel = lazyWithReload(() => import('./wheel/DailyWheel.jsx'), 'DailyWheel'); // THE DAILY WHEEL (oct24)
-// the wheel's gem flight (KitFly) — lazy: it mounts only when a closed wheel owes the GEMS pill a flight, never on boot
+// SIGN IN WITH GOOGLE (085): a restore still waiting on the player's OK (the popup's own landing mounts itself: mountLanding.jsx)
+import { GOOGLE_ON } from '../leaderboard/googleFlag.js';
+const AuthLanding = lazyWithReload(() => import('./account/AuthLanding.jsx'), 'AuthLanding');
+const authLanding = () => {
+  if (!GOOGLE_ON) return false; // VITE_GOOGLE_ON off: no landing, ever (googleFlag.js)
+  try { return !!localStorage.getItem('taw.auth.pending'); } catch { return false; }
+};
+// the paid gems' flight (KitFly) — lazy: it mounts only when a purchase owes the GEMS pill a flight, never on boot
 const GemFly = lazyWithReload(() => import('./kit/KitFly.jsx').then((m) => ({ default: m.KitFlyLayer })), 'GemFly');
-import { wheelReady, WHEEL_CHANGE } from '../progress/wheelDot.js'; // the tile's dot only — wheel.js rides the panel
 // YOUR GEAR → the worn gear's sheet (Andy oct9): the INDEX's GEAR SHEET, loaded on the tap (payload ratchet)
 const EquipScreen = lazyWithReload(() => import('./EquipScreen.jsx'), 'EquipScreen');
 import LiveTicker from '../leaderboard/LiveTicker.jsx';
@@ -126,8 +131,10 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
-import { rankTitle } from '../progress/rank'; // v3 (SEASON2): V3.Trophy — the ACHIEVEMENTS trophy, installed with the v3 chunk
+import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { takeRefundNote } from '../progress/cosmeticsRetire';
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
+import { PAYMENTS_ON } from '../payments/flag.js'; // PAID GEMS (default OFF): the lazy pick-up below
 import './wall-system.css';
 import './Homepage.css';
 import './MobileMenu.css';
@@ -183,7 +190,9 @@ let cloudBootChecked = false;
 // the word the nav wipe flashes as each menu sheet opens = that sheet's own title (closing wipes back with no word)
 const SHEET_WIPE_WORDS = { roll: 'ROLL', index: 'INDEX', gear: 'YOUR GEAR', gear2: '2ND GEAR', claims: 'REWARDS', profile: 'PROFILE' };
 
-export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onCreatePublic = null, playerName = '' }) {
+let paidAsked = false; // PAID GEMS: the pick-up runs once a page load
+
+export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, onCreateRoom, onJoinRoom, onQuickPlay, onCredits, onStats, onLeaderboard, onShop, onRebirth, onSatRush, onChain, onFuse, wsStatus, serverEventId, blitzPacks, onToggleBlitzPack, onSetAllBlitzPacks, blitzRounds, onSetBlitzRounds, restoreFocus = null, onFocusRestored, musicMuted = false, onToggleMusic, rooms = null, onRefreshRooms = null, onJoinPublicRoom = null, onWatchPublicRoom = null, onCreatePublic = null, playerName = '' }) {
   // Once any navigation action fires we're about to transition away; lock the
   // buttons so a rapid second click can't double-fire. State resets naturally
   // because the component unmounts on the screen change.
@@ -708,54 +717,27 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // alongside the balance so earning enough on the menu lights the dot immediately.
   const [winsAffordable, setWinsAffordable] = useState(() => canAffordAny());
   useEffect(() => { setWinsAffordable(canAffordAny(wins)); }, [wins]);
-  // THE DAILY FREE DROP (season 2, v3/dailyDrop.js via the V3 holder): the UPGRADES dot is also on while today's free
-  // chest is waiting; a claim (or a new local day, re-read when the tab comes back) moves it. No polling.
-  const [dropReady, setDropReady] = useState(() => !!(SEASON2 && V3.drop && V3.drop.dropReady()));
-  useEffect(() => {
-    if (!SEASON2 || !V3.drop) return undefined;
-    const re = () => setDropReady(V3.drop.dropReady());
-    window.addEventListener(V3.drop.DROP_CHANGE, re);
-    document.addEventListener('visibilitychange', re);
-    return () => {
-      window.removeEventListener(V3.drop.DROP_CHANGE, re);
-      document.removeEventListener('visibilitychange', re);
-    };
-  }, []);
   // THE SHOP's NEW-THING DOTS (oct28, v3/shopDots.js): a newly affordable look also lights UPGRADES (the shelf tabs read the same)
   const [shopNew, setShopNew] = useState(false);
   useEffect(() => (SEASON2 && V3.dots ? V3.dots.watchShopNew(gems, setShopNew) : undefined), [gems]);
   // THE DAILY WHEEL (season 2, oct24): its tile's dot = today's free spin not spun yet (local; the panel asks the server)
-  const [showWheel, setShowWheel] = useState(false);
-  // THE WHEEL'S GEMS FLY HOME (design research move 10): a gem prize is paid under the wheel's scrim, where the menu's
-  // GEMS pill can't be seen — so the pill HOLDS them (gemsInFlight) until the wheel closes, then six painted gems arc
-  // from the WHEEL tile into it and it counts each one in as it lands (KitFlyLayer, pooled). Everything else that
-  // reads `gems` (dots, the roll gate) keeps the real balance.
+  const [authLand, setAuthLand] = useState(authLanding);
+  // PAID GEMS FLY HOME: the pill holds a purchase (gemsInFlight) until the lazy fly layer lands it
   const [gemsInFlight, setGemsInFlight] = useState(0);
-  const wheelOwed = useRef(0);
   const [gemFly, setGemFly] = useState(null); // { from, amounts } while the lazy fly layer is up
-  const onWheelPaid = useCallback((g) => { wheelOwed.current += g; setGemsInFlight((n) => n + g); }, []);
-  useEffect(() => {
-    if (showWheel || !wheelOwed.current) return undefined;
-    const amount = wheelOwed.current;
-    wheelOwed.current = 0;
-    const id = requestAnimationFrame(() => { // after the wheel has unmounted: the tile's box, read once
-      const tile = [...document.querySelectorAll('[data-nav="wheel"]')].find((el) => el.getClientRects().length);
-      const b = tile ? tile.getBoundingClientRect() : null;
-      const from = b ? { x: b.left + b.width / 2, y: b.top + b.height / 2 } : null;
-      const parts = 6;
-      const share = Math.floor(amount / parts);
-      const amounts = Array.from({ length: parts }, (_, i) => (i === parts - 1 ? amount - share * (parts - 1) : share)).filter((a) => a > 0);
-      if (!from || !amounts.length) { setGemsInFlight(0); return; }
-      setGemFly({ from, amounts }); // mounts the lazy layer; its ref fires the flight (gemFlyMounted)
-    });
-    return () => cancelAnimationFrame(id);
-  }, [showWheel]);
   // safety: the pill is never left holding gems (a fly chunk that fails to load, a hidden tab) — release after 3 s
   useEffect(() => {
     if (!gemFly) return undefined;
     const t = setTimeout(() => { setGemsInFlight(0); setGemFly(null); }, 3000);
     return () => clearTimeout(t);
   }, [gemFly]);
+  // PAID GEMS (payments flag, default OFF; migration 082): once a page load the menu picks up paid-gem ledger rows —
+  // polling when back from Stripe (?paid=1) — and flies them into the pill (payments/payReturn.js; zero bytes when off)
+  useEffect(() => {
+    if (!PAYMENTS_ON || paidAsked) return;
+    paidAsked = true;
+    import('../payments/payReturn.js').then((m) => m.default(setGemsInFlight, setGemFly)).catch(() => {});
+  }, []);
   const shownGems = Math.max(0, gems - gemsInFlight);
   // the lazy fly layer's ref: called once it has mounted — fly, then unmount it when every gem has landed
   const gemFlyMounted = useCallback((api) => {
@@ -763,17 +745,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     gemFly.flown = true;
     api.fly({ from: gemFly.from, amounts: gemFly.amounts, onLand: (a) => setGemsInFlight((n) => Math.max(0, n - a)), onDone: () => { setGemsInFlight(0); setGemFly(null); } });
   }, [gemFly]);
-  const [wheelDot, setWheelDot] = useState(() => SEASON2 && wheelReady());
-  useEffect(() => {
-    if (!SEASON2) return undefined;
-    const re = () => setWheelDot(wheelReady());
-    window.addEventListener(WHEEL_CHANGE, re);
-    document.addEventListener('visibilitychange', re);
-    return () => {
-      window.removeEventListener(WHEEL_CHANGE, re);
-      document.removeEventListener('visibilitychange', re);
-    };
-  }, []);
   const { progress: xpProgress, refresh: refreshXp } = useXpCapture({
     fxRef: xpFxRef,
     isBlocked: () => dialogOpenRef.current,
@@ -987,6 +958,15 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     } catch {
       /* blocked */
     }
+  }, []);
+  // WIN FX + SOUND PACKS retired (nov2, cosmeticsRetire.js runs at boot): the gems refunded for paid ones are said ONCE,
+  // as one small edge toast on a settled menu — never a silent change to the balance
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const n = takeRefundNote();
+      if (n > 0 && typeof V3.toast === 'function') V3.toast({ head: `+${formatNum(n)} GEMS BACK`, label: 'WIN FX + SOUND PACKS RETIRED', icon: 'gems', tile: '#9A1AFF' });
+    }, 900);
+    return () => clearTimeout(t);
   }, []);
   // A11y: when an overlay (Shop/Stats) closes, App passes which control opened it so we
   // restore focus to that footer link on this remount, then clear the flag.
@@ -1326,7 +1306,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
   // H5: an open panel / overlay holds the moments queue — nothing new starts under it (a moment already
   // playing finishes). Stats, shop and the board are their own screens (they hold it themselves).
-  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal || showWheel));
+  useMomentHold(!!(dialog || lockedPreview || showClaims || showMarks || claimReveal));
 
   // NAV WIPE for the menu's own full-screen sheets (Andy oct24 "transition screens for all buttons (or at least
   // major ones)"): GEARS / INDEX / YOUR GEAR, REWARDS and PROFILE open + close under the SAME pooled wipe as a view
@@ -1356,11 +1336,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // never rebirthed (R0, ★0) and the level is under the gate. Season 1 keeps it open with its "IN N LV" line.
   // the lock is the LEVEL gate only — at the gate it opens and says "PLAY N WORDS" if game words are short (035)
   // read once per change of the owned list / the worn gear / the overlay (never per keystroke)
-  const ownsAnyGear = useMemo(() => {
-    if (equippedMark || markIdList.length) return true;
+  const ownedGear = useMemo(() => {
     const st = loadRollState();
-    return !!(st && st.marks && Object.keys(st.marks).length);
+    return new Set([...markIdList, ...(st && st.marks ? Object.keys(st.marks) : []), ...(equippedMark ? [equippedMark] : [])]).size;
   }, [equippedMark, markIdList, showMarks]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ownsAnyGear = ownedGear > 0;
   // FIRST-RUN PROGRESSIVE REVEAL (progress/reveal.js): a newcomer's menu opens a step at a time — the TITLE (hero +
   // PLAY), then the core (wins / upgrades / stats / contracts / board / achievements) after a first game or LV3, then
   // gears + gems, then rebirth when near. Existing saves are grandfathered to ALL. Keyed on the signals only (cheap,
@@ -1375,11 +1355,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // THE DAILY WHEEL (Andy oct24) takes the top-right slot once the core menu is revealed; NEWS + SETTINGS then move to
   // the bottom-right cluster (MenuUtility) and CREDITS moves inside SETTINGS. Before that (the first-run title, season 1)
   // the corners are exactly as they were.
-  const wheel = SEASON2 && reveal.core ? { dot: wheelDot, onClick: () => { sound.click(); setShowWheel(true); } } : null;
-  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? handleCredits : null} />;
+  const railLayout = !!(SEASON2 && reveal.core); // season 2's rail: SETTINGS + NEWS in the left rail's utility row
+  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={railLayout ? handleCredits : null} />;
   // oct28 (Andy "tf why is it at the corner"): once the rail is up, the desktop's SETTINGS is a NAMED button in it, not a cog
   // in the bottom-right corner; NEWS keeps that corner
-  const settingsRail = wheel ? <AudioControls variant="rail" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={handleCredits} /> : null;
+  const settingsRail = railLayout ? <AudioControls variant="rail" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={handleCredits} /> : null;
   const rebirthLock = s2Unlocks && !(s2State.rebirths > 0) && !(s2State.stars > 0) && xpProgress.level < rebirthGate ? `LV${formatNum(rebirthGate)}` : null;
   const openMarks = (view) => {
     if (navigating) return;
@@ -1404,7 +1384,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // affordable, a free roll, a new gear), off once it is not. REBIRTH's READY / gate and STATS' multiplier stay: those
     // are STATUS (where you stand), not a tally of things to buy.
     // THE POWER FORM (Andy oct26): the tile wears the painted form your POWER has reached (powerArt.js), not a stock bolt
-    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || dropReady || shopNew, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
+    shop: reveal.core ? { onClick: handleShop, dot: winsAffordable || shopNew, onHover: hover, value: null, art: SEASON2 ? powerForm(getKeyTier()).src : null } : null,
     // GEARS (NIGHT oct8 #2) = ROLL + INDEX: opens the ROLL screen (its INDEX button is the index's door); the dot
     // says a roll is ready OR a new gear landed in the index
     // the reveal's ONE teaser: the next step shows padlocked with its level ("LV6"), the rest are hidden
@@ -1415,7 +1395,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     stats: !reveal.core ? null : { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
   // the first-run tour never draws over a screen that covers the menu (overlap audit oct29 — see its render below)
-  const tourCovered = !!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showWheel || showPatch);
+  const tourCovered = !!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showPatch);
   const trophy = V3.Trophy && reveal.core && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const board = reveal.core && LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = reveal.core ? { count: claims.length, onClick: handleAchievements } : null;
@@ -1452,6 +1432,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const gear2Lock = s2Unlocks && gear2Gate != null && !s2Unlocks.unlocked('mark2', s2State) ? `R${gear2Gate}` : null;
   const [gear2Id, setGear2Id] = useState(() => (SEASON2 && V3.store && V3.store.mark2Id ? V3.store.mark2Id() : null));
   const wornGear2 = markShown && !gear2Lock && gear2Id && gear2Id !== equippedMark ? markEntry(gear2Id) : null;
+  // nov3 HONEST DOTS (design move 16): an empty gear slot's dot only when the visit pays — slot 1: a gear to EQUIP or a
+  // roll you can take; slot 2: a SECOND gear to put in it. Never "the slot is empty" alone.
+  const gearDot = !wornGear && (ownsAnyGear || rollDot);
+  const gear2Dot = !wornGear2 && ownedGear >= 2;
   const openGear2 = () => {
     if (navigating) return;
     if (gear2Lock) { handleRebirth(); return; }
@@ -1467,10 +1451,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const markChip = markShown && reveal.gears ? (
     showGear2 ? (
       <>
-        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
-        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} />
+        <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
+        <MenuGear2Chip mark={wornGear2} locked={gear2Lock} onClick={openGear2} dot={gear2Dot} />
       </>
-    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} />
+    ) : <MenuMarkChip mark={wornGear} owns={ownsAnyGear} onClick={openGear} dot={gearDot} />
   ) : null;
   // NO RATE LINE (Andy oct9: "no need to write how much xp/key below the progression bar bc thats not always the
   // case" — crits, boosts and gear make a key's pay vary). The rate lives on STATS (the rail tile's ×N) and UPGRADES.
@@ -1478,27 +1462,24 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // DAILY CONTRACTS (Andy oct21 "put the dailies on right side where profile is"): the right column's chip (paged ≥1200)
   // and the icon cluster's first tile everywhere else
   // (DAILY BLITZ was retired for MINER, Andy oct26 — its chip/icon/row left this cluster; MINER is a game card.)
-  const dailyTile = reveal.core ? <DailyTile onPlay={handleOpenDialog} navigating={navigating} /> : null;
+  // the worn look's bar kit (set by the effect further down); declared here so the DAILY chip's track can wear it too
+  const [barSkin, setBarSkin] = useState(null);
+  const dailyTile = reveal.core ? <DailyTile kit={barSkin} onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const dailyIcon = reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null;
   const gearSlot = markShown && reveal.gears && isPagedMenu ? (
     <>
-      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} />
-      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} /> : null}
+      <MenuGearSlot mark={wornGear} owns={ownsAnyGear} onClick={openGear} disabled={navigating} dot={gearDot} />
+      {showGear2 ? <MenuGearSlot2 mark={wornGear2} locked={gear2Lock} onClick={openGear2} disabled={navigating} dot={gear2Dot} /> : null}
     </>
   ) : null;
   // NIGHT oct8 #1b (SEASON2): the LV numeral moves INSIDE the bar (its own plate at the left edge) and the old LV
   // slot becomes the RANK plate — the name big, a small RANK caption (labelled: Andy oct6, nobody may be confused)
-  // the RANK plate you picked in SETTINGS (Andy oct8), else your highest
-  const shownRankName = (name) => {
-    const R = V3.ranks;
-    if (!R || !R.RANKS_V3) return name;
-    const at = R.RANKS_V3.findIndex((x) => x.name === name);
-    return at < 0 ? name : R.RANKS_V3[shownPlateIndex(at)].name;
-  };
   // PROFILE PLATE (Andy oct21 "switch profile to where title is … include title popup in the profile"): the XP bar's
   // lead plate is your PROFILE — your hero's face, PROFILE, and the title you wear. It opens the profile popup, whose
   // TITLE row opens ALL TITLES. (The dailies took the profile's old spots: the right column + the icon cluster.)
-  const titleName = shownRankName(rankTitle(xpProgress.level));
+  // nov2 (Andy: titles out → RANK LEAGUES): the plate names your board league (leagues.js), UNRANKED with no board place
+  const myLeague = leagueOf(boardRank);
+  const titleName = myLeague ? myLeague.name : 'UNRANKED';
   // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
   // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
   const [heroNews, setHeroNews] = useState(false);
@@ -1517,14 +1498,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
-    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — title ${titleName}`} data-nav="profile" data-testid="profile-plate">
+    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — ${titleName}${myLeague ? ' league' : ''}`} data-nav="profile" data-testid="profile-plate">
       {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
       {avFrame
         ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
         : face}
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
-        <span className="hp-rankplate-n">{titleName}</span>
+        <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>
+          {myLeague ? <img className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
+          {titleName}
+        </span>
       </span>
     </button>
   );
@@ -1533,7 +1517,6 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // LEVEL CHESTS (oct22): the plate shows the gem chest when the next level pays one (every 5th, first time this climb, daily cap)
   const nextChest = SEASON2 ? nextLevelChest(barLevel + 1, climbPeak(rebirths)) : 0;
   const xpGoal = useMemo(() => (SEASON2 ? { lv: barLevel + 1, chest: nextChest } : null), [barLevel, nextChest]);
-  const [barSkin, setBarSkin] = useState(null);
   useEffect(() => {
     let live = true;
     const on = () => (wornPopStyle() === 'classic' ? setBarSkin(null) : import('../progress/kitArt.js').then((m) => live && setBarSkin(m.kitOf(wornPopStyle())), () => {}));
@@ -1613,7 +1596,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             ach={ach}
             achSlot={trophy}
             news={reveal.gears ? news : null}
-            wheel={wheel}
+            railLayout={railLayout}
             daily={reveal.core ? <DailyTile variant="icon" onPlay={handleOpenDialog} navigating={navigating} /> : null}
             railItems={railItems}
             claimSlot={!showClaims && !claimReveal && !showMarks && !dialog && !lockedPreview
@@ -1640,12 +1623,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </div>
 
         {/* TOP RIGHT: leaderboard / achievements / SETTINGS (the cog joined this cluster — Andy oct9). */}
-        <MenuIcons board={board} ach={ach} achSlot={trophy} news={!wheel && reveal.gears ? news : null} daily={hasMainColumn ? null : dailyIcon} settingsSlot={wheel ? null : settingsSlot} wheel={wheel} navigating={navigating} />
+        <MenuIcons board={board} ach={ach} achSlot={trophy} news={!railLayout && reveal.gears ? news : null} daily={hasMainColumn ? null : dailyIcon} settingsSlot={railLayout ? null : settingsSlot} navigating={navigating} />
 
         {/* RIGHT, under the icons: CREDITS + the live room. They JOIN this cluster (no orphan
             fixed UI) — the mockup has no slot for them. */}
         <div className="homepage-footer-links hp-extras">
-          {wheel ? <MenuUtility news={reveal.gears ? news : null} navigating={navigating} /> : (
+          {railLayout ? <MenuUtility news={reveal.gears ? news : null} navigating={navigating} /> : (
             <button type="button" className={`homepage-credits-link${navigating ? ' disabled' : ''}`} onClick={handleCredits} disabled={navigating}>
               CREDITS
             </button>
@@ -1678,6 +1661,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
               heard={roomsHeard}
               name={playerName}
               onJoin={onJoinPublicRoom}
+              onWatch={onWatchPublicRoom}
               onCreate={onCreatePublic}
               onNavigate={() => setNavigating(true)}
               onOpenAll={handleDialogJoin}
@@ -1710,10 +1694,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 style={{ '--card-count': GAMES.length }}
                 data-page={isPagedMenu ? shownPage : undefined}
               >
-                {GAMES.map((game) => (
+                {GAMES.map((game, i) => (
                   <GameCard
                     key={game.id}
                     game={game}
+                    // the FIRST PAGE's art loads first and shows together; later cards wait (lazy) — Andy nov4
+                    priority={i < CARDS_PER_PAGE}
                     onSelect={handleOpenDialog}
                     onLockedSelect={handleLockedSelect}
                     onHover={handleHover}
@@ -1750,7 +1736,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
       {dialog && (
         <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="LOADING" />}>
           <ModeDialog
             game={dialog.game}
             sourceEl={dialog.el}
@@ -1772,20 +1758,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         </ScreenBoundary>
       )}
 
-      {/* the wheel's gems fly from the WHEEL tile into the GEMS pill on close (a pooled fly layer — never its own fixed UI
+      {/* a purchase's gems fly into the GEMS pill (a pooled fly layer — never its own fixed UI
           position: it is a full-screen, pointer-events:none overlay with no layout of its own) */}
       {gemFly ? (
         <Suspense fallback={null}>
           <GemFly ref={gemFlyMounted} target={() => [...document.querySelectorAll('.menu-gems-chip .kp-icon')].find((el) => el.getClientRects().length)} icon="gems" />
         </Suspense>
       ) : null}
-      {showWheel && (
-        <ScreenBoundary name="daily-wheel" onBack={() => setShowWheel(false)}>
-          <Suspense fallback={null}>
-            <DailyWheel onClose={() => setShowWheel(false)} onPaid={onWheelPaid} />
-          </Suspense>
-        </ScreenBoundary>
-      )}
+      {authLand ? (
+        <Suspense fallback={null}>
+          <AuthLanding resume onDone={() => setAuthLand(false)} />
+        </Suspense>
+      ) : null}
 
       {/* Locked-mode preview (level-gated CHAIN/FUSE). Read-only teaser — no play button. */}
       {lockedPreview && (
@@ -1808,7 +1792,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showClaims && (
         <ScreenBoundary name="rewards" onBack={() => setShowClaims(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="REWARDS" />}>
             <ClaimsPanel
               onClose={() => setShowClaims(false)}
               onReveal={(c) => { setShowClaims(false); setClaimReveal(c); }}
@@ -1819,8 +1803,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {patchDue && reveal.gears && !showPatch && <Suspense fallback={null}><PatchNotesHost blocked={!!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showMenuSpot)} /></Suspense>}
       {showPatch && <Suspense fallback={null}><PatchNotesReplay onClose={() => setShowPatch(false)} /></Suspense>}
-      {showProfile && <Suspense fallback={null}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
-      {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && !showWheel && (xpProgress.level > 1 || rebirths > 0) && (
+      {showProfile && <Suspense fallback={<OverlaySkeleton title="PROFILE" />}><ProfilePopup onClose={() => setShowProfile(false)} onMainChange={setMainId} /></Suspense>}
+      {tutReady && !dialog && !showMarks && !showClaims && !claimReveal && !showMenuSpot && (xpProgress.level > 1 || rebirths > 0) && (
         <Suspense fallback={null}>
           <TutorialHost
             level={xpProgress.level}
@@ -1838,7 +1822,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           rail's INDEX opens the INDEX straight away (its ✕ comes back to the menu). */}
       {showMarks === 'gear' && (
         <ScreenBoundary name="equip" onBack={closeGear}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="YOUR GEAR" />}>
             <EquipScreen
               equippedId={equippedMark}
               unlockedIds={markIdList}
@@ -1851,7 +1835,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks === 'gear2' && (
         <ScreenBoundary name="equip2" onBack={closeGear2}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="2ND GEAR" />}>
             <EquipScreen
               slot={2}
               equippedId={gear2Id}
@@ -1866,7 +1850,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       )}
       {showMarks && showMarks !== 'gear' && showMarks !== 'gear2' && (
         <ScreenBoundary name="marks" onBack={() => setShowMarks(false)}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<OverlaySkeleton title="GEARS" />}>
             <MarksIndex
               unlockedIds={markIdList}
               equippedId={equippedMark}

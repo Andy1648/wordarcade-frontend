@@ -16,7 +16,7 @@
      in headless Chromium), but recent Chrome's standardized `zoom` did not compound it, so the
      overlay rendered at --app-scale (off-centre / clipped) on real browsers. With the zoom removed
      on both sides, inset:0 is the real viewport and 88dvh a real 88% on every browser. */
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -728,98 +728,6 @@
 }
 .shop-perk .shop-card-btn {
   grid-area: btn;
-}
-
-/* ---- STEP 61: CODES — one field, one button, one answer line ---------------------------------- */
-.shop-codes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.shop-codes-label {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-label);
-  letter-spacing: 0.08em;
-  color: #b9aecd;
-}
-.shop-codes-row {
-  display: flex;
-  gap: 8px;
-}
-.shop-codes-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 12px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #fff;
-  background: #0d0618;
-  border: 3px solid #4a2f7a;
-  border-radius: 8px;
-}
-.shop-codes-input:focus {
-  outline: none;
-  border-color: #2effe0;
-}
-.shop-codes-btn {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0 16px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-body);
-  letter-spacing: 0.06em;
-  color: #0d0618;
-  background: #ffe94a;
-  border: 3px solid #a8950f;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: transform 120ms ease;
-}
-.shop-codes-btn:active {
-  transform: translate(2px, 2px);
-}
-.shop-codes-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.shop-codes-msg {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: var(--fs-label);
-  letter-spacing: 0.06em;
-}
-.shop-codes-msg.is-ok {
-  color: #2effe0;
-  transform-origin: left center;
-  animation: shop-codes-stamp 340ms cubic-bezier(.2, 1.4, .35, 1) both;
-}
-.shop-codes-msg.is-bad {
-  color: #ff6b3d;
-  animation: shop-codes-shake 300ms linear both;
-}
-/* H3: a redeem is a moment — the prize line slams in like a stamp; a bad code shakes no */
-@keyframes shop-codes-stamp {
-  0% { opacity: 0; transform: scale(1.9) rotate(-4deg); }
-  60% { opacity: 1; transform: scale(0.94) rotate(1deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0); }
-}
-@keyframes shop-codes-shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px); }
-  40% { transform: translateX(7px); }
-  60% { transform: translateX(-5px); }
-  80% { transform: translateX(3px); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .shop-codes-msg.is-ok, .shop-codes-msg.is-bad { animation: none; }
 }
 
 /* REBIRTH ON A SHORT LAPTOP (fine-tune oct2, loop B): at 1280x551 the REBIRTH button was sliced by

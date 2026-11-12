@@ -44,7 +44,14 @@ import { UNLOCK_TOAST } from '../../../progress/v3/notify.js';
 import { useReduceMotion } from '../../../lib/useReduceMotion.js';
 import { setReduceMotion } from '../../../lib/reduceMotion.js';
 import { formatNum } from '../../../format.js';
+import AvatarFrame from '../../../cast/AvatarFrame.jsx';
+import GearFx from '../../GearFx.jsx';
+import MarkCard from '../../markCard/MarkCard';
+import { registerMarkGlyphs } from '../../MarkBadge';
+import { ROLLED_GLYPHS, GLYPH_FINISH } from '../../markGlyphsRolled.jsx';
 import './KitGallery.css';
+
+registerMarkGlyphs(ROLLED_GLYPHS, GLYPH_FINISH);
 
 const cap = (s) => <div className="kg-cap">{s}</div>;
 
@@ -793,6 +800,24 @@ function IconsSheet() {
   );
 }
 
+// ======================================================================== GEAR FX (hover concepts)
+// ?kit=1&sheet=gearfx — LEGENDARY's flat light STREAKS vs MYTHIC's shockwaves on real cards (hover a card to play them)
+function GearFxSheet() {
+  return (
+    <section className="kg-sheet" id="gearfx" data-testid="kit-gearfx">
+      <h2 className="kg-h">GEAR FX — HOVER</h2>
+      <div style={{ display: 'flex', gap: 120, padding: '40px 60px', flexWrap: 'wrap' }}>
+        {[['mk-eclipse', 'legendary', 'ECLIPSE'], ['mk-singularity', 'mythic', 'SINGULARITY']].map(([id, tier, name]) => (
+          <div key={id} className="kg-gfx-card" data-tier={tier} style={{ position: 'relative', isolation: 'isolate', display: 'inline-block', lineHeight: 0 }}>
+            <GearFx tier={tier} />
+            <MarkCard id={id} tier={tier} name={name} fx />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ======================================================================== PAGE
 // ?kit=1&sheet=bars renders one sheet alone (perf measurement, focused screenshots)
 const ONLY = (() => {
@@ -803,6 +828,26 @@ const ONLY = (() => {
   }
 })();
 const show = (id) => !ONLY || ONLY === id;
+
+// ======================================================================== FRAME FX (nov4)
+// every avatar frame on a hero face — `?kit=1&sheet=frames`
+const FRAME_IDS = ['frost', 'graffiti', 'flame', 'bomb', 'bolt', 'scholar', 'chain', 'defuser', 'arcade', 'jackpot'];
+const FACES = ['riot', 'brawl', 'glitch', 'hype', 'hex'];
+function FramesSheet() {
+  return (
+    <section className="kg-sheet" id="frames">
+      <SheetHead title="AVATAR FRAMES" tone="cyan" tag="SQUARE" />
+      <div className="kg-frames">
+        {FRAME_IDS.map((id, i) => (
+          <figure key={id} className="kg-frame" data-frame={id}>
+            <AvatarFrame preview={id} src={`/cast/${FACES[i % FACES.length]}-hero.webp`} className="kg-frame-av" />
+            <figcaption>{id.toUpperCase()}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function KitGallery() {
   const rm = useReduceMotion();
@@ -827,6 +872,8 @@ export default function KitGallery() {
       {show('bars') && <BarsSheet />}
       {show('icons') && <IconsSheet />}
       {show('levelup') && <LevelUpSheet />}
+      {ONLY === 'frames' && <FramesSheet />}
+      {ONLY === 'gearfx' && <GearFxSheet />}
     </main>
   );
 }

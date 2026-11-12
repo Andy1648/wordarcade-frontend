@@ -61,10 +61,11 @@ test('item 1: mode dialog opens with <= 3 animations and no canvas', async ({ pa
   const info = await page.evaluate(() => {
     const inDialog = (a) => { const t = a.effect && a.effect.target; return t && t.closest && t.closest('.mode-dialog-overlay'); };
     const anims = document.getAnimations().filter((a) => a.playState === 'running' && inDialog(a));
-    return { count: anims.length, canvas: !!document.querySelector('.mode-dialog-bg-canvas') };
+    const names = anims.map((a) => `${String(a.effect.target.className).split(' ')[0]}:${a.transitionProperty || a.animationName || 'waapi'}`);
+    return { count: anims.length, names, canvas: !!document.querySelector('.mode-dialog-bg-canvas') };
   });
   expect(info.canvas, 'canvas element must be gone').toBe(false);
-  expect(info.count, 'concurrent dialog animations').toBeLessThanOrEqual(3);
+  expect(info.count, `concurrent dialog animations: ${info.names.join(' ')}`).toBeLessThanOrEqual(3);
 });
 
 const VIEWPORTS = [

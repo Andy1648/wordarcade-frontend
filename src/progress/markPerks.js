@@ -75,14 +75,28 @@ export const MARK_PERKS = {
   'mk-firebird': ['afterparty', 'freeOd'],
   'mk-trident': ['tripleThreat', 'freeOd'],
   'mk-paradox': ['twinSouls', 'freeOd'],
+  // NEW GEARS nov2 — existing perks only (no new perk code)
+  'mk-snowball': ['combo'],
+  'mk-telescope': ['bigWords'],
+  'mk-drumsticks': ['critKey10'],
+  'mk-anchor': ['combo', 'freeOd'],
+  'mk-comet': ['winner2', 'freeOd'],
+  'mk-meltdown': ['bigWords', 'freeOd'],
+  'mk-genie': ['dropTwice', 'freeOd'],
+  'mk-gauntlet': ['critKey10', 'freeOd'],
+  'mk-grimoire': ['fortune', 'freeOd'],
+  'mk-supernova': ['overdrive15', 'freeOd'],
+  // NEW GEARS nov3 — existing perks only
+  'mk-pinata': ['dropTwice', 'freeOd'],
+  'mk-megaton': ['critKey10', 'frenzyAll', 'freeOd'],
 };
 
 export const LETTERS_PERK_MULT = 2;
 export const WINNER_PERK_MULT = 2;
 export const OVERDRIVE_PERK_MIN = 15;
 export const KEY_KEEP_TIERS = 3;
-// FREE OVERDRIVE (every MYTHIC+ gear, Andy-agreed): ×10 for FREE_OD_SEC seconds after every FREE_OD_EVERY_MIN minutes
-// of PLAY while worn (overdrive.js — the same play clock and the same ×10 OVERDRIVE as the random one).
+// FREE OVERDRIVE (every MYTHIC+ gear, Andy-agreed): OVERDRIVE for FREE_OD_SEC seconds after every FREE_OD_EVERY_MIN minutes
+// of PLAY while worn (overdrive.js — the same play clock and the same OVERDRIVE as the random one).
 export const FREE_OD_SEC = 60;
 export const FREE_OD_EVERY_MIN = 15;
 export const OD_LONG_MULT = 2; // AFTERBURN (HEADMASTER): an OVERDRIVE runs twice as long

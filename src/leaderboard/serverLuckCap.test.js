@@ -41,7 +41,9 @@ const luck0 = (id) => {
 const ROLLED = new Set(C.ROLL_MARKS.map((m) => m.id));
 const TIER = new Map(C.ROLL_MARKS.map((m) => [m.id, m.tier]));
 const ALL_IDS = [...C.ROLL_MARKS.map((m) => m.id), ...C.PERMANENT_MARKS.map((m) => m.id), ...UNLISTED_IDS];
-const LUCK_ROWS = new Map((sql.match(/\('mk-[a-z0-9-]+', [\d.]+\)/g) || []).map((r) => {
+// 080_new_gears_2.sql refreshes the gear_luck rows (nov2 +12 via 079, nov3 +5); the cap FUNCTION + constants stay 061's
+const luckSql = read('080_new_gears_2.sql').split('private.gear_luck (mark_id, luck_pct) values')[1] || '';
+const LUCK_ROWS = new Map((luckSql.match(/\('mk-[a-z0-9-]+', [\d.]+\)/g) || []).map((r) => {
   const [, id, v] = r.match(/\('(mk-[a-z0-9-]+)', ([\d.]+)\)/);
   return [id, Number(v)];
 }));
@@ -102,7 +104,7 @@ const earnedPips = (id, n) => Math.min(C.MAX_PIPS, Math.floor(Math.max(0, n - 1)
 
 test('the server luck table IS the game: every gear with ROLL LUCK, its star-0 % (season 2 sizes), none extra', () => {
   const want = ALL_IDS.filter((id) => luck0(id) > 0);
-  for (const id of want) assert.equal(LUCK_ROWS.get(id), luck0(id), `061 gear_luck for ${id}`);
+  for (const id of want) assert.equal(LUCK_ROWS.get(id), luck0(id), `080 gear_luck for ${id}`);
   assert.equal(LUCK_ROWS.size, want.length, 'no extra gear in gear_luck');
   assert.ok(LUCK_ROWS.get('mk-shamrock') >= 400, 'season 2 sizes (GEAR OP), not season 1');
 });

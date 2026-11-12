@@ -29,11 +29,15 @@ import { ready as sfxReady } from '../../audio/gameSounds';
 import { tone, pentFreq, NOTE } from '../../audio/audioCore.js';
 import {
   WHEEL_SLOTS, SLICE_DEG, WHEEL_AD_ON, artSrc, oddsRows, landAngle, spinPlan, flapperTrack,
-  resultText, bonusText, nextBonus, payLanded, noteSpun, readWheel, wheelDay,
+  resultText, bonusText, nextBonus, payLanded, noteSpun, readWheel, wheelDay, weekRow, noteNeed, wordsLeft, WHEEL_WORDS,
 } from '../../progress/wheel.js';
+import { lifetimeGameWords } from '../../progress/rebirthWords.js';
+import { submitStats } from '../../leaderboard/client.js';
+import { kitPlay } from '../kit/motion.js';
 import { wheelState, spinWheel, claimWheel } from '../../leaderboard/serverWheel.js';
 import { grantGems } from '../../progress/gemsCore.js';
 import { grantStockFx } from '../../progress/v3/stock.js';
+import { wheelBoostUnlockMult } from '../../progress/v3/unlocks.js';
 import { grantKit, kitById, kitSrc } from '../../cast/kit.js';
 import { showRewarded, rewardedReady } from '../../ads/rewarded.js';
 import { holdBeats } from '../../hooks/useBeatSync';
@@ -42,10 +46,35 @@ import { holdBeats } from '../../hooks/useBeatSync';
 // restyled ~350 menu nodes a frame UNDER the wheel while it spun (measured: 400 ms of style recalc per spin at 1x CPU)
 const stopMenuPointer = (e) => e.stopPropagation();
 
-const PAY = { grantGems, grantFx: grantStockFx, grantKit };
+// R20 (REBIRTH ROAD): the XP / WINS boosts run twice as long; the line the wheel prints says the same
+const PAY = { grantGems, grantFx: (kind, min) => grantStockFx(kind, min * wheelBoostUnlockMult()), grantKit };
+const shownSpin = (s) => (s && (s.prize === 'xp' || s.prize === 'wins') ? { ...s, amount: s.amount * wheelBoostUnlockMult() } : s);
 const WIND_DEG = 24; // the pull-back before the launch
 const POP_MS = 1150; // the prize's burst-out + drop
 const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
+
+// THE WEEK ROW (nov3 design-research move 18): the 7 days of this streak week — spun days stamped, today lit, the HOT
+// days in orange, and DAY 7's SUPER SPIN as its painted prize (hero-art day7-super-v1: a gold wheel bursting from a gift) with its ×2 (what day 7 pays: gems ×2, boosts 20 MIN, a
+// ticket one tier up — 067). Static at rest; today's pip pops once when the panel opens.
+const TODAY_POP = [{ transform: 'scale(.6)' }, { transform: 'scale(1.18)', offset: 0.6 }, { transform: 'scale(1)' }];
+function StreakWeek({ today, spun, bonus }) {
+  const todayRef = useRef(null);
+  useEffect(() => { kitPlay(todayRef.current, TODAY_POP, { duration: 320, easing: 'cubic-bezier(.3,1.6,.5,1)' }); }, [today]); // once the server's day is in
+  const row = weekRow(today, spun);
+  return (
+    <span className={`dw-streak dw-week${bonus ? ` is-${bonus}` : ''}`} role="img" data-testid="wheel-week"
+      aria-label={`Spin streak day ${Math.max(1, today)}${bonus ? ` · ${bonusText(bonus)}` : ''} · day ${row[6].day} is a super spin`}>
+      {row.map((c) => (c.day % 7 === 0 ? (
+        <span key={c.day} ref={c.now ? todayRef : null} className={`dw-day7 is-${c.state}`} data-day={c.day} data-state={c.state}>
+          <img src={artSrc('day7-super-v1')} alt="" draggable="false" />
+          <b className="dw-day7-x">×2</b>
+        </span>
+      ) : (
+        <span key={c.day} ref={c.now ? todayRef : null} className={`dw-pip is-${c.state}${c.bonus ? ` is-${c.bonus}` : ''}`} data-day={c.day} data-state={c.state}>{c.day}</span>
+      )))}
+    </span>
+  );
+}
 
 // one peg click, scheduled on the audio clock at `when` (s)
 function sndTickAt(when, i) {
@@ -99,7 +128,7 @@ const decodeSrc = (src) => {
   return im.decode ? im.decode().catch(() => {}) : Promise.resolve();
 };
 const BURST_SRC = '/fx/burst-win.webp';
-const WHEEL_ART = [...['title-v1', 'face', 'rim-v2', 'rim-v2-lit-a', 'rim-v2-lit-b', 'wedge-hi', 'hub', 'pointer-v2', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
+const WHEEL_ART = [...['title-v1', 'face', 'rim-v2', 'rim-v2-lit-a', 'rim-v2-lit-b', 'wedge-hi', 'hub', 'pointer-v2', 'day7-super-v1', ...WHEEL_SLOTS.map((p) => p.icon)].map(artSrc), BURST_SRC];
 
 // THE CHASE LIGHTS: one lit set's opacity, flipped at every peg tick of the spin (held between — steps), so the bulbs
 // race at launch and crawl into the landing with the wheel
@@ -133,10 +162,11 @@ function playOnce(el, frames, opts) {
   return a;
 }
 
-export default function DailyWheel({ onClose, onPaid }) {
+export default function DailyWheel({ onClose, onPaid, onPlay }) {
   const onPaidRef = useRef(onPaid);
   onPaidRef.current = onPaid;
-  const [st, setSt] = useState({ phase: 'load' }); // load | off | ready | spinning | landed | done
+  const [st, setSt] = useState({ phase: 'load' }); // load | off | locked | ready | spinning | landed | done
+  const [tries, setTries] = useState(0); // RETRY (design audit nov2 #13) re-asks the server
   const [odds, setOdds] = useState(false);
   const rotorRef = useRef(null);
   const icoRefs = useRef([]); // the 8 prize icons: counter-rotated so each one always stands upright to the viewer
@@ -199,13 +229,17 @@ export default function DailyWheel({ onClose, onPaid }) {
       }
       // the streak today's spin continues (067: one missed day is forgiven, two or more start again at DAY 1)
       const gap = r.lastDay > 0 ? wheelDay() - r.lastDay : 99;
-      setSt({ phase: 'ready', streak: gap <= 2 ? r.streak : 0, adOn: r.adOn, ad: r.ad });
+      // EARNED (083, Andy nov4 "dont have daily spin for free"): GAME words since the last spin unlock it
+      noteNeed(r.need);
+      const left = wordsLeft(r.need, r.words, lifetimeGameWords());
+      setSt({ phase: left > 0 ? 'locked' : 'ready', left, streak: gap <= 2 ? r.streak : 0, adOn: r.adOn, ad: r.ad });
     });
     return () => {
       live.current = false;
       for (const t of pending) clearTimeout(t);
     };
-  }, [park]);
+  }, [park, tries]);
+  const retry = useCallback(() => { setSt({ phase: 'load' }); setTries((n) => n + 1); }, []);
 
   const land = useCallback((s, rest) => {
     restRef.current = rest;
@@ -214,7 +248,7 @@ export default function DailyWheel({ onClose, onPaid }) {
     const paidNow = payLanded(s, PAY);
     // the menu flies the gems into its GEMS pill once the wheel closes (the pill sits under this scrim)
     if (paidNow && s.prize === 'gems' && s.amount > 0 && onPaidRef.current) onPaidRef.current(s.amount);
-    if (s.kind === 'free') noteSpun(s.day, s.streak);
+    if (s.kind === 'free') { noteSpun(s.day, s.streak); noteNeed(lifetimeGameWords() + WHEEL_WORDS); } // tomorrow's: the next 15 game words
     if (paidNow || !s.claimed) claimWheel(s.spin);
     const big = s.prize === 'ticket' || s.prize === 'cosmetic';
     try { sndLand(big); } catch { /* audio */ }
@@ -285,12 +319,24 @@ export default function DailyWheel({ onClose, onPaid }) {
       wind = rotor.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${from - WIND_DEG}deg)` }], wo);
       windIcons = turnIcons(icoRefs.current, from, from - WIND_DEG, wo);
     }
-    const r = await spinWheel(kind);
+    let r = await spinWheel(kind);
+    // the board row lags the save by up to a submit: push this browser's words once, then ask again
+    if (r.error === 'words' && kind === 'free') {
+      try { await submitStats(true); } catch { /* offline: the refusal stands */ }
+      if (!live.current) return;
+      r = await spinWheel(kind);
+    }
     if (!live.current) return;
     if (!r.spin) {
       if (wind) wind.cancel();
       settleIcons(icoRefs.current, windIcons, from);
       if (rotor) rotor.style.willChange = '';
+      if (r.error === 'words') {
+        noteNeed(r.need);
+        const left = Math.max(1, wordsLeft(r.need, r.have, 0));
+        setSt((p) => ({ ...p, phase: 'locked', left, error: 'words' }));
+        return;
+      }
       setSt((p) => ({ ...p, phase: r.error === 'off' ? 'off' : 'ready', error: r.error }));
       return;
     }
@@ -348,6 +394,10 @@ export default function DailyWheel({ onClose, onPaid }) {
   const bonusNow = s ? s.bonus : nextBonus(st.streak || 0);
   const canAd = WHEEL_AD_ON && st.adOn && rewardedReady() && (st.phase === 'done' || st.phase === 'landed') && !st.ad && s && s.kind === 'free';
   const cos = s && s.prize === 'cosmetic' && s.cosmetic ? kitById(s.cosmetic) : null;
+  const resSub = s ? [
+    s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : '',
+    s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? bonusText(s.bonus) : '',
+  ].filter(Boolean).join(' · ') : '';
 
   if (typeof document === 'undefined') return null;
   return createPortal(
@@ -401,41 +451,50 @@ export default function DailyWheel({ onClose, onPaid }) {
             <h2 className="dw-title"><img className="dw-title-art" src={artSrc('title-v1')} alt="Daily wheel" draggable="false" /></h2>
             {/* the streak + ODDS share one row under the wordmark: the foot keeps one job (SPIN, then the result) */}
             <div className="dw-head-row">
-              <span className={`dw-streak${bonusNow ? ` is-${bonusNow}` : ''}`} aria-label={`Spin streak ${streak} days`}>
-                <span className="dw-streak-n">DAY {Math.max(1, streak)}</span>
-                {bonusNow ? <span className="dw-streak-b">{bonusText(bonusNow)}</span> : null}
-              </span>
+              <StreakWeek today={streak} spun={!!s} bonus={bonusNow} />
               <button type="button" className="dw-odds-btn" onClick={() => setOdds((o) => !o)} aria-expanded={odds}>ODDS</button>
             </div>
           </div>
 
           <div className="dw-foot">
             {st.phase === 'load' ? <p className="dw-msg">LOADING…</p> : null}
-            {st.phase === 'off' ? <p className="dw-msg">THE WHEEL NEEDS A CONNECTION · TRY AGAIN SOON</p> : null}
+            {/* OFFLINE (design audit nov2 #13): a house-style SPIN, disabled, with the reason on its lock chip — and a
+                real RETRY beside it — instead of a grey sentence where the button was */}
+            {st.phase === 'off' ? (
+              <div className="dw-off" data-testid="wheel-off">
+                <KitButton tone="pink" label="SPIN" disabled lockText="OFFLINE" labelSize={34} width={220} ariaLabel="Spin — offline" onDeny={retry} data-testid="wheel-spin-off" />
+                <KitButton tone="cyan" label="RETRY" labelSize={24} width={150} onClick={retry} data-testid="wheel-retry" />
+              </div>
+            ) : null}
+            {st.phase === 'locked' ? (
+              <div className="dw-earn" data-testid="wheel-locked">
+                <span className="dw-earn-bar" role="progressbar" aria-valuemin={0} aria-valuemax={WHEEL_WORDS} aria-valuenow={WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} aria-label="Game words toward today's spin">
+                  <span className="dw-earn-fill" style={{ transform: `scaleX(${(WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)) / WHEEL_WORDS})` }} />
+                  <span className="dw-earn-t">{WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} / {WHEEL_WORDS} GAME WORDS</span>
+                </span>
+                <KitButton tone="cyan" label="PLAY" sub={`${st.left} MORE ${st.left === 1 ? 'WORD' : 'WORDS'} TO SPIN`} labelSize={30} width={220} onClick={() => { if (onPlay && phaseRef.current !== 'spinning') onPlay(); else tryClose(); }} data-testid="wheel-play" />
+              </div>
+            ) : null}
             {st.phase === 'ready' ? (
-              <KitButton tone="pink" label="SPIN" sub="FREE TODAY" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
+              <KitButton tone="pink" label="SPIN" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
             ) : null}
             {st.phase === 'spinning' ? <p className="dw-msg">…</p> : null}
             {(st.phase === 'landed' || st.phase === 'done') && s ? (
               <div ref={resultRef} className={`dw-result is-${s.prize}`} data-testid="wheel-result">
                 <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
                 <span className="dw-result-t">
-                  <span className="dw-result-l">{cos ? cos.name : resultText(s)}</span>
-                  <span className="dw-result-s">
-                    {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
-                    {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}
-                  </span>
+                  <span className="dw-result-l">{cos ? cos.name : resultText(shownSpin(s))}</span>
+                  {resSub ? <span className="dw-result-s">{resSub}</span> : null}
                 </span>
               </div>
             ) : null}
-            {(st.phase === 'landed' || st.phase === 'done') ? <p className="dw-msg is-next">NEXT FREE SPIN TOMORROW</p> : null}
             {canAd ? <KitButton tone="cyan" label="WATCH AD" sub="+1 SPIN TODAY" labelSize={24} width={200} onClick={watchAd} /> : null}
           </div>
         </div>
 
         {odds ? (
           <div className="dw-odds" role="group" aria-label="Wheel odds">
-            <span className="dw-odds-h">WHAT THE WHEEL PAYS</span>
+            <span className="dw-odds-h">ODDS</span>
             <ul>
               {oddsRows().map((o) => (
                 <li key={o.slot} style={{ '--o-c': o.color }}>

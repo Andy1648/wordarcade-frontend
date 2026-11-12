@@ -11,7 +11,8 @@ const STEPS = [
   ['(max-width: 375px)', 0.42], // 19–24px room (360 wide) → MYTHIC 18px
   ['(max-width: 560px)', 0.5], // 22–27px room → MYTHIC 21px
 ];
-const DESKTOP = 0.9;
+// nov4: 0.55 (MYTHIC 23px) — the aura stops short of a neighbour's frame in the grid's BORDER ROOM (MarksIndex.css)
+const DESKTOP = 0.55;
 
 function current() {
   if (typeof window === 'undefined' || !window.matchMedia) return DESKTOP;

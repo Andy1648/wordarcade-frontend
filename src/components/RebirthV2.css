@@ -351,6 +351,8 @@
 .rb2-r--after { position: relative; }
 .rb2-ms.is-jackpot .rb2-ms-r { color: #FFE94A; }
 /* the stamp: invisible at rest, ONE finite slam on a jackpot rebirth (RebirthV2 JACKPOT_SLAM) */
+/* the shard burst (gains/ShardBurst) flies UNDER the JACKPOT stamp — the stamp is the read, the shards frame it */
+.rb2 > .gsb { z-index: 29; }
 .rb2-jack {
   position: fixed;
   left: 50%;
@@ -424,4 +426,9 @@
   .rb2-track-list > * { flex: 0 0 84px; scroll-snap-align: start; }
   .rb2-ms-what { font-size: var(--fs-k14); }
   .rb2-stage { row-gap: 8px; }
+}
+
+/* THE HEADER HOLDS STILL (Andy nov9: "only scroll inside"): on a phone too short for the whole page, the rest scrolls under it. */
+@media (max-width: 999px) {
+  .rb2-head { position: sticky; top: 0; z-index: 6; margin: -10px -16px 0; padding: 10px 16px 8px; background: var(--k-bg); }
 }

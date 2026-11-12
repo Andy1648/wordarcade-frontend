@@ -84,13 +84,13 @@ test('OPEN LEGENDARY+ ROLL: the sealed vessel opens on the server pick, free, pi
   expect(st.sinceLegendary).toBe(20); // pity untouched
   await page.getByTestId('sealed-roll-done').click();
   await expect(sealed).toHaveCount(0);
-  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN 40'); // 60 − 20 (hard pity 60, oct22)
+  await expect(page.getByTestId('roll-pity')).toContainText('LEGENDARY+ IN ≤ 40'); // 60 − 20 (hard pity 60, oct22)
   await expect(btn).toHaveCount(0); // spent: the server no longer lists it
 });
 
 test('ADVERSARIAL: no server ticket → no button (a forged local ticket and forged reply rows are ignored)', async ({ page }) => {
   await boot(page, { tickets: [
-    { id: TID, tier: 'secret', state: 'owned' }, // no SECRET+ tickets exist
+    { id: TID, tier: 'ultra', state: 'owned' }, // not a tier (089: a SECRET floor IS one now — the paid SECRET PACK)
     { id: 'not-a-uuid', tier: 'mythic', state: 'owned' },
     { id: TID, tier: 'legendary', state: 'spent' },
   ] });

@@ -2,7 +2,7 @@
 // at the corner....) too ai tell"):
 //   1. the menu's SETTINGS is a labelled button in the menu's own rail (beside the WINS / GEMS pills), not a lone cog
 //      in the bottom-right corner;
-//   2. the sheet is grouped (SOUND · GAMEPLAY · SAVE CODE · DANGER ZONE) and FITS the viewport — no scroll on desktop;
+//   2. the sheet is grouped (SOUND · GAMEPLAY · REWARD CODE · SAVE CODE · DANGER ZONE) and FITS the viewport — no scroll on desktop;
 //   3. none of its controls overlap each other;
 //   4. on a phone every control is ≥ 44 px and every line of text ≥ 16 px.
 // SHOTS=1 also saves the menu + open-sheet screenshots (SHOTS_DIR, default claude/shots-settings/after).
@@ -72,8 +72,8 @@ for (const { w, h, phone } of SIZES) {
     await settled(page);
     if (SHOTS) await page.screenshot({ path: `${DIR}/settings-${w}x${h}.png` });
 
-    // the four groups, in order
-    await expect(sheet.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'SAVE CODE', 'DANGER ZONE']);
+    // the five groups, in order (085: SIGN IN WITH GOOGLE is the first row of SAVE CODE)
+    await expect(sheet.locator('.sp-group-title')).toHaveText(['SOUND', 'GAMEPLAY', 'REWARD CODE', 'SAVE CODE', 'DANGER ZONE']);
 
     const m = await sheet.evaluate((el) => {
       const r = el.getBoundingClientRect();

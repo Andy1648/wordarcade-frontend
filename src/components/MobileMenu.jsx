@@ -155,7 +155,7 @@ export default function MobileMenu({
   ach,
   achSlot = null, // v3 (SEASON2): the ACHIEVEMENTS trophy (lazy S2Trophy) in the tile's place
   news = null, // { onClick } — the UPDATE LOG tile (re-opens the patch notes)
-  wheel = null, // { onClick, dot } — THE DAILY WHEEL tile (oct24): takes the top row's NEWS + SETTINGS slot
+  railLayout = false, // season 2's rail: SETTINGS + NEWS in the rail's utility row
   daily = null, // the DAILY CONTRACTS icon (contracts/DailyTile variant icon) — the icon cluster's first tile (oct21)
   railItems,
   xpBar = null,
@@ -167,7 +167,7 @@ export default function MobileMenu({
   title = null, // STAGE 0 of the reveal (TitlePlay, variant phone): the hero + ONE PLAY instead of the rows + the rail
 }) {
   // oct24: with the WHEEL up top, NEWS + SETTINGS join the rail row by the pills (CREDITS moves inside SETTINGS)
-  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={wheel ? onCredits : null} />;
+  const settingsSlot = <AudioControls variant="kit" accent="#2EFFE0" musicMuted={musicMuted} onToggleMusic={onToggleMusic} onCredits={railLayout ? onCredits : null} />;
   const rows = MODE_IDS
     .map((id) => games.find((g) => g.id === id))
     .filter(Boolean);
@@ -185,7 +185,7 @@ export default function MobileMenu({
           WORD
         </h1>
         <div className="hp-m-topr">
-          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={wheel ? null : news} daily={daily} settingsSlot={wheel ? null : settingsSlot} wheel={wheel} navigating={navigating} />
+          <MenuIcons board={board} ach={ach} achSlot={achSlot} news={railLayout ? null : news} daily={daily} settingsSlot={railLayout ? null : settingsSlot} navigating={navigating} />
         </div>
       </div>
 
@@ -327,7 +327,7 @@ export default function MobileMenu({
         gems={gems}
         navigating={navigating}
         className="hp-m-rail"
-        extra={wheel ? <MenuUtility news={news} settingsSlot={settingsSlot} navigating={navigating} className="hp-m-util" /> : (
+        extra={railLayout ? <MenuUtility news={news} settingsSlot={settingsSlot} navigating={navigating} className="hp-m-util" /> : (
           <button type="button" className={`hp-m-credits${navigating ? ' is-disabled' : ''}`} onClick={onCredits} disabled={navigating}>
             CREDITS
           </button>

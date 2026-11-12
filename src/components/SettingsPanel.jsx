@@ -3,7 +3,8 @@
 //
 //   SOUND        VOLUME (MUTE + a 10-step bar = the master volume, 0 = sound off) · MUSIC · GAME SFX (in a match)
 //   GAMEPLAY     REDUCE MOTION (<html data-reduce-motion>, live) · BEAT SYNC (the menu bouncing to the music)
-//   SAVE CODE    the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
+//   REWARD CODE  type a code, get a prize (RedeemCodes)
+//   SAVE CODE   the short code + COPY, a paste box + RESTORE, UNDO LAST RESTORE (see SaveRow)
 //   DANGER ZONE  RESET ACCOUNT, two steps — its own red card, apart from everything else
 //
 // No one-line "what it does" taglines (every label says it). CREDITS sits in the title bar beside CLOSE. Chunky house
@@ -21,13 +22,16 @@ import { setReduceMotion } from '../lib/reduceMotion';
 import { useReduceMotion } from '../lib/useReduceMotion';
 import { formatNum } from '../format';
 import { exportSave } from '../save/saveBackup';
-import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, formatShort, rememberShortCode, copyText } from '../save/saveCode';
+import { exportSaveCode, parseAnySave, readPreRestore, applySave, issueShortCode, fetchShortSave, normalizeShort, restoreError, formatShort, rememberShortCode, copyText } from '../save/saveCode';
 import { LEADERBOARD_ENABLED, getMyProfile, peekSecret, rpc } from '../leaderboard/client';
 import { progressScoreFromKeys, localScore } from '../save/cloudSave';
 import { resolveXpState } from '../progress/xp';
 import './kit/tokens.css';
 import './SettingsPanel.css';
 import { beatSyncOn, setBeatSync } from '../lib/beatSync';
+import RedeemCodes from './RedeemCodes';
+import AccountLine from './account/GoogleAccount.jsx';
+import { authAvailable } from '../leaderboard/auth.js';
 
 const STEPS = 10;
 
@@ -150,7 +154,7 @@ function SaveRow() {
   };
   const confirmParsed = (r, isUndo) => {
     if (!r.ok) {
-      setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : r.error));
+      setMsg(loud(isUndo ? 'THE OLD SAVE CAN NOT BE PUT BACK' : restoreError(r, draft)));
       return;
     }
     const mine = codeHeadline(r.keys, r.acct);
@@ -188,6 +192,9 @@ function SaveRow() {
   };
   return (
     <Group title="SAVE CODE" tone="#FF4FA3" edge="#b0206a" className="sp-save">
+      {/* SIGN IN WITH GOOGLE (085) heads the save group: the account keeps the progress on every device; the code below
+          still works without it (optional — school Google accounts often block third-party sign-in) */}
+      {authAvailable() ? <div className="sp-account" data-testid="sp-account"><AccountLine why="KEEP YOUR PROGRESS ON EVERY DEVICE" /></div> : null}
       {ask ? (
         <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
           <p className="sp-msg" data-testid="sp-load-compare">{ask.undo ? 'PUT BACK' : 'THIS CODE'}: {ask.mine.text} · THIS DEVICE: {ask.here.text}</p>
@@ -205,7 +212,7 @@ function SaveRow() {
           </div>
           {code ? <textarea className="sp-code" readOnly value={code} rows={2} aria-label="Your save code" data-testid="sp-save-code" onFocus={selectAll} onClick={selectAll} /> : null}
           <form className="sp-restore" onSubmit={check}>
-            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE A CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
+            <input className="sp-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="PASTE SAVE CODE" aria-label="Paste a save code" autoComplete="off" autoCorrect="off" autoCapitalize="characters" spellCheck="false" />
             <button type="submit" className="sp-btn sp-btn--ghost" disabled={!draft.trim() || busy}>RESTORE</button>
           </form>
           {undo && !code ? (
@@ -335,6 +342,13 @@ export default function SettingsPanel({ musicMuted = false, onToggleMusic, sheet
           <OnOff on={beatOn} onClick={() => { setBeatSync(!beatOn); setBeatOn(!beatOn); }} label="Beat sync" />
         </Row>
       </Group>
+      {/* REWARD CODE (Andy nov4 "move codes to settings"; nov5: its own card, told apart from the SAVE code). The menu's sheet
+          only: onToggleSfx means a match is on, and nobody redeems mid-round */}
+      {LEADERBOARD_ENABLED && !onToggleSfx ? (
+        <Group title="REWARD CODE" tone="#FF6B3D" edge="#b8431f" className="sp-rewards">
+          <RedeemCodes />
+        </Group>
+      ) : null}
       </div>
       <div className="sp-col">
         <SaveRow />

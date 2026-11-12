@@ -25,13 +25,15 @@ concurrency:
 
 jobs:
   shard:
-    name: shard ${{ matrix.shard }}/4
+    name: ${{ matrix.shard == 'perf' && 'perf (alone)' || format('shard {0}/4', matrix.shard) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false # every shard reports, so one red shard never hides another's failures
       matrix:
-        shard: [1, 2, 3, 4]
+        # 'perf' = the frame-time measurements (*.perf.spec.js, playwright.config.js project `perf`) on a runner of their
+        # own with ONE worker: beside a busy shard worker a 4x-CPU 60fps check measured the neighbour (nov10 flake)
+        shard: [1, 2, 3, 4, perf]
     steps:
       - uses: actions/checkout@v4
 
@@ -67,7 +69,12 @@ jobs:
       # playwright.config.js builds + serves the production bundle itself (webServer), and CI=true
       # (set by Actions) makes it start clean instead of reusing a server.
       - name: E2E shard ${{ matrix.shard }}/4
-        run: npx playwright test --shard=${{ matrix.shard }}/4 --workers=2 --reporter=list,blob
+        if: ${{ matrix.shard != 'perf' }}
+        run: npx playwright test --project=chromium --project=chromium-autoplay --shard=${{ matrix.shard }}/4 --workers=2 --reporter=list,blob
+
+      - name: E2E perf (alone, one worker)
+        if: ${{ matrix.shard == 'perf' }}
+        run: npx playwright test --project=perf --workers=1 --reporter=list,blob
 
       - name: Upload blob report
         if: ${{ !cancelled() }}

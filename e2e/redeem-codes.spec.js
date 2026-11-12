@@ -1,13 +1,13 @@
-// redeem-codes.spec.js — STEP 61. The shop's CODES entry against a mocked lb_redeem
-// (supabase/migrations/007_redeem_codes.sql): a good code lands in REWARDS (it does not pay on its
-// own), claiming pays exactly its wins, a second try says already-redeemed, a wrong code says so,
-// and a DB without 007 says codes are not switched on — never a crash.
+// redeem-codes.spec.js — STEP 61. The CODES row against a mocked lb_redeem (supabase/migrations/007_redeem_codes.sql): a
+// good code pays once, a second try says already-redeemed, a wrong code says so, and a DB without 007 says codes are not
+// switched on — never a crash. Andy nov4 "move codes to settings": the row lives in SETTINGS (season 2 — what visitors
+// get) and nowhere else; the first test below pins that, its fit at every size included.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady, navControl } from './support/menu.js';
 import { mockBoard } from './support/boardMock.js';
 
-async function boot(page, { live = true, level = 20 } = {}) {
+async function boot(page, { live = true, level = 20, query = '' } = {}) {
   await installBackendMock(page);
   await mockBoard(page, []);
   const used = new Set();
@@ -31,35 +31,105 @@ async function boot(page, { live = true, level = 20 } = {}) {
     if (sessionStorage.getItem('rc.seeded')) return;
     sessionStorage.setItem('rc.seeded', '1');
     localStorage.setItem('taw.seenMenuSpotlight', '1');
-    localStorage.setItem('taw.xp', JSON.stringify({ lv: level, into: 0 }));
+    localStorage.setItem('taw.s2.xp', JSON.stringify({ lv: level, f: 0, rc: 0, v: 10 }));
     localStorage.setItem('taw.econ', '12'); // already on Rebirth Rush: econ 12 (this spec is not about the one-time conversion)
-    localStorage.setItem('taw.wins', '1000');
+    localStorage.setItem('taw.s2.wins', '1000');
+    for (const k of ['gems', 'power', 'gears', 'markRolls', 'rebirth', 'board', 'keyTier', 'init']) localStorage.setItem(`taw.tut.${k}`, '1');
     localStorage.setItem('taw.claims', '[]');
   }, level);
-  await page.goto('/?portal=1');
+  await page.goto(`/?portal=1&season2=1${query}`);
   await menuReady(page);
 }
-const wins = (page) => page.evaluate(() => Number(localStorage.getItem('taw.wins') || 0));
+const wins = (page) => page.evaluate(() => Number(localStorage.getItem('taw.s2.wins') || 0));
+const openSettings = async (page) => {
+  await page.locator('[data-nav="settings"]:visible').first().click();
+  await page.locator('.sp-sheet').waitFor({ state: 'visible' });
+  // the sheet's one enter scales it: a target measured mid-way reads a hair under 44 (43.98 on a slow CI box)
+  await expect.poll(() => page.locator('.sp-sheet').evaluate((el) => Math.abs(el.getBoundingClientRect().width - el.offsetWidth) < 0.05)).toBe(true);
+};
 async function redeem(page, code) {
-  const input = page.locator('.shop-codes-input');
-  await input.scrollIntoViewIfNeeded();
-  await input.fill(code);
-  await page.locator('.shop-codes-btn').click();
-  return page.locator('.shop-codes-msg');
+  await page.locator('.sp-codes-input').fill(code);
+  await page.locator('.sp-codes-btn').click();
+  return page.locator('.sp-codes-msg');
+}
+const SHOTS = process.env.SHOTS_DIR || null;
+
+// Andy nov4 "move codes to settings": one place only. At every size: the row is on screen in SETTINGS with full targets
+// and 16 px type, nothing overlaps, the sheet never scrolls (360x640 with SIGN IN WITH GOOGLE too — even with an answer
+// line up); the shop has no CODES shelf and no redeem box.
+for (const [w, h, query] of [[1920, 1080, ''], [1366, 768, ''], [1280, 551, ''], [390, 844, ''], [360, 640, ''], [390, 844, '&google=1'], [360, 640, '&google=1']]) {
+  test(`CODES opens from SETTINGS and the shop's entry is gone @${w}x${h}${query}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page, { query });
+    await navControl(page, 'shop').click();
+    await page.locator('.sp2').waitFor({ state: 'visible' });
+    await expect(page.locator('.sp2-tab[data-shelf="codes"]')).toHaveCount(0);
+    await expect(page.locator('.sp2-tab')).toHaveCount(2);
+    await expect(page.locator('.sp-codes')).toHaveCount(0);
+    await page.goto(`/?portal=1&season2=1${query}`); // back on the menu, fresh
+    await menuReady(page);
+
+    await openSettings(page);
+    const sheet = page.locator('.sp-sheet');
+    const fit = () => sheet.evaluate((el) => {
+      const vis = (n) => { const cs = getComputedStyle(n); const b = n.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && b.width > 1 && b.height > 1; };
+      const boxes = [...el.querySelectorAll('button, input, [role="switch"]')].filter(vis).map((n) => { const b = n.getBoundingClientRect(); return { k: n.className, l: b.left, t: b.top, r: b.right, b: b.bottom }; });
+      const overlaps = [];
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i]; const c = boxes[j];
+        if (Math.min(a.r, c.r) - Math.max(a.l, c.l) > 1 && Math.min(a.b, c.b) - Math.max(a.t, c.t) > 1) overlaps.push(`${a.k} × ${c.k}`);
+      }
+      const r = el.getBoundingClientRect();
+      return { over: el.scrollHeight - el.clientHeight, bottom: r.bottom, overlaps, offSheet: boxes.filter((b) => b.b > r.bottom + 1 || b.t < r.top - 1).map((b) => b.k) };
+    });
+    const check = async () => {
+      const m = await fit();
+      expect(m.over, 'the sheet never scrolls').toBeLessThanOrEqual(1);
+      expect(m.bottom).toBeLessThanOrEqual(h);
+      expect(m.overlaps, 'no control overlaps another').toEqual([]);
+      expect(m.offSheet, 'every control inside the sheet').toEqual([]);
+    };
+    const input = page.locator('.sp-codes-input');
+    const btn = page.locator('.sp-codes-btn');
+    await expect(input).toBeVisible();
+    await expect(btn).toHaveText('CLAIM');
+    await expect(sheet.locator('.sp-rewards .sp-codes')).toHaveCount(1); // its own card, apart from the SAVE code
+    await input.fill('X'); // REDEEM awake, as a player sees it
+    for (const loc of [input, btn]) {
+      const b = await loc.boundingBox();
+      expect(Math.round(b.height), 'a full 44 px target (the fit zoom renders 43.975 on some runners)').toBeGreaterThanOrEqual(44);
+      expect(b.width).toBeGreaterThanOrEqual(44);
+    }
+    expect(await input.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 'no iOS focus zoom').toBeGreaterThanOrEqual(16);
+    await input.fill('');
+    await check();
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/settings-${w}x${h}${query ? '-google' : ''}.png` });
+    // the answers: still no scroll, no overlap
+    await expect(await redeem(page, 'nope')).toHaveText("THAT CODE DOESN'T EXIST");
+    await page.waitForTimeout(350); // the shake is over
+    await check();
+    await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×3 · 5 MIN — STARTED');
+    await page.waitForTimeout(350);
+    await check();
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/settings-${w}x${h}${query ? '-google' : ''}-redeemed.png` });
+    // closing clears the answer: the sheet comes back whole
+    await page.locator('.sp-close').click();
+    await openSettings(page);
+    await expect(page.locator('.sp-codes-msg')).toHaveCount(0);
+    await expect(page.getByTestId('sp-reset-open')).toBeVisible();
+  });
 }
 
 for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
   test(`E4: a code pays the moment it is redeemed — once, never twice, never via the inbox @ ${vp.width}`, async ({ page }) => {
     await page.setViewportSize(vp);
     await boot(page);
-    await navControl(page, 'shop').click();
-    await expect(page.locator('.shop-codes')).toBeVisible();
+    await openSettings(page);
+    await expect(page.locator('.sp-codes')).toBeVisible();
     await expect(await redeem(page, 'nope')).toHaveText("THAT CODE DOESN'T EXIST");
     const before = await wins(page);
     await expect(await redeem(page, 'gift-2026')).toHaveText('+25K WINS — ADDED');
     await expect.poll(() => wins(page)).toBe(before + 25000);
-    await page.locator('.shop-codes').screenshot({ path: `claude/codes/shop-codes-${vp.width}.png` });
-    await page.screenshot({ path: `claude/codes/shop-${vp.width}.png` });
     const claims = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.claims') || '[]'));
     expect(claims.filter((c) => c.kind === 'code'), 'E4: codes never sit in the inbox').toEqual([]);
     await expect(await redeem(page, 'GIFT-2026')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
@@ -70,29 +140,30 @@ for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
 test('a DB without migration 007 says codes are not switched on', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page, { live: false });
-  await navControl(page, 'shop').click();
+  await openSettings(page);
   await expect(await redeem(page, 'GIFT-2026')).toHaveText('CODES AREN’T SWITCHED ON YET');
 });
 
 // ---- R10 (migration 010): SCALING + BOOST codes — applied at redeem since E4 ----
-test('a PER-LEVEL code pays wins × the level at redeem (LV20 → 1,000 × 20)', async ({ page }) => {
+test('a PER-LEVEL code scales at redeem: season 2 pays wins × the rebirth multiplier (R2 → 1,000 × 9)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
+  await page.addInitScript(() => { localStorage.setItem('taw.s2.rebirths', '2'); });
   await boot(page);
-  await navControl(page, 'shop').click();
+  await openSettings(page);
   const before = await wins(page);
-  // H2d: the line says what was ADDED (1,000 × LV20), not the formula.
-  await expect(await redeem(page, 'levelup')).toHaveText(/^\+20K WINS — ADDED$/);
-  await expect.poll(() => wins(page)).toBe(before + 20000);
+  // H2d: the line says what was ADDED (1,000 × 9), not the formula.
+  await expect(await redeem(page, 'levelup')).toHaveText(/^\+9,000 WINS — ADDED$/);
+  await expect.poll(() => wins(page)).toBe(before + 9000);
 });
 
 test('a BOOST code starts ×3 on everything at once; a gold pill counts down on the menu, nothing under 13px', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 551 });
   await boot(page);
-  await navControl(page, 'shop').click();
+  await openSettings(page);
   const before = await wins(page);
   await expect(await redeem(page, 'triple')).toHaveText('BOOST ×3 · 10 MIN — STARTED');
   expect(await wins(page), 'a boost pays nothing by itself').toBe(before);
-  await page.locator('.shop-close').click();
+  await page.locator('.sp-close').click();
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
   expect(boost.mult).toBe(3);
   expect(boost.until - Date.now()).toBeGreaterThan(9 * 60 * 1000);
@@ -105,7 +176,6 @@ test('a BOOST code starts ×3 on everything at once; a gold pill counts down on 
   await expect(pill.locator('.bd-clock')).toHaveText(/\d:\d\d/);
   const px = await pill.evaluate((el) => Math.min(...[el, ...el.querySelectorAll('*')].map((n) => parseFloat(getComputedStyle(n).fontSize))));
   expect(px).toBeGreaterThanOrEqual(13);
-  await page.screenshot({ path: 'claude/day-oct2/r10-boost-pill-1280x551.png' });
 });
 
 test('BOOST OVER: when the clock hits 0 on the menu a finite moment plays and leaves no loop behind', async ({ page }) => {
@@ -138,24 +208,63 @@ test('a fresh LV1 profile at 1280x551 shows no boost pill and pays as before', a
   await expect(page.locator('.tover')).toHaveCount(0);
 });
 
-// ---- Andy oct10 (migration 030): GEMS + OVERDRIVE codes — applied at redeem (season 2: UPGRADES → CODES shelf) ----
-test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×5 for its minutes', async ({ page }) => {
+// ---- Andy oct10 (migration 030): GEMS + OVERDRIVE codes — applied at redeem ----
+test('a GEMS code pays its gems through the gem door; an OVERDRIVE code starts ×3 for its minutes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await boot(page);
-  // a season-2 save past the first-run reveal (UPGRADES opens after a first game — progress/reveal.js)
-  await page.addInitScript(() => { try { localStorage.setItem('taw.reveal', 'all'); } catch { /* blocked */ } });
-  await page.goto('/?portal=1&season2=1');
-  await menuReady(page);
-  await navControl(page, 'shop').click();
-  await page.locator('.sp2-tab[data-shelf="codes"]').click();
+  await openSettings(page);
   const gems = () => page.evaluate(() => (JSON.parse(localStorage.getItem('taw.s2.gems') || '{}').bal) || 0);
   const g0 = await gems();
   await expect(await redeem(page, 'gemrain')).toHaveText('+150 GEMS — ADDED');
   await expect.poll(gems).toBe(g0 + 150);
-  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×5 · 5 MIN — STARTED');
+  await expect(await redeem(page, 'OVERDRIVE')).toHaveText('OVERDRIVE ×3 · 5 MIN — STARTED');
   const boost = await page.evaluate(() => JSON.parse(localStorage.getItem('taw.boost') || 'null'));
-  expect(boost && boost.mult).toBe(5);
+  expect(boost && boost.mult).toBe(3); // nov6: OVERDRIVE ×3
   expect(boost.until - Date.now()).toBeGreaterThan(4 * 60_000);
   await expect(await redeem(page, 'GEMRAIN')).toHaveText('YOU ALREADY REDEEMED THAT CODE');
   expect(await gems(), 'never twice').toBe(g0 + 150);
 });
+
+// nov5: two kinds of code, told apart. A code in the wrong box says which box it belongs in, and changes nothing
+for (const [w, h] of [[1366, 768], [360, 640]]) {
+  test(`a save code in the REWARD box and a reward code in the SAVE box each say so, and the sheet still fits @${w}x${h}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await boot(page);
+    await page.locator('[data-nav="settings"]:visible').first().click();
+    const sheet = page.locator('.sp-sheet');
+    await sheet.waitFor({ state: 'visible' });
+    await expect(sheet.locator('.sp-group-title').filter({ hasText: 'REWARD CODE' })).toHaveCount(1);
+    await expect(sheet.locator('.sp-group-title').filter({ hasText: 'SAVE CODE' })).toHaveCount(1);
+    await expect(page.locator('.sp-codes-input')).toHaveAttribute('placeholder', 'TYPE REWARD CODE');
+    await expect(page.getByLabel('Paste a save code')).toHaveAttribute('placeholder', 'PASTE SAVE CODE');
+    const fits = () => sheet.evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.getBoundingClientRect().bottom <= innerHeight + 1);
+    expect(await fits()).toBe(true);
+    // each group's title tag stays off the row under it
+    expect(await sheet.evaluate((el) => [...el.querySelectorAll('.sp-group')].filter((g) => {
+      const tag = g.querySelector('.sp-group-title').getBoundingClientRect();
+      const next = g.querySelector('.sp-group-title').nextElementSibling.getBoundingClientRect();
+      return tag.bottom > next.top + 4 && tag.left < next.right && tag.right > next.left; // 4: a tag's -2deg tilt grows its box
+    }).length)).toBe(0);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-settings-${w}.png` });
+
+    // a whole save code, pasted into the reward box: named at once, no request, no stump left behind
+    let redeems = 0;
+    page.on('request', (r) => { if (r.url().includes('lb_redeem')) redeems += 1; });
+    await page.locator('.sp-codes-input').fill(`TAW2.${'a'.repeat(400)}.deadbeef`);
+    await expect(page.locator('.sp-codes-msg')).toContainText('THAT IS A SAVE CODE');
+    await expect(page.locator('.sp-codes-input')).toHaveValue('');
+    expect(redeems).toBe(0);
+    expect(await fits()).toBe(true);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-save-in-reward-${w}.png` });
+    await page.locator('.sp-close').click();
+
+    // a reward code, typed into the save box
+    await page.locator('[data-nav="settings"]:visible').first().click();
+    await sheet.waitFor({ state: 'visible' });
+    await page.getByLabel('Paste a save code').fill('GIFT-2026');
+    await page.getByRole('button', { name: 'RESTORE' }).click();
+    await expect(sheet.locator('.sp-save > .sp-msg')).toContainText('REWARD CODE');
+    expect(await fits()).toBe(true);
+    await page.screenshot({ path: `${process.env.SHOTS || 'test-results'}/codes-reward-in-save-${w}.png` });
+  });
+}

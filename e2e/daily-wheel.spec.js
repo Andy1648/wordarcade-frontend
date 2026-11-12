@@ -8,7 +8,8 @@
 //   4. the panel fits every target viewport with no scroll.
 // SHOTS=1 also saves the seeded screenshots for the PR (claude/shots-wheel/).
 import { test, expect } from '@playwright/test';
-import { boot } from './support/wheelBoot.js';
+import { boot, openWheel } from './support/wheelBoot.js';
+import { navDot } from './support/menu.js';
 
 const SHOTS = !!process.env.SHOTS;
 const DIR = process.env.SHOTS_DIR || 'claude/shots-wheel';
@@ -25,12 +26,11 @@ const noScroll = (page) => page.evaluate(() => ({
   y: document.documentElement.scrollHeight - innerHeight, x: document.documentElement.scrollWidth - innerWidth,
 }));
 
-test('menu: the WHEEL takes the top-right slot; NEWS sits bottom-right, SETTINGS in the rail; CREDITS lives in SETTINGS', async ({ page }) => {
+test('menu: no WHEEL tile (it lives in UPGRADES, Andy nov5), and UPGRADES wears its dot; NEWS sits bottom-right, SETTINGS in the rail; CREDITS lives in SETTINGS', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page);
-  const tile = page.locator('.hp-icons [data-nav="wheel"]');
-  await expect(tile).toBeVisible();
-  await expect(tile.locator('.kb-idot')).toBeVisible(); // today's free spin is waiting
+  await expect(page.locator('[data-nav="wheel"]')).toHaveCount(0);
+  await expect(navDot(page, 'shop')).toHaveCount(1); // today's spin is waiting
   await expect(page.locator('.hp-icons [data-nav="news"], .hp-icons [data-nav="settings"]')).toHaveCount(0);
   await expect(page.locator('.hp-util [data-nav="news"]')).toBeVisible();
   // oct28: SETTINGS left that corner for a named button in the left rail (Andy "tf why is it at the corner")
@@ -46,7 +46,7 @@ test('menu: the WHEEL takes the top-right slot; NEWS sits bottom-right, SETTINGS
 test('SPIN: one server spin, lands, pays +60 gems once, claims, clears the dot; reopen never pays again', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   const db = await boot(page, { gems: 200, slot: 2 });
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
   await artLoaded(page);
@@ -63,9 +63,9 @@ test('SPIN: one server spin, lands, pays +60 gems once, claims, clears the dot; 
   const under = Math.floor((((-deg % 360) + 360 + 22.5) % 360) / 45);
   expect(under).toBe(2);
   await page.locator('.dw-close').click();
-  await expect(page.locator('[data-nav="wheel"] .kb-idot')).toHaveCount(0);
+  await expect(page.getByTestId('daily-spin-card').locator('xpath=ancestor::*[contains(@class,"sp2-card")][1]').locator('.sp2-dot')).toHaveCount(0);
   // reopen: today's result, no SPIN, no second payment
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   await expect(wheel.getByTestId('wheel-result')).toContainText('+60 GEMS');
   await expect(wheel.getByTestId('wheel-spin')).toHaveCount(0);
   expect(await gemBal(page)).toBe(260);
@@ -75,7 +75,7 @@ test('SPIN: one server spin, lands, pays +60 gems once, claims, clears the dot; 
 test('a LEGENDARY+ ticket pays nothing locally (the server owns it); the ODDS sheet prints 8 rows = 100%', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 600 });
   await boot(page, { gems: 200, slot: 5, streak: 3 });
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toContainText('LEGENDARY+ ROLL', { timeout: 12000 });
@@ -93,7 +93,7 @@ test('a LEGENDARY+ ticket pays nothing locally (the server owns it); the ODDS sh
 test('phone 390x844: SPIN lands and pays (+ the PR shots)', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await boot(page, { gems: 200, slot: 2 });
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
   await artLoaded(page);
@@ -111,7 +111,7 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
     await boot(page);
     expect(await noScroll(page)).toEqual({ x: 0, y: 0 });
     if (SHOTS) { await page.waitForTimeout(1500); await page.screenshot({ path: `${DIR}/menu-${w}x${h}.png` }); }
-    await page.locator('[data-nav="wheel"]').click();
+    await openWheel(page);
     const panel = page.locator('.dw');
     await expect(page.getByTestId('wheel-spin')).toBeVisible();
     const b = await panel.boundingBox();
@@ -141,12 +141,12 @@ for (const [w, h] of [[1536, 864], [1366, 768], [1280, 600], [390, 844], [360, 6
 }
 
 // the wheel-only cosmetics: the painted piece shows on the result card, lands in the save, and wears where its slot is worn
-for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame'], ['confetti', 'PRIZE SHOWER', 'WIN FX', 'fx']]) {
+for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']]) { // CONFETTI (a WIN FX) retired nov2
   for (const [vn, vp] of [['1366x768', { width: 1366, height: 768 }], ['390x844', { width: 390, height: 844 }]]) {
     test(`cosmetic ${id} ${vn}: the result card shows its art, it is owned, WEAR equips it`, async ({ page }) => {
       await page.setViewportSize(vp);
       await boot(page, { slot: 7, cosmetic: id });
-      await page.locator('[data-nav="wheel"]').click();
+      await openWheel(page);
       const wheel = page.getByTestId('daily-wheel');
       await wheel.getByTestId('wheel-spin').click();
       const res = wheel.getByTestId('wheel-result');
@@ -155,6 +155,7 @@ for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']
       expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).own)).toContain(id);
       if (SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${DIR}/cosmetic-${id}-result-${vn}.png` }); }
       await wheel.getByRole('button', { name: 'Close the daily wheel' }).click();
+      await page.keyboard.press('Escape'); // the shop the wheel opened over
       await page.locator('[data-nav="profile"]:visible').first().click();
       await page.getByTestId('profile-kit').click();
       const pk = page.getByTestId('kit-picker');
@@ -173,7 +174,7 @@ for (const [id, name, tab, slotKey] of [['jackpot', 'JACKPOT', 'FRAME', 'frame']
 test('a retired LUCKY from an old server: +120 GEMS on the gift box, nothing owned in the kit', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page, { gems: 200, slot: 7, cosmetic: 'lucky' });
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await wheel.getByTestId('wheel-spin').click();
   const res = wheel.getByTestId('wheel-result');
@@ -190,18 +191,18 @@ test('CLOSE: tap outside + Escape + ✕ close the wheel; mid-spin all three are 
   const db = await boot(page, { gems: 200, slot: 2 });
   const wheel = page.getByTestId('daily-wheel');
   // tap outside (the scrim, not the panel)
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
   await page.mouse.click(12, 12);
   await expect(wheel).toHaveCount(0);
   // Escape
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(wheel).toHaveCount(0);
   // mid-spin: a slow server keeps the wheel in its spin; outside / Escape / ✕ do nothing
   await page.route('https://lb.e2e.invalid/**/rpc/lb_wheel_spin', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return route.fallback(); });
-  await page.locator('[data-nav="wheel"]').click();
+  await openWheel(page);
   await wheel.getByTestId('wheel-spin').click();
   await page.mouse.click(12, 12);
   await page.keyboard.press('Escape');
@@ -225,7 +226,7 @@ test.describe('films', () => {
       await page.setViewportSize({ width: 1366, height: 768 });
       await page.addInitScript(() => localStorage.setItem('taw.reduceMotion', '0'));
       await boot(page, { gems: 200, slot });
-      await page.locator('[data-nav="wheel"]').click();
+      await openWheel(page);
       const wheel = page.getByTestId('daily-wheel');
       await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
       await artLoaded(page);

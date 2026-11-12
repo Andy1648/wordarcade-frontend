@@ -12,10 +12,12 @@ const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '036_serv
 const has = (s) => assert.ok(sql.includes(s), `036 is missing: ${s}`);
 // 063_legendary_harder.sql re-seeds the pool (Andy oct22: LEGENDARY 1 IN 130 + pity 60; 059 / 055 / 048 / 044 before it): the LATEST pool must be the game's pool
 const pool = readFileSync(join(process.cwd(), 'supabase', 'migrations', '063_legendary_harder.sql'), 'utf8').replace(/\r\n/g, '\n');
+// 080_new_gears_2.sql re-seeds the pool again (nov3 batch 2: +5 gears after 079's +12, same tier odds): the LATEST pool rows; 063 keeps pick_gear's pity
+const pool75 = readFileSync(join(process.cwd(), 'supabase', 'migrations', '080_new_gears_2.sql'), 'utf8').replace(/\r\n/g, '\n');
 
-test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (063 re-seeds 036)', () => {
-  ROLL_MARKS.forEach((m, i) => assert.ok(pool.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `063 is missing ${m.id}`));
-  const rows = pool.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
+test('the server pool IS the game pool: every gear, its tier, its 1-in-x, in order (080 re-seeds 036)', () => {
+  ROLL_MARKS.forEach((m, i) => assert.ok(pool75.includes(`('${m.id}', '${m.tier}', ${m.x}, ${i + 1})`), `080 is missing ${m.id}`));
+  const rows = pool75.match(/\('mk-[a-z0-9-]+', '[a-z]+', [\d.]+, \d+\)/g) || [];
   assert.equal(rows.length, ROLL_MARKS.length, 'no extra gear on the server');
 });
 
@@ -25,7 +27,11 @@ test('the server constants are the game constants (price, shiny, bonus roll, pit
   has(`BONUS_EVERY constant integer := ${BONUS_ROLL_EVERY};`);
   // the pity constants live in pick_gear, which 063 redefines (LEG_PITY 60)
   assert.ok(pool.includes(`EPIC_PITY constant integer := ${PITY.epic.hard}; LEG_PITY constant integer := ${PITY.legendary.hard};`), '063 pick_gear pity');
-  for (const [t, g] of Object.entries(DUPE_GEMS)) has(`when '${t}' then ${g}`);
+  // the server's budget is a CEILING on what it trusts: its dupe table may only sit at or above what the game pays
+  for (const [t, g] of Object.entries({ rare: 5, epic: 25, legendary: 100, mythic: 500, secret: 2500 })) {
+    has(`when '${t}' then ${g}`);
+    assert.ok(g >= DUPE_GEMS[t], `${t} pays more than the server budget counts`);
+  }
   has('LUCK_CAP constant double precision := 15;');
   has('WRITE-ONLY: Claude never runs migrations');
 });

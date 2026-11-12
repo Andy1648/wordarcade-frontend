@@ -1,9 +1,7 @@
 // e2e/roll-robust.spec.js — the ROLL screen is buttery smooth and handles every case (Andy, ROLL v1). One test per bullet:
-//   1. smooth: only transform/opacity move; at 4x CPU (CDP Emulation.setCPUThrottlingRate — a school Chromebook) the
-//      frame times through a full reel spin + the LEGENDARY full reveal run at 60fps: median ≤ 20 ms; p95 is a stall
-//      guard for now (see the test) — CI-aware, like input-latency.spec.js (CI is ~1.5x slower at the same throttle)
+//   1. smooth (4x CPU, 60fps): moved to roll-smooth.perf.spec.js — a frame-time measurement must run ALONE (the perf project)
 //   2. spam on ROLL never double-charges: 20 raw taps roll nothing (R4: a tap is not a hold); 8 rapid holds = exactly 10 gems per roll actually made
-//   3. 0 gems: a clear state — "NO GEMS" on the button and, on a press, −N + gem; never a silent grey button
+//   3. 0 gems: a clear state — "N MORE" on the button, PLAY FOR GEMS under it and, on a press, −N + gem; never a silent grey button
 //   4. AUTO stops cleanly when the gems run out: no negative balance, no stuck spinner, the toggle resets
 //   5. the tab going hidden, or leaving (✕ / INDEX) mid-roll, still lands and saves the result
 //   6. a refresh mid-roll keeps the mark you paid for — saved at purchase, charged exactly once
@@ -56,15 +54,13 @@ const store = (page) => page.evaluate(() => {
   };
 });
 const result = (page) => page.locator('[data-testid="mark-roll-result"]');
-// AUTO's other honest stops: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target — or the
-// roll DROPPED a chase hero (cast.js rollChaseDrop stops AUTO). A gems-ran-out stop is neither.
+// AUTO's other honest stop: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target. A gems-ran-out
+// stop is not one. (A roll never drops a hero any more — nov12.)
 const stoppedOnHit = (page) => page.evaluate(() => {
   const top = ['legendary', 'mythic', 'secret'];
   const tiers = [...document.querySelectorAll('[data-testid="mark-roll-result"], [data-testid="mark-roll-extra"] [data-tier]')]
     .map((el) => el.getAttribute('data-tier'));
-  let heroes = [];
-  try { heroes = JSON.parse(localStorage.getItem('taw.s2.heroes') || '[]'); } catch { heroes = []; }
-  return tiers.some((t) => top.includes(t)) || ['drake', 'magma', 'facet'].some((h) => heroes.includes(h));
+  return tiers.some((t) => top.includes(t));
 });
 // the LANDED card's own gear turn + shine are sanctioned at rest (Andy oct11 "i want the animations to show on the roll
 // screen as well (when its stopped)") — everything else on the stage must be done
@@ -92,47 +88,6 @@ async function keepReveal(page) {
     await page.waitForTimeout(150);
   }
 }
-
-test('1. smooth: a full spin + the LEGENDARY reveal run at 60fps at 4x CPU (transform/opacity only)', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 }); // a school Chromebook
-  await seed(page, { 'taw.markRolls': STARTED({ sinceLegendary: 499 }) });
-  await openRoll(page);
-  await page.waitForTimeout(800);
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-  await page.evaluate(() => {
-    window.__ft = [];
-    let last = 0;
-    const tick = (t) => { if (last) window.__ft.push(t - last); last = t; if (!window.__ftStop) requestAnimationFrame(tick); };
-    requestAnimationFrame(tick);
-  });
-  await holdRoll(page);
-  await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 20000 }); // 4x throttle
-  await page.waitForTimeout(2000); // the reveal plays in (rays, slam, pop, burst)
-  const r = await page.evaluate(() => {
-    window.__ftStop = true;
-    const f = window.__ft.slice(10).sort((a, b) => a - b); // the tap's own frame + the React commit lead in
-    // what moved: every running/finished animation on the screen animates transform / opacity only
-    const props = new Set();
-    for (const a of document.getAnimations()) {
-      const el = a.effect && a.effect.target;
-      if (!el || !el.closest || !el.closest('.rs-overlay')) continue;
-      for (const k of a.effect.getKeyframes()) for (const p of Object.keys(k)) if (!['offset', 'easing', 'composite', 'computedOffset'].includes(p)) props.add(p);
-    }
-    return { n: f.length, p50: f[Math.floor(f.length / 2)], p95: f[Math.floor(f.length * 0.95)], props: [...props] };
-  });
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  console.log(`[roll-smooth] frames ${r.n}  p50 ${r.p50.toFixed(1)} ms  p95 ${r.p95.toFixed(1)} ms  props ${r.props.join(',')}`);
-  expect(r.n).toBeGreaterThan(60);
-  for (const p of r.props) expect(['transform', 'opacity']).toContain(p);
-  // 60fps through the spin + reveal: the MEDIAN frame is a 60Hz frame (main before ROLL v1: p50 67–83 ms here — the
-  // assertion that catches a regression). p95 is NOT yet ≤ 20 ms at 4x: the frames that can't be 16.7 ms are the tap
-  // itself (the purchase: storage + the wins grant re-rendering the App underneath) and the reveal mounting its card
-  // and bursts — measured on the dev box p95 33–67 ms, 183 under load (main: 133–2,033). So p95 is a STALL guard
-  // (no multi-hundred-ms freeze); CI runners are ~1.5x slower at the same throttle.
-  expect(r.p50).toBeLessThanOrEqual(process.env.CI ? 34 : 20);
-  expect(r.p95).toBeLessThanOrEqual(process.env.CI ? 300 : 200);
-});
 
 test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -174,13 +129,13 @@ test('2. spam-clicking ROLL never double-charges: 10 gems per roll actually made
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', String(after.gems));
 });
 
-test('3. 0 gems: "NO GEMS" + on a press −N + gem — never a silent grey button', async ({ page }) => {
+test('3. 0 gems: "N MORE" + PLAY FOR GEMS + on a press −N + gem — never a silent grey button', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await seed(page, { 'taw.gems': gemsOf(0), 'taw.markRolls': STARTED() });
   await openRoll(page);
   const roll = page.locator('.rs-roll');
   await expect(roll).toHaveClass(/is-short/);
-  await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
+  await expect(roll.locator('.rs-roll-lbl')).toHaveText(/^[\d,.]+[A-Z]* MORE$/);
   await expect(roll.locator('img.gem-icon')).toBeVisible();
   await holdRoll(page);
   await expect(page.locator('.rs-msg')).toHaveAttribute('data-need', '10');
@@ -210,7 +165,7 @@ test('4. AUTO stops cleanly when the gems run out: no negative balance, no stuck
   expect(s.gems).toBeLessThan(10);
   const roll = page.locator('.rs-roll');
   await expect(roll).not.toHaveClass(/is-rolling/);
-  await expect(roll.locator('.rs-roll-lbl')).toHaveText('NO GEMS');
+  await expect(roll.locator('.rs-roll-lbl')).toHaveText(/^[\d,.]+[A-Z]* MORE$/);
   await expect(page.locator('.rs-need')).toHaveText(`−${10 - s.gems}`);
   await page.waitForTimeout(1200);
   expect(await reelAnims(page)).toBe(0);
@@ -278,7 +233,7 @@ test('6. refresh mid-roll keeps the mark you paid for — saved at purchase, cha
   expect(after.owned).toHaveLength(1);
   await page.locator('.hp-nav.is-gears:visible').first().click(); // v2 menu: the GEARS rail button (ROLL + INDEX)
   await page.locator('.rs-overlay').waitFor();
-  await expect(page.getByTestId('roll-index')).toContainText('1/48'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4) + 5 oct18 (4 LEGENDARY + CHRONOS) + 15 oct21 GEAR EXPANSION
+  await expect(page.getByTestId('roll-index')).toContainText('1/65'); // GEAR POOL v2: 27 gears + JACKPOT (gear card v4) + 5 oct18 (4 LEGENDARY + CHRONOS) + 15 oct21 GEAR EXPANSION + 12 nov2 + 5 nov3
   await expect(page.locator('.rs-gems-bal')).toHaveAttribute('data-gems', '90');
 });
 

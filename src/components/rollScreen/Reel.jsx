@@ -20,8 +20,7 @@
 // the track's transform, in % — nothing is measured, ever; no per-frame main-thread work); every other effect is a finite WAAPI one-shot on transform/opacity (the mockup's
 // endless rays / blink are FINITE here: the rays turn for RAYS_MS then rest, the "TAP TO KEEP" blinks twice);
 // will-change is ON only while a node animates and cleared when it stops; nothing loops. Every non-rectangle shape is
-// an asset (/art/rolls/rays.svg as a tinted mask, the painted blade shards in /fx/shards via fx/shards/shardPlan.js, the
-// inline pointer SVG).
+// an asset (/art/rolls/rays.svg as a tinted mask, /art/rolls/{shard,spark,blob}.svg particles, the inline pointer SVG).
 // REDUCED MOTION: mode 'none' — no spin, no shake, no burst, no reveal layer: the reel sits on the result and the
 // line shows at once.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -39,7 +38,7 @@ import RevealStats from './RevealStats.jsx';
 import GearFx from '../GearFx';
 import { GLOW_TIERS } from '../markCard/idleSheen.js';
 import { revealStatsOf } from './revealStats.js';
-import { shardSrc, bladeFrames, bladeFlavour, clearVectors, SHARD_MS, SHARD_MAX } from '../../fx/shards/shardPlan.js';
+import { SHARD_MAX } from '../../fx/shards/shardPlan.js';
 import {
   revealTimeline, extensionPlan, extensionAt, revealDoneMs, selfCloseMs, SPARK_POOL, SPARK_SPOTS, SCREEN_SHAKE, PRE_RATTLE,
   DIM_LIGHTS, FLASH_PEAK,
@@ -52,7 +51,12 @@ import {
 
 const CELLS = Array.from({ length: REEL_LEN }, (_, i) => i);
 const PARTS = Array.from({ length: BURST_POOL }, (_, i) => i);
+// nov4 (Andy "extra"): the roll's particles are the flat house SVGs again (/art/rolls), not the painted crystal blades
+const ART = '/art/rolls/';
+const PARTICLE_ART = ['shard.svg', 'spark.svg', 'blob.svg'];
+const partSrc = (i) => `${ART}${PARTICLE_ART[i % PARTICLE_ART.length]}`;
 const VEC = burstVectors(BURST_POOL);
+const VEC_BIG = burstVectors(BURST_POOL, 2.6);
 const markOf = (id) => rollMarkById(id) || { id, tier: 'rare', name: '' };
 const lineOf = (tier) => CARD_RAR[cardTier(tier)].line;
 // REEL SHOWCASE: a passing cell of a gear you don't own shows the INDEX's locked silhouette (tier frame, "???")
@@ -220,13 +224,15 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
     if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
-    const kind = revealKind(tier, mode);
+    const kind = revealKind(tier, mode, { dupe: !!res.dupe, pipUp: !!res.pipUp });
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
     const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
       const v = VEC[i];
-      // the painted blade shards (fx/shards): each snaps out tip-first, hangs, drifts and fades
-      anim(n[`p${i}`], bladeFrames(v, { s: v.s, ...bladeFlavour(i) }), { duration: SHARD_MS - 60 + (i % 4) * 20, easing: 'linear' });
+      anim(n[`p${i}`], [
+        { opacity: 1, transform: 'translate3d(0,0,0) scale(0.4) rotate(0deg)' },
+        { opacity: 0, transform: `translate3d(${v.x}px,${v.y}px,0) scale(${v.s}) rotate(${v.r}deg)` },
+      ], { duration: 650 + (i % 4) * 60, easing: 'cubic-bezier(.15,.8,.3,1)' });
     }
     if (kind !== 'line') {
       phase.current = 'cut';
@@ -247,7 +253,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // to the panel's own frame (the purple border is the only edge), not a fixed 48px — a band-sized TELL / FLASH drew a
   // hard line across the cards' glow, and a 48px fade ran over the frame and the top bar. --rs-up = band → top frame
   // (the fades + shades use it both ways), --rs-down = band → bottom frame (the transient TELL / FLASH fill the panel).
-  // Measured on mount and when the panel resizes only (never per frame).
+  // Measured on mount and when the panel or anything stacked in it resizes (nov6: the result line landing moves the band
+  // without resizing the panel, and a stale --rs-up ran the shades over the purple frame). Never per frame.
   useLayoutEffect(() => {
     const win = nodes.current.win;
     const stage = win && win.closest('.rs-stage');
@@ -256,13 +263,16 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       const w = win.getBoundingClientRect();
       const s = stage.getBoundingClientRect();
       const top = s.top + stage.clientTop;
-      win.style.setProperty('--rs-up', `${Math.max(0, Math.round(w.top - top))}px`);
-      win.style.setProperty('--rs-down', `${Math.max(0, Math.round(top + stage.clientHeight - w.bottom))}px`);
+      // floor, and NOT clamped at 0: on a tight screen the band can poke past the frame, and then these go negative so the
+      // shades still stop AT the frame (the purple border is never dimmed)
+      win.style.setProperty('--rs-up', `${Math.floor(w.top - top)}px`);
+      win.style.setProperty('--rs-down', `${Math.floor(top + stage.clientHeight - w.bottom)}px`);
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(measure);
     ro.observe(stage);
+    stage.querySelectorAll(':scope > *, :scope > * > *').forEach((el) => ro.observe(el));
     return () => ro.disconnect();
   }, []);
 
@@ -366,7 +376,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // THE CARD DOMINATES (design audit nov2): the reveal card is sized from the viewport — ~65% of the height on
     // desktop, ~75% of the width on a phone — measured once as the reveal opens (no per-frame read; revealCardW is pure)
     const size = () => {
-      const w = revealCardW({ vw: window.innerWidth, vh: window.innerHeight, kind, plate: !!(st && (st.perks.length || st.dupe)) });
+      const w = revealCardW({ vw: window.innerWidth, vh: window.innerHeight, kind, plate: !!(st && (st.perks.length || st.dupe)), frame: tier === 'mythic' || tier === 'secret' });
       if (n.cut) { n.cut.style.setProperty('--mc-w', `${w}px`); n.cut.style.setProperty('--mc-s', String(w / 180)); }
     };
     size();
@@ -449,15 +459,18 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // EPIC+: the BURST — the jagged ring (tinted the rarity) + the shard pool; MYTHIC+ a second, wider ring
     if (tl.burst) {
       anim(n.rvRing0, [{ transform: 'scale(0.3)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.25)', opacity: 0 }], { duration: tl.burst.ms, delay: tl.burst.at, easing: ease.out });
-      const k = Math.min(burstCount(tier), SHARD_MAX); // one strong idea: 8–14 blades, never a stacked spray
-      // the blades burst from behind the card and must CLEAR it (up / down too, not only past its sides): one size read
-      // per reveal (never per frame), in the card's own untransformed box — the pool sits in the same container
-      const card = n.rvCard;
-      const vs = clearVectors(k, card ? card.offsetWidth : 252, card ? card.offsetHeight : 420, { reach: full ? [70, 190] : [40, 130] });
+      // ONE strong idea per tier (Andy nov3): LEGENDARY's moment is its rays + slam, so it throws NO particles (BURST.legendary 0)
+      const k = Math.min(burstCount(tier), SHARD_MAX);
+      const far = full ? 1.6 : 1.1;
       for (let i = 0; i < k; i += 1) {
-        anim(n[`q${i}`], bladeFrames(vs[i], { s: vs[i].s * (full ? 1.1 : 0.9), ...bladeFlavour(i) }), { duration: SHARD_MS - 80 + (i % 5) * 20, delay: tl.burst.at, easing: 'linear' });
+        const v = VEC_BIG[i];
+        anim(n[`q${i}`], [
+          { opacity: 0, transform: 'translate3d(0,0,0) scale(0.5)' },
+          { opacity: 1, transform: 'translate3d(0,0,0) scale(0.8)', offset: 0.01 },
+          { opacity: 0, transform: `translate3d(${v.x * (far / 1.6)}px,${v.y * (far / 1.6)}px,0) scale(${v.s * far}) rotate(${v.r * 2}deg)` },
+        ], { duration: (full ? 1100 : 760) + (i % 5) * 90, delay: tl.burst.at, easing: 'cubic-bezier(.15,.8,.3,1)' });
       }
-      if (full) later(() => sndShardBurst(tier), tl.burst.at);
+      if (full && k) later(() => sndShardBurst(tier), tl.burst.at);
     }
     if (tl.ring2) anim(n.rvRing1, [{ transform: 'scale(0.4) rotate(0deg)', opacity: 1 }, { transform: 'scale(1.35) rotate(10deg)', opacity: 1, offset: 0.55 }, { transform: 'scale(1.7) rotate(14deg)', opacity: 0 }], { duration: tl.ring2.ms, delay: tl.ring2.at, easing: ease.out });
     // RARE+: ONE sheen pass — the wide band asset swept across the clipped face (transform only)
@@ -568,10 +581,10 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
               {/* the burst rings: the jagged ring asset as a mask, tinted the rarity (EPIC+ one, MYTHIC+ two) */}
               <span className="rv-ring" ref={reg('rvRing0')} />
               <span className="rv-ring is-2" ref={reg('rvRing1')} />
-              {/* the painted blade shards burst from BEHIND the card (centred on it, under the rattle in paint order) */}
+              {/* the flat particles burst from BEHIND the card (centred on it, under the rattle in paint order) */}
               <div className="rs-parts is-cut">
                 {PARTS.map((i) => (
-                  <img key={i} className="rs-part" ref={reg(`q${i}`)} src={shardSrc(cr ? cr.tier : tier, i)} alt="" draggable="false" />
+                  <img key={i} className="rs-part" ref={reg(`q${i}`)} src={partSrc(i)} alt="" draggable="false" />
                 ))}
               </div>
               <div className="rv-rattle" ref={reg('rvRattle')}>
@@ -651,7 +664,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
         </div>
         <div className="rs-parts">
           {PARTS.map((i) => (
-            <img key={i} className="rs-part" ref={reg(`p${i}`)} src={shardSrc(tier, i)} alt="" draggable="false" />
+            <img key={i} className="rs-part" ref={reg(`p${i}`)} src={partSrc(i)} alt="" draggable="false" />
           ))}
         </div>
       </div>

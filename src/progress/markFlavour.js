@@ -58,6 +58,25 @@ export const MARK_FLAVOUR = Object.freeze({
   'mk-firebird': 'EVERY END IS A HEAD START.',
   'mk-trident': 'THREE PRONGS. THREE TIMES.',
   'mk-paradox': 'TWO GEARS. ONE SOUL.',
+  // ---- NEW GEARS nov2 ----
+  'mk-bullseye': 'HITS THE GAME. SCORES THE XP.',
+  'mk-rocketskates': 'BRAKES ARE FOR LOSERS.',
+  'mk-snowball': 'ONLY GETS BIGGER.',
+  'mk-telescope': 'SPOTS A LONG WORD A MILE OFF.',
+  'mk-drumsticks': 'KEEPS TIME. BREAKS RECORDS.',
+  'mk-anchor': 'DROPS THE CHAIN. HOLDS THE LEAD.',
+  'mk-comet': 'FIRST ACROSS. LEAVES A TRAIL.',
+  'mk-meltdown': 'BIG WORDS GO NUCLEAR.',
+  'mk-genie': 'THREE WISHES. ALL GEARS.',
+  'mk-gauntlet': 'ONE PUNCH LIGHTS THE FUSE.',
+  'mk-grimoire': 'EVERY WORD, ALREADY WRITTEN.',
+  'mk-supernova': 'WIN MORE. BURN BRIGHTER.',
+  // ---- NEW GEARS nov3 ----
+  'mk-cherrybomb': 'KEEP WINNING. KEEP TICKING.',
+  'mk-spraycan': 'BIG WORDS. BIGGER LETTERS.',
+  'mk-popcorn': 'EVERY GAME POPS OFF.',
+  'mk-pinata': 'HIT IT. GET RICH.',
+  'mk-megaton': 'WIN STREAK GOES NUCLEAR.',
   // ---- SECRET ----
   'mk-origin': 'BEFORE THE FIRST WORD, THIS.',
   // ---- PERMANENT ----

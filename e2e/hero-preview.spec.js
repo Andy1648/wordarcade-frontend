@@ -62,18 +62,20 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await expect(pv).not.toHaveAttribute('data-hero', /^hex/);
     await pv.getByRole('button', { name: 'Previous hero' }).click();
     await expect(pv).toHaveAttribute('data-hero', 'hex');
-    // an earnable crew member shows its progress bar to the requirement
+    // nov9: a LEGEND is gems only — no rebirth bar, no lock, just its price
     await pv.getByRole('button', { name: '‹ ALL HEROES' }).click();
     await page.locator('.hc[data-hero="mecha"]').click();
     if (!(await pv.isVisible())) await page.locator('.hc[data-hero="mecha"]').click();
-    await expect(pv.locator('.hpv-prog-n')).toHaveText('0 / 10');
+    await expect(pv.locator('.hpv-prog')).toHaveCount(0);
+    await expect(pv.locator('.hpv-locked')).toHaveCount(0);
+    await expect(pv).toContainText('NOT ENOUGH GEMS');
     await page.waitForTimeout(700);
     await shot(page, `${vn}-5-preview-legend`);
   });
 }
 
 test('hero preview: HOLD TO BUY buys + equips the hero; the profile wears it', async ({ page }) => {
-  await openPicker(page, { width: 1366, height: 768 }, 3000);
+  await openPicker(page, { width: 1366, height: 768 }, 5000); // LEXI is 4,000 (nov9)
   await page.locator('.hc[data-hero="lexi"]').click();
   const pv = page.getByTestId('hero-preview');
   const hold = pv.getByRole('button', { name: /Hold to buy LEXI/ });

@@ -187,7 +187,10 @@ for (const vp of SIZES) {
       // the XP pill shares the GEMS row: on a desktop it adds NO height; on a phone, when GEMS carries its source chips,
       // the pair wraps and XP takes at most ONE compact row. (The season-2 REBIRTH READY run-over card was already taller
       // than the screen at these sizes before game XP — measured, a separate fit issue — so the gate is the added height.)
-      const allowed = vp.width < 500 ? 36 : 1;
+      // design audit nov2 #5: a ZERO gems pill is hidden, and the earned row with it — so when the run dropped no gems
+      // the XP pill is the row's only item and costs exactly one compact row (it can no longer ride beside GEMS)
+      const gemsShown = await page.evaluate(() => { const g = document.querySelector('.solo-deathcard .gems-earned'); return !!g && g.getClientRects().length > 0; });
+      const allowed = vp.width < 500 || !gemsShown ? 36 : 1;
       expect(fit.bottom - without, `the XP pill made the run-over card taller (bottom ${Math.round(fit.bottom)} vs ${Math.round(without)} without it, viewport ${fit.h})`).toBeLessThanOrEqual(allowed);
       expect(fit.right, 'the run-over card runs off the right').toBeLessThanOrEqual(fit.w + 1);
       if (order.wins) {

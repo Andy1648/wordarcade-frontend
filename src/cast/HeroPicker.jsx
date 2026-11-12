@@ -18,7 +18,7 @@ import './HeroPicker.css';
 
 // one card each, the grid's (and ‹ ›'s) order — a LIMITED hero still on sale leads the grid (its clock is the point)
 const ON_SALE = LEGEND.filter((h) => h.limited && limitedDaysLeft(h.id));
-// the CHASE heroes close the grid: the rarest things in the game, locked with their odds until one drops
+// the rarest heroes (MYTHIC / SECRET) close the grid, priced over the LEGENDs
 const MEMBERS = [...ON_SALE, ...CAST, ...NEW_CREW, ...LEGEND.filter((h) => !ON_SALE.includes(h)), ...CHASE];
 const ALL = [...MEMBERS, ...GOLD, ...ELITE];
 /** A member's variants, base first: [base, GOLD?, ELITE?]. */
@@ -39,18 +39,16 @@ function Status({ m, current }) {
   const vs = variantsOf(m);
   if (vs.some((v) => v.id === current)) return <span className="hp2-act is-on">EQUIPPED</span>;
   if (ownsHero(m.id)) return null; // owned, not worn: the card itself is the button
-  if (m.chase) return null; // CHASE: no price — its odds ride the card art (cardReq)
+  if (!heroGateMet(m.id)) return null; // HOLLOW after its sale: nothing to buy
   return <span className="hp2-act is-price"><KitIcon name="gems" size={20} shadow={2} extras={false} />{formatNum(m.price)}</span>;
 }
-/** The requirement printed on a card's art: the earn (60 WINS / LEVEL 20 / REBIRTH 1) of a crew member you don't own
- *  yet, or a LEGEND's rebirth gate with the lock until you reach it (then only its price stands between you and it). */
+/** What a card's art prints for a hero you don't own: HOLLOW's sale clock (then GONE FOREVER).
+ *  Every other hero is just its gem price (nov9: no WINS / LEVEL / REBIRTH requirements). */
 function cardReq(m) {
   const u = HERO_UNLOCK[m.id];
   if (!u || ownsHero(m.id)) return null;
-  // LIMITED (HOLLOW): the clock while it's on sale, then gone for good
   if (u.until != null) { const d = limitedDaysLeft(m.id); return d ? { icon: 'clock', label: `ENDS IN ${d}D` } : { lock: true, label: 'GONE FOREVER' }; }
-  if (u.gate) return heroGateMet(m.id) ? null : { lock: true, label: u.label };
-  return { icon: u.icon, label: u.label };
+  return heroGateMet(m.id) ? null : { lock: true, label: u.label };
 }
 
 function Variants({ m }) {

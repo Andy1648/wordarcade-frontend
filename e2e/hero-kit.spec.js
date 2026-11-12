@@ -35,7 +35,7 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     await page.addInitScript(() => { localStorage.setItem('taw.s2.kit', JSON.stringify({ own: ['pixel', 'lucky'], pet: 'pixel', frame: null, fx: null })); });
     await openKit(page, vp, 1000);
     const pk = page.getByTestId('kit-picker');
-    await expect(page.getByTestId('customize').getByRole('tab')).toHaveCount(5); // oct28: HERO · FRAME · WIN FX · POP STYLE · SOUND
+    await expect(page.getByTestId('customize').getByRole('tab')).toHaveCount(3); // nov2: HERO · FRAME · POP STYLE (WIN FX + SOUND retired)
     await expect(page.getByTestId('customize').getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByTestId('customize').getByRole('tab', { name: /SIDEKICK/ })).toHaveCount(0);
     await expect(page.locator('[data-sidekick], .sk')).toHaveCount(0);
@@ -52,10 +52,11 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     const pk = page.getByTestId('kit-picker');
     // FRAME is the first tab now (no SIDEKICK)
     await expect(page.getByTestId('customize').getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
-    // FROST: 40 wins (20 seeded) → its bar + HOLD TO BUY (700 ≥ 600); the try-on shows it
+    // FROST: gems only (nov9) — no WINS bar; 700 gems is short of its 2,000; the try-on shows it
     await expect(pk.locator('.skp-name')).toHaveText('FROST');
     await expect(pk.locator('.skp-stage [data-frame="frost"]')).toBeVisible();
-    await expect(pk.locator('.skp-prog-n')).toContainText('20 / 40 WINS');
+    await expect(pk.locator('.skp-prog')).toHaveCount(0);
+    await expect(pk).toContainText('NOT ENOUGH GEMS');
     await page.waitForTimeout(500);
     await shot(page, `${vn}-4-frame-frost`);
     // BOMB SQUAD: a road frame not claimed → its road, no buy
@@ -74,21 +75,3 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
   });
 }
 
-test('WIN FX: try one on (the burst replays behind the WIN pose), buy it, it is worn', async ({ page }) => {
-  await openKit(page, { width: 1366, height: 768 }, 600);
-  const pk = page.getByTestId('kit-picker');
-  await page.getByTestId('customize').getByRole('tab', { name: 'WIN FX' }).click();
-  await expect(pk.locator('.skp-fx[data-fx="firework"]')).toBeVisible();
-  await expect(pk.locator('.skp-prog-n')).toContainText('20 / 25 WINS');
-  await page.waitForTimeout(700);
-  await shot(page, 'cb-6-winfx');
-  const hold = pk.getByRole('button', { name: /Hold to buy FIREWORKS/ });
-  const box = await hold.boundingBox();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await expect(pk.getByRole('button', { name: 'TAKE OFF' })).toBeVisible({ timeout: 5000 });
-  await page.mouse.up();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('taw.s2.kit')).fx)).toBe('firework');
-  await pk.getByRole('radio', { name: /INK SPLAT/ }).click();
-  await expect(pk.locator('.skp-fx[data-fx="splat"]')).toBeVisible();
-});

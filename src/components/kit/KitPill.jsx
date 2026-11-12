@@ -18,10 +18,11 @@
 // NEED tag are single pooled nodes.
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import KitIcon from './KitIcon.jsx';
+import { GemsPlus } from '../gems/GemsPlus.jsx';
+import { PAYMENTS_ON } from '../../payments/flag.js';
 import { createCountTween, COUNT_GAIN_MS, COUNT_SPEND_MS } from './countTween.js';
 import { FX, fx, fxOrShow, kitPlay } from './motion.js';
 import { formatNum, formatShort } from '../../format.js';
-import { rollDigits, ROLL_MS } from '../../juice/rollDigits.js';
 import './tokens.css';
 import './KitPill.css';
 
@@ -34,6 +35,12 @@ export const POP_STACK_MS = 750;
 // a burst of small gains (gems landing ~85 ms apart) COALESCES into one roll: each gain waits this long and a newer one
 // replaces it, so the figure rolls once to the final total (the +N stack and the bump still answer every gain)
 export const ROLL_COALESCE_MS = 90;
+// ROLLING DIGITS is a LAZY chunk (nov12, payload ratchet): the pill is on the menu's first paint, the roller is not — the
+// pill fetches juice/rollDigits.js on its first gain (the gain's own coalesce delay covers the fetch). ROLL_MS is inlined
+// for the same reason; it mirrors juice/rollPlan.js ROLL_MS.
+const ROLL_MS = 700;
+let rollMod = null;
+const loadRoll = () => (rollMod ||= import('../../juice/rollDigits.js'));
 // the gain BUMP (gains/gainPlan.js BUMP_MS / BUMP_SCALE — inlined: the pill is on the menu's first paint, the gain
 // module is not)
 const BUMP_MS = 180;
@@ -48,6 +55,7 @@ export function fitScale(len, cw, avail) {
 
 export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, label, icon, tone, className, ariaLabel }, ref) {
   const k = PILL_KINDS[kind] || PILL_KINDS.gems;
+  const plus = PAYMENTS_ON && kind === 'gems'; // the buy-gems "+" (GemsPlus): the shrink-to-fit below measures around it
   const rootRef = useRef(null);
   const bodyRef = useRef(null);
   const numRef = useRef(null);
@@ -161,10 +169,24 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
         const text = formatShort(value);
         s.rolling = true;
         fit(text);
-        rollDigits(num, text, { delay: Math.max(ROLL_COALESCE_MS, gainMs - ROLL_MS), ms: Math.min(ROLL_MS, gainMs) });
+        // a newer gain or a spend while the chunk is still fetching supersedes this roll (the token)
+        const tok = (num.__rollTok = (num.__rollTok || 0) + 1);
+        const t0 = performance.now();
+        const delay = Math.max(ROLL_COALESCE_MS, gainMs - ROLL_MS);
+        loadRoll().then(({ rollDigits }) => {
+          if (num.__rollTok !== tok) return;
+          rollDigits(num, text, { delay: Math.max(0, delay - (performance.now() - t0)), ms: Math.min(ROLL_MS, gainMs) });
+        }, () => {
+          // the chunk failed to load: the gain counts in plain text as it did before the roll existed
+          rollMod = null;
+          if (num.__rollTok !== tok) return;
+          s.rolling = false;
+          num.textContent = text;
+        });
       } else {
-        // a spend counts down in plain text: a roll still landing must not write over it
+        // a spend counts down in plain text: a roll still landing (or still loading) must not write over it
         s.rolling = false;
+        num.__rollTok = (num.__rollTok || 0) + 1;
         num.__rollId = (num.__rollId || 0) + 1;
       }
     }
@@ -230,7 +252,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
 
   const name = label || k.label;
   return (
-    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`} data-value={value}>
+    <div ref={rootRef} className={`kp kp-tone-${tone || k.tone}${plus ? ' has-plus' : ''}${className ? ` ${className}` : ''}`} role="group" aria-label={ariaLabel || `${name} ${formatNum(value)}`} data-value={value}>
       <div className="kp-name" aria-hidden="true">{name}</div>
       <div ref={bodyRef} className="kp-body">
         <div className="kp-box">
@@ -251,6 +273,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
             </div>
           </div>
         </div>
+        {plus ? <GemsPlus /> : null}
       </div>
       <div ref={popRef} className="kp-pop" aria-hidden="true">
         <span ref={popTextRef} className="kp-pop-t" />

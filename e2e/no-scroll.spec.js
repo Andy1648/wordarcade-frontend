@@ -19,23 +19,20 @@ const ALLOW = [
   ['.mx-grid', 'the gear INDEX: every gear'],
   ['.cz.is-hero .cz-body:not(:has(.hpv))', 'CUSTOMIZE · HERO: every hero (oct28: the card stays put, the grid scrolls)'],
   ['.cz:is(.is-pop, .is-sound) .cz-body', 'CUSTOMIZE · POP STYLE / SOUND: every look'],
-  ['.rl', 'the title ladder: all 16 titles'],
-  ['.rl-shelf', 'the title list on a short laptop (1280x551): all 16 titles'],
   ['.sp2-grid', 'the UPGRADES stock: more boosts below ("SCROLL FOR MORE")'],
-  ['.sp2-shelf', 'the CODES shelf'],
   ['.ppp-window-scroll', 'the Category Blitz pack picker (Andy\'s named exception)'],
   ['.sr-bank-list', 'the French Rush word bank'],
   ['.sr-brief-list', 'the SAT / French briefing: the words to study'],
 ];
 // PHONES ONLY (<= 480 wide): long pages a phone scrolls instead of crushing (Andy oct21: taps, room, more scroll)
 const ALLOW_PHONE = [
-  ['.hp-m', 'the phone menu column (64px tap rows)'],
+  ['.hp-m-modes', 'the phone menu MODE ROWS (64px tap rows) — nov9: the menu holds still, only the modes scroll'],
   ['.pf', 'the profile / hero preview page'],
   ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
-  ['.sp2', 'the UPGRADES page'],
+  ['.sp2', 'the UPGRADES page (nov9: under a pinned header)'],
   ['.pn', 'the patch notes'],
   ['.pn-scroll', 'the patch notes: the notes scroll INSIDE the sheet, COLLECT under them (overlap audit oct29)'],
-  ['.rb2', 'rebirth on the smallest phone'],
+  ['.rb2', 'rebirth on the smallest phone (nov9: under a pinned header)'],
   ['.rb2-track-list', 'the UNLOCKS row swipes sideways (Andy oct15: a list)'],
   ['.sr-lineup', 'the SAT suspects on the smallest phone'],
 ];
@@ -77,10 +74,8 @@ const SCREENS = {
   'player card': async (p) => { await navControl(p, 'leaderboard').click(); await expect(p.locator('.lb2-col--1')).toHaveAttribute('data-id', /.+/, { timeout: 10_000 }); await p.locator('.lb2-col--1').click(); await p.locator('.pc').waitFor(); },
   profile: async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').waitFor(); },
   'hero picker': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc').first().waitFor(); },
-  // oct28: a tap on an OWNED hero wears it — a locked one (a CHASE hero) opens the preview
+  // oct28: a tap on an OWNED hero wears it — one you do not own (FACET) opens the preview
   'hero preview': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc[data-hero="facet"]').click(); await p.locator('.hpv').waitFor(); },
-  // oct22 (#483): the XP bar's plate is the PROFILE plate; the ladder opens from the profile's TITLE
-  'title ladder': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-title').click(); await p.getByTestId('rank-ladder').waitFor(); },
   'daily contracts': async (p) => { await nav(p, 'contracts').click(); await p.getByTestId('contracts-sheet').waitFor(); },
   upgrades: async (p) => { await navControl(p, 'shop').click(); await p.locator('.sp2').waitFor(); },
   'gears roll': async (p) => { await navControl(p, 'gears').click(); await p.locator('.rs-overlay').waitFor(); },

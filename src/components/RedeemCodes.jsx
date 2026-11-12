@@ -1,6 +1,5 @@
-// RedeemCodes.jsx — STEP 61: the shop's CODES entry. One field + REDEEM; the answer is one line.
-// A good code does not pay here — it lands in REWARDS to claim (leaderboard/client.js redeemCode),
-// and the line says so.
+// RedeemCodes.jsx — STEP 61: the REWARD CODE box (a prize for typing a code, never to be mixed up with the SAVE code: WRONG_BOX). One field + CLAIM; the answer is one line. It lives in SETTINGS only (Andy
+// nov4 "move codes to settings"; styled in SettingsPanel.css). A good code pays the moment it is redeemed.
 // H3/H5 (Andy oct3): a redeem is announced, never a quiet line — a good code STAMPS its prize with the
 // purchase chime, a bad one shakes. Both finite transform/opacity, keyed per attempt so each one replays.
 import { useRef, useState } from 'react';
@@ -8,6 +7,7 @@ import { sndPurchase, sndWordRejected } from '../audio/gameSounds';
 import { redeemCode, normaliseCode, REDEEM_REASONS } from '../leaderboard/client';
 import { formatNum } from '../format';
 import { claimAmount } from '../progress/claims';
+import { isLongSaveCode, normalizeShort, WRONG_BOX } from '../save/saveCode';
 
 export default function RedeemCodes() {
   const [value, setValue] = useState('');
@@ -18,6 +18,15 @@ export default function RedeemCodes() {
     nRef.current += 1;
     setMsg({ ok, text, n: nRef.current });
     try { (ok ? sndPurchase : sndWordRejected)(); } catch { /* audio blocked */ }
+  };
+  const onType = (e) => {
+    const raw = e.target.value;
+    if (isLongSaveCode(raw)) { // a whole save pasted here: no request, no 32-character stump left in the box
+      setValue('');
+      say(false, WRONG_BOX.saveInReward);
+      return;
+    }
+    setValue(normaliseCode(raw));
   };
   const submit = async (e) => {
     e.preventDefault();
@@ -38,7 +47,7 @@ export default function RedeemCodes() {
         : r.kind === 'gems'
         ? `+${formatNum(r.gems)} GEMS — ADDED`
         : r.kind === 'overdrive'
-          ? `OVERDRIVE ×${r.mult || 5} · ${r.min} MIN — STARTED`
+          ? `OVERDRIVE ×${r.mult} · ${r.min} MIN — STARTED`
           : r.kind === 'boost'
         ? `BOOST ×${r.mult} · ${r.min} MIN — STARTED`
         : r.perLevel
@@ -50,31 +59,29 @@ export default function RedeemCodes() {
             : 'REDEEMED';
       say(true, text);
     } else {
-      say(false, REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code);
+      say(false, r.reason === 'bad_code' && normalizeShort(code) ? WRONG_BOX.maybeSaveInReward : REDEEM_REASONS[r.reason] || REDEEM_REASONS.bad_code);
     }
   };
   return (
-    <form className="shop-codes" onSubmit={submit} noValidate>
-      <label className="shop-codes-label" htmlFor="shop-codes-input">HAVE A CODE?</label>
-      <div className="shop-codes-row">
+    <form className="sp-codes" onSubmit={submit} noValidate data-testid="sp-codes">
+      <div className="sp-restore">
         <input
-          id="shop-codes-input"
-          className="shop-codes-input"
+          className="sp-input sp-codes-input"
+          aria-label="Reward code"
           value={value}
-          onChange={(e) => setValue(normaliseCode(e.target.value))}
-          placeholder="ENTER CODE"
+          onChange={onType}
+          placeholder="TYPE REWARD CODE"
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          maxLength={32}
           disabled={busy}
         />
-        <button type="submit" className="shop-codes-btn" disabled={busy || !value}>
-          {busy ? '…' : 'REDEEM'}
+        <button type="submit" className="sp-btn sp-codes-btn" disabled={busy || !value}>
+          {busy ? '…' : 'CLAIM'}
         </button>
       </div>
       {msg && (
-        <div key={msg.n} className={`shop-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
+        <div key={msg.n} className={`sp-msg sp-codes-msg${msg.ok ? ' is-ok' : ' is-bad'}`} role="status">
           {msg.text}
         </div>
       )}
