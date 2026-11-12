@@ -44,12 +44,11 @@ import { rollsPerRoll } from '../../progress/markPerks';
 import { serverRollOn, prepare as prepareServerRoll, take as takeServerRoll, claim as claimServerRoll, syncPity } from '../../leaderboard/serverRoll';
 import { getGems, subscribeGems } from '../../progress/gems';
 import { GemIcon, GemCount } from '../gems/Gems';
+import { GemsPlus } from '../gems/GemsPlus.jsx';
 import { isBoostActive } from '../../progress/boost';
 import { sndPurchase, sndWordRejected } from '../../audio/gameSounds';
 import { sndRollRelease, sndRollReady } from '../../audio/rollSounds';
 import { announceRolls } from '../../leaderboard/live';
-import { pushShowcaseNow } from '../../leaderboard/client.js';
-import { rollChaseDrop, writeMain } from '../../cast/cast.js';
 import { formatNum } from '../../format';
 import { lazyWithReload } from '../../lib/chunkReload';
 import { holdBeats } from '../../hooks/useBeatSync';
@@ -73,8 +72,6 @@ export const stopMenuPointer = (e) => e.stopPropagation();
 const MarksIndex = lazyWithReload(() => import('../MarksIndex'), 'MarksIndex');
 // 065: an EPIC+ / LEGENDARY+ ticket opens as a SEALED CAPSULE (its own big reveal), not the reel
 const SealedRollReveal = lazyWithReload(() => import('./SealedRollReveal'), 'SealedRollReveal');
-// THE CHASE DROP's reveal (oct28): the NEW HERO moment, only fetched when a roll actually drops a CHASE hero
-const HeroUnlock = lazyWithReload(() => import('../../cast/HeroUnlock.jsx'), 'HeroUnlock');
 const SEALED_TIERS = ['epic', 'legendary'];
 const tierName = (t) => (MARK_TIERS[t] ? MARK_TIERS[t].name : String(t || '').toUpperCase());
 
@@ -170,9 +167,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   const queue = useRef([]);
   const partProbs = useRef(null);
   const auto = useRef({ on: false, until: null, timer: null });
-  // a CHASE hero this roll dropped: held until the gear's reveal closes, then its own NEW HERO reveal plays
-  const dropRef = useRef(null);
-  const [heroDrop, setHeroDrop] = useState(null);
   const live = useRef({});
 
   useEffect(() => subscribeGems(setGems), []);
@@ -241,10 +235,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     if (auto.current.on && autoShouldStop(res, auto.current.until)) stopAuto();
     askServer(); // the next roll's pick: asked while this reveal plays (AUTO or a tap)
     announceRolls([res, ...(res.extra || [])]); // MYTHIC+ → one ticker line each
-    // THE CHASE DROP (oct28): every gear roll can also drop a CHASE hero (cast.js CHASE_ODDS) — kept at once, shown
-    // after this reveal; AUTO stops so it is never rolled past
-    const drop = rollChaseDrop();
-    if (drop) { dropRef.current = drop; stopAuto(); }
+    // nov12 (Andy: "dont make any hero avatars rollable"): a gear roll only ever pays gear — never a hero
     const wornNow = res.decision === 'auto' ? applyRollEquip(res, earned) : null;
     if (wornNow && onEquip) onEquip(wornNow);
   };
@@ -313,7 +304,8 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     const t = bestTicket(tickets);
     if (!t) return;
     stopAuto();
-    if (SEALED_TIERS.includes(t.tier)) { if (pending.current) commit(pending.current); setSealed(t); return; }
+    // 089: a PAID pack (source 'pay') always opens as a pack — the sealed reveal at its tier, never the reel
+    if (SEALED_TIERS.includes(t.tier) || t.source === 'pay') { if (pending.current) commit(pending.current); setSealed(t); return; }
     setTicketBusy(true);
     const pick = t.pick || (await rollTicket(t));
     if (!live.current.mounted) return;
@@ -362,7 +354,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
   };
   const onDone = () => {
     if (pending.current && queue.current.length) { spinNextPart(); return; } // the DOUBLE ROLL's next spin
-    if (dropRef.current) { setHeroDrop(dropRef.current); dropRef.current = null; return; } // the CHASE DROP's turn
     if (!auto.current.on) { rearm(); return; }
     auto.current.timer = setTimeout(() => {
       auto.current.timer = null;
@@ -372,7 +363,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
 
   // TAP TO ROLL (Andy oct13 "no need to hold to roll gears"; was HOLD TO ROLL, NIGHT oct8 R4). One tap pays and spins.
   // The server's pick (036) is asked AHEAD — when the screen opens, on the press itself and after every landing — so the
-  // tap almost never waits for it. Mid-spin a tap jumps to the result. NO GEMS: the tap shows the shortfall.
+  // tap almost never waits for it. Mid-spin a tap jumps to the result. Short of gems: the tap shows the shortfall.
   const tap = () => {
     if (ctl.current && ctl.current.busy()) { ctl.current.finish(); return; }
     if (!canAfford) { short(); return; }
@@ -487,8 +478,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
     );
   }
 
-  // the label says what the hand must do: ROLL (NO GEMS when short; '...' mid-spin)
-  const rollLabel = cost.free ? 'ROLL' : rolling ? '...' : canAfford ? 'ROLL' : 'NO GEMS';
+  // the label says what the hand must do: ROLL ('...' mid-spin; short: how far off, on a bar of how far along, with the way to earn it below)
+  const isShort = !cost.free && !rolling && !canAfford;
+  const rollLabel = cost.free ? 'ROLL' : rolling ? '...' : canAfford ? 'ROLL' : `${formatNum(Math.ceil(cost.gems - gems))} MORE`;
   return (
     <div className={`marks-overlay rs-overlay${reduced ? ' is-reduced' : ''}${tut && tutDef ? ' is-tut' : ''}`} role="dialog" aria-modal="true" aria-label="Roll for a mark" ref={setCoverHost} onPointerMove={stopMenuPointer} onMouseMove={stopMenuPointer}>
       <div className="rs-top">
@@ -503,9 +495,9 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             <span className="rs-index-k">INDEX</span> <span className="rs-index-n">{formatNum(col.base)}/{formatNum(col.total)}</span>
           </button>
         </span>
-        <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'}>
+        <div className="rs-equipped" aria-label={worn ? `Equipped: ${worn.name}, ${worn.tag}` : 'Nothing equipped'} style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line, '--rs-tier-edge': CARD_RAR[cardTier(worn.tier)].edge } : undefined}>
           <span className="rs-equipped-k">EQUIPPED</span>
-          <span className="rs-equipped-v" style={worn ? { '--rs-tier': CARD_RAR[cardTier(worn.tier)].line } : undefined}>{worn ? worn.tag : 'NONE'}</span>
+          <span className="rs-equipped-v">{worn ? worn.tag : 'NONE'}</span>
         </div>
         <h2 className="rs-title" aria-hidden="true">ROLL</h2>
         <div className="rs-topr">
@@ -520,6 +512,7 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
               ) : null}
             </div>
             <GemCount value={gems} size={30} className="rs-gems-bal" />
+            <GemsPlus />
           </div>
         </div>
       </div>
@@ -557,16 +550,21 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             onContextMenu={(e) => e.preventDefault()}
             aria-label={cost.free ? 'ROLL · FREE ROLL' : `ROLL · ${formatNum(cost.gems)} GEMS`}
           >
+            {isShort ? <i className="rs-roll-fill" style={{ transform: `scaleX(${Math.max(0, Math.min(1, gems / cost.gems))})` }} aria-hidden="true" /> : null}
             <span className="rs-roll-lbl">{rollLabel}</span>
             {/* a free roll keeps ROLL — FREE sits in the price pill */}
             {cost.free ? <span className="rs-roll-price is-free">FREE ROLL</span> : (
-              <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{formatNum(cost.gems)}</span>
+              <span className="rs-roll-price"><GemIcon size={22} className="rs-roll-gem" />{isShort ? `${formatNum(Math.floor(gems))} / ${formatNum(cost.gems)}` : formatNum(cost.gems)}</span>
             )}
           </button>
           {/* the pity headline, BIG, right under the button it is about (NIGHT oct8 #4) */}
-          <div className="rs-pity-big" aria-hidden="true">
-            EPIC+ IN ≤ <b data-testid="pity-epic">{formatNum(epicLeft)}</b>
-          </div>
+          {isShort ? (
+            <button type="button" className="rs-earn" data-testid="roll-earn" onClick={onClose}>PLAY FOR GEMS</button>
+          ) : (
+            <div className="rs-pity-big" aria-hidden="true">
+              EPIC+ IN ≤ <b data-testid="pity-epic">{formatNum(epicLeft)}</b>
+            </div>
+          )}
         </div>
         <div className="rs-opts">
           <button
@@ -614,11 +612,6 @@ export default function RollScreen({ unlockedIds = [], equippedId = null, achiev
             ticket={sealed}
             onDone={() => { setSealed(null); setTickets((l) => l.filter((x) => x.id !== sealed.id)); refreshTickets(); setLanded((n) => n + 1); }}
           />
-        </Suspense>
-      ) : null}
-      {heroDrop ? (
-        <Suspense fallback={null}>
-          <HeroUnlock ids={[heroDrop]} onEquip={(id) => { writeMain(id); pushShowcaseNow(); }} onClose={() => { setHeroDrop(null); rearm(); }} />
         </Suspense>
       ) : null}
       {tut && tutDef && (

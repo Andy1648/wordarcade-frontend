@@ -1775,3 +1775,19 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
   .solo-deathcard { --dc-gap: 6px; padding: 12px; }
   .solo-deathcard .missed-hold { padding: 6px 10px; }
 }
+
+/* ===== BALANCED DEATH CARD (design audit nov2 #5): the first-run card was half empty — the story on the left, a lone
+   "+0 GEMS" pill + PLAY AGAIN floating in the right half. A ZERO pill never shows (the ledger re-renders it the moment a
+   gem lands), and a card with no score (the first-run tutorial) is ONE centred column: the story, then PLAY AGAIN
+   full-width under it. ===== */
+.solo-deathcard .gems-earned[data-gems-total='0'] { display: none; }
+.solo-deathcard .solo-earned-row:not(:has(> :not([data-gems-total='0']))) { display: none; }
+@media (min-width: 820px) {
+  :root .solo-deathcard.is-bare { display: flex; flex-direction: column; max-width: calc(500px * var(--solo-k, 1)); }
+  .solo-deathcard.is-bare .solo-death-story > .solo-exit { margin-bottom: 0; align-self: flex-start; }
+  .solo-deathcard.is-bare .solo-death-story > .solo-exit + .solo-death-mascot { margin-top: calc(-52px - var(--dc-gap)); }
+  .solo-deathcard.is-bare .solo-death-story > :last-child { margin-bottom: 0; }
+}
+.solo-deathcard.is-bare .solo-death-actions > .solo-restart { min-height: 56px; font-size: var(--fs-k20); }
+.solo-deathcard.is-bare .solo-death-reward,
+.solo-deathcard.is-bare .solo-death-actions { align-self: stretch; width: 100%; }

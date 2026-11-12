@@ -4,7 +4,7 @@
 // the wordmark / ODDS / ✕, everything inside the panel, the numbers ≥ 16px; after the spin today turns DONE.
 // SHOTS=<dir> saves a screenshot per size + day.
 import { test, expect } from '@playwright/test';
-import { boot } from './support/wheelBoot.js';
+import { boot, openWheel } from './support/wheelBoot.js';
 
 const SHOTS = process.env.SHOTS;
 
@@ -29,7 +29,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
     test(`${w}x${h} · DAY ${streak + 1}: seven days, today lit, DAY 7 SUPER in view, nothing overlaps`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await boot(page, { gems: 200, slot: 2, streak });
-      await page.locator('[data-nav="wheel"]:visible').first().click();
+      await openWheel(page);
       const wheel = page.getByTestId('daily-wheel');
       await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
       await page.waitForTimeout(400);
@@ -48,7 +48,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
 test('after the spin, today is stamped DONE', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await boot(page, { gems: 200, slot: 2, streak: 2 });
-  await page.locator('[data-nav="wheel"]:visible').first().click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await wheel.getByTestId('wheel-spin').click();
   await expect(wheel.getByTestId('wheel-result')).toBeVisible({ timeout: 12000 });

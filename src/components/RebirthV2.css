@@ -427,3 +427,8 @@
   .rb2-ms-what { font-size: var(--fs-k14); }
   .rb2-stage { row-gap: 8px; }
 }
+
+/* THE HEADER HOLDS STILL (Andy nov9: "only scroll inside"): on a phone too short for the whole page, the rest scrolls under it. */
+@media (max-width: 999px) {
+  .rb2-head { position: sticky; top: 0; z-index: 6; margin: -10px -16px 0; padding: 10px 16px 8px; background: var(--k-bg); }
+}

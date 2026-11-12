@@ -53,8 +53,17 @@ async function boot(page, vp, me) {
   return lb;
 }
 
-/** Every pair of boxes in `groups` (each a list of rects) that overlaps by more than `tol` px. */
-function overlapsIn(page) {
+/** Every pair of boxes in `groups` (each a list of rects) that overlaps by more than `tol` px — measured on the SETTLED
+ *  board. THE CI FLAKE (nov10, "@390 climbing into the top 3", podium 2: seal x face): the board's arrival one-shots are
+ *  still running when the spec reaches its check, and a box read mid-flight includes the transform. Your own seal's
+ *  SLAM (a NEW league) starts 2.66 s after the board lands at scale 3.2: frozen 40 ms in, it is drawn ~2.9x at 63%
+ *  opacity and its box overlaps the face by 5.8 px, while at rest the two sit 6.6 px apart. A check that happened to land
+ *  in those frames failed a layout that is fine. So every finite animation on the board finishes first (they all end;
+ *  nothing loops at rest), then the boxes are read — the same rules, on the layout the player actually looks at. */
+async function overlapsIn(page) {
+  await page.evaluate(() => Promise.all(document.getAnimations()
+    .filter((a) => { const el = a.effect && a.effect.target; return el && el.closest && el.closest('.lb2') && Number.isFinite(a.effect.getComputedTiming().endTime); })
+    .map((a) => a.finished.catch(() => {}))));
   return page.evaluate(() => {
     const out = [];
     const box = (el) => el.getBoundingClientRect();
@@ -230,9 +239,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, {
     await page.waitForTimeout(200);
     const pin = await page.evaluate(() => { const s = document.querySelector('.lb2-scroll').getBoundingClientRect(); const m = document.querySelector('.lb2-row.is-me').getBoundingClientRect(); return { inside: m.top >= s.top - 1 && m.bottom <= s.bottom + 1, rows: document.querySelectorAll('.lb2-row.is-me').length }; });
     expect(pin).toEqual({ inside: true, rows: 1 });
-    // the TOP 100 tier wears its painted stone seal (51-100). The cut lines are SLIM FLAT dividers (Andy nov2: the
+    // a row wears its league's badge, its place on the plate (MASTER, 51-100). The cut lines are SLIM FLAT dividers (Andy nov2: the
     // painted ribbons "look horrendous"): no ribbon art, a readable name, no taller than a third of a row
-    await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-tier', 'stone');
+    await expect(lb.locator('.lb2-row[data-rank="75"] .lb2-seal')).toHaveAttribute('data-league', 'master');
     const seps = await lb.locator('.lb2-sep').evaluateAll((els) => els.map((e) => {
       const name = e.querySelector('.lb2-sep-name, .lg-badge-name'); const row = document.querySelector('.lb2-row:not(.is-me)');
       const art = [e, ...e.querySelectorAll('*')].some((x) => ['', '::before', '::after'].some((p) => /url\(/.test(getComputedStyle(x, p || null).backgroundImage) || /url\(/.test(getComputedStyle(x, p || null).maskImage || '')));
@@ -314,11 +323,11 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   });
 }
 
-// POST-ACTION (anti-slop checklist): you just climbed from #5 INTO the top 3 - your own medal row wears YOU + the NEW tier
-// news, the panel follows you, and nothing overlaps mid-climb or after
+// POST-ACTION (anti-slop checklist): you just climbed from #12 (TITAN) INTO the top 3 (CHAMPION) - your own medal row wears YOU
+// + the NEW league news (nov9: the news is a LEAGUE crossed; #5 -> #2 stays in CHAMPION), the panel follows you, and nothing overlaps mid-climb or after
 for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
   test(`@${vp.width} climbing into the top 3: your medal row + the tier news, no overlaps`, async ({ page }) => {
-    const lb = await boot(page, vp, { level: 895, rebirths: 40, stars: 4, seenAt: 5 });
+    const lb = await boot(page, vp, { level: 895, rebirths: 40, stars: 4, seenAt: 12 });
     const mine = lb.locator('.lb2-top3 .lb2-col.is-me');
     await expect(mine).toHaveAttribute('data-place', '2');
     await expect(mine.locator('.lb2-you')).toBeVisible();

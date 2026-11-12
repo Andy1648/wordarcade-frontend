@@ -49,8 +49,8 @@ test('the 15 new gears are in the pool, painted, each with its own line; the tie
   }
   assert.equal(oneInX('mk-domino'), 1020); // nov2: EPIC 12 → 17 gears (1 IN 60 × 17)
   assert.equal(oneInX('mk-longshot'), 1560); // oct22: LEGENDARY 1 IN 130
-  assert.equal(oneInX('mk-trident'), 26000); // nov2: MYTHIC 6 → 13 gears (1 IN 2,000 × 13)
-  assert.equal(oneInX('mk-paradox'), 30000);
+  assert.equal(oneInX('mk-trident'), 28000); // nov2: MYTHIC 6 → 13 gears; nov3 + PINATA → 14 (1 IN 2,000 × 14)
+  assert.equal(oneInX('mk-paradox'), 45000); // nov3: MEGATON is the third SECRET
   assert.equal(MARK2_STORE_KEY, MARK2_KEY, 'TWIN SOULS reads the real 2nd-slot key');
   for (const ps of Object.values(MARK_PERKS)) for (const p of ps) assert.ok(PERKS[p] && PERKS[p].line.length <= 40, p);
 });

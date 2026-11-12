@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: 12px 16px;
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
 }
 .dw {
   --dw-c: var(--k-pink, #FF4FA3);
@@ -403,6 +403,9 @@
 .dw-pop-burst { width: 150%; height: 150%; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .dw-pop, .dw-lit, .dw-wedge { display: none; } }
 
+/* OFFLINE: the disabled SPIN + RETRY side by side (they stack on a narrow foot) */
+.dw-off { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 18px; }
+.dw-off .kb-lockchip { font-size: var(--fs-body); } /* the reason reads at the 16px floor */
 /* EARNED SPINS (Andy nov4 "dont have daily spin for free"): until today's game words are in, the foot shows how far —
    a chunky bar (transform-only fill, static), the words left, and PLAY back to the menu. The hub stays disabled. */
 .dw-earn { display: flex; flex-direction: column; align-items: center; gap: 12px; }

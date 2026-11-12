@@ -52,10 +52,11 @@ for (const [vn, vp] of [['cb', { width: 1366, height: 768 }], ['phone', { width:
     const pk = page.getByTestId('kit-picker');
     // FRAME is the first tab now (no SIDEKICK)
     await expect(page.getByTestId('customize').getByRole('tab', { name: 'FRAME' })).toHaveAttribute('aria-selected', 'true');
-    // FROST: 40 wins (20 seeded) → its bar + HOLD TO BUY (700 ≥ 600); the try-on shows it
+    // FROST: gems only (nov9) — no WINS bar; 700 gems is short of its 2,000; the try-on shows it
     await expect(pk.locator('.skp-name')).toHaveText('FROST');
     await expect(pk.locator('.skp-stage [data-frame="frost"]')).toBeVisible();
-    await expect(pk.locator('.skp-prog-n')).toContainText('20 / 40 WINS');
+    await expect(pk.locator('.skp-prog')).toHaveCount(0);
+    await expect(pk).toContainText('NOT ENOUGH GEMS');
     await page.waitForTimeout(500);
     await shot(page, `${vn}-4-frame-frost`);
     // BOMB SQUAD: a road frame not claimed → its road, no buy

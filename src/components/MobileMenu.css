@@ -357,8 +357,6 @@
   .hp-m-top .hp-icons .kb--icon { width: 46px; height: 54px; }
   .hp-m-top .hp-icons .kb-iface { width: 46px; height: 46px; }
   .hp-m-top .hp-icons .kb-iface .kit-icon { width: 30px; height: 30px; }
-  .hp-m-top .hp-icons .is-wheel .kb-art { width: 36px; height: 36px; }
-  .hp-m-top .hp-icons .is-wheel .kb-idot { right: -6px; } /* the row's last tile: its free-spin dot stays inside the phone's edge */
   .hp-m-top .hp-icons .kb-itag { left: -12px; bottom: 0; } /* oct22: at -8px the tilted 0/3 sticker sat on the PROFILE card below */
   .hp-m-xp { flex: 0 0 auto; }
   .hp-m-xp .kx { flex-wrap: nowrap; gap: 10px; padding-top: 0; }
@@ -504,9 +502,10 @@
    RUSH slid under CHAIN | FUSE). So the column SCROLLS instead of crushing: every band keeps its natural height, the
    mode rows keep a big 64px tap target and only GROW to fill a tall phone (390x844 still fits on one screen). */
 @media (max-width: 480px) {
-  .hp-m { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+  /* nov9 (Andy "only scroll inside (such as for the game modes)"): the menu holds still, the mode rows scroll in their own box */
+  .hp-m { overflow: hidden; }
   .hp-m > * { flex-shrink: 0; }
-  .hp-m-modes { flex: 1 0 auto; }
+  .hp-m-modes { flex: 1 1 auto; min-height: 0; overflow: hidden auto; overscroll-behavior: contain; }
   .hp-m-row { flex: 1 0 auto; min-height: 64px; }
 }
 @media (max-width: 480px) and (max-height: 760px) {

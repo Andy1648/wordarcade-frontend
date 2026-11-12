@@ -7,7 +7,7 @@
 .rh-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
 .rh-btn:focus-visible { outline: 3px solid #FFE94A; outline-offset: 2px; }
 @media (hover: hover) { .rh-btn:hover { transform: scale(1.06); } }
-.rh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .84); }
+.rh-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: var(--scrim); }
 .rh-pop {
   position: relative; width: min(980px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px 18px 18px;
   background: #1a0b2e; border: 5px solid #5E0F9E; border-radius: 8px; box-shadow: 10px 10px 0 #000;
@@ -54,7 +54,7 @@
 /* a NARROW seat (phones, a 1024 laptop — under ~200px): the hero stands ON TOP of the text, stepping up over the seat's
    top edge, never beside or over it; the name gets the seat's whole width */
 @container seat (max-width: 199px) {
-  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-top: 0; padding-right: 10px; align-content: flex-start; }
+  .room-wrap[data-skin="v2"] .room-player-chip:has(> .rh-btn) { padding-top: 0; padding-right: 6px; padding-left: 10px; align-content: flex-start; }
   /* "BOT · MEDIUM" is ~140px of Space Mono in a ~130px column (CI's metrics ran it 13px out of a 1024 seat): the badge
      keeps to the seat's width — tighter tracking, and if it still can't fit it breaks once at a space ("BOT ·" /
      "MEDIUM"), never letter by letter into the old three-line pillar */

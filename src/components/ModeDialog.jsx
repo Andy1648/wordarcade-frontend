@@ -7,8 +7,11 @@ import { MODES } from './modeDialogConfig';
 import ConnectingContent from './ConnectingContent';
 import PackPicker from './PackPicker';
 import packs from '../data/packs';
-import ModeExample from './ModeExample';
 import { reduceMotion } from '../lib/reduceMotion';
+import KitIcon from './kit/KitIcon.jsx';
+import { GEM_RATING } from './gemRating.js';
+import { perWordRateNow } from '../progress/wins';
+import { formatRate } from '../format';
 
 
 // Open/close feel (fix/dialog-quality item 2): ONE transform+opacity transition on ONE element
@@ -138,6 +141,12 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
   }, []);
 
   const accent = mode.accent;
+  const art = game.artLayers || null;
+  // WHAT IT PAYS (Andy oct10 "ABSOLUTELY know where the gems come from"; kept through design audit nov2 #4): ONE compact
+  // row — the card's gem-friendly rating (1–3 lit gems, gemRating.js) and the base WINS / WORD (the same perWordRateNow
+  // the menu card prints; MINER banks on Blitz's rails, as ModeExample says). No sentence.
+  const gemsLit = GEM_RATING[game.id] || 0;
+  const rateNow = perWordRateNow({ mode: game.id === 'miner' ? 'category-blitz' : game.id });
   const overlay = (
     <div className="mode-dialog-overlay" role="presentation">
       <div className="mode-dialog-scrim" ref={scrimRef} onClick={handleClose} />
@@ -172,13 +181,16 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
           ✕
         </button>
 
-        <div className="mode-dialog-content">
-          <div
-            className="mode-dialog-chip"
-            style={{ color: accent, borderColor: accent }}
-          >
-            {mode.chip}
-          </div>
+        <div className={`mode-dialog-content${art ? ' has-art' : ''}`}>
+          {/* THE HERO (design audit nov2 #4): the mode's own painted card art — its backdrop + hero, the same 2:3 frame
+              the menu card shows (already cached by the menu), still. No tagline chip, no EXAMPLE box, no stats list:
+              the title, one hook line, the art and the choice. SAT RUSH / WORD RACE have no painted card yet, so none. */}
+          {art ? (
+            <div className="mode-dialog-art" aria-hidden="true" style={{ '--md-hy': art.heroY || '-11%', '--md-hs': art.heroScale || 0.76, borderColor: darken(game.baseColor, 0.45) }}>
+              <img className="mode-dialog-art-l" src={art.bg} alt="" draggable="false" decoding="async" />
+              <img className="mode-dialog-art-l mode-dialog-art-hero" src={art.hero} alt="" draggable="false" decoding="async" />
+            </div>
+          ) : null}
 
           <div className={`mode-dialog-lower${modeKey === 'blitz' ? ' mode-dialog-lower--blitz' : ''}`}>
             <div className="mode-dialog-title">
@@ -196,10 +208,19 @@ export default function ModeDialog({ game, sourceEl, onClose, onCreate, onJoin, 
               )}
             </div>
             <div className="mode-dialog-liner">{mode.liner}</div>
-            {/* No MASTERY line (Andy oct10: "no one has cared abt it"). */}
-            {/* Real worked example (item 2): the actual mechanic shown, plus the per-word wins
-                rate and typical round length. Replaces the old prose "HOW IT WORKS" blurb. */}
-            <ModeExample mode={game.id} accent={accent} />
+            <div className="mode-dialog-payrow" data-testid="mode-dialog-pay">
+              {gemsLit ? (
+                <span className="mode-dialog-pay-gems" data-gems={gemsLit} role="img" aria-label={`Gem friendly: ${gemsLit} of 3`}>
+                  {[1, 2, 3].map((i) => <KitIcon key={i} name="gems" size={20} shadow={1} extras={false} className={i <= gemsLit ? 'is-lit' : 'is-dim'} />)}
+                </span>
+              ) : null}
+              <span className="mode-dialog-pay-wins" data-testid="mode-dialog-wins">
+                <KitIcon name="wins" size={22} shadow={1} extras={false} />
+                {game.id === 'fuse' ? null : <span className="mode-dialog-pay-k">BASE</span>}
+                <b className="mode-dialog-pay-n">{formatRate(rateNow.rate)}</b>
+                <span className="mode-dialog-pay-k">/ WORD</span>
+              </span>
+            </div>
 
             {modeKey === 'blitz' && (
               <PackPicker

@@ -79,8 +79,7 @@ test('E4: a new mark is owned at once (no inbox) → MARKS button says NEW → E
   await expect(locked).not.toContainText(/[×+]\d/);
   await locked.click();
   await expect(sheet.locator('.mc-odds')).toContainText('1 IN '); // the sheet's card: the odds in its hero
-  // a locked sheet: the odds + how to get it as the main line, the COUNT of hidden stats, never a value
-  await expect(sheet.getByTestId('mark-main')).toContainText('ROLL TO UNLOCK');
+  // a locked sheet: the odds as the main line, the COUNT of hidden stats, never a value
   await expect(sheet.getByTestId('mark-crit')).toHaveCount(0);
   await expect(sheet).not.toContainText(/[×+]\d/);
   await expect(sheet.getByTestId('mark-flavour')).toHaveCount(0);

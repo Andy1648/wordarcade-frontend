@@ -26,13 +26,12 @@ const ALLOW = [
 ];
 // PHONES ONLY (<= 480 wide): long pages a phone scrolls instead of crushing (Andy oct21: taps, room, more scroll)
 const ALLOW_PHONE = [
-  ['.hp-m', 'the phone menu column (64px tap rows)'],
-  ['.pf', 'the profile / hero preview page'],
+  ['.hp-m-modes', 'the phone menu MODE ROWS (64px tap rows) — nov9: the menu holds still, only the modes scroll'],
   ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
-  ['.sp2', 'the UPGRADES page'],
+  ['.sp2', 'the UPGRADES page (nov9: under a pinned header)'],
   ['.pn', 'the patch notes'],
   ['.pn-scroll', 'the patch notes: the notes scroll INSIDE the sheet, COLLECT under them (overlap audit oct29)'],
-  ['.rb2', 'rebirth on the smallest phone'],
+  ['.rb2', 'rebirth on the smallest phone (nov9: under a pinned header)'],
   ['.rb2-track-list', 'the UNLOCKS row swipes sideways (Andy oct15: a list)'],
   ['.sr-lineup', 'the SAT suspects on the smallest phone'],
 ];
@@ -74,7 +73,7 @@ const SCREENS = {
   'player card': async (p) => { await navControl(p, 'leaderboard').click(); await expect(p.locator('.lb2-col--1')).toHaveAttribute('data-id', /.+/, { timeout: 10_000 }); await p.locator('.lb2-col--1').click(); await p.locator('.pc').waitFor(); },
   profile: async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').waitFor(); },
   'hero picker': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc').first().waitFor(); },
-  // oct28: a tap on an OWNED hero wears it — a locked one (a CHASE hero) opens the preview
+  // oct28: a tap on an OWNED hero wears it — one you do not own (FACET) opens the preview
   'hero preview': async (p) => { await nav(p, 'profile').click(); await p.getByTestId('profile-kit').click(); await p.locator('.hc[data-hero="facet"]').click(); await p.locator('.hpv').waitFor(); },
   'daily contracts': async (p) => { await nav(p, 'contracts').click(); await p.getByTestId('contracts-sheet').waitFor(); },
   upgrades: async (p) => { await navControl(p, 'shop').click(); await p.locator('.sp2').waitFor(); },

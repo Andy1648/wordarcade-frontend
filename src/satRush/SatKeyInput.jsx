@@ -20,18 +20,11 @@
 // which need their own focus). The hint under the poster is the visible half of that contract and
 // only exists where there is no hardware keyboard.
 import { useEffect, useRef, useState } from 'react';
+import { isTouchOnly } from './tapMode';
 
-// A coarse pointer with no hover is the "no hardware keyboard" signal. Resolved once per mount
-// (not per frame) — this drives a hint line, not layout, so it need not track a docked keyboard.
-function isTouchOnly() {
-  if (typeof window === 'undefined' || !window.matchMedia) return false;
-  try {
-    return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-  } catch {
-    return false;
-  }
-}
-
+// A coarse pointer with no hover is the "no hardware keyboard" signal (tapMode.js). A touch device
+// now answers by TAPPING (feat/sat-tap) and never mounts this field; the hint below only shows for
+// a `?tap=0` touch run that asked to type.
 // Controls that own their own focus — tapping these must not steal it back to the field.
 const FOCUS_OWNERS = 'button, a, input, textarea, select, [role="button"], [contenteditable]';
 

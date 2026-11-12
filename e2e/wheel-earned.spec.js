@@ -6,7 +6,7 @@
 //   3. the server refuses (its row lagged and never caught up): the wheel goes back to LOCKED, nothing paid.
 // SHOTS=<dir> saves the locked state at 1366 / 390.
 import { test, expect } from '@playwright/test';
-import { boot } from './support/wheelBoot.js';
+import { boot, openWheel } from './support/wheelBoot.js';
 
 const SHOTS = process.env.SHOTS;
 
@@ -14,7 +14,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
   test(`${w}x${h}: not earned — LOCKED with the words bar, PLAY, no SPIN; the menu dot goes once the need is known`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     const db = await boot(page, { gems: 200, slot: 2, streak: 2, earn: { words: 400, need: 409 } });
-    await page.locator('[data-nav="wheel"]:visible').first().click();
+    await openWheel(page);
     const wheel = page.getByTestId('daily-wheel');
     const locked = wheel.getByTestId('wheel-locked');
     await expect(locked).toBeVisible();
@@ -35,10 +35,10 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
     expect(m.playH).toBeGreaterThanOrEqual(44);
     expect(m.fs).toBeGreaterThanOrEqual(16);
     if (SHOTS) { await page.waitForFunction(() => [...document.images].every((i) => i.complete && i.naturalWidth), null, { timeout: 6000 }).catch(() => {}); await page.screenshot({ path: `${SHOTS}/locked-${w}x${h}.png` }); }
-    // PLAY closes the wheel back to the menu, where the tile wears no dot now (the need is known, the words aren't there)
+    // PLAY closes the wheel and the shop, back to the menu and its games
     await wheel.getByTestId('wheel-play').click();
     await expect(wheel).toHaveCount(0);
-    await expect(page.locator('[data-nav="wheel"] .kb-idot')).toHaveCount(0);
+    await expect(page.locator('.sp2')).toHaveCount(0);
     expect(db.calls.spin).toBe(0);
   });
 }
@@ -46,7 +46,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080], [390, 844], [360, 640]]) {
 test('earned: SPIN lands and pays as before', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   const db = await boot(page, { gems: 200, slot: 2, earn: { words: 420, need: 415 } });
-  await page.locator('[data-nav="wheel"]:visible').first().click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-locked')).toHaveCount(0);
   await wheel.getByTestId('wheel-spin').click();
@@ -58,7 +58,7 @@ test('the server refuses (its count never caught up): back to LOCKED, nothing pa
   await page.setViewportSize({ width: 1366, height: 768 });
   // the state says earned (this browser's words are in), the spin says not yet — even after the forced submit
   const db = await boot(page, { gems: 200, slot: 2, earn: { words: 420, need: 415 } });
-  await page.locator('[data-nav="wheel"]:visible').first().click();
+  await openWheel(page);
   const wheel = page.getByTestId('daily-wheel');
   await expect(wheel.getByTestId('wheel-spin')).toBeVisible();
   db.earn.words = 410; // the row went backwards (a reset elsewhere): the server is the judge

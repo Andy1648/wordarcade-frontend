@@ -29,11 +29,11 @@ for (const mode of [
     // The shared mode dialog opens (portaled to body).
     const dialog = page.locator('.mode-dialog-shell');
     await expect(dialog).toBeVisible();
-    // Name, one-line rule, the worked-example block (with the per-word wins line), and PLAY.
+    // Name, one-line rule, the mode's painted card art, and PLAY (design audit nov2 #4: no EXAMPLE / stats box).
     await expect(dialog.locator('.mode-dialog-title')).toContainText(mode.name);
     await expect(dialog.locator('.mode-dialog-liner')).toContainText(mode.rule, { ignoreCase: true });
-    await expect(dialog.locator('.mode-ex')).toBeVisible();
-    await expect(dialog.locator('.mode-ex-pay2')).toContainText('WINS / WORD');
+    await expect(dialog.locator('.mode-dialog-art')).toBeVisible();
+    await expect(dialog.locator('.mode-ex')).toHaveCount(0);
     const play = dialog.locator('.mode-dialog-btn', { hasText: 'PLAY' });
     await expect(play).toBeVisible();
     // Solo dialog shows no CREATE/JOIN.

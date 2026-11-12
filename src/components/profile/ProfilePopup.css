@@ -1,6 +1,6 @@
 /* ProfilePopup — one card: hero on the left, you on the right; on a phone it stacks. Flat panels, colored outlines,
    hard black shadows (house style). Sizes ride the kit tokens; the card scrolls inside itself, never the page. */
-.pf-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(13, 6, 24, .84); }
+.pf-scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: var(--scrim); }
 .pf {
   position: relative; width: min(980px, 100%); max-height: calc(100dvh - 32px); overflow: auto; padding: 18px;
   background: #1a0b2e; border: 5px solid var(--pf-d); border-radius: 8px; box-shadow: 10px 10px 0 #000;
@@ -124,3 +124,24 @@
 /* the banner's badge slots are real slots — bigger than the board card's 46px row */
 .pf .pc-badges { grid-template-columns: repeat(3, 64px); gap: 12px; padding: 0 6px 6px 0; }
 @media (max-width: 760px) { .pf .pc-badges { grid-template-columns: repeat(3, 52px); gap: 10px; } }
+
+/* A PHONE PROFILE IS ONE SCREEN (Andy nov9: "the screen requires scrolling - only scroll inside"). At 360x640 a full account
+   (name + league + medals + ABOUT YOU) ran 243px past the card. On a phone the hero stands BESIDE its name and CUSTOMIZE instead
+   of on top of them (the stage is the tall part), and the rhythm tightens. Nothing is hidden, no text shrinks. */
+@media (max-width: 760px) and (max-height: 900px) {
+  .pf { padding: 12px 14px; max-height: calc(100dvh - 24px); }
+  .pf-scrim { padding: 12px; }
+  .pf-head { margin-bottom: 6px; }
+  .pf-body { gap: 12px; }
+  .pf-left .hs { max-width: 210px; }
+}
+/* a short phone (360x640): the hero stands beside its name + CUSTOMIZE — on a taller phone it stays on top, the biggest thing */
+@media (max-width: 760px) and (max-height: 720px) {
+  .pf-left { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); grid-template-areas: 'hero name' 'hero kit'; align-items: center; column-gap: 12px; row-gap: 8px; }
+  .pf-left > .hs, .pf-left > .pf-card { grid-area: hero; justify-self: center; }
+  .pf-left .hs { max-width: 100%; width: 100%; }
+  .pf-left .pf-card { width: 100%; }
+  .pf-left > .pf-hero { grid-area: name; align-self: end; }
+  .pf-left > .pf-kit { grid-area: kit; align-self: start; width: 100%; padding: 0 8px; font-size: var(--fs-k16); white-space: nowrap; }
+  .pf-left > .pf-card ~ .pf-kit { grid-row: 1 / span 2; align-self: center; }
+}

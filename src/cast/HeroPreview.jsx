@@ -7,13 +7,12 @@
 // Motion: finite WAAPI one-shots re-armed on timers (nothing infinite), transform / opacity only, hidden tab skipped,
 // reduce motion = still poses (kitPlay is a no-op).
 import { useEffect, useRef, useState } from 'react';
-import { HERO_UNLOCK, ownsHero, heroGateMet, goldProgress, hasPose, totalWins, castSrc } from './cast.js';
+import { ownsHero, heroGateMet, goldProgress, hasPose, castSrc } from './cast.js';
 import { rarityOf } from './CastArt.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
 import { KitHoldButton, KitIcon } from '../components/kit/index.js';
 import FitText from '../components/kit/FitText.jsx';
-import { getRebirths, storedLevel } from '../progress/xp.js';
 import { formatNum } from '../format';
 import './HeroPreview.css';
 
@@ -24,14 +23,8 @@ const SWAP = [{ opacity: 0 }, { opacity: 1 }]; // oct18: pose swaps fade (no squ
 /** How far this save is toward an earnable hero: { have, need, label } — or null when it isn't earned through play. A
  *  LEGEND's rebirth (a gate: the rebirth unlocks the BUY, it doesn't earn the hero) is reported the same way, with `gate`. */
 export function unlockProgress(h) {
-  if (h.gold) { const p = goldProgress(h.id); return { have: p.have, need: p.need, label: `WINS WITH ${h.name.replace(/^GOLD /, '')}` }; }
-  const u = HERO_UNLOCK[h.id];
-  if (!u || u.until != null) return null; // LIMITED: a sale window, not progress
-  try {
-    if (u.reb != null) return { have: Math.min(getRebirths() || 0, u.reb), need: u.reb, label: u.gate ? 'REBIRTHS TO UNLOCK' : 'REBIRTHS', gate: !!u.gate };
-    if (u.lv != null) return { have: Math.min(storedLevel() || 1, u.lv), need: u.lv, label: 'LEVEL' };
-    if (u.wins != null) return { have: Math.min(totalWins(), u.wins), need: u.wins, label: 'WINS' };
-  } catch { /* a broken store reads as zero */ }
+  // GOLD is earned by GAMES WON with that hero (never "WINS" — that reads as the coin, Andy nov9); nothing else has progress
+  if (h.gold) { const p = goldProgress(h.id); return { have: p.have, need: p.need, label: `GAMES WON WITH ${h.name.replace(/^GOLD /, '')}`, gate: true }; }
   return null;
 }
 
@@ -147,15 +140,9 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                     <span className="hpv-prog-n">{formatNum(prog.have)} / {formatNum(prog.need)}</span>
                   </div>
                 ) : null}
-                {prog && !prog.gate ? <span className="hpv-or">OR SKIP THE WAIT</span> : null}
-                {h.chase ? (
-                  // CHASE: never sold, never earned on a counter — only a gear roll can drop it
+                {h.price && !h.gold && !heroGateMet(h.id) ? (
                   <div className="hpv-buy">
-                    <span className="hpv-locked" data-testid="hero-drop-odds"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].label} GEAR ROLLS</span>
-                  </div>
-                ) : h.price && !h.gold && !heroGateMet(h.id) ? (
-                  <div className="hpv-buy">
-                    <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].until != null ? 'GONE FOREVER · OCTOBER 2026 ONLY' : `${HERO_UNLOCK[h.id].label}, THEN ${formatNum(h.price)} GEMS`}</span>
+                    <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />GONE FOREVER · OCTOBER 2026 ONLY</span>
                     <span className="hpv-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span>
                   </div>
                 ) : h.price && !h.gold ? (

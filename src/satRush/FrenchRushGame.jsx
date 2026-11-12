@@ -195,13 +195,15 @@ export default function FrenchRushGame() {
               onExit={inClassRun ? leaveClassRun : home}
             />
             <div className="sr-body">
-              <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} />
+              <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} onPick={game.pickChoice} />
               {inClassRun && (classState.offline || classState.hostAway || view.pending !== 'idle') && (
                 <div className={`fr-class-line${classState.offline || classState.hostAway ? ' alert' : ''}`} role="status">
                   {classState.offline ? 'reconnecting…' : classState.hostAway ? 'teacher reconnecting…' : 'waiting for the teacher…'}
                 </div>
               )}
-              <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />
+              {/* TAP-TO-ANSWER: a touch device answers by tapping a choice, so no field is mounted and
+                  the soft keyboard can never open (feat/sat-tap). */}
+              {view.answerMode !== 'tap' && <SatKeyInput active={view.phase === 'playing'} typeKey={game.typeKey} />}
             </div>
           </>
         )}

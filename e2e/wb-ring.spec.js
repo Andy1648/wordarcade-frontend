@@ -133,7 +133,13 @@ async function measure(page) {
       const card = s.querySelector('.game-player-card');
       const name = s.querySelector('.game-player-name-text');
       if (vis(card)) parts.push({ k: 'avatar', r: card.getBoundingClientRect() });
-      if (vis(name)) parts.push({ k: 'name:' + name.textContent.trim(), r: name.getBoundingClientRect() });
+      // a SEAT PLATE (a phone's 6+ seat board) carries its name INSIDE the plate: that is the plate's own text, not a
+      // label hanging off an avatar, so it is not a second part that could collide with it
+      const onPlate = !!s.closest('.wb-ring-6up') && vis(card) && vis(name) && (() => {
+        const c = card.getBoundingClientRect(); const t = name.getBoundingClientRect();
+        return t.left >= c.left - 1 && t.right <= c.right + 1 && t.top >= c.top - 1 && t.bottom <= c.bottom + 1;
+      })();
+      if (vis(name) && !onPlate) parts.push({ k: 'name:' + name.textContent.trim(), r: name.getBoundingClientRect() });
     }
     const arrow = document.querySelector('.wb-pointer-arrow');
     if (vis(arrow)) parts.push({ k: 'pointer', r: arrow.getBoundingClientRect() });
@@ -213,8 +219,17 @@ for (const vp of VIEWPORTS) {
         expect(m.n, 'every player has a seat').toBe(n);
         // (1) no seat is more than twice its own content
         expect(m.maxRatio, `widest seat vs its content at n=${n}`).toBeLessThanOrEqual(2);
-        // (2) evenly spaced: every gap within 2deg of every other
-        expect(m.spread, `angle spread between seats at n=${n}`).toBeLessThanOrEqual(2);
+        // (2) evenly spaced: every gap within 2deg of every other - on the RING. A 6+ seat board is not a ring (any width, nov10)
+        // (nov9 SEAT PLATES: the bomb over a two-column grid of plates, so every name holds >= 11px): there the seats are
+        // checked as that grid instead - two columns, every plate the same size
+        if (n >= 6) {
+          const cols = await page.$$eval('.wb-seat', (els) => els.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width), Math.round(r.height)]; }));
+          expect(new Set(cols.map((c) => c[0])).size, `two plate columns at n=${n}`).toBe(2);
+          expect(new Set(cols.map((c) => c[1])).size, `every plate the same width at n=${n}`).toBe(1);
+          expect(new Set(cols.map((c) => c[2])).size, `every plate the same height at n=${n}`).toBe(1);
+        } else {
+          expect(m.spread, `angle spread between seats at n=${n}`).toBeLessThanOrEqual(2);
+        }
         if (n === 2) {
           // horizontally opposed, NOT stacked
           expect(m.pairAxis.dx, '2 players must be far apart horizontally').toBeGreaterThan(m.pairAxis.dy * 4);

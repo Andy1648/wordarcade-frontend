@@ -384,7 +384,7 @@ export default function SoloShell({
 
       {phase === 'over' ? (
         <div className="solo-over">
-          <div className="solo-deathcard" ref={deathCardRef}>
+          <div className={`solo-deathcard${over.bare ? ' is-bare' : ''}`} ref={deathCardRef}>
             {/* TWO HALVES (s2 fit, oct21): the STORY (way out, face, result, links, the missed word) and
                 the REWARD (wins, XP + gems, score, REBIRTH READY, RESTART). Stacked on a phone; side by
                 side on a desktop, where the season-2 gate card stacked ran ~320px past a 768 screen. */}
@@ -403,7 +403,7 @@ export default function SoloShell({
             {/* Rendered on the tutorial card too (H6): WinsEarnedTotal returns null when the run
                 banked nothing, so a run that DID bank (a mid-run bonus) always names it. */}
             <WinsEarnedTotal amount={over.winsEarned} lines={over.winsBonusLines || []} />
-            {/* GEMS earned this run — always its own line, never hidden (Andy oct5) */}
+            {/* GEMS earned this run — its own line; a ZERO pill is hidden (design audit nov2 #5, Solo.css) */}
             {/* GAME XP (oct21) + GEMS share ONE row under the wins (side by side — the card's height is the fit gate's) */}
             <div className="solo-earned-row">
               <XpEarnedLine since={xpSince} />

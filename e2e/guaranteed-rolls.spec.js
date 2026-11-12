@@ -90,7 +90,7 @@ test('OPEN LEGENDARY+ ROLL: the sealed vessel opens on the server pick, free, pi
 
 test('ADVERSARIAL: no server ticket → no button (a forged local ticket and forged reply rows are ignored)', async ({ page }) => {
   await boot(page, { tickets: [
-    { id: TID, tier: 'secret', state: 'owned' }, // no SECRET+ tickets exist
+    { id: TID, tier: 'ultra', state: 'owned' }, // not a tier (089: a SECRET floor IS one now — the paid SECRET PACK)
     { id: 'not-a-uuid', tier: 'mythic', state: 'owned' },
     { id: TID, tier: 'legendary', state: 'spent' },
   ] });

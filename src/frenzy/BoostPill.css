@@ -39,7 +39,7 @@
   30% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
-/* Rebirth Rush OVERDRIVE (×10 XP & wins, 5 min): the SAME pill, bigger and pink so it can't be missed.
+/* Rebirth Rush OVERDRIVE (×3 XP & wins, 5 min): the SAME pill, bigger and pink so it can't be missed.
    Same finite slam-in on start and the same finite 10 × 1 s red pulse in its last 10 s. */
 .boost-pill.od-pill {
   gap: 8px;

@@ -10,6 +10,7 @@
   --fs-mrmeta: max(var(--fs-k13), calc(14 * var(--u, 1px)));
   --fs-mrcount: max(var(--fs-k18), calc(20 * var(--u, 1px)));
   --fs-mrchipico: max(20px, calc(22 * var(--u, 1px)));
+  --mr-btn: max(104px, calc(110 * var(--u, 1px)));
 }
 .mr-panel {
   box-sizing: border-box;
@@ -64,11 +65,13 @@
   --mr-accent: #2EFFE0;
   --mr-face: max(32px, calc(34 * var(--u, 1px)));
   display: grid;
-  /* two stacked lines: [host name · JOIN] over [face · mode chip · x/max] — the name gets the row's width, the row has the height */
-  grid-template-columns: var(--mr-face) minmax(0, 1fr) auto;
+  /* two stacked lines (nov9): the host name across the whole row, over [face · mode chip + x/max · the button]. Every
+     track is fixed (the button too), so the name, the face and the button start at one x on every row - no row
+     indents its own way, and a long name wraps across the full width instead of squeezing beside the button. */
+  grid-template-columns: var(--mr-face) minmax(0, 1fr) var(--mr-btn);
   grid-template-areas:
-    'host host join'
-    'face meta meta';
+    'face host host'
+    'meta meta join';
   align-items: center;
   column-gap: 7px;
   row-gap: 4px;
@@ -109,17 +112,13 @@
   /* never shrunk or ellipsized (names are max 20 chars): a long one wraps at its spaces beside JOIN */
   overflow-wrap: break-word;
 }
-.mr-meta { grid-area: meta; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.mr-meta { grid-area: meta; display: block; min-width: 0; line-height: 1.15; }
 /* the MODE CHIP: the mode's card art + its name in the mode colour, a full scale step (never shrunk; a long name wraps) */
 .mr-modechip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   min-width: 0;
-  padding: 2px 7px 2px 3px;
-  background: #0d0618;
-  border: 2px solid var(--mr-accent);
-  border-radius: 8px;
 }
 .mr-modeico { width: var(--fs-mrchipico); height: var(--fs-mrchipico); object-fit: contain; flex: 0 0 auto; }
 .mr-mode {
@@ -132,11 +131,13 @@
   color: var(--mr-accent);
   overflow-wrap: normal;
 }
-/* the x/max: big and white — the number a joiner reads first */
+/* the x/max: white Bungee - the number a joiner reads first; flows after the mode's last word (inline: the pair wraps word
+   by word in the space the button leaves, so it is never more than two short lines) */
 .mr-count {
-  flex: 0 0 auto;
+  display: inline-block;
+  margin-left: 2px;
   font-family: 'Bungee', sans-serif;
-  font-size: var(--fs-mrcount);
+  font-size: var(--fs-mrhost);
   text-transform: uppercase;
   line-height: 1;
   color: #fff;
@@ -155,7 +156,8 @@
   transition: transform 120ms ease-out;
 }
 .mr-join {
-  min-width: max(54px, calc(58 * var(--u, 1px)));
+  width: var(--mr-btn);
+  box-sizing: border-box;
   min-height: 44px;
   padding: 0 8px;
   font-size: var(--fs-mrbtn);
@@ -163,6 +165,21 @@
   background: #2EFFE0;
   border: 3px solid #12a894;
 }
+.mr-join.is-watch { color: #0d0618; background: #FF4FA3; border-color: #b8206e; }
+/* SPECTATE (nov4): the button reads IN LOBBY over JOIN / PLAYING over SPECTATE */
+.mr-join { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.mr-status {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-mrmeta);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mr-action { line-height: 1; white-space: nowrap; }
+/* a live game that can't take a watcher says why, in the small mono line (it never reads as a pressable SPECTATE) */
+.mr-action.is-why { font-family: 'Space Mono', monospace; font-size: var(--fs-mrmeta); font-weight: 700; }
+.mr-join.is-none { color: #d9c8ff; background: #241040; border-color: #3d1d6b; }
+.mr-join.is-none:disabled { opacity: 1; }
 .mr-join:hover:not(:disabled),
 .mr-create:hover:not(:disabled),
 .mr-more:hover:not(:disabled),

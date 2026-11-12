@@ -137,7 +137,7 @@
 .room-seat-tags .room-host-badge { margin-left: 0; }
 .room-rename-hint {
   cursor: pointer;
-  font-size: var(--fs-k14);
+  font-size: var(--fs-k15); /* nov9: 15, so the 1280x551 lobby fit-zoom never draws it under the 13px floor */
   letter-spacing: 1px;
   color: #fff;
   background: var(--pc-dark, #6b5a86);
@@ -839,7 +839,7 @@ html[data-beat='true'] .room-leave-btn {
 /* A BIG ROOM GOES TWO-UP — at EVERY width (fix/join-screens-scale). Past four players the roster is
    the tallest thing on the screen: on a 390x844 phone an 8-player room pushed DIFFICULTY and START
    ~200px below the fold with nothing to scroll, and on a 625px laptop it did the same to the last
-   row. Two chips per row, tighter rows, long names ellipsised; the type is unchanged. */
+   row. Two chips per row, tighter rows, long names scale down (FitText); the type is unchanged. */
 .room-players-list:has(> :nth-child(5)) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -857,7 +857,7 @@ html[data-beat='true'] .room-leave-btn {
 .room-players-list:has(> :nth-child(5)) .room-player-name {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -934,4 +934,51 @@ html[data-beat='true'] .room-leave-btn {
 /* ...and it stops short of the bottom-right sound button instead of running under it. */
 @media (max-width: 480px) {
   .room-start-btn { width: calc(100% - 60px); }
+}
+
+/* AUTO-START (nov9 house rooms): where WAITING FOR HOST sat - the lobby starts on its own. Static: the number changes
+   once a second, nothing loops. */
+.room-autostart {
+  margin: 0 auto 14px;
+  padding: 8px 16px;
+  width: fit-content;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: #FFE94A;
+  border: 3px solid #b8a21a;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #000;
+  text-align: center;
+}
+.room-autostart b { font-size: var(--fs-k24); }
+
+/* nov9: a name is ONE line through FitText (never broken mid-word, never ellipsized) - the rename button and its FitText
+   must be allowed to shrink to the seat, or a long name runs out of it instead of scaling down */
+.room-rename-btn { min-width: 0; max-width: 100%; }
+.room-rename-btn > .fit-box { flex: 1 1 auto; min-width: 0; }
+
+/* ONLY THE ROSTER SCROLLS (Andy nov9: "only scroll inside (such as for the game modes)"). The oct29 phone card scrolled the whole
+   setup (code, mode, difficulty and the seats) as one box, so a two-player Word Bomb room at 360x640 slid the code off the top to
+   show the seats. Now LEAVE, the code, GAME MODE and DIFFICULTY hold still and the seats are the one list that scrolls, under them;
+   a short phone puts the four difficulties on one row so the seats keep room. Static, nothing animates. */
+@media (max-width: 600px) {
+  .room-main { overflow-y: hidden; }
+  .room-main > * , .room-main > .room-col > * { flex-shrink: 0; }
+  .room-main > .room-col > .room-players-list {
+    flex: 1 1 auto; flex-shrink: 1; min-height: 56px; margin-bottom: 0;
+    overflow-y: auto; overscroll-behavior: contain; align-content: start;
+    /* the seats' hard shadows stay inside the list's box */
+    padding: 2px 6px 6px 2px; margin-right: -6px;
+  }
+}
+@media (max-width: 480px) and (max-height: 760px) {
+  .room-difficulty-row { flex-wrap: nowrap; gap: 6px; margin-bottom: 14px; }
+  .room-difficulty-row > .room-difficulty-btn { flex: 1 1 0; padding: 7px 2px; }
+  .room-gametype-row { margin-bottom: 14px; }
+  .room-main { padding-top: 6px; }
+  .room-main > .room-col > .room-players-label { margin-top: 4px; margin-bottom: 6px; }
+  .room-main > .room-col > .room-players-list { min-height: 84px; }
 }

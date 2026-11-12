@@ -52,7 +52,7 @@
   .hc-name { font-size: var(--fs-k22); -webkit-text-stroke-width: 4px; }
 }
 /* not owned yet (one-card picker): the hero greyed back; the status pill under the card says how to get it */
-.hc.is-dim .hc-hero { filter: grayscale(.75) brightness(.6) drop-shadow(3px 3px 0 #000); }
+.hc.is-dim .hc-hero { filter: brightness(0); opacity: .9; } /* nov2 move 20: a dark silhouette of the real art, like a locked elite */
 /* a LIVE card (oct19): the flipbook box sits exactly where the still did */
 .hc-hero.cast-flip { display: block; aspect-ratio: 1; }
 
@@ -60,3 +60,11 @@
    (a static hue turn on the painted art, never animated; the frame's windows are the LEGEND frame's own) */
 .hc.is-mythic .hc-frame { filter: hue-rotate(160deg) saturate(1.25); }
 .hc.is-secret .hc-frame { filter: hue-rotate(100deg) saturate(1.3); }
+
+/* the LOCK on a hero you don't own yet (nov2, research move 20): the painted lock icon in a small house chip, top-right of
+   the art window - the price / requirement chip keeps the bottom */
+.hc-lock {
+  position: absolute; top: 5%; right: 5%; z-index: 3;
+  display: grid; place-items: center; width: 34px; height: 34px;
+  background: #1a0b2e; border: 3px solid #000; border-radius: 8px; box-shadow: 2px 2px 0 #000;
+}

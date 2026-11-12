@@ -20,9 +20,9 @@ export function modeGemRows(mode) {
   if (!E) return [];
   const words = [`+${E.DROP_MIN}–${E.DROP_MAX}`, `1 IN ${Math.round(1 / E.DROP_CHANCE)} WORDS`];
   const b = E.BOT_WIN_BY_DIFF;
-  const pot = [`${E.POT_PER_PLAYER} × PLAYERS`, 'WIN VS PEOPLE'];
+  const pot = [`UP TO ${E.POT_MAX}`, 'WIN VS PEOPLE'];
   if (mode === 'word-bomb' || mode === 'category-blitz') return [[`+${b.easy} / ${b.medium} / ${b.hard}`, 'BEAT A BOT'], pot, words];
-  if (mode === 'word-race') return [[`${E.POT_PER_PLAYER} × PLAYERS`, 'WIN'], [`+1 / ${Math.round(1 / E.RACE_GEMS_PER_WPM)} WPM`, 'SPEED'], words];
+  if (mode === 'word-race') return [[`UP TO ${E.POT_MAX}`, 'WIN'], [`+1 / ${Math.round(1 / E.RACE_GEMS_PER_WPM)} WPM`, 'SPEED'], words];
   return [words];
 }
 
