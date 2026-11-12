@@ -1999,6 +1999,9 @@ export default function GameScreen({
   // existing accept/reject + life-loss events; no scoring/server/WS involvement.
   const streak = useCombo();
   comboRef.current = streak.count; // keep the accept-time combo read fresh
+  const peakStreakRef = useRef(0);
+  if (streak.count > peakStreakRef.current) peakStreakRef.current = streak.count;
+  useEffect(() => { peakStreakRef.current = 0; }, [gameNonce]);
   // The light-slot decision for the word that just landed (clutch / lucky / rare). The landing is
   // App's per-word record of MY accepted word; it arrives in the same render as its word_result.
   // The decision is LATCHED per landing (useLatched) so a later state change (a reject clearing the
@@ -3206,6 +3209,7 @@ export default function GameScreen({
         <div className="wb-structure" aria-hidden="true">
           <div className="wb-band" />
           <div className="wb-facet" />
+          <div className="wb-heat" />
           <div className="wb-bandrule" />
           <div className="wb-bandedge" />
         </div>
@@ -3325,6 +3329,8 @@ export default function GameScreen({
               )}
             </div>
           </div>
+          {/* The streak rides the prompt, where the eye already is, and grows with the tier (nov6). Nothing at a quiet 0-1. */}
+          {!isCategory ? <ComboMeter count={streak.count} brk={streak.brk} className="combo-meter--wb" /> : null}
         </div>
         {/* ===== THE COUNTDOWN (fix/wb-readability-and-timer) =====
             Measured on a live round: the remaining time drove CSS CLASSES ONLY - the
@@ -3736,8 +3742,6 @@ export default function GameScreen({
           </div>
         ) : (
           <div className="game-input-row drain-exempt" ref={inputRowRef}>
-            {/* Personal hype streak, floats above the input (pointer-events:none). */}
-            <ComboMeter count={streak.count} brk={streak.brk} />
             {/* THE RECEIPT for the word just accepted: base × every live multiplier = what you
                 were paid. It JOINS this cluster (CLAUDE.md: no orphan fixed UI) and is absolutely
                 positioned + pointer-events:none, exactly like the ComboMeter above it, so it never
@@ -4019,6 +4023,7 @@ export default function GameScreen({
                 of={Math.max(1, table.length)}
                 winnerName={winner ? winner.name : ''}
                 modeLabel="WORD BOMB"
+                peakStreak={peakStreakRef.current}
                 me={{ words: mine.length, letters: mine.reduce((a, w) => a + w.length, 0), best }}
                 xp={resultsXp}
                 ledger={payoutLedger}

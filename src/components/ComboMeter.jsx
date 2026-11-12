@@ -32,10 +32,10 @@ export function ComboShatter({ count }) {
   );
 }
 
-export default function ComboMeter({ count, brk }) {
+export default function ComboMeter({ count, brk, className = '' }) {
   const tier = tierOf(count);
   return (
-    <div className="combo-meter" aria-hidden="true">
+    <div className={`combo-meter${className ? ` ${className}` : ''}`} aria-hidden="true">
       {/* Mid-game LEVEL-UP: a small finite "LV n" punch beside the streak (renders nothing until a
           game word crosses a level). It joins this cluster — never its own fixed UI. */}
       <LevelUpChip />
