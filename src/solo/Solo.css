@@ -1791,3 +1791,54 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 .solo-deathcard.is-bare .solo-death-actions > .solo-restart { min-height: 56px; font-size: var(--fs-k20); }
 .solo-deathcard.is-bare .solo-death-reward,
 .solo-deathcard.is-bare .solo-death-actions { align-self: stretch; width: 100%; }
+
+/* ===== THE STREAK, ON SCREEN (nov12, the Word Bomb pass for CHAIN + FUSE — Andy: "addiction corresponding to aggression (they
+   need to feel benefits of playing)") =====
+   1. The streak count rides the hero ring's right side (the left sits on the card edge at 1366) and climbs a size per tier (the shared ComboMeter, its per-hit pop as ever).
+   2. THE HEAT: the band behind the stage takes the tier colour, deeper per tier — quiet at T0, one opacity transition per change.
+   3. The run-over card names the run's BEST STREAK in the tier colour it reached, and NEW RECORD when it beat the mode's best.
+   Static per tier; the only motion is the existing finite pop + one opacity transition. Nothing loops. */
+.solo-streak { position: absolute; top: 50%; left: calc(100% + 10px); transform: translateY(-50%); z-index: 3; }
+.solo-streak .combo-meter { position: static; flex-direction: column; align-items: flex-start; }
+.solo-streak .combo-badge { transform-origin: left center; }
+.solo-streak .combo-count { font-size: var(--fs-panel); }
+.solo-streak .combo-fire .combo-count { font-size: var(--fs-h2); }
+.solo-streak .combo-max .combo-count { font-size: var(--fs-h1); }
+@media (max-width: 560px) {
+  .solo-streak { left: calc(100% + 4px); }
+  .solo-streak .combo-badge { padding: 3px 6px; }
+  .solo-streak .combo-label { display: none; } /* the count alone: a phone's room beside the ring is ~80px */
+  .solo-streak .combo-fire .combo-count { font-size: var(--fs-h2); }
+  .solo-streak .combo-max .combo-count { font-size: var(--fs-h2); }
+}
+.solo-heat {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 40%, 100% 14%, 100% 100%, 0 100%);
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.solo-root[data-heat='1'] .solo-heat { background: #2EFFE0; opacity: 0.06; }
+.solo-root[data-heat='2'] .solo-heat { background: #FFE94A; opacity: 0.1; }
+.solo-root[data-heat='3'] .solo-heat { background: #FF6B3D; opacity: 0.15; }
+.solo-root[data-heat='4'] .solo-heat { background: #FF4FA3; opacity: 0.22; }
+@media (prefers-reduced-motion: reduce) { .solo-heat { transition: none; } }
+.solo-peak {
+  flex-basis: 100%;
+  font-size: var(--fs-panel);
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.solo-peak b { font-size: var(--fs-h2); font-weight: 400; }
+.solo-peak i { font-style: normal; white-space: nowrap; display: inline-block; }
+.solo-peak[data-heat='2'] { color: #FFE94A; }
+.solo-peak[data-heat='3'] { color: #FF6B3D; }
+.solo-peak[data-heat='4'] { color: #FF4FA3; }
+/* a short window (a laptop at 125%, 1163x501): the streak line is one compact row of body type (the Bungee line wrapped to two) */
+@media (max-height: 600px) {
+  .solo-peak { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); letter-spacing: 0.04em; -webkit-text-stroke: 0; line-height: 1.2; }
+  .solo-peak b { font-size: var(--fs-body); }
+  .solo-scoreline:has(.solo-peak) { row-gap: 0; }
+  .solo-peak { line-height: 1.05; }
+}
