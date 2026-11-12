@@ -521,6 +521,9 @@
 }
 
 
+/* the results card tallies these same lines itself: a toast over it covered the rank table (nov6). Lives here, not in the
+   eager WinsCreditToast.css, so it rides the lazy results chunk (payload ratchet). */
+body:has(.rs2) .wct { display: none; }
 /* the numbers stay readable while the coins burst off them */
 .rs2-total-num { position: relative; z-index: 41; }
 /* BEST STREAK (nov6): only when the player had one; its colour is the tier they reached in the game */
