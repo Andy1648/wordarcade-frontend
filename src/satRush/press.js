@@ -17,6 +17,7 @@
 // rest, REDUCE MOTION (the in-game toggle) skips it entirely.
 import { useEffect, useRef } from 'react';
 import { reduceMotion } from '../lib/reduceMotion.js';
+import { sndPress } from './rushSounds.js';
 
 export const PRESS_MS = 680;
 export const PRESS_SHORT_MS = 520;
@@ -70,6 +71,8 @@ export function playPress(word, kicker = '', dir = 'forward', short = false) {
   const t0 = now();
   if (t0 - lastAt < COALESCE_MS) return false;
   lastAt = t0;
+  // the press SOUNDS even under REDUCE MOTION (sound is not motion) — the type clicks in, the sheet is pulled
+  if (parts) sndPress(short);
   if (!parts || reduceMotion()) return false;
   if (typeof parts.root.animate !== 'function') return false;
   stop();

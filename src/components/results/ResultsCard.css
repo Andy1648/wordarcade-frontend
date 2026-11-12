@@ -521,6 +521,19 @@
 }
 
 
+/* the results card tallies these same lines itself: a toast over it covered the rank table (nov6). Lives here, not in the
+   eager WinsCreditToast.css, so it rides the lazy results chunk (payload ratchet). */
+body:has(.rs2) .wct { display: none; }
+/* the numbers stay readable while the coins burst off them */
+.rs2-total-num { position: relative; z-index: 41; }
+/* BEST STREAK (nov6): only when the player had one; its colour is the tier they reached in the game */
+.rs2-peak { display: flex; align-items: center; gap: 8px; padding: 2px 10px; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; --c: #2EFFE0; }
+.rs2-peak[data-heat='2'] { --c: #FFE94A; }
+.rs2-peak[data-heat='3'] { --c: #FF6B3D; }
+.rs2-peak[data-heat='4'] { --c: #FF4FA3; }
+.rs2-peak-n { font-family: 'Bungee', cursive; text-transform: uppercase; font-size: var(--fs-panel); line-height: 1; color: var(--c); -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rs2-peak-k { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); line-height: 1.05; color: #fff; }
+
 /* ZERO BARS HIDE (design audit nov2): a "+0" GEMS box or a "+0" WINS total is not a result — on a phone the gold +0 bar
    pushed the stack into the RANK / WORDS header. Hidden while zero; both are live (the ledger / the total re-render). */
 .rs2-gems:has(.gems-earned[data-gems-total='0']) { display: none; }

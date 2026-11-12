@@ -16,13 +16,23 @@ import {
   burst,
   screenFlash,
   sfx,
-  validCue,
   scoreTick,
   fanfare,
   defeatTone,
   sparkle,
   unlockAudio,
 } from '../juice';
+// The PRINT-SHOP transition sounds (feat/french-rush-sound): paper, ink, stamps — gated so they never stack.
+import {
+  sndCardIn,
+  sndStageTick,
+  sndStrike,
+  sndCapture,
+  sndMiss,
+  sndRevenant,
+  sndDeepCut,
+  sndCaseClosed,
+} from './rushSounds';
 
 // Print-role palette. The retro-print rebuild moved the STATE visuals onto the
 // page itself (stamps, the black corner ribbon, the negative-reprint invert, the
@@ -80,8 +90,19 @@ export function multiplierDrop(stage, maxStage) {
     squash(m);
     flash(m, INK);
   }
-  // Higher stage = lower ante = lower pitch. scoreTick maps 0..1 -> pitch.
-  scoreTick(maxStage > 0 ? 1 - stage / maxStage : 0);
+  // Higher stage = lower ante = lower pitch: a dry INK TICK that falls with the reward.
+  sndStageTick(maxStage > 0 ? 1 - stage / maxStage : 0);
+}
+
+// --- a new card lands -------------------------------------------------------
+// A plain word slides onto the desk (a revenant / deep cut has its own arrival instead).
+export function cardIn() {
+  sndCardIn();
+}
+
+// --- a choice crossed out / a letter spelled in by the clock ----------------
+export function strike() {
+  sndStrike();
 }
 
 // --- a correct clear --------------------------------------------------------
@@ -89,7 +110,7 @@ export function multiplierDrop(stage, maxStage) {
 // tile squash). juice just plays the cue, whose pitch rises with the streak so a
 // hot run reads as higher-stakes. No burst, no ring, no card flash.
 export function answerCorrect({ streak = 0 } = {}) {
-  validCue(streak);
+  sndCapture(streak); // the CAPTURED stamp — its ping climbs with the streak
 }
 
 // --- a rejected keystroke ---------------------------------------------------
@@ -119,19 +140,19 @@ export function silverBreak() {
 // --- PRIORITY 3: Deep Cut ---------------------------------------------------
 // Marked for the whole word by the black corner ribbon (CSS); arrival is its whoosh.
 export function deepCutEnter() {
-  sfx('open');
+  sndDeepCut();
 }
 
 // --- PRIORITY 4: Revenant ---------------------------------------------------
 // The "IT'S BACK" stamp (CSS) carries the arrival; juice plays the slash.
 export function revenantEnter() {
-  sfx('slash');
+  sndRevenant();
 }
 
 // A plain miss (life lost, no silver to break): the "MISS!!" stamp + page tear
 // (CSS) carry it; the KO thud + a shake stay (shake is kept for miss + death).
 export function miss() {
-  sfx('ko');
+  sndMiss(); // the poster tears
   shake(6, 340);
 }
 
@@ -140,8 +161,8 @@ export function miss() {
 // the score reveal from here.
 export function death() {
   hitStop(120);
-  sfx('ko');
-  defeatTone();
+  sndMiss();
+  sndCaseClosed(); // the case is closed — outranks the tear, both land
   screenFlash({ alpha: 0.7, color: PAPER, life: 0.4 });
   shake(11, 460);
 }
@@ -149,7 +170,7 @@ export function death() {
 // --- results-screen celebration primitives (reused from the shared layer) ---
 export { scoreTick, sfx as resultSfx, burst as resultBurst, screenFlash as resultFlash };
 export function resultsStamp() {
-  sfx('ko'); // heavy slam for the DEAD stamp
+  sndCaseClosed(); // heavy slam for the DEAD / CASE CLOSED stamp
   screenFlash({ alpha: 0.5, color: PAPER, life: 0.3 });
   shake(6, 320);
 }

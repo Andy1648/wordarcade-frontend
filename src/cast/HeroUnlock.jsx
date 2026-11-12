@@ -20,7 +20,7 @@ import { markHeroesSeen } from './heroSeen.js';
 import './HeroUnlock.css';
 
 const SND_TIER = { gold: 'epic', elite: 'legendary', legend: 'mythic' };
-const TIER_WORD = { gold: 'GOLD HERO', elite: 'ELITE HERO', legend: 'LEGEND!', mythic: 'MYTHIC DROP!', secret: 'SECRET DROP!' };
+const TIER_WORD = { gold: 'GOLD HERO', elite: 'ELITE HERO', legend: 'LEGEND!', mythic: 'MYTHIC HERO!', secret: 'SECRET HERO!' };
 const T = { drop: 150, flip: 900, pop: 1180, title: 1300, btns: 1750 };
 const EASE_POP = 'cubic-bezier(.2,1.4,.4,1)';
 
@@ -31,7 +31,7 @@ export default function HeroUnlock({ ids, equipped = null, onEquip, onClose }) {
   const n = useRef({});
   const reg = (k) => (el) => { n.current[k] = el; };
   const r = rarityOf(h);
-  const word = (h && h.chase) || r.tier; // a CHASE drop names its own tier (MYTHIC / SECRET), louder than LEGEND
+  const word = (h && h.chase) || r.tier; // the rarest heroes name their own tier (MYTHIC / SECRET), louder than LEGEND
 
   useEffect(() => { markHeroesSeen(ids); }, [ids]);
   useEffect(() => {
