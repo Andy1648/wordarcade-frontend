@@ -5231,8 +5231,8 @@ html[data-beat='true'] .cb-category-display {
       calc((var(--wb-r) - var(--wb-bomb-w) * 0.75) * 2)
     )
   );
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible; /* FitText scales the name to the cap; a name too long even at its floor shows whole (never "RIVA…") */
+  text-overflow: clip;
   white-space: nowrap;
   font-size: var(--fs-label);
   color: var(--v-ink-dim);
@@ -7066,9 +7066,9 @@ html[data-beat='true'] .wb-belly {
 }
 @keyframes cb-count-pop { from { transform: scale(1.35); } to { transform: scale(1); } }
 @media (min-width: 900px) {
-  /* a long name ellipsises instead of running into its count */
+  /* a long name scales down (FitText) instead of running into its count */
   .cb-round .cb-progress-name { min-width: 0; flex: 1 1 auto; }
-  .cb-round .cb-progress-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .cb-round .cb-progress-name-text { overflow: hidden; text-overflow: clip; white-space: nowrap; min-width: 0; }
   .cb-round .cb-progress-count { white-space: nowrap; }
 }
 
@@ -7102,7 +7102,7 @@ html[data-beat='true'] .wb-belly {
   .cb-round .cb-progress > .cb-section-label { display: none; }
   .cb-round .cb-progress-row { flex: 1 1 0; min-width: 88px; margin-bottom: 0; padding: 6px 8px; gap: 6px; }
   .cb-round .cb-progress-name { flex: 1 1 auto; min-width: 0; }
-  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cb-round .cb-progress-name-text { white-space: nowrap; overflow: hidden; text-overflow: clip; }
   .cb-round .cb-progress-unit { display: none; }
 }
 
@@ -7189,4 +7189,215 @@ html[data-beat='true'] .wb-belly {
    is the part that needs the height. Top clearance for the fixed WINS pill stays (the board still starts below it). */
 @media (min-width: 900px) and (min-height: 600px) {
   .game-stage--blitz .cb-round { min-height: calc(100dvh - 270px); }
+}
+
+/* SPECTATE (nov4): a watcher's static line where the input would be (in the bottom bar's flow, never fixed), and the
+   game-over note that replaces PLAY AGAIN / REMATCH. Flat, coloured outline, hard black shadow, no motion. */
+.game-watch-bar {
+  /* positioned like the input row it replaces, so it paints above the board's positioned backdrop layers */
+  position: relative;
+  z-index: 3;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: #FF4FA3;
+  background: #1a0b2e;
+  border: 3px solid #b8206e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.game-watch-note {
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-body);
+  letter-spacing: 0.06em;
+  color: #FF4FA3;
+  text-align: center;
+}
+.game-watch-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  color: #0d0618;
+  background: #FF4FA3;
+  border: 3px solid #b8206e;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+
+/* ===== SEAT PLATES (nov9: "nothing tiny" — 11px minimum, "make room instead of shrinking") =====
+   On a PHONE a 6+ seat ring has no room for names: eight labels around a ~250px circle drew at 6-7px. So on the phone
+   stack the 6+ seat ring stops being a circle: the bomb sits on top and the seats become PLATES in a two-column grid
+   under it - a seat-colour stripe, the name (one line, FitText, never broken, never "…") over the hearts - in seat order,
+   the seat on the clock lit in the Word Bomb accent, a knocked-out seat dimmed. (No hero face on a plate: a 360px plate
+   is 136px, and a 28px face left a 16-letter name 90px = 8.7px. The heroes stand in every seat everywhere else.) It lives in the SAME ring box (the grid row wbRingSize sizes),
+   and the bomb takes what the plates leave (--wb-bomb-w below), so the board's other bands never move. No turn wedge
+   (a grid has no angle to point along) and no floating flags or status lines (they hung off a circle's seat).
+   DESKTOP TOO (nov10): the 8-seat ring gave a name ~90px of arc, so long names drew at 6-11px on 1366/1920. Any 6+
+   seat board is plates now; the desktop block after this one only sizes them for the wider board. */
+@media all {
+  .game-stage--wb .wb-ring.wb-ring-6up {
+    /* the plates: 4 rows x 32px + 3 gaps of 4px = 140px, + 6px to the bomb */
+    --wb-bomb-w: clamp(56px, calc((var(--wb-size) - 120px) / 1.15), 110px);
+    width: 100%;
+    height: auto;
+    justify-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-pointer { display: none; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-core {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    order: -1;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-ring-seats {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 3px;
+    /* the plates use 12px of the board's 14px side padding: a 20-character name holds >= 11px at 360 (nov9) */
+    width: calc(100% + 24px);
+    margin-inline: -12px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    min-width: 0;
+    transform: none;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 1px 3px 1px 4px;
+    border-radius: 6px;
+    border: 2px solid var(--pc-dark, #3d2a5c);
+    border-left: 4px solid var(--pc, #2EFFE0);
+    background: #1a0b2e;
+    transform: none;
+    overflow: hidden;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.current {
+    background: var(--wb-accent, #ff6b3d);
+    border-color: #b8431f;
+    transform: none;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.eliminated { opacity: 0.45; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat-char { display: none; }
+  /* name over hearts, beside the face */
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat--name-out-up .game-player-name-text {
+    display: block;
+    visibility: visible;
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: var(--fs-label);
+    letter-spacing: 0;
+    line-height: 1.15;
+    color: var(--pc, #fff);
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.current .game-player-name-text { color: #0d0618; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card .game-player-name { align-items: flex-start; text-align: left; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text .fit-in { transform-origin: left center; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char .game-player-hearts {
+    position: static;
+    transform: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    --wb-hs: 1;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts svg,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts > * { width: 10px; height: 10px; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-your-turn,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .player-typing,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .player-status,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-lastlife { display: none; }
+}
+
+/* ===== BLITZ ON A PHONE IS ONE SCREEN (Andy nov9: "the screen requires scrolling - only scroll inside") =====
+   At 360x640 the stacked round ran 190px past the bottom (YOUR ANSWERS + THE RACE under the fold) and the whole app scrolled.
+   Now the stage is the screen: the category, the clock and the field hold still, SEND sits beside the field again, the race
+   rows tighten, and the answers + race rail is the one box that scrolls if a big lobby still outgrows it. Static, nothing animates. */
+@media (max-width: 480px) {
+  .game-wrap:has(> .game-stage--blitz .cb-round) { height: var(--vvh, 100dvh); min-height: 0; box-sizing: border-box; }
+  .game-stage--blitz:has(.cb-round) { display: flex; flex-direction: column; max-height: 100%; min-height: 0; box-sizing: border-box; }
+  .game-stage--blitz .cb-round { display: flex; flex-direction: column; align-items: stretch; flex: 1 1 auto; min-height: 0; gap: 10px; }
+  .game-stage--blitz .cb-round-main { flex: none; }
+  .game-stage--blitz .cb-round-side { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .game-stage--blitz .cb-round-side > * { flex-shrink: 0; }
+  .game-stage--blitz .cb-round .game-input-row { flex-direction: row; }
+  .game-stage--blitz .cb-round .game-input-row .game-input { flex: 1 1 auto; width: auto; min-width: 0; }
+  .game-stage--blitz .cb-round .game-input-row .game-send-btn { width: auto; }
+  .game-stage--blitz .cb-round .cb-category-display { padding: 12px; }
+  .game-stage--blitz .rj-list { --rh: 28px; --rg: 4px; }
+}
+/* a short phone: the category steps down one size so THE RACE shows under your answers, and the game-over mascot gives up the
+   last few px the card ran over (it scrolled 5px at 360x640) */
+@media (max-width: 480px) and (max-height: 720px) {
+  .game-stage--blitz .cb-round .cb-category-display { font-size: var(--fs-h2); }
+  .game-over-mascot .mascot-img { height: clamp(60px, 10vh, 150px); }
+  .game-over-card { padding-top: 6px; padding-bottom: 6px; }
+}
+
+/* desktop sizing for the plates: the board's centre column is `auto`, so the plate area sets its own width (the rails are
+   1fr and give way); the bomb takes the height the four plate rows leave in the ring row */
+@media (min-width: 701px) {
+  .game-stage--wb .wb-ring.wb-ring-6up {
+    /* 4 rows x 40px + 3 gaps of 6px = 178px, + 8px to the bomb */
+    --wb-bomb-w: clamp(80px, calc((var(--wb-size) - 190px) / 1.15), 180px);
+    width: max(var(--wb-size), 380px);
+    justify-self: center;
+    gap: 8px;
+  }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-ring-seats { width: 100%; margin-inline: 0; gap: 6px; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-card.has-char { height: auto; min-height: 40px; padding: 2px 8px 2px 8px; border-left-width: 6px; }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-name-text,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat--name-out-up .game-player-name-text { font-size: var(--fs-body); }
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts svg,
+  .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts > * { width: 12px; height: 12px; }
 }

@@ -68,3 +68,10 @@ export async function boot(page, { gems = 200, slot = 2, streak = 0, cosmetic = 
   await page.locator('.homepage-logo, .hp-m-title').first().waitFor();
   return db;
 }
+
+/** The wheel lives in UPGRADES (Andy nov5): from the menu or from the shop, its card opens it. */
+export async function openWheel(page) {
+  const card = page.getByTestId('daily-spin-card');
+  if (!(await card.isVisible().catch(() => false))) await page.locator('[data-nav="shop"]:visible').first().click();
+  await card.click();
+}

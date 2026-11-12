@@ -1,0 +1,202 @@
+/* BuyGems.css — the buy-gems panel (real-money gem packs). House style: flat panels, thick coloured outlines (a darker shade
+   of the fill), hard black offset shadows, 8px corners. Motion: hover / press transforms and the panel's one finite enter;
+   nothing loops. Phone: every target ≥ 44px, two packs a row, the whole panel fits without scrolling. */
+.pg-scrim { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 12px; background: rgba(13, 6, 24, .82); }
+.pg {
+  width: min(860px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #1a0b2e;
+  color: #fff;
+  border: 6px solid #5c0fa3;
+  border-radius: 8px;
+  box-shadow: 8px 8px 0 #000;
+  animation: pg-in 220ms cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes pg-in { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.pg-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.pg-title {
+  text-transform: uppercase;
+  margin: 0;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k26);
+  font-weight: 400;
+  color: #FFE94A;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+/* GEMS | PACKS (089): the panel's title is its two tabs — the lit one reads as the title did (yellow, inked) */
+.pg-tabs { display: flex; gap: 8px; flex: none; }
+.pg-tab {
+  min-height: 44px;
+  padding: 0 12px;
+  background: #0d0618;
+  color: #c9b8e8;
+  border: 4px solid #3a2560;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k18);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+}
+.pg-tab.is-on { background: #FFE94A; color: #0d0618; border-color: #F2A900; }
+@media (hover: hover) { .pg-tab:hover:not(.is-on):not(:disabled) { transform: translate(-2px, -2px); } }
+.pg-tab:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+.pg-tab:disabled { cursor: default; }
+.pg-tab:focus-visible { outline: 4px solid #2EFFE0; outline-offset: 3px; }
+.pg-have { text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k20); color: #2EFFE0; white-space: nowrap; }
+.pg-have .gem-icon { flex: none; }
+.pg-close {
+  text-transform: uppercase;
+  margin-left: auto;
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  background: #FF4FA3;
+  color: #0d0618;
+  border: 4px solid #b0206a;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k16);
+  cursor: pointer;
+}
+.pg-close:active { transform: translate(3px, 3px); box-shadow: none; }
+
+/* the packs: four in a row on a desktop, two on a phone. The whole card is the one tap; the price is its face */
+.pg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 6px 6px 0; }
+.pg-cell { min-width: 0; display: flex; }
+.pg-pack {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: #0d0618;
+  color: #fff;
+  border: 4px solid #12A99A;
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 #000;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 120ms ease-out;
+}
+@media (hover: hover) { .pg-pack:hover:not(:disabled) { transform: translate(-2px, -2px); } }
+.pg-pack:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 1px 1px 0 #000; }
+.pg-pack:disabled { cursor: default; }
+.pg-pack:focus-visible, .pg-close:focus-visible { outline: 4px solid #2EFFE0; outline-offset: 3px; }
+.pg-pack.is-over { border-color: #3a2560; }
+.pg-pack.is-over .pg-art { opacity: 0.45; }
+.pg-art { width: 100%; max-width: 128px; aspect-ratio: 1 / 1; height: auto; object-fit: contain; }
+.pg-gems {
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k22);
+  color: #fff;
+  white-space: nowrap;
+  line-height: 1;
+}
+.pg-gems .gem-icon { flex: none; }
+.pg-price {
+  text-transform: uppercase;
+  margin-top: auto;
+  align-self: stretch;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  background: #FFE94A;
+  color: #0d0618;
+  border: 4px solid #F2A900;
+  border-radius: 8px;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  font-size: var(--fs-k20);
+  white-space: nowrap;
+}
+.pg-pack.is-over .pg-price { background: #3a2560; border-color: #241640; color: #c9b8e8; }
+
+/* the foot: the month's limit + ODDS (the roll screen's RATES popup), then one line of fine print */
+.pg-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; }
+.pg-cap { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); color: #c9b8e8; text-transform: uppercase; }
+.pg-cap b { color: #2EFFE0; font-weight: 400; }
+.pg .pg-odds { min-height: 44px; border-radius: 8px; }
+.pg .pg-odds .rs-rates-k { display: inline; } /* the roll screen's phone rule hides the word; here the word IS the label */
+.pg-low { display: grid; }
+.pg-low > * { grid-area: 1 / 1; }
+.pg-fine.is-hid { visibility: hidden; }
+.pg-fine { margin: 0; font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k14); line-height: 1.4; color: #c9b8e8; }
+.pg-fine b { color: #fff; }
+.pg-note { font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); line-height: 1.25; color: #FF6B3D; text-transform: uppercase; }
+
+/* SIGN IN WITH GOOGLE (085): buying needs a Google account — a tap on a pack, signed out, asks here (BACK returns to the packs) */
+.pg-signin {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px; text-align: center;
+  background: #0d0618; border: 4px solid #5c0fa3; border-radius: 8px;
+}
+.pg-signin-h { font: 400 var(--fs-k22) 'Bungee', cursive; text-transform: uppercase; color: #FFE94A; }
+.pg-signin-t { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #fff; max-width: 34ch; }
+
+/* phone: two packs a row, tight enough that a 360x640 screen holds the whole panel */
+@media (max-width: 759px) {
+  .pg-scrim { padding: 8px; }
+  .pg { gap: 8px; padding: 10px 12px; border-width: 4px; box-shadow: 5px 5px 0 #000; }
+  .pg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 5px 5px 0; }
+  .pg-pack { padding: 6px; box-shadow: 4px 4px 0 #000; }
+  .pg-art { max-width: 76px; }
+  .pg-title { font-size: var(--fs-k22); }
+  .pg-have { font-size: var(--fs-k18); }
+  .pg-head { gap: 8px; }
+  .pg-tabs { gap: 6px; }
+  .pg-tab { padding: 0 8px; font-size: var(--fs-k16); border-width: 3px; }
+}
+@media (max-width: 759px) and (max-height: 700px) {
+  .pg-art { max-width: 52px; }
+  .pg-gems { font-size: var(--fs-k20); }
+}
+/* short desktop windows (1280x600): smaller art so the panel never scrolls */
+@media (min-width: 760px) and (max-height: 700px) {
+  .pg-art { max-width: 96px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pg { animation: none; }
+  .pg-pack { transition: none; }
+}
+html[data-reduce-motion] .pg { animation: none; }
+.pg-back {
+  min-height: 44px; padding: 0 18px; background: #1a0b2e; color: #fff; border: 4px solid #5c0fa3; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  font-family: var(--k-display, 'Bungee', sans-serif); font-size: var(--fs-k16); text-transform: uppercase; cursor: pointer;
+}
+.pg-back:active { transform: translate(3px, 3px); box-shadow: none; }
+.pg-signin .gsi-wrap { align-items: center; }
+
+/* FIRST BUY ×2 (088): one flat stamp on the pack's corner + the bonus in plain numbers. Static: nothing moves */
+.pg-pack { position: relative; }
+.pg-first {
+  position: absolute; left: -4px; top: -4px; z-index: 1; padding: 1px 6px; transform: rotate(-4deg);
+  background: #FF4FA3; color: #0d0618; border: 3px solid #b0206a; border-radius: 8px; box-shadow: 2px 2px 0 #000;
+  font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k14); font-weight: 700; white-space: nowrap;
+}
+.pg-bonus { font-family: var(--k-mono, 'Space Mono', monospace); font-size: var(--fs-k15); font-weight: 700; color: #2EFFE0; white-space: nowrap; line-height: 1.1; }
+@media (max-width: 759px) and (max-height: 700px) {
+  .pg-pack.is-first { gap: 2px; }
+  .pg-foot { flex-wrap: nowrap; } /* the limit wraps beside ODDS instead of pushing it onto its own row */
+  .pg-cap { flex: 1 1 auto; min-width: 0; }
+  .pg .pg-odds { flex: none; }
+  .pg-pack.is-first .pg-art { max-width: 56px; margin-top: 12px; } /* under the stamp, not behind it */
+}

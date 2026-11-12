@@ -24,15 +24,20 @@ const vessel = (OFF, src, label) => Object.freeze({
   glow: Object.freeze({ src: src.glow }),
   label: Object.freeze({ ...label, ...fitLabel(label.text, OFF.plate, label.stroke ? 6 : 0) }),
 });
+const LEG_SRC = {
+  base: '/rolls/vessel-legendary-base.webp', lid: '/rolls/vessel-legendary-lid.webp', cog: '/rolls/vessel-legendary-cog.webp',
+  badge: '/rolls/vessel-legendary-badge.webp', glow: '/rolls/vessel-glow-legendary.webp',
+};
 export const VESSEL_ART = Object.freeze({
   epic: vessel(EPIC_OFF, {
     base: '/rolls/vessel-epic-base.webp', lid: '/rolls/vessel-epic-lid.webp', cog: '/rolls/vessel-epic-cog.webp',
     badge: '/rolls/vessel-epic-badge.webp', glow: '/rolls/vessel-glow-epic.webp',
   }, { text: 'EPIC+', ink: '#fff', stroke: '#2a0a4a' }),
-  legendary: vessel(LEG_OFF, {
-    base: '/rolls/vessel-legendary-base.webp', lid: '/rolls/vessel-legendary-lid.webp', cog: '/rolls/vessel-legendary-cog.webp',
-    badge: '/rolls/vessel-legendary-badge.webp', glow: '/rolls/vessel-glow-legendary.webp',
-  }, { text: 'LEGENDARY+', ink: '#3a2200', stroke: null }),
+  legendary: vessel(LEG_OFF, LEG_SRC, { text: 'LEGENDARY+', ink: '#3a2200', stroke: null }),
+  // 089 PAID PACKS: a MYTHIC+ / SECRET ticket opens in the SAME gold canister — only its badge word is its own floor (a paid
+  // MYTHIC pack must never read LEGENDARY+). No new art.
+  mythic: vessel(LEG_OFF, LEG_SRC, { text: 'MYTHIC+', ink: '#3a2200', stroke: null }),
+  secret: vessel(LEG_OFF, LEG_SRC, { text: 'SECRET', ink: '#3a2200', stroke: null }),
 });
 export const SHARD_ART = Object.freeze(['/rolls/vessel-shard-1.webp', '/rolls/vessel-shard-2.webp', '/rolls/vessel-shard-3.webp']);
 const RANK = { rare: 0, epic: 1, legendary: 2, mythic: 3, secret: 4 };

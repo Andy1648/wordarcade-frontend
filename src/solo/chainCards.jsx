@@ -49,7 +49,8 @@ export function ChainFirstRunCard() {
   return (
     <>
       <h2>CHAIN BROKE</h2>
-      <div className="solo-armhint">EVERY WORD STARTS WITH THE LAST LETTER OF THE ONE BEFORE</div>
+      {/* design audit nov2 #5: no rule SENTENCE here — the dialog and the in-game teach already said it; the worked
+          chain shows it */}
       <div className="solo-chain-example" aria-label="E to EAGLE to ELEPHANT to TIGER to RIVER">
         <b className="cx-pivot">E</b>
         <span className="cx-arrow"> → </span>

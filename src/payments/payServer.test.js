@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Stripe from 'stripe';
-import { handleCheckout, handleWebhook, verifyEvent, grantArgs, routeEvent, paymentsEnabled, serviceRpc, verifyAuthUser } from '../../api/_lib/pay.js';
-import { PACKS, MONTHLY_CAP_CENTS, packById } from './packs.js';
+import { handleCheckout, handleWebhook, verifyEvent, grantArgs, grantCall, routeEvent, paymentsEnabled, serviceRpc, verifyAuthUser } from '../../api/_lib/pay.js';
+import { PACKS, ROLL_PACKS, ALL_PACKS, MONTHLY_CAP_CENTS, packById, isRollPack } from './packs.js';
 
 const WHSEC = 'whsec_test_secret_for_unit_tests';
 const stripe = new Stripe('sk_test_unit_tests_only');
@@ -18,7 +18,7 @@ const AUTH = async (t) => (t === 'tok_good' ? { id: UID, google: true } : null);
 
 // ---- a fake 082 database ----------------------------------------------------------------------------------------------
 function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
-  const db = { reservations: new Map(), purchases: new Map(), ledger: [], flags: flagged, authFlags: new Set(), calls: [], seq: 0 };
+  const db = { reservations: new Map(), purchases: new Map(), ledger: [], tickets: [], flags: flagged, authFlags: new Set(), calls: [], seq: 0 };
   const monthCents = (pid) =>
     [...db.purchases.values()].filter((p) => p.profile_id === pid).reduce((s, p) => s + p.amount_cents, 0) +
     [...db.reservations.values()].filter((r) => r.profile_id === pid && r.state === 'open').reduce((s, r) => s + r.amount_cents, 0);
@@ -49,9 +49,25 @@ function fakeDb({ profiles = { [SECRET]: PID }, flagged = new Set() } = {}) {
       if (r) r.state = 'paid';
       return { granted: true, duplicate: false, gems: body.p_gems };
     }
+    if (fn === 'pay_grant_pack') { // 089: one SERVER TICKET per checkout session, never gems
+      if (db.purchases.has(body.p_session)) return { granted: false, duplicate: true };
+      const ticket = { id: `tk-${++db.seq}`, profile_id: body.p_profile, tier: body.p_tier, state: 'owned', key: `pay:${body.p_session}` };
+      db.tickets.push(ticket);
+      db.purchases.set(body.p_session, { kind: 'pack', profile_id: body.p_profile, gems: body.p_gems, amount_cents: body.p_cents, pi: body.p_payment_intent, clawed: 0, ticket });
+      const r = db.reservations.get(body.p_reservation);
+      if (r) r.state = 'paid';
+      return { granted: true, duplicate: false, ticket: true, tier: body.p_tier };
+    }
     if (fn === 'pay_claw' || fn === 'pay_claw2') {
       const pur = [...db.purchases.values()].find((p) => p.pi === body.p_payment_intent);
       if (!pur) return { found: false };
+      // 089: an UNOPENED pack is revoked (nothing off the wallet); an opened one falls through to the gem claw below
+      if (pur.kind === 'pack' && (pur.ticket.state === 'owned' || pur.ticket.state === 'revoked')) {
+        if (body.p_reason === 'refund' && !(body.p_ratio > 0)) return { found: true, clawed: 0 };
+        pur.ticket.state = 'revoked';
+        if (body.p_reason === 'dispute') { db.flags.add(pur.profile_id); db.authFlags.add(UID); }
+        return { found: true, clawed: 0, revoked: true };
+      }
       // 086 pay_claw2: the refunded SHARE scaled onto the purchase's USD amount, then 082's claw
       const refunded = fn === 'pay_claw2' ? Math.ceil(Math.min(1, Math.max(0, body.p_ratio || 0)) * pur.amount_cents) : body.p_refunded_cents;
       if (fn === 'pay_claw2' && body.p_reason === 'dispute') db.authFlags.add(UID);
@@ -97,7 +113,7 @@ const completed = (over = {}, meta = {}) => ({
   data: {
     object: {
       id: 'cs_test_1', object: 'checkout.session', mode: 'payment', payment_status: 'paid', amount_total: 199, currency: 'usd',
-      payment_intent: 'pi_1', metadata: { taw: '1', profile_id: PID, pack: 'pouch', gems: '600', reservation: 'res-1', ...meta }, ...over,
+      payment_intent: 'pi_1', metadata: { taw: '1', profile_id: PID, pack: 'pouch', gems: '1000', reservation: 'res-1', ...meta }, ...over,
     },
   },
 });
@@ -268,14 +284,14 @@ test('webhook: a completed session grants the pack table\'s gems ONCE — a rede
   // async_payment_succeeded for the same session is the same purchase
   const late = await handleWebhook(signedReq({ ...completed(), type: 'checkout.session.async_payment_succeeded' }), { stripe, rpc: db.rpc, env: ENV });
   assert.deepEqual(await late.json(), { granted: false, duplicate: true });
-  assert.equal(db.net(), 600);
+  assert.equal(db.net(), 1000);
   assert.equal(db.purchases.size, 1);
   const grant = db.calls.find((c) => c[0] === 'pay_grant')[1];
-  assert.deepEqual(grant, { p_session: 'cs_test_1', p_reservation: 'res-1', p_profile: PID, p_pack: 'pouch', p_gems: 600, p_cents: 199, p_currency: 'usd', p_payment_intent: 'pi_1' });
+  assert.deepEqual(grant, { p_session: 'cs_test_1', p_reservation: 'res-1', p_profile: PID, p_pack: 'pouch', p_gems: 1000, p_cents: 199, p_currency: 'usd', p_payment_intent: 'pi_1' });
 });
 
 test('webhook: gems come from the pack table, never the metadata; a mismatched amount / unpaid / foreign session grants nothing', () => {
-  assert.equal(grantArgs(completed({}, { gems: '999999' }).data.object).p_gems, 600);
+  assert.equal(grantArgs(completed({}, { gems: '999999' }).data.object).p_gems, 1000);
   assert.equal(grantArgs(completed({ amount_total: 1 }).data.object), null, 'paid less than the pack');
   assert.equal(grantArgs(completed({ currency: 'eur' }).data.object), null);
   assert.equal(grantArgs(completed({ payment_status: 'unpaid' }).data.object), null);
@@ -284,7 +300,7 @@ test('webhook: gems come from the pack table, never the metadata; a mismatched a
   assert.equal(grantArgs(completed({}, { pack: 'hoard' }).data.object), null, 'metadata pack ≠ amount');
   // Adaptive Pricing: the payer saw EUR, the source amount is still the pack's USD price
   const ap = grantArgs(completed({ currency: 'eur', amount_total: 185, currency_conversion: { amount_total: 199, source_currency: 'usd', fx_rate: '0.93' } }).data.object);
-  assert.equal(ap && ap.p_gems, 600);
+  assert.equal(ap && ap.p_gems, 1000);
 });
 
 test('webhook: a db failure is a 500 (Stripe retries); the retry still grants exactly once', async () => {
@@ -295,19 +311,19 @@ test('webhook: a db failure is a 500 (Stripe retries); the retry still grants ex
   down = false;
   assert.equal((await handleWebhook(signedReq(completed()), { stripe, rpc: flaky, env: ENV })).status, 200);
   assert.equal((await handleWebhook(signedReq(completed()), { stripe, rpc: flaky, env: ENV })).status, 200);
-  assert.equal(db.net(), 600);
+  assert.equal(db.net(), 1000);
 });
 
 // ============================================================================================================== CLAWS
 test('refund / dispute: claw the gems back pro rata, never twice; a dispute takes them all and flags the account', async () => {
   const db = fakeDb();
   await routeEvent(completed(), db.rpc);
-  assert.equal(db.net(), 600);
+  assert.equal(db.net(), 1000);
   const refund = (amount_refunded) => ({ type: 'charge.refunded', data: { object: { id: 'ch_1', payment_intent: 'pi_1', amount: 199, amount_refunded, metadata: { taw: '1' } } } });
-  await routeEvent(refund(100), db.rpc); // ~half → ceil(600 × 100/199) = 302
-  assert.equal(db.net(), 600 - 302);
+  await routeEvent(refund(100), db.rpc); // ~half → ceil(1000 × 100/199) = 503
+  assert.equal(db.net(), 1000 - 503);
   await routeEvent(refund(100), db.rpc); // the same event again: nothing new owed
-  assert.equal(db.net(), 600 - 302);
+  assert.equal(db.net(), 1000 - 503);
   await routeEvent(refund(199), db.rpc); // the rest
   assert.equal(db.net(), 0);
   await routeEvent(refund(199), db.rpc);
@@ -315,7 +331,7 @@ test('refund / dispute: claw the gems back pro rata, never twice; a dispute take
   // dispute on a second purchase
   await routeEvent({ type: 'checkout.session.completed', data: { object: { ...completed().data.object, id: 'cs_test_2', payment_intent: 'pi_2' } } }, db.rpc);
   const out = await routeEvent({ type: 'charge.dispute.created', data: { object: { id: 'dp_1', charge: 'ch_2', payment_intent: 'pi_2', amount: 199 } } }, db.rpc);
-  assert.deepEqual(out, { status: 200, body: { clawed: 600 } });
+  assert.deepEqual(out, { status: 200, body: { clawed: 1000 } });
   assert.equal(db.net(), 0);
   assert.ok(db.flags.has(PID));
   // and the flagged account can't check out again
@@ -413,12 +429,12 @@ test('checkout never sends payment_method_types (Stripe rejects it; the Dashboar
 
 test('086: a refund under Adaptive Pricing claws by the refunded SHARE (EUR charge, half refunded = half the gems)', async () => {
   const db = fakeDb();
-  await routeEvent(completed(), db.rpc); // $1.99 pouch, 600 gems
+  await routeEvent(completed(), db.rpc); // $1.99 pouch, 1000 gems
   // the payer paid 1.85 EUR (185 cents); 0.93 EUR refunded — about half, whatever the USD numbers are
   await routeEvent({ type: 'charge.refunded', data: { object: { id: 'ch_e', payment_intent: 'pi_1', amount: 185, amount_refunded: 93, currency: 'eur', metadata: { taw: '1' } } } }, db.rpc);
   const call = db.calls.find((c) => c[0] === 'pay_claw2');
   assert.ok(Math.abs(call[1].p_ratio - 93 / 185) < 1e-9, 'the share, not the EUR cents');
-  assert.equal(db.net(), 600 - Math.ceil((600 * Math.ceil((93 / 185) * 199)) / 199));
+  assert.equal(db.net(), 1000 - Math.ceil((1000 * Math.ceil((93 / 185) * 199)) / 199));
   // a charge flagged fully refunded is the whole purchase, whatever the amounts say
   await routeEvent({ type: 'charge.refunded', data: { object: { id: 'ch_e', payment_intent: 'pi_1', amount: 185, amount_refunded: 184, refunded: true, metadata: { taw: '1' } } } }, db.rpc);
   assert.equal(db.net(), 0);
@@ -446,4 +462,175 @@ test('086 SQL: Google-only RPCs, unlink revokes devices, relink wait, cap + flag
   assert.match(sql, /private\.pay_auth_flags where auth_uid = p_auth_uid/);
   assert.match(sql, /grant execute on function public\.pay_claw2\(text, numeric, text\) to service_role;/);
   assert.doesNotMatch(sql, /grant execute on function public\.pay_[a-z0-9_]+\([^)]*\) to [^;]*anon/);
+});
+
+// ============================================================================================================ THE LOG LINE
+test('every call logs one line: what happened, and never a secret, token, player id, Stripe id or checkout URL', async () => {
+  const lines = [];
+  const real = console.log;
+  console.log = (l) => lines.push(String(l));
+  try {
+    const db = fakeDb();
+    const s = mockStripe();
+    const ok = await handleCheckout(checkoutReq({ pack: 'pouch', secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    assert.equal(ok.status, 200);
+    await handleCheckout(checkoutReq({ pack: 'nope', secret: SECRET }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    await handleCheckout(checkoutReq({ pack: 'pouch', secret: 'not-hex' }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH });
+    await handleWebhook(new Request('https://typeaword.com/api/stripe-webhook', { method: 'POST', body: '{}' }), { stripe, rpc: db.rpc, env: ENV });
+    await handleWebhook(new Request('https://typeaword.com/api/stripe-webhook', { method: 'POST', body: '{}' }), { stripe, rpc: db.rpc, env: {} });
+  } finally {
+    console.log = real;
+  }
+  const got = lines.map((l) => JSON.parse(l));
+  assert.deepEqual(got, [
+    { pay: 'checkout', status: 200 },
+    { pay: 'checkout', status: 400, error: 'bad_pack' },
+    { pay: 'checkout', status: 400, error: 'bad_secret' },
+    { pay: 'webhook', status: 400, error: 'bad_signature' },
+    { pay: 'webhook', status: 503, error: 'not_configured' },
+  ]);
+  for (const l of lines) {
+    assert.ok(!l.includes(SECRET), 'no device secret');
+    assert.ok(!l.includes(UID), 'no account id');
+    assert.ok(!l.includes(PID), 'no profile id');
+    assert.ok(!/https?:|cs_|pi_|whsec|sk_/.test(l), 'no URL or Stripe id');
+  }
+});
+
+test('a paid webhook logs its event type and that it granted; a retry logs duplicate', async () => {
+  const lines = [];
+  const real = console.log;
+  console.log = (l) => lines.push(String(l));
+  try {
+    const db = fakeDb();
+    const hook = () => handleWebhook(signedReq(completed()), { stripe, rpc: db.rpc, env: ENV });
+    await hook();
+    await hook();
+  } finally {
+    console.log = real;
+  }
+  assert.deepEqual(lines.map((l) => JSON.parse(l)), [
+    { pay: 'webhook', status: 200, event: 'checkout.session.completed', granted: true, duplicate: false },
+    { pay: 'webhook', status: 200, event: 'checkout.session.completed', granted: false, duplicate: true },
+  ]);
+});
+
+// ========================================================================================================= 089 ROLL PACKS
+const packDone = (pack, cents, over = {}, meta = {}) => completed({ id: `cs_test_${pack}`, amount_total: cents, payment_intent: `pi_${pack}`, ...over }, { pack, gems: undefined, tier: pack.split('-')[0], ...meta });
+const quiet = async (fn) => { const real = console.log; console.log = () => {}; try { return await fn(); } finally { console.log = real; } };
+
+test('089 pack table: MYTHIC $4.99 + SECRET $14.99, in the one price table, each under the cap, art slots reserved', async () => {
+  const fs = await import('node:fs');
+  assert.deepEqual(ROLL_PACKS.map((p) => [p.id, p.tier, p.cents]), [['mythic-pack', 'mythic', 499], ['secret-pack', 'secret', 1499]]);
+  for (const p of ROLL_PACKS) {
+    assert.equal(packById(p.id), p, 'pay.js charges roll packs from the same table');
+    assert.ok(isRollPack(p) && !isRollPack(packById('pouch')));
+    assert.ok(p.cents <= MONTHLY_CAP_CENTS);
+    assert.ok(Number.isInteger(p.debtGems) && p.debtGems > 0);
+    assert.equal(p.artSlot, `/shop/pack-${p.tier}-v1.webp`);
+    // the painted art is dropped in later: until then `art` is null and the card draws existing tier art (no 404s)
+    if (p.art) assert.ok(fs.existsSync(new URL(`../../public${p.art}`, import.meta.url)), p.art);
+    assert.ok(fs.existsSync(new URL(`../../public/fx/frame-${p.tier}-v2.webp`, import.meta.url)), 'the stand-in tier frame');
+  }
+  assert.equal(new Set(ALL_PACKS.map((p) => p.id)).size, ALL_PACKS.length);
+  assert.ok(Object.isFrozen(ROLL_PACKS) && Object.isFrozen(ROLL_PACKS[0]));
+  // packs are clearly better value than gems for their tier (the sim: a MYTHIC+ ≈ 17,700 gems even at the x6.6 luck cap)
+  const bestGemsPerCent = Math.max(...PACKS.map((p) => p.gems / p.cents));
+  assert.ok(17700 / bestGemsPerCent > 2 * packById('mythic-pack').cents, 'MYTHIC PACK < half the gem route');
+  assert.ok(149000 / bestGemsPerCent > 5 * packById('secret-pack').cents, 'SECRET PACK < a fifth of the gem route');
+});
+
+test('089 checkout: a pack is charged the TABLE price — a client amount is ignored; metadata carries the tier, never gems', async () => {
+  const db = fakeDb();
+  const s = mockStripe();
+  const r = await quiet(() => handleCheckout(checkoutReq({ pack: 'secret-pack', secret: SECRET, amount: 1, cents: 1, tier: 'mythic' }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH }));
+  assert.equal(r.status, 200);
+  const { params } = s.created[0];
+  assert.equal(params.line_items[0].price_data.unit_amount, 1499);
+  assert.match(params.line_items[0].price_data.product_data.name, /secret pack — one gear roll, SECRET \(TYPE A WORD\)/);
+  assert.deepEqual(params.metadata, { taw: '1', profile_id: PID, pack: 'secret-pack', tier: 'secret', reservation: 'res-1' });
+  assert.equal(params.success_url, 'https://typeaword.com/?paid=1');
+  assert.deepEqual(db.calls[0], ['pay_reserve', { p_secret: SECRET, p_pack: 'secret-pack', p_cents: 1499, p_auth_uid: UID }]);
+});
+
+test('089 checkout: the SAME $20 cap and Google sign-in — SECRET + MYTHIC fit (1998), then nothing; no session, no Stripe', async () => {
+  const db = fakeDb();
+  const s = mockStripe();
+  const buy = (pack, access = 'tok_good') => quiet(() => handleCheckout(checkoutReq({ pack, secret: SECRET, access }), { stripe: s, rpc: db.rpc, env: ENV, authUser: AUTH }));
+  assert.equal((await buy('secret-pack', 'tok_forged')).status, 401);
+  assert.equal((await buy('secret-pack')).status, 200);
+  assert.equal((await buy('mythic-pack')).status, 200);
+  assert.equal((await buy('pouch')).status, 409, 'the cap is shared with gems');
+  assert.equal((await buy('mythic-pack')).status, 409);
+  assert.equal(s.created.length, 2);
+  // off without the flag, packs included
+  assert.equal((await quiet(() => handleCheckout(checkoutReq({ pack: 'mythic-pack', secret: SECRET }), { stripe: s, rpc: fakeDb().rpc, env: { ...ENV, VITE_PAYMENTS_ON: '0' }, authUser: AUTH }))).status, 404);
+});
+
+test('089 webhook: a paid pack grants exactly ONE ticket (pay_grant_pack, from the table) and NO gems; a duplicate is a no-op', async () => {
+  const db = fakeDb();
+  const ev = packDone('mythic-pack', 499);
+  const r1 = await quiet(() => handleWebhook(signedReq(ev), { stripe, rpc: db.rpc, env: ENV }));
+  assert.deepEqual(await r1.json(), { granted: true, duplicate: false });
+  for (let i = 0; i < 3; i += 1) {
+    const again = await quiet(() => handleWebhook(signedReq({ ...ev, id: `evt_pack_retry_${i}` }), { stripe, rpc: db.rpc, env: ENV }));
+    assert.deepEqual(await again.json(), { granted: false, duplicate: true });
+  }
+  const late = await quiet(() => handleWebhook(signedReq({ ...ev, type: 'checkout.session.async_payment_succeeded' }), { stripe, rpc: db.rpc, env: ENV }));
+  assert.deepEqual(await late.json(), { granted: false, duplicate: true });
+  assert.equal(db.tickets.length, 1);
+  assert.deepEqual([db.tickets[0].tier, db.tickets[0].state], ['mythic', 'owned']);
+  assert.equal(db.net(), 0, 'a pack is never gems');
+  assert.equal(db.calls.filter((c) => c[0] === 'pay_grant').length, 0);
+  const grant = db.calls.find((c) => c[0] === 'pay_grant_pack')[1];
+  assert.deepEqual(grant, { p_session: 'cs_test_mythic-pack', p_reservation: 'res-1', p_profile: PID, p_pack: 'mythic-pack', p_tier: 'mythic', p_gems: 4000, p_cents: 499, p_currency: 'usd', p_payment_intent: 'pi_mythic-pack' });
+});
+
+test('089 webhook: the tier and price come from the table — a metadata tier / a wrong amount / unpaid grant nothing extra', () => {
+  const s = (pack, cents, over = {}, meta = {}) => packDone(pack, cents, over, meta).data.object;
+  assert.equal(grantCall(s('mythic-pack', 499, {}, { tier: 'secret' })).args.p_tier, 'mythic', 'the tier is the table\'s');
+  assert.equal(grantCall(s('secret-pack', 499)), null, 'a SECRET pack paid at the MYTHIC price');
+  assert.equal(grantCall(s('secret-pack', 1499, { payment_status: 'unpaid' })), null);
+  assert.equal(grantCall(s('secret-pack', 1499, {}, { taw: undefined })), null);
+  assert.equal(grantCall(s('secret-pack', 1499)).fn, 'pay_grant_pack');
+  assert.equal(grantCall(completed().data.object).fn, 'pay_grant', 'gems still go to pay_grant');
+  assert.deepEqual(grantArgs(completed().data.object), grantCall(completed().data.object).args);
+});
+
+test('089 refund / dispute: an UNOPENED pack is revoked (nothing off the wallet); an OPENED one claws its gem value like gems', async () => {
+  const db = fakeDb();
+  await routeEvent(packDone('mythic-pack', 499), db.rpc);
+  const refund = (pi, amount, amount_refunded) => ({ type: 'charge.refunded', data: { object: { payment_intent: pi, amount, amount_refunded, metadata: { taw: '1' } } } });
+  const out = await routeEvent(refund('pi_mythic-pack', 499, 499), db.rpc);
+  assert.deepEqual(out, { status: 200, body: { clawed: 0 } });
+  assert.equal(db.tickets[0].state, 'revoked');
+  assert.equal(db.net(), 0);
+  await routeEvent(refund('pi_mythic-pack', 499, 499), db.rpc); // a retry
+  assert.equal(db.tickets[0].state, 'revoked');
+  // opened, then refunded: the gems the same dollars buy come off (082's rule for spent gems)
+  await routeEvent(packDone('secret-pack', 1499), db.rpc);
+  db.tickets[1].state = 'spent';
+  await routeEvent(refund('pi_secret-pack', 1499, 1499), db.rpc);
+  assert.equal(db.net(), -12000);
+  await routeEvent(refund('pi_secret-pack', 1499, 1499), db.rpc);
+  assert.equal(db.net(), -12000, 'never twice');
+  // a dispute on an unopened pack: revoked + both flags
+  const db2 = fakeDb();
+  await routeEvent(packDone('mythic-pack', 499), db2.rpc);
+  await routeEvent({ type: 'charge.dispute.created', data: { object: { payment_intent: 'pi_mythic-pack', amount: 499 } } }, db2.rpc);
+  assert.equal(db2.tickets[0].state, 'revoked');
+  assert.ok(db2.flags.has(PID) && db2.authFlags.has(UID));
+});
+
+test('089: a pack webhook logs only the fixed fields (no tier, ticket, ids)', async () => {
+  const lines = [];
+  const real = console.log;
+  console.log = (l) => lines.push(String(l));
+  try {
+    await handleWebhook(signedReq(packDone('secret-pack', 1499)), { stripe, rpc: fakeDb().rpc, env: ENV });
+  } finally {
+    console.log = real;
+  }
+  assert.deepEqual(lines.map((l) => JSON.parse(l)), [{ pay: 'webhook', status: 200, event: 'checkout.session.completed', granted: true, duplicate: false }]);
+  assert.ok(!/cs_|pi_|tk-|secret-pack/.test(lines[0]));
 });

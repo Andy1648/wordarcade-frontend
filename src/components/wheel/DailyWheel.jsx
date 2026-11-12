@@ -37,6 +37,7 @@ import { kitPlay } from '../kit/motion.js';
 import { wheelState, spinWheel, claimWheel } from '../../leaderboard/serverWheel.js';
 import { grantGems } from '../../progress/gemsCore.js';
 import { grantStockFx } from '../../progress/v3/stock.js';
+import { wheelBoostUnlockMult } from '../../progress/v3/unlocks.js';
 import { grantKit, kitById, kitSrc } from '../../cast/kit.js';
 import { showRewarded, rewardedReady } from '../../ads/rewarded.js';
 import { holdBeats } from '../../hooks/useBeatSync';
@@ -45,7 +46,9 @@ import { holdBeats } from '../../hooks/useBeatSync';
 // restyled ~350 menu nodes a frame UNDER the wheel while it spun (measured: 400 ms of style recalc per spin at 1x CPU)
 const stopMenuPointer = (e) => e.stopPropagation();
 
-const PAY = { grantGems, grantFx: grantStockFx, grantKit };
+// R20 (REBIRTH ROAD): the XP / WINS boosts run twice as long; the line the wheel prints says the same
+const PAY = { grantGems, grantFx: (kind, min) => grantStockFx(kind, min * wheelBoostUnlockMult()), grantKit };
+const shownSpin = (s) => (s && (s.prize === 'xp' || s.prize === 'wins') ? { ...s, amount: s.amount * wheelBoostUnlockMult() } : s);
 const WIND_DEG = 24; // the pull-back before the launch
 const POP_MS = 1150; // the prize's burst-out + drop
 const RESULT_DELAY_MS = 780; // the result card slams as the prize lands in it
@@ -159,10 +162,11 @@ function playOnce(el, frames, opts) {
   return a;
 }
 
-export default function DailyWheel({ onClose, onPaid }) {
+export default function DailyWheel({ onClose, onPaid, onPlay }) {
   const onPaidRef = useRef(onPaid);
   onPaidRef.current = onPaid;
   const [st, setSt] = useState({ phase: 'load' }); // load | off | locked | ready | spinning | landed | done
+  const [tries, setTries] = useState(0); // RETRY (design audit nov2 #13) re-asks the server
   const [odds, setOdds] = useState(false);
   const rotorRef = useRef(null);
   const icoRefs = useRef([]); // the 8 prize icons: counter-rotated so each one always stands upright to the viewer
@@ -234,7 +238,8 @@ export default function DailyWheel({ onClose, onPaid }) {
       live.current = false;
       for (const t of pending) clearTimeout(t);
     };
-  }, [park]);
+  }, [park, tries]);
+  const retry = useCallback(() => { setSt({ phase: 'load' }); setTries((n) => n + 1); }, []);
 
   const land = useCallback((s, rest) => {
     restRef.current = rest;
@@ -389,6 +394,10 @@ export default function DailyWheel({ onClose, onPaid }) {
   const bonusNow = s ? s.bonus : nextBonus(st.streak || 0);
   const canAd = WHEEL_AD_ON && st.adOn && rewardedReady() && (st.phase === 'done' || st.phase === 'landed') && !st.ad && s && s.kind === 'free';
   const cos = s && s.prize === 'cosmetic' && s.cosmetic ? kitById(s.cosmetic) : null;
+  const resSub = s ? [
+    s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : '',
+    s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? bonusText(s.bonus) : '',
+  ].filter(Boolean).join(' · ') : '';
 
   if (typeof document === 'undefined') return null;
   return createPortal(
@@ -449,40 +458,43 @@ export default function DailyWheel({ onClose, onPaid }) {
 
           <div className="dw-foot">
             {st.phase === 'load' ? <p className="dw-msg">LOADING…</p> : null}
-            {st.phase === 'off' ? <p className="dw-msg">THE WHEEL NEEDS A CONNECTION · TRY AGAIN SOON</p> : null}
+            {/* OFFLINE (design audit nov2 #13): a house-style SPIN, disabled, with the reason on its lock chip — and a
+                real RETRY beside it — instead of a grey sentence where the button was */}
+            {st.phase === 'off' ? (
+              <div className="dw-off" data-testid="wheel-off">
+                <KitButton tone="pink" label="SPIN" disabled lockText="OFFLINE" labelSize={34} width={220} ariaLabel="Spin — offline" onDeny={retry} data-testid="wheel-spin-off" />
+                <KitButton tone="cyan" label="RETRY" labelSize={24} width={150} onClick={retry} data-testid="wheel-retry" />
+              </div>
+            ) : null}
             {st.phase === 'locked' ? (
               <div className="dw-earn" data-testid="wheel-locked">
                 <span className="dw-earn-bar" role="progressbar" aria-valuemin={0} aria-valuemax={WHEEL_WORDS} aria-valuenow={WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} aria-label="Game words toward today's spin">
                   <span className="dw-earn-fill" style={{ transform: `scaleX(${(WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)) / WHEEL_WORDS})` }} />
                   <span className="dw-earn-t">{WHEEL_WORDS - Math.min(WHEEL_WORDS, st.left)} / {WHEEL_WORDS} GAME WORDS</span>
                 </span>
-                <KitButton tone="cyan" label="PLAY" sub={`${st.left} MORE ${st.left === 1 ? 'WORD' : 'WORDS'} TO SPIN`} labelSize={30} width={220} onClick={tryClose} data-testid="wheel-play" />
+                <KitButton tone="cyan" label="PLAY" sub={`${st.left} MORE ${st.left === 1 ? 'WORD' : 'WORDS'} TO SPIN`} labelSize={30} width={220} onClick={() => { if (onPlay && phaseRef.current !== 'spinning') onPlay(); else tryClose(); }} data-testid="wheel-play" />
               </div>
             ) : null}
             {st.phase === 'ready' ? (
-              <KitButton tone="pink" label="SPIN" sub="EARNED TODAY" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
+              <KitButton tone="pink" label="SPIN" labelSize={34} width={220} onClick={() => spin('free')} data-testid="wheel-spin" />
             ) : null}
             {st.phase === 'spinning' ? <p className="dw-msg">…</p> : null}
             {(st.phase === 'landed' || st.phase === 'done') && s ? (
               <div ref={resultRef} className={`dw-result is-${s.prize}`} data-testid="wheel-result">
                 <img src={prizeArt(s)} alt="" aria-hidden="true" draggable="false" />
                 <span className="dw-result-t">
-                  <span className="dw-result-l">{cos ? cos.name : resultText(s)}</span>
-                  <span className="dw-result-s">
-                    {s.prize === 'ticket' ? 'WAITING IN GEARS → ROLL' : cos ? 'IN PROFILE → CUSTOMIZE' : st.phase === 'done' ? 'TODAY’S SPIN' : 'YOURS!'}
-                    {s.bonus === 'super' || (s.bonus === 'hot' && s.prize === 'gems') ? ` · ${bonusText(s.bonus)}` : ''}
-                  </span>
+                  <span className="dw-result-l">{cos ? cos.name : resultText(shownSpin(s))}</span>
+                  {resSub ? <span className="dw-result-s">{resSub}</span> : null}
                 </span>
               </div>
             ) : null}
-            {(st.phase === 'landed' || st.phase === 'done') ? <p className="dw-msg is-next">NEXT FREE SPIN TOMORROW</p> : null}
             {canAd ? <KitButton tone="cyan" label="WATCH AD" sub="+1 SPIN TODAY" labelSize={24} width={200} onClick={watchAd} /> : null}
           </div>
         </div>
 
         {odds ? (
           <div className="dw-odds" role="group" aria-label="Wheel odds">
-            <span className="dw-odds-h">WHAT THE WHEEL PAYS</span>
+            <span className="dw-odds-h">ODDS</span>
             <ul>
               {oddsRows().map((o) => (
                 <li key={o.slot} style={{ '--o-c': o.color }}>

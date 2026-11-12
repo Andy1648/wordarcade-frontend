@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px 16px;
-  background: rgba(13, 6, 24, 0.82);
+  background: var(--scrim);
   outline: none;
 }
 

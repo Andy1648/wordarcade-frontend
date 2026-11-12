@@ -204,6 +204,17 @@ export function withPageMeta(html, m) {
   set(/(<meta name="twitter:image:alt" content=")[^"]*(")/, m.imageAlt)
   return html
 }
+// Developer notes never ship: dropping them pays for the boot shell in index.html. The main stylesheet stays in <head>: lazy chunks
+// append their CSS to <head> too, so moving it later would flip the cascade and let it beat every chunk's rules (it broke the game
+// screens' layout when tried). So the shell paints once that sheet has arrived, before any JS has run.
+function stripHtmlCommentsPlugin() {
+  return {
+    name: 'strip-html-comments',
+    apply: 'build',
+    transformIndexHtml: { order: 'post', handler: (html) => html.replace(/<!--[\s\S]*?-->\s*/g, '') },
+  }
+}
+
 function pageMetaPlugin(outDir) {
   return {
     name: 'page-meta-shells',
@@ -235,6 +246,7 @@ export default defineConfig(({ mode }) => {
   const outDir = isPortal ? 'dist-portal' : 'dist'
   return {
     plugins: [
+      stripHtmlCommentsPlugin(),
       react(),
       // Dev serves from public/, preview from the build output. `command` is 'serve' for BOTH
       // (vite preview resolves its config with command==='serve'), so it cannot tell them apart —

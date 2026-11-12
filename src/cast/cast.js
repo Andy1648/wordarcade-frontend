@@ -57,7 +57,7 @@ export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
 // of each member (ChatGPT, the HERO as the reference), bought once with gems and kept. Same colour / seat / idle beat as
 // its base member; only the HERO pose is painted (castSrc falls every other pose back to it).
-export const ELITE_PRICE = 2500;
+export const ELITE_PRICE = 10000;
 export const ELITE = [
   { id: 'riot-elite', base: 'riot', name: 'ROCKSTAR RIOT', tag: 'HEADLINES EVERY ROUND' },
   { id: 'glitch-elite', base: 'glitch', name: 'GLITCH.EXE', tag: 'ALREADY IN YOUR FILES' },
@@ -94,16 +94,18 @@ export const goldProgress = (id) => {
 //   the wait. DUD is the dearest of the four.
 // · a LEGEND is never free: it needs its REBIRTH (a `gate` — locked until you reach it) AND its gem price.
 // Heroes are looks only: none of this changes how a game plays or pays.
-export const HERO_PRICE = { hex: 300, glitch: 300, shh: 500, lexi: 750, sizzle: 750, quill: 900, dud: 1000, jinx: 1300, salty: 1600, buzz: 1800, zip: 2000, hollow: 1500, boo: 7500, mecha: 10000, nova: 12500 };
-export const HERO_UNLOCK = { glitch: { reb: 1, label: 'REBIRTH 1', icon: 'rebirth' }, hex: { lv: 20, label: 'LEVEL 20', icon: 'levels' },
-  shh: { wins: 40, label: '40 WINS', icon: 'wins' }, lexi: { wins: 60, label: '60 WINS', icon: 'wins' },
-  sizzle: { wins: 60, label: '60 WINS', icon: 'wins' }, dud: { wins: 100, label: '100 WINS', icon: 'wins' },
-  quill: { wins: 80, label: '80 WINS', icon: 'wins' }, jinx: { wins: 130, label: '130 WINS', icon: 'wins' }, // unlucky 13
-  salty: { wins: 160, label: '160 WINS', icon: 'wins' },
-  buzz: { wins: 200, label: '200 WINS', icon: 'wins' },
-  zip: { wins: 250, label: '250 WINS', icon: 'wins' },
-  boo: { reb: 5, label: 'REBIRTH 5', icon: 'rebirth', gate: true }, mecha: { reb: 10, label: 'REBIRTH 10', icon: 'rebirth', gate: true },
-  nova: { reb: 15, label: 'REBIRTH 15', icon: 'rebirth', gate: true },
+// nov9 (Andy: "the 'wins' in the avatar select isnt clear bc it seems like the coin currency - maybe just remove them and
+// just make them cost pure gems (remove all rebirth/level requirements - scale up the gem cost by a butt ton)"): every
+// priced hero is GEMS ONLY — no WINS / LEVEL / REBIRTH requirement. Tiered by rarity against the paid packs (1,000 gems =
+// $1.99 … 16,000 = $19.99) and free play (~150–250 gems a day; a gear roll is 75): a first crew pick ≈ two weeks of free
+// play or one $4.99 pile, the newest crew ≈ a $9.99 chest, an ELITE ≈ a $9.99 chest + a pile, the LEGENDs the long goal
+// (NOVA ≈ a $19.99 hoard + a $9.99 chest). Whatever a save had already earned under the old rules stays owned
+// (grandfatherNov9). DRAKE / MAGMA / FACET stay drop-only; HOLLOW's October sale stays over.
+export const HERO_PRICE = { hex: 2500, glitch: 2500, shh: 2500, lexi: 4000, sizzle: 4000, quill: 4000, dud: 6000, jinx: 6000, salty: 8000, buzz: 8000, zip: 8000, hollow: 15000, boo: 15000, mecha: 20000, nova: 25000 };
+// the OLD earn rules (oct17–nov8), kept ONLY to grandfather what a save had already earned (grandfatherNov9)
+const OLD_EARN = { glitch: { reb: 1 }, hex: { lv: 20 }, shh: { wins: 40 }, lexi: { wins: 60 }, sizzle: { wins: 60 }, dud: { wins: 100 },
+  quill: { wins: 80 }, jinx: { wins: 130 }, salty: { wins: 160 }, buzz: { wins: 200 }, zip: { wins: 250 } };
+export const HERO_UNLOCK = {
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
   hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true },
   // a CHASE hero's gate never opens: it only DROPS (rollChaseDrop) — the card prints its odds
@@ -116,11 +118,10 @@ const counts = () => {
 const n0 = (v) => Math.max(0, Math.floor(Number(v) || 0));
 /** Every win (bots + online) — the WINS requirement's count. */
 export const totalWins = () => { const o = counts(); return n0(o.mp) + n0(o.bots); };
-/** Earned through play (no gems): the HERO_UNLOCK requirement is met on this save. A LEGEND's rebirth is a gate, never
- *  an earn — it is always bought. */
-export function heroEarned(id) {
-  const u = HERO_UNLOCK[id];
-  if (!u || u.gate) return false;
+/** Met the OLD (pre-nov9) earn rule on this save — read once, by grandfatherNov9. */
+function oldEarned(id) {
+  const u = OLD_EARN[id];
+  if (!u) return false;
   try {
     if (u.reb != null && (getRebirths() || 0) >= u.reb) return true;
     if (u.lv != null && (storedLevel() || 1) >= u.lv) return true;
@@ -128,7 +129,6 @@ export function heroEarned(id) {
   } catch { /* a broken store reads as not yet */ }
   return false;
 }
-/** Can this hero be bought yet? Only a LEGEND has a gate (its rebirth, or a LIMITED one's sale window); everything else can always be bought. */
 /** A LIMITED hero still on sale: whole days left (1+), else null (not limited, or the sale is over). */
 export function limitedDaysLeft(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
@@ -139,8 +139,7 @@ export function heroGateMet(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
   if (!u || !u.gate) return true;
   if (u.until != null) return now < u.until; // LIMITED: on sale until the date, never after
-  if (u.drop != null) return false; // CHASE: never sold — it only drops
-  try { return (getRebirths() || 0) >= u.reb; } catch { return false; }
+  return false; // CHASE: never sold — it only drops
 }
 // GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
 // for free (SHH's old 50 online wins already meets its new 40 WINS). Anyone who already met one keeps that hero —
@@ -159,6 +158,20 @@ function grandfatherOct19() {
     localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...v, ...keep])]));
   } catch { /* blocked storage */ }
 }
+// GRANDFATHERED (nov9, once per save): heroes stopped being EARNED (wins / level / rebirth) — they are gems only now.
+// Anything this save had already earned under the old rules is written into the owned list first, so nobody loses one.
+const RULES_GF_NOV9 = 'taw.s2.heroes.gf3';
+function grandfatherNov9() {
+  try {
+    if (localStorage.getItem(RULES_GF_NOV9)) return;
+    const keep = Object.keys(OLD_EARN).filter(oldEarned);
+    let v = [];
+    try { v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]'); } catch { /* corrupt: start over */ }
+    if (!Array.isArray(v)) v = [];
+    if (keep.length) localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...v, ...keep])]));
+    localStorage.setItem(RULES_GF_NOV9, '1');
+  } catch { /* blocked storage */ }
+}
 for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...CHASE, ...ELITE, ...GOLD];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
@@ -167,6 +180,7 @@ export const HEROES_KEY = 'taw.s2.heroes';
 /** The bought heroes (ELITEs + priced crew), validated. */
 export function ownedHeroes() {
   grandfatherOct19();
+  grandfatherNov9();
   try {
     const v = JSON.parse(localStorage.getItem(HEROES_KEY) || '[]');
     return Array.isArray(v) ? v.filter((id) => ALL_HEROES.some((h) => h.id === id && (h.price || h.chase))) : [];
@@ -176,7 +190,7 @@ export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
   if (h && h.gold) return goldProgress(id).done; // GOLD is earned with wins only, never bought
   if (h && h.chase) return ownedHeroes().includes(id); // CHASE: only a drop makes it yours
-  return !!h && (!h.price || heroEarned(id) || ownedHeroes().includes(id));
+  return !!h && (!h.price || ownedHeroes().includes(id));
 };
 /** THE CHASE DROP: one gear roll's chance at each CHASE hero you don't have yet (CHASE_ODDS). A hit is kept at once
  *  (HEROES_KEY) and its id returned (the roll screen plays the NEW HERO reveal); a miss returns null. */

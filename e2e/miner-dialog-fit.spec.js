@@ -1,30 +1,36 @@
-// e2e/miner-dialog-fit.spec.js — the MINER mode dialog's example card fits its box (oct29 overlap audit item 7: on a
-// phone "THE RAREST PIZZA TOPPING" was cut at the right edge and TRUFFLE ran 11-23px out of .mode-ex).
+// e2e/miner-dialog-fit.spec.js — the MINER mode dialog fits (oct29 overlap audit item 7 was its EXAMPLE card spilling the
+// ore words; design audit nov2 #4 removed that card). Now: the painted art, the title, the hook and both buttons sit
+// inside the dialog, the dialog inside the screen, and nothing in it overlaps or scrolls sideways.
 import { test, expect } from '@playwright/test';
 import { bootMenu } from './support/screens.js';
 import { revealMode } from './support/menu.js';
+import { layoutDefects } from './support/overlap.js';
 
 const SHOTS = process.env.LB_SHOTS || '';
 
 for (const [w, h] of [[390, 844], [360, 640], [1366, 768]]) {
-  test(`MINER dialog example @ ${w}x${h}: the prompt and every ore word stay inside the example card`, async ({ page }) => {
+  test(`MINER dialog @ ${w}x${h}: art, title, hook and buttons stay inside the dialog`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await bootMenu(page, 40);
     await (await revealMode(page, 'miner')).click({ force: true });
-    const ex = page.locator('.mode-ex').first();
-    await ex.waitFor({ state: 'visible' });
+    const shell = page.locator('.mode-dialog-shell');
+    await shell.waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/miner-dialog-${w}.png` });
-    const spill = await ex.evaluate((card) => {
-      // the card's CONTENT box (inside its padding + border): text past it reads as cut off
-      const r = card.getBoundingClientRect(); const cs = getComputedStyle(card);
-      const cb = { left: r.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), right: r.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
-      // only what is drawn: a short screen (< 700px tall) hides the example lines on purpose (ModeDialog.css)
-      return [...card.querySelectorAll('.mode-ex-word, .mode-ex-ore-w')].filter((el) => el.getClientRects().length > 0).flatMap((el) => {
+    const spill = await shell.evaluate((card) => {
+      const r = card.getBoundingClientRect();
+      const out = [];
+      for (const el of card.querySelectorAll('.mode-dialog-art, .mode-dialog-title, .mode-dialog-liner, .mode-dialog-btn')) {
+        if (!el.getClientRects().length) continue;
         const b = el.getBoundingClientRect();
-        return b.left < cb.left - 1 || b.right > cb.right + 1 ? [`${el.className}: ${el.textContent} (${Math.round(b.right - cb.right)}px over)`] : [];
-      });
+        if (b.left < r.left - 1 || b.right > r.right + 1 || b.top < r.top - 1 || b.bottom > r.bottom + 1) out.push(el.className.toString().split(' ')[0]);
+      }
+      if (r.top < 0 || r.bottom > innerHeight + 1 || r.left < 0 || r.right > innerWidth + 1) out.push('dialog off screen');
+      return out;
     });
     expect(spill).toEqual([]);
+    const d = await layoutDefects(page, { scope: '.mode-dialog-shell' });
+    expect(d.overlaps).toEqual([]);
+    expect(d.hscroll).toBe(false);
   });
 }

@@ -18,7 +18,7 @@ import { standingText } from './boardTarget.js';
 import PodiumIcon from '../components/PodiumIcon';
 import { RANKUP_MS } from '../lib/menuMoments.js';
 import { rivalCopy, rivalGapLine, rivalGapSpoken } from './rival.js';
-import { enteredTier } from './nameTier.js';
+import { leagueMove } from './leagues.js';
 import { SEASON2, V3 } from '../progress/season.js'; // P7: V3.rankUp = the kit's top-edge RANK-UP banner (v3 chunk)
 import './RankUpMoment.css';
 
@@ -45,9 +45,10 @@ export default function RankUpMoment({ from, to, onDone, onPop, kind = 'up', nam
       if (kind === 'passed') {
         V3.rankUp({ head: rivalCopy({ name, from, to, levels, rebirths }).title, from: { name: `#${formatNum(from)}`, req: 'R6' }, to: { name: `#${formatNum(to)}`, req: 'R0' } });
       } else {
-        // a climb INTO a tier names it (Andy oct21 name prestige): "MADE TOP 10" / "NEW #1" instead of BOARD
-        const t = enteredTier(from, to);
-        const head = !t ? 'BOARD' : t.key === 'crown' ? 'NEW #1' : `MADE ${t.label}`;
+        // a climb INTO a league names it (Andy oct21 name prestige → nov9 leagues): "MADE TITAN" / "NEW #1" instead of BOARD
+        const m = leagueMove(from, to);
+        const t = m && m.dir === 'up' ? m.league : null;
+        const head = !t ? 'BOARD' : t.key === 'legend' ? 'NEW #1' : `MADE ${t.name}`;
         V3.rankUp({ head, from: { name: `#${formatNum(from)}`, req: 'R0' }, to: { name: `#${formatNum(to)}`, req: 'R7', code: standing } });
       }
       if (popRef.current) popRef.current();

@@ -25,7 +25,7 @@ async function menuReadyAndFrozen(page) {
 const SHOTS = process.env.MR_SHOT_DIR || '';
 const ROOMS7 = [
   { code: 'AAAA1', gameType: 'word-bomb', playerCount: 3, maxPlayers: 8, status: 'waiting', hostName: 'GLOWWORM', hostHero: 'mecha' },
-  { code: 'AAAA2', gameType: 'category-blitz', playerCount: 1, maxPlayers: 8, status: 'waiting', hostName: 'A VERY LONG HOST NAME' },
+  { code: 'AAAA2', gameType: 'category-blitz', playerCount: 1, maxPlayers: 8, status: 'waiting', hostName: 'A VERY LONG HOSTNAME' }, // 20 chars: the name cap
   { code: 'AAAA3', gameType: 'word-race', playerCount: 2, maxPlayers: 8, status: 'waiting', hostName: 'ZED', hostHero: 'riot-elite' },
   { code: 'AAAA4', gameType: 'word-bomb', playerCount: 5, maxPlayers: 8, status: 'waiting' }, // old backend: no host
   { code: 'AAAA5', gameType: 'word-bomb', playerCount: 1, maxPlayers: 8, status: 'waiting', hostName: 'P5' },

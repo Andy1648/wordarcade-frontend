@@ -53,7 +53,7 @@ export const MODES = {
   sat: {
     accent: '#FFE94A', bg: ['#2b2620', '#120f0b'], anim: 'streaks', solo: true,
     chip: 'SOLO', name: 'SAT RUSH', t1: 'SAT', t2: 'RUSH',
-    liner: 'READ THE CLUE. TYPE THE WORD BEFORE IT SPELLS ITSELF.',
+    liner: 'TYPE THE WORD BEFORE IT SPELLS ITSELF.',
     create: 'PLAY',
     choices: [
       { id: 'briefing', label: 'BRIEFING', line: 'STUDY 5 WORDS, THEN HUNT THEM' },

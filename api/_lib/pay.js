@@ -7,7 +7,11 @@
 // purchase needs a Google account linked to the secret's board row, checked here against /auth/v1/user and in SQL). The price comes from src/payments/packs.js; the board
 // profile comes from the secret (082 pay_reserve, service role). Gems are granted ONLY by the signature-verified
 // webhook, once per checkout session (082 pay_grant: purchases.stripe_session_id is the primary key).
-import { packById, PAY_CURRENCY } from '../../src/payments/packs.js';
+//
+// ROLL PACKS (089, Andy nov9): the same checkout sells a MYTHIC / SECRET PACK (src/payments/packs.js ROLL_PACKS). Same
+// price table, same cap, same Google sign-in, same flag. Its webhook grant is 089 pay_grant_pack: a SERVER TICKET (060's
+// guaranteed-roll row), once per checkout session, never gems; a refund / dispute revokes it if unopened (089 pay_claw2).
+import { packById, isRollPack, PAY_CURRENCY } from '../../src/payments/packs.js';
 
 const SECRET_RE = /^[0-9a-f]{32,128}$/;
 // Stripe's minimum expires_at is 30 min out. The 082 reservation lives 35 min, so it always outlives its session.
@@ -16,6 +20,17 @@ export const SESSION_MINUTES = 30;
 /** Payments are switched on for the server only with the flag AND a Stripe key (the flag alone does nothing). */
 export function paymentsEnabled(env = process.env) {
   return env.VITE_PAYMENTS_ON === '1' && !!env.STRIPE_SECRET_KEY;
+}
+
+// ONE LOG LINE PER CALL, for Vercel's logs (Andy nov6: see the first real purchase, and why a call failed). A fixed list of
+// fields, so a secret, a token, an email, a player id or a Stripe id can never reach the logs.
+const LOG_FIELDS = ['error', 'granted', 'duplicate', 'clawed', 'ignored', 'released'];
+export async function logPay(route, res, extra = {}) {
+  let body = {};
+  try { body = await res.clone().json(); } catch { /* nothing to read: the status still says it */ }
+  const line = { pay: route, status: res.status, ...extra };
+  for (const k of LOG_FIELDS) if (body && body[k] !== undefined) line[k] = body[k];
+  console.log(JSON.stringify(line));
 }
 
 const json = (status, body) =>
@@ -76,7 +91,12 @@ export function siteOrigin(request, env = process.env) {
  *   404 off · 400 bad_pack / bad_secret / bad_body · 401 sign_in · 403 no_profile / not_linked / flagged · 409 cap ·
  *   502 stripe/db/auth trouble
  */
-export async function handleCheckout(request, { stripe, rpc, env = process.env, now = Date.now, authUser = verifyAuthUser(env) } = {}) {
+export async function handleCheckout(request, deps = {}) {
+  const res = await checkout(request, deps);
+  await logPay('checkout', res);
+  return res;
+}
+async function checkout(request, { stripe, rpc, env = process.env, now = Date.now, authUser = verifyAuthUser(env) } = {}) {
   if (!paymentsEnabled(env) || !stripe || !rpc) return json(404, { error: 'off' });
   let body;
   try {
@@ -110,10 +130,15 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
   }
 
   const origin = siteOrigin(request, env);
-  const meta = { taw: '1', profile_id: String(res.profile_id), pack: pack.id, gems: String(pack.gems), reservation: String(res.reservation) };
+  const roll = isRollPack(pack);
+  const meta = roll
+    ? { taw: '1', profile_id: String(res.profile_id), pack: pack.id, tier: pack.tier, reservation: String(res.reservation) }
+    : { taw: '1', profile_id: String(res.profile_id), pack: pack.id, gems: String(pack.gems), reservation: String(res.reservation) };
+  // what the payer sees on Stripe's page and the receipt
+  const what = roll ? `${pack.name.toLowerCase()} — one gear roll, ${pack.tier === 'secret' ? 'SECRET' : `${pack.tier.toUpperCase()} or better`}` : `${pack.gems} gems — ${pack.name.toLowerCase()}`;
   // The amount rides INLINE (price_data) from the pack table: no Stripe Products/Prices to keep in sync, and nothing
   // the client says can change it.
-  const lineItem = { price_data: { currency: PAY_CURRENCY, unit_amount: pack.cents, product_data: { name: `${pack.gems} gems — ${pack.name.toLowerCase()} (TYPE A WORD)` } }, quantity: 1 };
+  const lineItem = { price_data: { currency: PAY_CURRENCY, unit_amount: pack.cents, product_data: { name: `${what} (TYPE A WORD)` } }, quantity: 1 };
   try {
     const session = await stripe.checkout.sessions.create(
       {
@@ -127,7 +152,7 @@ export async function handleCheckout(request, { stripe, rpc, env = process.env, 
         // Stripe Checkout always asks the PAYER for their email (the parent's); we never ask the player for one
         client_reference_id: String(res.profile_id),
         metadata: meta,
-        payment_intent_data: { metadata: meta, description: `TYPE A WORD — ${pack.gems} gems` },
+        payment_intent_data: { metadata: meta, description: roll ? `TYPE A WORD — ${pack.name.toLowerCase()}` : `TYPE A WORD — ${pack.gems} gems` },
         submit_type: 'pay',
         expires_at: Math.floor(now() / 1000) + SESSION_MINUTES * 60,
         success_url: `${origin}/?paid=1`,
@@ -155,6 +180,12 @@ export async function verifyEvent(stripe, rawBody, signature, secret) {
 
 /** A completed session -> the grant arguments, or null when it is not ours / not paid / does not match the pack table. */
 export function grantArgs(session) {
+  const c = grantCall(session);
+  return c ? c.args : null;
+}
+/** A completed session -> { fn, args } — the RPC that grants it (082/088 pay_grant for gems, 089 pay_grant_pack for a roll
+ *  pack) — or null. The pack, its gems / tier and its price all come from the pack table, never the metadata. */
+export function grantCall(session) {
   if (!session || session.mode !== 'payment' || session.payment_status !== 'paid') return null;
   const m = session.metadata || {};
   const pack = packById(m.pack);
@@ -165,7 +196,24 @@ export function grantArgs(session) {
   const total = cc && Number.isFinite(cc.amount_total) ? cc.amount_total : session.amount_total;
   const cur = String((cc && cc.source_currency) || session.currency || '').toLowerCase();
   if (total !== pack.cents || cur !== PAY_CURRENCY) return null;
-  return {
+  const pi = typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent && session.payment_intent.id) || null;
+  if (isRollPack(pack)) {
+    return {
+      fn: 'pay_grant_pack',
+      args: {
+        p_session: session.id,
+        p_reservation: m.reservation || null,
+        p_profile: m.profile_id,
+        p_pack: pack.id,
+        p_tier: pack.tier,
+        p_gems: pack.debtGems, // not granted: the gem value a refund of an OPENED pack claws (089)
+        p_cents: pack.cents,
+        p_currency: PAY_CURRENCY,
+        p_payment_intent: pi,
+      },
+    };
+  }
+  return { fn: 'pay_grant', args: {
     p_session: session.id,
     p_reservation: m.reservation || null,
     p_profile: m.profile_id,
@@ -173,8 +221,8 @@ export function grantArgs(session) {
     p_gems: pack.gems,
     p_cents: pack.cents,
     p_currency: PAY_CURRENCY,
-    p_payment_intent: typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent && session.payment_intent.id) || null,
-  };
+    p_payment_intent: pi,
+  } };
 }
 
 const piOf = (x) => (typeof x === 'string' ? x : (x && x.id) || null);
@@ -188,12 +236,12 @@ export async function routeEvent(event, rpc) {
   switch (event && event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded': {
-      const args = grantArgs(o);
-      if (!args) {
+      const call = grantCall(o);
+      if (!call) {
         // an unpaid (async) completion waits for async_payment_succeeded; anything not ours is acknowledged and ignored
         return { status: 200, body: { ignored: o.payment_status !== 'paid' ? 'unpaid' : 'not_ours' } };
       }
-      const r = await rpc('pay_grant', args);
+      const r = await rpc(call.fn, call.args);
       return { status: 200, body: { granted: !!(r && r.granted), duplicate: !!(r && r.duplicate) } };
     }
     case 'checkout.session.expired': {
@@ -208,7 +256,7 @@ export async function routeEvent(event, rpc) {
       // currency cancels out); pay_claw2 scales it onto the purchase's USD amount. A fully refunded charge is 1.
       const amt = Number(o.amount) || 0;
       const ratio = o.refunded === true ? 1 : amt > 0 ? Math.min(1, Math.max(0, (Number(o.amount_refunded) || 0) / amt)) : 0;
-      const r = await rpc('pay_claw2', { p_payment_intent: pi, p_ratio: ratio, p_reason: 'refund' });
+      const r = await rpc('pay_claw2', { p_payment_intent: pi, p_ratio: ratio, p_reason: 'refund' }); // 089: a roll pack's ticket is revoked here too
       return notFoundOr(r, o);
     }
     case 'charge.dispute.created': {
@@ -231,12 +279,19 @@ function notFoundOr(r, o) {
   return { status: 200, body: { clawed: (r && r.clawed) || 0 } };
 }
 
-export async function handleWebhook(request, { stripe, rpc, env = process.env } = {}) {
+export async function handleWebhook(request, deps = {}) {
+  const seen = {};
+  const res = await webhook(request, deps, seen);
+  await logPay('webhook', res, seen);
+  return res;
+}
+async function webhook(request, { stripe, rpc, env = process.env } = {}, seen = {}) {
   const secret = env.STRIPE_WEBHOOK_SECRET;
   if (!stripe || !secret) return json(503, { error: 'not_configured' });
   const raw = await request.text(); // the RAW body: the signature is over these exact bytes (never re-serialise)
   const event = await verifyEvent(stripe, raw, request.headers.get('stripe-signature'), secret);
   if (!event) return json(400, { error: 'bad_signature' });
+  seen.event = String(event.type || '');
   if (!rpc) return json(500, { error: 'db_not_configured' }); // Stripe retries until SUPABASE_SERVICE_ROLE_KEY is set
   try {
     const out = await routeEvent(event, rpc);

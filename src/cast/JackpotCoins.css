@@ -1,0 +1,6 @@
+/* the coin pool, laid over the ring box; each coin rests invisible on the stack painted at the frame's top-left */
+.avf.avf .avf-coins { position: absolute; z-index: 2; display: block; pointer-events: none; }
+.avf.avf .avf-coin {
+  position: absolute; left: 5%; top: 8%; width: 18%; height: auto; max-width: none; margin: 0; padding: 0; border: 0;
+  opacity: 0; transform: none; filter: none; pointer-events: none;
+}

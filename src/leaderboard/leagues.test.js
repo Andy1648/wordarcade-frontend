@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEAGUES, leagueOf, leagueMove, nextLeague } from './leagues.js';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { LEAGUES, LEAGUE_ART, leagueOf, leagueMove, nextLeague } from './leagues.js';
+import { leagueRange, rangeLabel } from './leagueRange.js';
+import { LEAGUE_PLATE } from './leaguePlate.js';
+
+const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
 
 test('leagueOf: the cutoffs, edges included', () => {
   const at = (r) => (leagueOf(r) || {}).key;
@@ -37,4 +44,27 @@ test('nextLeague: places to climb into the band above', () => {
   assert.deepEqual(nextLeague(2), { league: LEAGUES[0], places: 1 });
   assert.equal(nextLeague(1), null);
   assert.equal(nextLeague(0), null);
+});
+
+test('every league ships its badge and knows where its plate is', () => {
+  for (const l of LEAGUES) {
+    assert.ok(existsSync(join(PUBLIC, LEAGUE_ART[l.key])), l.key);
+    const p = LEAGUE_PLATE[l.key];
+    assert.ok(p && p.x > 0.3 && p.x < 0.7 && p.y > 0.3 && p.y < 0.7 && p.w > 0.2 && p.w < 0.6, l.key);
+  }
+});
+
+test('ranges: read off the cutoffs, written one way, covering every rank once', () => {
+  assert.deepEqual(leagueRange(LEAGUES[0]), { lo: 1, hi: 1 });
+  assert.deepEqual(leagueRange(LEAGUES[2]), { lo: 11, hi: 50 });
+  assert.deepEqual(leagueRange(LEAGUES[LEAGUES.length - 1]), { lo: 1601, hi: null });
+  assert.equal(rangeLabel(LEAGUES[0]), 'RANK 1');
+  assert.equal(rangeLabel(LEAGUES[1]), 'RANKS 2–10');
+  assert.equal(rangeLabel(LEAGUES[4]), 'RANKS 101–300');
+  assert.equal(rangeLabel(LEAGUES[7]), 'RANKS 1,601+');
+  for (let i = 1; i < LEAGUES.length; i++) assert.equal(leagueRange(LEAGUES[i]).lo, LEAGUES[i - 1].top + 1);
+  for (const r of [1, 2, 10, 11, 50, 51, 100, 101, 300, 301, 800, 801, 1600, 1601, 9999]) {
+    const { lo, hi } = leagueRange(leagueOf(r));
+    assert.ok(r >= lo && (hi == null || r <= hi), String(r));
+  }
 });

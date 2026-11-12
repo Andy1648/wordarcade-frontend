@@ -2,7 +2,7 @@
 //   startCheckout(packId)  POST /api/checkout { pack, secret, access } -> redirect to Stripe Checkout. NEVER an amount.
 //                          access = the SIGN IN WITH GOOGLE session (085: buying needs one; no session -> 'sign_in').
 //   fetchPaid()            082 pay_gems_pending: the paid-gem ledger rows this browser has not applied yet, plus this
-//                          month's spend and cap (the shelf's "left this month" line).
+//                          month's spend and cap (the panel's "left this month" line).
 //   applyPaid(rows)        applies each row ONCE (the ids are remembered in taw.pay.applied, so a lost ack can never pay
 //                          twice): +N through the one gem door (grantGems 'paid'), −N off the balance FLOORED AT 0
 //                          (082's header: the server budget keeps the rest of the debt), then acks them to the server.
@@ -37,6 +37,36 @@ export function clawGems(n) {
   saveGemState(s);
   tellBalance(s.bal);
   return took;
+}
+
+// A pack waiting on a Google sign-in, for the length of the tab: LOAD YOUR PROGRESS reloads the page on the way to it.
+export const PAY_RESUME_KEY = 'taw.pay.resume';
+const RESUME_MS = 10 * 60 * 1000;
+/** The pack id waiting on a sign-in (this tab, the last few minutes), or null. */
+export function readPayResume() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(PAY_RESUME_KEY) || 'null');
+    return r && typeof r.pack === 'string' && Date.now() - r.at < RESUME_MS ? r.pack : null;
+  } catch { return null; }
+}
+
+// 089 ROLL PACKS: the pack this tab just left for Stripe with, so the return (?paid=1) knows to wait for its TICKET (a pack
+// is never gems) and open it. Only a hint for the menu: the ticket itself is whatever the server lists (lb_tickets).
+export const PACK_OPEN_KEY = 'taw.pay.packOpen';
+const PACK_OPEN_MS = 60 * 60 * 1000;
+/** Remember (or with null, forget) the roll pack this tab is buying. */
+export function notePackCheckout(id) {
+  try {
+    if (id) sessionStorage.setItem(PACK_OPEN_KEY, JSON.stringify({ pack: id, at: Date.now() }));
+    else sessionStorage.removeItem(PACK_OPEN_KEY);
+  } catch { /* private mode: the pack still waits in the shop's PACKS shelf */ }
+}
+/** The roll pack id this tab left for Stripe with (the last hour), or null. */
+export function readPackCheckout() {
+  try {
+    const r = JSON.parse(sessionStorage.getItem(PACK_OPEN_KEY) || 'null');
+    return r && typeof r.pack === 'string' && Date.now() - r.at < PACK_OPEN_MS ? r.pack : null;
+  } catch { return null; }
 }
 
 /** Does this browser have a board profile the gems can land on? (the server re-checks: pay_reserve 'no_profile') */
@@ -87,6 +117,19 @@ export async function fetchPaid(call = rpc) {
     };
   } catch {
     return null;
+  }
+}
+
+/** Should the panel show FIRST BUY ×2? Only a guess for the stamp: 088 pay_grant alone decides, at grant time. False until 088 has
+ *  run (the function is missing), and on any failure: never promise a bonus we can't confirm. */
+export async function fetchFirstBuy({ signedIn = false, call = rpc } = {}) {
+  if (!LEADERBOARD_ENABLED) return false;
+  const args = { p_secret: peekSecret() || null };
+  try {
+    const r = signedIn ? await (await import('../leaderboard/auth.js')).authRpc('pay_first_buy_open', args) : await call('pay_first_buy_open', args);
+    return r === true;
+  } catch {
+    return false;
   }
 }
 

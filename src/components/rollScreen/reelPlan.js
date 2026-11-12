@@ -298,10 +298,13 @@ export function needMoreText(price, have, fmt = (n) => String(n)) {
  * (LEGENDARY+: full-screen rays, the rarity, "1 IN X" huge, the card, the screen shakes). 'dim' and 'full' stay up
  * until a tap. The layers each tier plays are revealPlan.js's.
  */
-export function revealKind(tier, mode = 'full') {
+export function revealKind(tier, mode = 'full', { dupe = false, pipUp = false } = {}) {
   if (mode !== 'full') return 'line';
   const r = tierIndex(tier);
   if (r >= tierIndex('legendary')) return 'full';
+  // the common copies skip the ceremony: a RARE / EPIC duplicate takes the short line path (the result line + its × copies
+  // chip), unless it steps a ★ pip up. LEGENDARY+ is rare enough to keep its full reveal, copy or not.
+  if (dupe && !pipUp) return 'line';
   return r === tierIndex('epic') ? 'dim' : 'lite';
 }
 /** THE REVEAL CARD'S WIDTH (design audit nov2: a ~250px card floating in a void lost the big stat hit Andy asked for

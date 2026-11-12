@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gzipSync } from 'fflate';
 import { exportSave, parseSave, importSave, PRE_RESTORE_KEY } from './saveBackup.js';
-import { exportSaveCode, parseAnySave, importAnySave, crc32, cleanPaste, SAVE_ERRORS, readPreRestore } from './saveCode.js';
+import { exportSaveCode, parseAnySave, importAnySave, crc32, cleanPaste, SAVE_ERRORS, readPreRestore, isLongSaveCode, restoreError, WRONG_BOX } from './saveCode.js';
 
 function makeStore(initial = {}) {
   const m = new Map(Object.entries(initial));
@@ -156,4 +156,17 @@ test('cleanPaste / crc32 are stable', () => {
   assert.equal(crc32('123456789'), 'cbf43926'); // the standard CRC-32 check value
   assert.equal(cleanPaste(' \u201cTAW2.abc.0011aabb\u201d. '), 'TAW2.abc.0011aabb');
   assert.equal(cleanPaste('my code is eyJmb3Jt'), 'eyJmb3Jt');
+});
+
+test('THE TWO KINDS OF CODE: a long save code is never a reward code; a failed RESTORE names the reward box', () => {
+  assert.equal(isLongSaveCode(`TAW2.${'a'.repeat(40)}.deadbeef`), true);
+  assert.equal(isLongSaveCode('  my save: TAW2.abc.deadbeef '), true);
+  assert.equal(isLongSaveCode('tawz1:abc'), true);
+  assert.equal(isLongSaveCode('x'.repeat(65)), true);
+  for (const code of ['GIFT-2026', 'WELCOME', 'NEWPLAYERS', 'moneyJar', 'x'.repeat(32)]) assert.equal(isLongSaveCode(code), false, code);
+  assert.equal(restoreError({ ok: false, reason: 'not_found', error: 'NO SAVE WITH THAT CODE' }, 'NEWPLAYERS'), WRONG_BOX.maybeRewardInSave);
+  assert.equal(restoreError({ ok: false, error: SAVE_ERRORS.notOurs }, 'GIFT-2026'), WRONG_BOX.rewardInSave);
+  // a damaged SAVE code keeps its own, more useful line
+  assert.equal(restoreError({ ok: false, error: SAVE_ERRORS.cutOff }, 'GIFT-2026'), SAVE_ERRORS.cutOff);
+  assert.equal(restoreError({ ok: false, error: SAVE_ERRORS.notOurs }, `not a code at all ${'!'.repeat(40)}`), SAVE_ERRORS.notOurs);
 });

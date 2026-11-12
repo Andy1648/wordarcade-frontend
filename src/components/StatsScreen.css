@@ -13,7 +13,7 @@
      Achievements tabs) is rendered with .view-screen zoom forced to 1 (App.jsx), so this fixed
      inset:0 overlay is sized to the REAL viewport. The old reciprocal cancelled only in headless;
      recent real Chrome left it at --app-scale. See ShopScreen.css. */
-  background: rgba(13, 6, 24, 0.86);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -779,3 +779,21 @@
 .stats-ladder.stats-ladder-chips {
   margin: 4px 0 10px;
 }
+
+/* ===== ALL TIME = THE CURRENT STYLE (design audit nov2 #6): this window was an older register — 1–2px cell borders,
+   a blurred rarity glow on the level numeral, a hairline header rule. Now the STATS screen's kit: thick coloured
+   outlines, hard black offsets, Bungee numbers, no glow. ===== */
+.stats-panel { border-width: 5px; border-color: #5c0fa3; box-shadow: 10px 10px 0 #000; }
+.stats-header { border-bottom: 4px solid #5c0fa3; }
+.stats-title { -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000; }
+.stats-close { background: #FF4FA3; border: 4px solid #a3175e; color: #000; font-family: 'Bungee', sans-serif; text-transform: uppercase; }
+.stats-tab { border-width: 4px; }
+.stats-tab.is-active { border-color: #128f7d; }
+.pc-card .pc-lv.rarity-ink.rarity-ink { text-shadow: 4px 4px 0 #000; -webkit-text-stroke: 5px #000; }
+.pc-cell { background: #1a0b2e; border: 4px solid #5c0fa3; box-shadow: 4px 4px 0 #000; }
+.pc-val { font-family: 'Bungee', sans-serif; font-weight: 400; text-transform: uppercase; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
+.pc-rank { border-width: 3px; box-shadow: 2px 2px 0 #000; }
+.rec-cell { border: 4px solid #5c0fa3; }
+.rec-cell--locked { border-color: #2a1f3d; }
+.rec-value { font-family: 'Bungee', sans-serif; text-transform: uppercase; font-weight: 400; letter-spacing: 0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
+.rec-silhouette { border-width: 3px; }

@@ -47,6 +47,8 @@ import { V3 } from '../progress/season';
 import { otherSeatIds } from '../progress/seats';
 import { minWordsFor } from '../progress/wins';
 import { usePlayClock } from '../progress/playClock.js';
+import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
+import FitText from '../components/kit/FitText.jsx';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -74,6 +76,14 @@ function useNow(active) {
   return now;
 }
 
+/** A watcher's hero line: who leads and how far (a tie names the first). Pure. */
+export function leaderLine(racers, target) {
+  const live = (racers || []).filter((r) => !r.left);
+  if (!live.length) return 'THE FIELD LEFT';
+  const top = live.reduce((a, b) => (b.index > a.index ? b : a));
+  return top.index > 0 ? `${String(top.name || '').toUpperCase()} LEADS · ${top.index}/${target}` : 'THEY ARE OFF';
+}
+
 export default function WordRaceScreen({
   race,
   myId,
@@ -86,6 +96,8 @@ export default function WordRaceScreen({
   onLocalReject,
   onRematch,
   onLeave,
+  watchOnly = false, // SPECTATE (nov9): watching a public race from the room list - never a racer
+  watchers = 0, // how many are watching (room_update.watchers)
 }) {
   usePlayClock(); // TIME PLAYED on the profile (Andy oct21: race time was never counted)
   const [text, setText] = useState('');
@@ -213,7 +225,7 @@ export default function WordRaceScreen({
   const xpSince = useGameXpRunMark(live); // GAME XP (oct21): this race's words
   const speedPaid = useRef(new Set());
   useEffect(() => {
-    if (!over) return;
+    if (!over || watchOnly) return; // a watcher played nothing: no result, no speed gems
     const mine = standings.find((s) => s.id === myId);
     const myPl = mine ? mine.place : Infinity;
     const rivals = standings.filter((s) => s.id !== myId).map((s) => ({ id: s.id, isBot: !!s.isBot, beaten: Number.isFinite(s.place) && s.place > myPl }));
@@ -302,6 +314,8 @@ export default function WordRaceScreen({
           {status === 'over' ? 'FINISHED' : clockText(timeLeft)}
         </span>
         <div className="wr-head-actions">
+          {watchOnly ? <WatchPill /> : null}
+          <WatchersChip n={watchers} />
           {audioSlot}
           <button type="button" className="wr-btn wr-btn-ghost" onClick={onLeave}>
             LEAVE
@@ -321,7 +335,7 @@ export default function WordRaceScreen({
               data-racer-index={r.index}
             >
               <span className="wr-lane-name">
-                <span className="wr-lane-name-txt">{r.name}</span>
+                <FitText className="wr-lane-name-txt" translate="no">{r.name}</FitText>
                 {isMe && <span className="wr-tag wr-tag-me">YOU</span>}
                 {r.isBot && <span className="wr-tag">BOT</span>}
                 {r.left && <span className="wr-tag">LEFT</span>}
@@ -358,6 +372,8 @@ export default function WordRaceScreen({
                     human rival; keyed on the race seed so a rematch announces it again. */}
                 {hasHumanRival(racers, myId) && <MatchWinBanner key={seed || 'race'} mode="word-race" />}
               </>
+            ) : watchOnly ? (
+              <span className="wr-hero-done" data-testid="watch-leader">{leaderLine(racers, target)}</span>
             ) : finished ? (
               <span className="wr-hero-done">FINISHED — WAITING ON THE FIELD</span>
             ) : fragment && wordsMode ? (
@@ -391,6 +407,9 @@ export default function WordRaceScreen({
             ) : null}
           </div>
 
+          {watchOnly ? (
+            <WatchBar>YOU&apos;RE WATCHING · A SEAT OPENS IF THEY RACE AGAIN</WatchBar>
+          ) : (<>
           <form className={`wr-form${shakeSeq ? ` wr-shake-${shakeSeq % 2}` : ''}`} onSubmit={submit}>
             <UnlistedSlot />
             <input
@@ -419,6 +438,7 @@ export default function WordRaceScreen({
           <p className="wr-earn" aria-label="Earned this race">
             +{formatNum(earned?.wins || 0)} WINS
           </p>
+          </>)}
         </section>
       )}
 
@@ -434,7 +454,9 @@ export default function WordRaceScreen({
             <Mascot pose={iWon ? 'celebrate' : 'panic'} emote={iWon ? 'celebrate' : 'slump'} size={96} />
             <div>
               <h2 className="wr-over-title">
-                {iWon ? 'YOU WIN!' : over.winnerId ? `${ordinal(myPlace || standings.length)} PLACE` : 'NO FINISHERS'}
+                {watchOnly
+                  ? (over.winnerId ? `${String(standings.find((s) => s.id === over.winnerId)?.name || 'SOMEONE').toUpperCase()} WINS` : 'NO FINISHERS')
+                  : iWon ? 'YOU WIN!' : over.winnerId ? `${ordinal(myPlace || standings.length)} PLACE` : 'NO FINISHERS'}
               </h2>
               {verdict ? (
                 <p className={`wr-over-why wr-verdict${verdict.win ? ' is-win' : ''}`} data-testid="challenge-verdict">
@@ -453,10 +475,7 @@ export default function WordRaceScreen({
             {standings.map((s) => (
               <li key={s.id} className={s.id === myId ? 'is-me' : ''} data-standing-id={s.id}>
                 <span className="wr-st-place">{ordinal(s.place)}</span>
-                <span className="wr-st-name">
-                  {s.name}
-                  {s.isBot ? ' (BOT)' : ''}
-                </span>
+                <FitText className="wr-st-name" translate="no">{`${s.name}${s.isBot ? ' (BOT)' : ''}`}</FitText>
                 <span className="wr-st-words">{plural(s.words, 'WORD')}</span>
               </li>
             ))}
@@ -475,10 +494,12 @@ export default function WordRaceScreen({
           <div className="wr-over-actions">
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
                 the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}
-            <RebirthReadyButton onGo={onLeave} />
-            <button type="button" className="wr-btn wr-btn-go" onClick={onRematch} disabled={rematchPending}>
-              {isHost ? 'RACE AGAIN' : 'BACK TO LOBBY'}
-            </button>
+            {watchOnly ? null : <RebirthReadyButton onGo={onLeave} />}
+            {watchOnly ? null : (
+              <button type="button" className="wr-btn wr-btn-go" onClick={onRematch} disabled={rematchPending}>
+                {isHost ? 'RACE AGAIN' : 'BACK TO LOBBY'}
+              </button>
+            )}
             <button type="button" className="wr-btn wr-btn-ghost" onClick={onLeave}>
               MENU
             </button>
@@ -495,7 +516,7 @@ export default function WordRaceScreen({
           </div>
           {/* NEAR-MISS (dormant, ?nearmiss=1): race has no claim prompt, so it takes the same slot
               under the exits; tapping it is RACE AGAIN. */}
-          <NearMiss mode="word-race" onPlay={onRematch} disabled={rematchPending} />
+          {watchOnly ? null : <NearMiss mode="word-race" onPlay={onRematch} disabled={rematchPending} />}
         </section>
       )}
     </div>

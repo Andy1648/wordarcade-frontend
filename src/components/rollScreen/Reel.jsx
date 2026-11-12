@@ -224,7 +224,7 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
     // RARE: one flash over the band; EPIC+: a rarity-colour wash over the whole screen (the dim / reveal sit on top)
     if (FLASH_TIERS.has(tier)) anim(n.flash, [{ opacity: 0.75 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'none' });
     if (WASH_TIERS.has(tier)) anim(n.wash, [{ opacity: 0 }, { opacity: 0.4, offset: 0.25 }, { opacity: 0 }], { duration: 650, easing: 'ease-out', fill: 'none' });
-    const kind = revealKind(tier, mode);
+    const kind = revealKind(tier, mode, { dupe: !!res.dupe, pipUp: !!res.pipUp });
     // REVEAL v2: a land that opens a reveal leaves the burst to the reveal (one burst, on the card, after its flip)
     const k = kind === 'line' ? Math.min(burstCount(tier, mode), SHARD_MAX) : 0;
     for (let i = 0; i < k; i += 1) {
@@ -253,7 +253,8 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
   // to the panel's own frame (the purple border is the only edge), not a fixed 48px — a band-sized TELL / FLASH drew a
   // hard line across the cards' glow, and a 48px fade ran over the frame and the top bar. --rs-up = band → top frame
   // (the fades + shades use it both ways), --rs-down = band → bottom frame (the transient TELL / FLASH fill the panel).
-  // Measured on mount and when the panel resizes only (never per frame).
+  // Measured on mount and when the panel or anything stacked in it resizes (nov6: the result line landing moves the band
+  // without resizing the panel, and a stale --rs-up ran the shades over the purple frame). Never per frame.
   useLayoutEffect(() => {
     const win = nodes.current.win;
     const stage = win && win.closest('.rs-stage');
@@ -262,13 +263,16 @@ export default function Reel({ spin, idle = null, view = null, auto = false, cov
       const w = win.getBoundingClientRect();
       const s = stage.getBoundingClientRect();
       const top = s.top + stage.clientTop;
-      win.style.setProperty('--rs-up', `${Math.max(0, Math.round(w.top - top))}px`);
-      win.style.setProperty('--rs-down', `${Math.max(0, Math.round(top + stage.clientHeight - w.bottom))}px`);
+      // floor, and NOT clamped at 0: on a tight screen the band can poke past the frame, and then these go negative so the
+      // shades still stop AT the frame (the purple border is never dimmed)
+      win.style.setProperty('--rs-up', `${Math.floor(w.top - top)}px`);
+      win.style.setProperty('--rs-down', `${Math.floor(top + stage.clientHeight - w.bottom)}px`);
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(measure);
     ro.observe(stage);
+    stage.querySelectorAll(':scope > *, :scope > * > *').forEach((el) => ro.observe(el));
     return () => ro.disconnect();
   }, []);
 

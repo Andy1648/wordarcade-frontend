@@ -26,13 +26,13 @@ const ALLOW = [
 ];
 // PHONES ONLY (<= 480 wide): long pages a phone scrolls instead of crushing (Andy oct21: taps, room, more scroll)
 const ALLOW_PHONE = [
-  ['.hp-m', 'the phone menu column (64px tap rows)'],
+  ['.hp-m-modes', 'the phone menu MODE ROWS (64px tap rows) — nov9: the menu holds still, only the modes scroll'],
   ['.pf', 'the profile / hero preview page'],
   ['.cz-body', 'CUSTOMIZE on a phone: the tab under the strip (oct28 — the card stays put)'],
-  ['.sp2', 'the UPGRADES page'],
+  ['.sp2', 'the UPGRADES page (nov9: under a pinned header)'],
   ['.pn', 'the patch notes'],
   ['.pn-scroll', 'the patch notes: the notes scroll INSIDE the sheet, COLLECT under them (overlap audit oct29)'],
-  ['.rb2', 'rebirth on the smallest phone'],
+  ['.rb2', 'rebirth on the smallest phone (nov9: under a pinned header)'],
   ['.rb2-track-list', 'the UNLOCKS row swipes sideways (Andy oct15: a list)'],
   ['.sr-lineup', 'the SAT suspects on the smallest phone'],
 ];
