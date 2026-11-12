@@ -2700,6 +2700,7 @@ function App() {
         onLeave={handleLeaveRequest}
         watchOnly={!!watching}
         watchers={room ? room.watchers || 0 : 0}
+        roomPlayers={room ? room.players : null}
       />
     );
   } else if (view === 'game' && gameType === WORD_RACE_ID) {
@@ -2727,6 +2728,7 @@ function App() {
         onLeave={handleLeaveRequest}
         watchOnly={!!watching}
         watchers={room ? room.watchers || 0 : 0}
+        roomPlayers={room ? room.players : null}
       />
     );
   } else if (view === 'game') {
@@ -2815,6 +2817,7 @@ function App() {
       <MinerLobby
         room={room}
         myId={myId}
+        onSetHero={handleSetHero}
         miner={miner}
         serverError={serverError}
         startPending={startPending}
@@ -2829,6 +2832,7 @@ function App() {
       <WordRaceLobby
         room={room}
         myId={myId}
+        onSetHero={handleSetHero}
         race={race}
         serverError={serverError}
         startPending={startPending}

@@ -28,8 +28,9 @@ import { otherSeatIds } from '../progress/seats';
 import FitText from '../components/kit/FitText.jsx';
 import './Miner.css';
 import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
+import CastArt from '../cast/CastArt.jsx';
+import useSeatHeroes from '../cast/useSeatHeroes.js';
 
-const HERO = '/cards/miner-hero.webp';
 const WALL = '/cards/miner-bg.webp';
 const LAMP = '/miner/lamp.webp';
 
@@ -94,7 +95,7 @@ function Ladder({ hit }) {
 }
 
 /** THE RACE: one tunnel per miner, the digger travelling toward the CORE. */
-function Race({ miner, myId }) {
+function Race({ miner, myId, heroOf }) {
   const target = miner?.target || 500;
   const miners = miner?.miners || [];
   const digging = miner?.status === 'digging';
@@ -116,7 +117,8 @@ function Race({ miner, myId }) {
               <span className="mn-run-track">
                 <span className="mn-run-dug" aria-hidden="true" />
                 <span className="mn-run-slide" aria-hidden="true">
-                  <img className="mn-run-digger" src={HERO} alt="" draggable="false" />
+                  {/* each miner digs as THEIR hero (nov12: every lane wore the same miner sprite) */}
+                  <CastArt className="mn-run-digger" id={heroOf(m.id)} live={false} data-hero={heroOf(m.id)} />
                   {pick && pick.ore && <OreIcon ore={pick.ore} size="xs" pop key={`p${reveal.round}`} />}
                 </span>
                 {digging && m.locked && <span className="mn-run-lock" aria-label="locked in">✓</span>}
@@ -143,7 +145,9 @@ export default function MinerScreen({
   onLeave,
   watchOnly = false, // SPECTATE (nov9): watching a public mine from the room list - never a miner
   watchers = 0, // how many are watching (room_update.watchers)
+  roomPlayers = null, // room_update.players: every player's equipped hero (set_hero)
 }) {
+  const heroOf = useSeatHeroes(roomPlayers, myId);
   usePlayClock();
   const [text, setText] = useState('');
   const [shakeSeq, setShakeSeq] = useState(0);
@@ -343,7 +347,8 @@ export default function MinerScreen({
           {over && (
             <div className="mn-over" data-testid="miner-over">
               <div className="mn-over-hero">
-                <img className={`mn-over-digger${iWon ? ' is-win' : ''}`} src={HERO} alt="" draggable="false" />
+                {/* the winner's hero (yours when you hit the core) */}
+                <CastArt className={`mn-over-digger${iWon ? ' is-win' : ''}`} id={heroOf(iWon ? myId : (over.winnerIds[0] || (standings[0] && standings[0].id) || myId))} live={false} />
                 <h2 className="mn-over-title">
                   {watchOnly
                     ? `${String(standings.find((s) => over.winnerIds.includes(s.id))?.name || 'NOBODY').toUpperCase()} HIT THE CORE`
@@ -386,7 +391,7 @@ export default function MinerScreen({
           )}
         </section>
 
-        <Race miner={miner} myId={myId} />
+        <Race miner={miner} myId={myId} heroOf={heroOf} />
       </div>
     </div>
   );
