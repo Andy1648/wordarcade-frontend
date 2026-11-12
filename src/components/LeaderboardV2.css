@@ -1461,3 +1461,5 @@
 .lb2 .lb2-lg { gap: calc(10px * var(--lb2-k)); }
 .lb2:not(.lb2--narrow) .lb2-lg-art { width: calc(136px * var(--lb2-k)); height: calc(136px * var(--lb2-k)); }
 .lb2:not(.lb2--narrow) .lb2-lg-next { width: calc(60px * var(--lb2-k)); height: calc(60px * var(--lb2-k)); }
+/* nov12 v3: the place pill rides the badge's bottom tab - YOUR CLIMB's big badge keeps a modest pill (it scaled with the art) */
+.lb2-climb-seal { --num-k: calc(1.25 * var(--lb2-k)); }

@@ -19,10 +19,13 @@ export const LEAGUES = [
   { key: 'bronze', name: 'BRONZE', top: Infinity },
 ];
 
-// The painted league badge set v2 (nov9, ONE ChatGPT chat, best of four each, escalating: a bronze medallion → a silver
-// shield → gold laurels → crystal spikes → an amethyst star → a horned iron crest → pink wings → the gold winged crown).
-// Every badge carries an EMPTY glossy plate for a number. Immutable art: a repaint gets a new filename (art-manifest).
-export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league2-${l.key}-v1.webp`]));
+// The painted league badge set v3 (nov12, Andy "really go for the satisfying themes - newgrounds, anime, addiction"): one
+// ChatGPT chat, best of four each, every league its OWN theme and each a louder silhouette than the one below - BRONZE a
+// scrapper's bottle-cap, SILVER street blades, GOLD a high roller's dice + coins, CRYSTAL a frost wolf, MASTER an arcane
+// third-eye sigil, TITAN a berserker oni, CHAMPION a crowned phoenix, LEGEND the ascended dragon king. Its centre is the
+// league's own EMBLEM (readable by silhouette at row size); the place goes on the empty tab at its bottom edge (leaguePlate.js).
+// Immutable art: a repaint gets a new filename (art-manifest).
+export const LEAGUE_ART = Object.fromEntries(LEAGUES.map((l) => [l.key, `/lb/league3-${l.key}-v2.webp`]));
 
 /** The league a board rank sits in, or null with no rank (an unclaimed name is UNRANKED). */
 export function leagueOf(rank) {

@@ -158,3 +158,32 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 390, height: 844 }]) {
     await expect(ladder).toHaveCount(0);
   });
 }
+
+// LEAGUES v3 (Andy nov12 "newgrounds, anime, addiction"): YOUR badge powers up ONCE when MY LEAGUE opens - a finite one-shot
+// (transform/opacity), never a loop - and the badge art is the v3 set.
+test.describe('your league badge powers up once', () => {
+  test.use({ reducedMotion: 'no-preference' });
+  test('1366: MY LEAGUE badge plays one finite power-up, v3 art', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.addInitScript(() => {
+      window.__pu = [];
+      const orig = Element.prototype.animate;
+      Element.prototype.animate = function (frames, opts) {
+        try {
+          if (Array.isArray(frames) && frames.some((f) => /scale\(1\.22\) rotate\(5deg\)/.test(f.transform || ''))) {
+            window.__pu.push({ cls: this.className, it: opts && opts.iterations, keys: [...new Set(frames.flatMap((f) => Object.keys(f)))] });
+          }
+        } catch { /* never break */ }
+        return orig.call(this, frames, opts);
+      };
+    });
+    const lb = await boot(page, { width: 1366, height: 768 }, 150);
+    await lb.locator('.lb2-tab[data-tab="league"]').click({ timeout: 20_000 });
+    const art = lb.locator('.lb2-lg-art');
+    await expect(art).toHaveAttribute('src', /\/lb\/league3-crystal-v2\.webp$/);
+    await expect.poll(() => page.evaluate(() => window.__pu.filter((p) => /lb2-lg-art/.test(p.cls)).length), { timeout: 5000 }).toBe(1);
+    const pu = await page.evaluate(() => window.__pu.find((p) => /lb2-lg-art/.test(p.cls)));
+    expect(pu.it === undefined || pu.it === 1).toBe(true);
+    for (const k of pu.keys) expect(['offset', 'transform', 'opacity', 'easing']).toContain(k);
+  });
+});
