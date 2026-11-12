@@ -959,3 +959,26 @@ html[data-beat='true'] .room-leave-btn {
    must be allowed to shrink to the seat, or a long name runs out of it instead of scaling down */
 .room-rename-btn { min-width: 0; max-width: 100%; }
 .room-rename-btn > .fit-box { flex: 1 1 auto; min-width: 0; }
+
+/* ONLY THE ROSTER SCROLLS (Andy nov9: "only scroll inside (such as for the game modes)"). The oct29 phone card scrolled the whole
+   setup (code, mode, difficulty and the seats) as one box, so a two-player Word Bomb room at 360x640 slid the code off the top to
+   show the seats. Now LEAVE, the code, GAME MODE and DIFFICULTY hold still and the seats are the one list that scrolls, under them;
+   a short phone puts the four difficulties on one row so the seats keep room. Static, nothing animates. */
+@media (max-width: 600px) {
+  .room-main { overflow-y: hidden; }
+  .room-main > * , .room-main > .room-col > * { flex-shrink: 0; }
+  .room-main > .room-col > .room-players-list {
+    flex: 1 1 auto; flex-shrink: 1; min-height: 56px; margin-bottom: 0;
+    overflow-y: auto; overscroll-behavior: contain; align-content: start;
+    /* the seats' hard shadows stay inside the list's box */
+    padding: 2px 6px 6px 2px; margin-right: -6px;
+  }
+}
+@media (max-width: 480px) and (max-height: 760px) {
+  .room-difficulty-row { flex-wrap: nowrap; gap: 6px; margin-bottom: 14px; }
+  .room-difficulty-row > .room-difficulty-btn { flex: 1 1 0; padding: 7px 2px; }
+  .room-gametype-row { margin-bottom: 14px; }
+  .room-main { padding-top: 6px; }
+  .room-main > .room-col > .room-players-label { margin-top: 4px; margin-bottom: 6px; }
+  .room-main > .room-col > .room-players-list { min-height: 84px; }
+}
