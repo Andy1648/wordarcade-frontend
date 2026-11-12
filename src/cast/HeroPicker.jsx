@@ -18,7 +18,7 @@ import './HeroPicker.css';
 
 // one card each, the grid's (and ‹ ›'s) order — a LIMITED hero still on sale leads the grid (its clock is the point)
 const ON_SALE = LEGEND.filter((h) => h.limited && limitedDaysLeft(h.id));
-// the CHASE heroes close the grid: the rarest things in the game, locked with their odds until one drops
+// the rarest heroes (MYTHIC / SECRET) close the grid, priced over the LEGENDs
 const MEMBERS = [...ON_SALE, ...CAST, ...NEW_CREW, ...LEGEND.filter((h) => !ON_SALE.includes(h)), ...CHASE];
 const ALL = [...MEMBERS, ...GOLD, ...ELITE];
 /** A member's variants, base first: [base, GOLD?, ELITE?]. */
@@ -39,10 +39,10 @@ function Status({ m, current }) {
   const vs = variantsOf(m);
   if (vs.some((v) => v.id === current)) return <span className="hp2-act is-on">EQUIPPED</span>;
   if (ownsHero(m.id)) return null; // owned, not worn: the card itself is the button
-  if (m.chase || !heroGateMet(m.id)) return null; // CHASE (its odds ride the art) or HOLLOW after its sale: nothing to buy
+  if (!heroGateMet(m.id)) return null; // HOLLOW after its sale: nothing to buy
   return <span className="hp2-act is-price"><KitIcon name="gems" size={20} shadow={2} extras={false} />{formatNum(m.price)}</span>;
 }
-/** What a card's art prints for a hero you don't own: HOLLOW's sale clock (then GONE FOREVER), a CHASE drop's odds.
+/** What a card's art prints for a hero you don't own: HOLLOW's sale clock (then GONE FOREVER).
  *  Every other hero is just its gem price (nov9: no WINS / LEVEL / REBIRTH requirements). */
 function cardReq(m) {
   const u = HERO_UNLOCK[m.id];
