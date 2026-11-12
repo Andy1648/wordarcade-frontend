@@ -121,7 +121,7 @@ for (const { mode, lobby, start, input, label } of [
   });
 }
 
-test('HOUSE ROOM reads as a real room: small while waiting, players drift in one at a time, the host starts it (no countdown), two humans play together', async ({ browser }) => {
+test('HOUSE ROOM reads as a real room: small while waiting, players drift in one at a time, the same STARTS IN clock as any public room, two humans play together', async ({ browser }) => {
   test.setTimeout(240000);
   const a = await viewerOnMenu(browser, 'HOUSEGUEST');
   const b = await freshPage(browser, 'phone', 'HOUSEPAL', { width: 390, height: 844 });
@@ -146,9 +146,8 @@ test('HOUSE ROOM reads as a real room: small while waiting, players drift in one
   await a.locator('.room-wrap').waitFor({ timeout: 30000 });
   await rowB.click();
   await b.locator('.room-wrap').waitFor({ timeout: 30000 });
-  // a lobby like any other: WAITING FOR HOST, no countdown
-  await expect(a.getByText('WAITING FOR HOST')).toBeVisible();
-  await expect(a.getByTestId('room-autostart')).toHaveCount(0);
+  // a lobby like any other public one (nov12): the same visible auto-start clock a real room shows
+  await expect(a.getByTestId('room-autostart')).toContainText(/STARTS IN|STARTING/, { timeout: 15000 });
   if (SHOTS) await a.screenshot({ path: `${SHOTS}/house-waiting.png` });
   // watch the roster until the game starts: it only ever grows by one at a time
   const counts = [];
