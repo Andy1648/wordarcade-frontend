@@ -637,3 +637,7 @@
 .wr-peak[data-heat='3'] { color: #FF6B3D; }
 .wr-peak[data-heat='4'] { color: #FF4FA3; }
 .wr-play > .wr-hero { align-self: stretch; } /* the hero spans the column, so the streak's corner is the column's, never the word's */
+/* nov12: the runner is the racer's own hero (CastArt: an <img>, or a layered span with its rarity aura) - the same 36px
+   the mascot car had */
+.wr-runner { width: 36px; height: 36px; object-fit: contain; }
+.wr-runner.cast-layered { display: inline-block; }

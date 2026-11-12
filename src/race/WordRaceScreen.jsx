@@ -53,6 +53,8 @@ import ComboMeter from '../components/ComboMeter';
 import { TierSlam } from '../components/FeelLadder';
 import { heatTier } from '../juice/ladder';
 import { recordBestStreak } from '../solo/bestStreak.js';
+import CastArt from '../cast/CastArt.jsx';
+import useSeatHeroes from '../cast/useSeatHeroes.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
@@ -102,7 +104,9 @@ export default function WordRaceScreen({
   onLeave,
   watchOnly = false, // SPECTATE (nov9): watching a public race from the room list - never a racer
   watchers = 0, // how many are watching (room_update.watchers)
+  roomPlayers = null, // room_update.players: every player's equipped hero (set_hero)
 }) {
+  const heroOf = useSeatHeroes(roomPlayers, myId);
   usePlayClock(); // TIME PLAYED on the profile (Andy oct21: race time was never counted)
   const [text, setText] = useState('');
   const [shakeSeq, setShakeSeq] = useState(0);
@@ -387,7 +391,8 @@ export default function WordRaceScreen({
                   ))}
                 </div>
                 <div className="wr-runner-slide" aria-hidden="true">
-                  <Mascot pose={won || r.index >= target ? 'celebrate' : 'run'} size={36} className="wr-runner" />
+                  {/* each racer runs as THEIR hero (nov12: every lane wore the same mascot) */}
+                  <CastArt className="wr-runner" id={heroOf(r.id)} live={false} data-hero={heroOf(r.id)} />
                 </div>
               </div>
               <span className="wr-lane-count">

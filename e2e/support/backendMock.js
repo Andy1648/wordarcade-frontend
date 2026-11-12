@@ -130,11 +130,6 @@ export async function installBackendMock(page, opts = {}) {
   // spec asks for it (opts.autoName).
   if (!autoName) await page.addInitScript(() => { window.__TAW_NO_AUTONAME = true; });
 
-  // THE CHASE DROP (cast.js rollChaseDrop): every gear roll has an unseeded ~1-in-230 chance to put the full-screen NEW
-  // HERO reveal over whatever the spec clicks next. Across the suite's rolls that failed a random spec on most CI runs
-  // (retries: 0). Off here; e2e/chase-heroes.spec.js turns it back on for the drop itself.
-  await page.addInitScript(() => { window.__TAW_NO_CHASE_DROP = true; });
-
   // Mirror the emulated prefers-reduced-motion into the in-game REDUCE MOTION toggle (see above).
   if (seedReduceMotion) await mirrorReduceMotion(page);
 

@@ -42,16 +42,15 @@ export const LEGEND = [
   // The top of the LEGEND ladder: REBIRTH 15 (the third jackpot rebirth), then gems
   { id: 'nova', name: 'NOVA', tag: 'BIGGER THAN THE SKY', color: '#2EFFE0', dark: '#1A1060', legend: true },
 ];
-// CHASE (oct28, Andy: "a few SUPER-RARE chase heroes with that rare addicting feeling"): heroes you can NEVER buy or earn
-// on a counter — each GEAR ROLL has a tiny chance to DROP one (CHASE_ODDS: "1 IN N" printed on its locked card, so you
-// always know what you're chasing). Two MYTHIC, one SECRET. A drop is kept forever (HEROES_KEY, like a bought hero).
+// THE RAREST HEROES (oct28 as CHASE drops). nov12 (Andy: "dont make any hero avatars rollable its confusing - just make them
+// cost gems"): no gear roll, pack or wheel ever gives a hero now — DRAKE / MAGMA / FACET are bought with gems like the
+// rest, priced over the LEGENDs (HERO_PRICE). `chase` is only their tier now (MYTHIC / SECRET: the frame colour and the
+// tier word). Anyone who rolled one before keeps it (it is in HEROES_KEY, like a bought hero).
 export const CHASE = [
   { id: 'drake', name: 'DRAKE', tag: 'HATCHED ANGRY', color: '#FF4FA3', dark: '#8E0F2A', legend: true, chase: 'mythic' },
   { id: 'magma', name: 'MAGMA', tag: 'NEVER COOLS DOWN', color: '#FF6B3D', dark: '#2A1E26', legend: true, chase: 'mythic' },
   { id: 'facet', name: 'FACET', tag: 'FLAWLESS', color: '#2EFFE0', dark: '#4A2A8A', legend: true, chase: 'secret' },
 ];
-/** One gear roll's chance of each CHASE hero (1 IN N). */
-export const CHASE_ODDS = { drake: 500, magma: 500, facet: 2500 };
 /** HOLLOW's sale ends at the start of Nov 1 2026, US Pacific (07:00 UTC). */
 export const HOLLOW_UNTIL = Date.UTC(2026, 10, 1, 7, 0, 0);
 // ELITE (oct17, Andy: "elite cards will need to be noticably better … bc they will cost gems"): a full premium redesign
@@ -100,16 +99,18 @@ export const goldProgress = (id) => {
 // $1.99 … 16,000 = $19.99) and free play (~150–250 gems a day; a gear roll is 75): a first crew pick ≈ two weeks of free
 // play or one $4.99 pile, the newest crew ≈ a $9.99 chest, an ELITE ≈ a $9.99 chest + a pile, the LEGENDs the long goal
 // (NOVA ≈ a $19.99 hoard + a $9.99 chest). Whatever a save had already earned under the old rules stays owned
-// (grandfatherNov9). DRAKE / MAGMA / FACET stay drop-only; HOLLOW's October sale stays over.
-export const HERO_PRICE = { hex: 2500, glitch: 2500, shh: 2500, lexi: 4000, sizzle: 4000, quill: 4000, dud: 6000, jinx: 6000, salty: 8000, buzz: 8000, zip: 8000, hollow: 15000, boo: 15000, mecha: 20000, nova: 25000 };
+// (grandfatherNov9). HOLLOW's October sale stays over.
+// nov12: the three that used to drop from gear rolls are the TOP of the ladder — above NOVA (25,000), the dearest LEGEND:
+// DRAKE / MAGMA (MYTHIC) 30,000 ≈ a $19.99 hoard + two $4.99 piles + a pouch; FACET (SECRET) 40,000 ≈ two hoards + a
+// $9.99 chest. One step per tier, as the gear ladder goes LEGENDARY < MYTHIC < SECRET.
+export const HERO_PRICE = { hex: 2500, glitch: 2500, shh: 2500, lexi: 4000, sizzle: 4000, quill: 4000, dud: 6000, jinx: 6000, salty: 8000, buzz: 8000, zip: 8000, hollow: 15000, boo: 15000, mecha: 20000, nova: 25000, drake: 30000, magma: 30000, facet: 40000 };
 // the OLD earn rules (oct17–nov8), kept ONLY to grandfather what a save had already earned (grandfatherNov9)
 const OLD_EARN = { glitch: { reb: 1 }, hex: { lv: 20 }, shh: { wins: 40 }, lexi: { wins: 60 }, sizzle: { wins: 60 }, dud: { wins: 100 },
   quill: { wins: 80 }, jinx: { wins: 130 }, salty: { wins: 160 }, buzz: { wins: 200 }, zip: { wins: 250 } };
 export const HERO_UNLOCK = {
   // a LIMITED hero's gate is a DATE: buyable until it, then gone (owners keep it)
   hollow: { until: HOLLOW_UNTIL, label: 'OCTOBER ONLY', gate: true },
-  // a CHASE hero's gate never opens: it only DROPS (rollChaseDrop) — the card prints its odds
-  ...Object.fromEntries(Object.entries(CHASE_ODDS).map(([id, n]) => [id, { drop: n, label: `1 IN ${n}`, gate: true }])) };
+};
 // the ACHIEVEMENTS counters (progress/v3/store.js taw.s2.count) read straight from storage, which keeps the cast data
 // free of the progress store import (`mp` = online wins, `bots` = wins against bots)
 const counts = () => {
@@ -138,8 +139,7 @@ export function limitedDaysLeft(id, now = Date.now()) {
 export function heroGateMet(id, now = Date.now()) {
   const u = HERO_UNLOCK[id];
   if (!u || !u.gate) return true;
-  if (u.until != null) return now < u.until; // LIMITED: on sale until the date, never after
-  return false; // CHASE: never sold — it only drops
+  return u.until == null || now < u.until; // LIMITED: on sale until the date, never after
 }
 // GRANDFATHERED (oct19, once per save): the old rules handed out BOO at REBIRTH 5, MECHA at REBIRTH 10, DUD at LEVEL 35
 // for free (SHH's old 50 online wins already meets its new 40 WINS). Anyone who already met one keeps that hero —
@@ -172,7 +172,7 @@ function grandfatherNov9() {
     localStorage.setItem(RULES_GF_NOV9, '1');
   } catch { /* blocked storage */ }
 }
-for (const c of [...CAST, ...NEW_CREW, ...LEGEND]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
+for (const c of [...CAST, ...NEW_CREW, ...LEGEND, ...CHASE]) if (HERO_PRICE[c.id]) c.price = HERO_PRICE[c.id];
 export const ALL_HEROES = [...CAST, ...NEW_CREW, ...LEGEND, ...CHASE, ...ELITE, ...GOLD];
 export const heroById = (id) => ALL_HEROES.find((x) => x.id === id) || null;
 // owned ELITE ids — a season-2 progress key (taw.s2.*), so the save backup / cloud save carry it with the gems paid
@@ -189,22 +189,8 @@ export function ownedHeroes() {
 export const ownsHero = (id) => {
   const h = ALL_HEROES.find((x) => x.id === id);
   if (h && h.gold) return goldProgress(id).done; // GOLD is earned with wins only, never bought
-  if (h && h.chase) return ownedHeroes().includes(id); // CHASE: only a drop makes it yours
   return !!h && (!h.price || ownedHeroes().includes(id));
 };
-/** THE CHASE DROP: one gear roll's chance at each CHASE hero you don't have yet (CHASE_ODDS). A hit is kept at once
- *  (HEROES_KEY) and its id returned (the roll screen plays the NEW HERO reveal); a miss returns null. */
-export function rollChaseDrop(rand = Math.random) {
-  if (typeof window !== 'undefined' && window.__TAW_NO_CHASE_DROP) return null; // e2e: an unseeded drop covered random specs (mirrors __TAW_NO_ACHIEVEMENT_GRANT)
-  for (const h of CHASE) {
-    if (ownsHero(h.id)) continue;
-    if (rand() < 1 / CHASE_ODDS[h.id]) {
-      try { localStorage.setItem(HEROES_KEY, JSON.stringify([...new Set([...ownedHeroes(), h.id])])); } catch { return null; }
-      return h.id;
-    }
-  }
-  return null;
-}
 // painted poses that exist in public/cast/ — add `'<id>-<pose>'` as each cut file lands (no 404s, no broken frames)
 const PAINTED = new Set([
   'riot-hero', 'glitch-hero', 'hype-hero', 'brawl-hero', 'hex-hero',

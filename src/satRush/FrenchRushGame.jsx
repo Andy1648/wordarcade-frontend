@@ -37,9 +37,11 @@ import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
 import PressWipe from './PressWipe';
 import { usePressOnChange } from './press';
+import { useFrVoice } from './useFrVoice';
 
 // The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
 function Cover({ onPlay, onBank, onClass, wordCount }) {
+  const canSay = useFrVoice(); // say up front that every word can be HEARD (only when this device can)
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
@@ -58,6 +60,7 @@ function Cover({ onPlay, onBank, onClass, wordCount }) {
         <div className="sr-cover-meta">
           <span className="sr-cover-pay">6 AP THEMES + ESSAY &amp; EXAM WORDS · {wordCount} WORDS</span>
           <span className="sr-cover-round">NO TIMER UNLESS YOU WANT ONE · ACCENTS OPTIONAL</span>
+          {canSay && <span className="sr-cover-round fr-cover-say">🔊 HEAR EVERY WORD SAID IN FRENCH</span>}
         </div>
 
         <button type="button" className="sr-btn" onClick={onPlay}>

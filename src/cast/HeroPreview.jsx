@@ -7,7 +7,7 @@
 // Motion: finite WAAPI one-shots re-armed on timers (nothing infinite), transform / opacity only, hidden tab skipped,
 // reduce motion = still poses (kitPlay is a no-op).
 import { useEffect, useRef, useState } from 'react';
-import { HERO_UNLOCK, ownsHero, heroGateMet, goldProgress, hasPose, castSrc } from './cast.js';
+import { ownsHero, heroGateMet, goldProgress, hasPose, castSrc } from './cast.js';
 import { rarityOf } from './CastArt.jsx';
 import CastArt from './CastArt.jsx';
 import { kitPlay } from '../components/kit/motion.js';
@@ -140,12 +140,7 @@ export default function HeroPreview({ h, variants = null, onVariant = null, curr
                     <span className="hpv-prog-n">{formatNum(prog.have)} / {formatNum(prog.need)}</span>
                   </div>
                 ) : null}
-                {h.chase ? (
-                  // CHASE: never sold, never earned on a counter — only a gear roll can drop it
-                  <div className="hpv-buy">
-                    <span className="hpv-locked" data-testid="hero-drop-odds"><KitIcon name="lock" size={26} shadow={1} extras={false} />{HERO_UNLOCK[h.id].label} GEAR ROLLS</span>
-                  </div>
-                ) : h.price && !h.gold && !heroGateMet(h.id) ? (
+                {h.price && !h.gold && !heroGateMet(h.id) ? (
                   <div className="hpv-buy">
                     <span className="hpv-locked"><KitIcon name="lock" size={26} shadow={1} extras={false} />GONE FOREVER · OCTOBER 2026 ONLY</span>
                     <span className="hpv-gems"><KitIcon name="gems" size={22} shadow={2} extras={false} />{formatNum(gems)}</span>

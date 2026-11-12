@@ -13,7 +13,8 @@
 // If the run is built around a root family, the screen is headed by that morpheme
 // so the framing is "here's one root and its family," not "here are five words".
 
-import { speakFr, canSpeak, withArticle } from './speak';
+import { withArticle } from './speak';
+import SayButton from './SayButton';
 import EnglishLine from './EnglishLine';
 
 // The sentence with the blank filled by the answer and highlighted. The blank in
@@ -29,7 +30,7 @@ function FilledSentence({ context, word }) {
   );
 }
 
-function BriefCard({ card, speak }) {
+function BriefCard({ card, speak, hint = false }) {
   const { word, pos, rawPos, gender, context, contextEn, gloss, root, isReview, knownCousins } = card;
   const known = new Set(knownCousins);
   return (
@@ -42,11 +43,7 @@ function BriefCard({ card, speak }) {
       <div className="sr-brief-wordrow">
         <span className="sr-brief-word">
           {speak ? withArticle(word, rawPos, gender) : word}
-          {speak && canSpeak() && (
-            <button type="button" className="sr-say" onClick={() => speakFr(word)} aria-label={`say ${word}`}>
-              🔊
-            </button>
-          )}
+          {speak && <SayButton word={word} hint={hint} />}
         </span>
         <span className="sr-brief-meta">
           {pos}
@@ -123,8 +120,8 @@ export default function Briefing({ briefing, onStart, onExit, ui = null }) {
         </div>
 
         <ul className="sr-brief-list">
-          {cards.map((card) => (
-            <BriefCard key={card.word} card={card} speak={!!(ui && ui.stamps)} />
+          {cards.map((card, i) => (
+            <BriefCard key={card.word} card={card} speak={!!(ui && ui.stamps)} hint={i === 0} />
           ))}
         </ul>
 

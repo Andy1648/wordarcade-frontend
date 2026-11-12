@@ -54,15 +54,13 @@ const store = (page) => page.evaluate(() => {
   };
 });
 const result = (page) => page.locator('[data-testid="mark-roll-result"]');
-// AUTO's other honest stops: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target — or the
-// roll DROPPED a chase hero (cast.js rollChaseDrop stops AUTO). A gems-ran-out stop is neither.
+// AUTO's other honest stop: the landed roll (or a double roll's extra) hit LEGENDARY+ — AUTO's top target. A gems-ran-out
+// stop is not one. (A roll never drops a hero any more — nov12.)
 const stoppedOnHit = (page) => page.evaluate(() => {
   const top = ['legendary', 'mythic', 'secret'];
   const tiers = [...document.querySelectorAll('[data-testid="mark-roll-result"], [data-testid="mark-roll-extra"] [data-tier]')]
     .map((el) => el.getAttribute('data-tier'));
-  let heroes = [];
-  try { heroes = JSON.parse(localStorage.getItem('taw.s2.heroes') || '[]'); } catch { heroes = []; }
-  return tiers.some((t) => top.includes(t)) || ['drake', 'magma', 'facet'].some((h) => heroes.includes(h));
+  return tiers.some((t) => top.includes(t));
 });
 // the LANDED card's own gear turn + shine are sanctioned at rest (Andy oct11 "i want the animations to show on the roll
 // screen as well (when its stopped)") — everything else on the stage must be done

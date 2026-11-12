@@ -20,7 +20,8 @@ import { useClassRoom } from './useClassRoom';
 import { qrPath } from './qr';
 import { classReport } from './classReport';
 import { bandWords, difficultiesFor, DIFFICULTY_ORDER } from '../runSpec';
-import { withArticle, speakFr, canSpeak, setAutoSpeak } from '../speak';
+import { withArticle, speakFr, setAutoSpeak } from '../speak';
+import SayButton from '../SayButton';
 import { formatNum } from '../../format';
 import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
@@ -560,11 +561,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
               <>
                 <div className="fr-class-answer" key={`a-${snap.index}`} style={{ '--len': longest(withArticle(row.word, row.pos, row.gender)) + 1 }}>
                   {withArticle(row.word, row.pos, row.gender)}
-                  {canSpeak() && (
-                    <button type="button" className="sr-say" onClick={() => speakFr(row.word)} aria-label={`say ${row.word}`}>
-                      🔊
-                    </button>
-                  )}
+                  <SayButton word={row.word} />
                 </div>
                 {row.context && <p className="fr-class-context">“{row.context.replace(/_+/, row.word)}”</p>}
                 <EnglishLine text={row.contextEn} className="fr-class-context-en" />
