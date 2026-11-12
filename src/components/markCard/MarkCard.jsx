@@ -29,7 +29,7 @@
 // `parts` adds a screen's own class names to the header / tier / odds / name / stat nodes (the INDEX's .mx-tile-*
 // hooks), so one card serves every screen's tests and styles. `odds` lands on the locked hero (the only odds a tile
 // prints).
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import MarkBadge, { CogRing, RANK_RIMS } from '../MarkBadge';
 import ShinyBadge from '../rollScreen/ShinyBadge';
 import { markEntry } from '../../progress/markRolls';
@@ -38,6 +38,7 @@ import CardFrame from './CardFrame.jsx';
 import { cardModel, MASKED_ODDS } from './cardModel.js';
 import { shineNow, shineHost, shineSrc } from './cardShine.js';
 import { useReduceMotion } from '../../lib/useReduceMotion';
+import { bespokeOf, playBespoke, ACT_EVERY_SWEEPS } from './gearBespoke.js';
 import './MarkCard.css';
 
 const NONE = {};
@@ -63,10 +64,18 @@ function MarkCard({
   const clipRef = useRef(null);
   const bandRef = useRef(null);
   const reduced = useReduceMotion();
+  // BESPOKE (gearBespoke.js): a few single gears wear their own painted component in place of the tier's frame variant
+  const bespoke = useMemo(() => bespokeOf(id), [id]);
+  const partRefs = useRef([]);
+  const sweeps = useRef(0);
+  const onSweep = useMemo(() => (bespoke ? () => {
+    sweeps.current += 1;
+    if (sweeps.current % ACT_EVERY_SWEEPS === 0) playBespoke(bespoke, partRefs.current);
+  } : undefined), [bespoke]);
   useEffect(() => {
     if (!shine || still || reduced) return undefined;
-    return shineHost(clipRef.current, bandRef.current, shineTier);
-  }, [shine, still, reduced, shineTier]);
+    return shineHost(clipRef.current, bandRef.current, shineTier, onSweep);
+  }, [shine, still, reduced, shineTier, onSweep]);
   const pal = CARD_RAR[cardTier(c.tier)];
   const hi = c.hi && !locked;
   const style = { '--mc-line': pal.line, '--mc-edge': pal.edge, '--mc-fill': locked ? LOCKED.fill : pal.fill };
@@ -109,14 +118,28 @@ function MarkCard({
       className={`mc is-${c.tier}${locked ? ' is-locked' : ''}${hi ? ' is-hi' : ''}${fx ? ' is-fx' : ''}${still ? ' is-still' : ''}${className ? ` ${className}` : ''}`}
       style={style}
       data-tier={c.tier}
-      onPointerEnter={shine && !still && !reduced ? () => shineNow(clipRef.current) : undefined}
+      onPointerEnter={shine && !still && !reduced ? () => { shineNow(clipRef.current); if (bespoke) playBespoke(bespoke, partRefs.current); } : undefined}
     >
       <div className="mc-face">
         {/* the frame is vector art (CardFrame) — the plates the text sits on, the rosette behind the cog, the shadow */}
         <CardFrame line={pal.line} edge={pal.edge} fill={locked ? LOCKED.fill : pal.fill} tier={c.tier} locked={locked} />
         {/* MYTHIC / SECRET: the frame VARIANT asset over the whole card (horns + crest / off-register glitch brackets +
             crown) — a different class of card, owned or locked */}
-        {FRAME_X[c.tier] ? <img className="mc-frame-x" src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
+        {bespoke ? (
+          <span className="mc-frame-x mc-bespoke" data-bespoke={id} aria-hidden="true">
+            {bespoke.parts.map((p, i) => (
+              <img
+                key={p.src}
+                ref={(el) => { partRefs.current[i] = el; }}
+                className="mc-bespoke-part"
+                src={p.src}
+                alt=""
+                draggable="false"
+                style={{ left: `${p.x}%`, top: `${p.y}%`, width: `${p.w}%`, transformOrigin: p.o }}
+              />
+            ))}
+          </span>
+        ) : FRAME_X[c.tier] ? <img className="mc-frame-x" src={FRAME_X[c.tier]} alt="" draggable="false" /> : null}
         <div className={cls('mc-head', parts.head)}>
           <span className={cls('mc-tier', parts.tier)}>{c.rarityName}</span>
         </div>
