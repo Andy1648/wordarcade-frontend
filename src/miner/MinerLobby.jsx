@@ -8,6 +8,7 @@ import FitText from '../components/kit/FitText.jsx';
 import CastArt from '../cast/CastArt.jsx';
 import { castFor, heroById } from '../cast/cast.js';
 import './Miner.css';
+import useAutoStartSec from '../hooks/useAutoStartSec.js';
 
 // EACH MINER IS THEIR HERO (design audit 10: every seat wore the same miner sprite): the hero the player has on (the
 // room carries it, as in every other mode), else the cast member their id gives them - YOU get your own pick
@@ -16,6 +17,7 @@ const BOT_FILL_TO = 3; // mirrors the backend minerMode.js BOT_FILL_TO
 
 export default function MinerLobby({ room, myId, miner, audioSlot, serverError, startPending, botPending, onStart, onAddBot, onLeave }) {
   const isHost = room.hostId === myId;
+  const autoSec = useAutoStartSec(room); // a public lobby starts on its own (server clock)
   const queue = miner && miner.status === 'queue' && miner.code === room.code ? miner : null;
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -71,6 +73,9 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
         )}
       </ol>
 
+      {!queue && autoSec != null ? (
+        <p className="mn-lobby-status" role="status" data-testid="room-autostart">{autoSec > 0 ? <>STARTS IN <b>{autoSec}</b></> : 'STARTING…'}</p>
+      ) : null}
       {queue ? (
         <p className="mn-lobby-status" role="status" data-testid="miner-fill">
           {fillIn > 0 ? fillIn : 'GO'}
@@ -84,7 +89,7 @@ export default function MinerLobby({ room, myId, miner, audioSlot, serverError, 
             START
           </button>
         </div>
-      ) : (
+      ) : autoSec != null ? null : (
         <p className="mn-lobby-status is-wait" role="status">WAITING FOR HOST</p>
       )}
       {serverError && <p className="mn-toast is-reject">{serverError}</p>}

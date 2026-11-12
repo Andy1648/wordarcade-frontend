@@ -19,6 +19,7 @@ import './kit/tokens.css';
 const MAX_NAME_LENGTH = 20; // same cap as the lobby / browser name fields
 import './RoomScreenV2.css';
 import FitText from './kit/FitText.jsx';
+import useAutoStartSec from '../hooks/useAutoStartSec.js';
 
 // P9c/9d (claude/mockups/v2/RoomSettings.dc.html LOBBY): the SEASON2 skin — the code as LETTER TILES, an 8-SEAT grid
 // (empty seats drawn as open slots), a big START. Same handlers, same server messages; live (flag OFF) is untouched.
@@ -174,20 +175,8 @@ export default function RoomScreen({ room, myId, playerColors = {}, preselectedG
   }, [room]);
   useEffect(() => () => clearTimeout(joinPopTimerRef.current), []);
 
-  // AUTO-START (nov9 house rooms): the server starts this lobby on its own (room_update.autoStartInMs, re-sent with every
-  // roster change) - count it down here, once a second, only while it runs. Nobody waits on a host who never presses.
-  const autoMs = room && Number.isFinite(room.autoStartInMs) ? room.autoStartInMs : null;
-  const [autoAt, setAutoAt] = useState(null);
-  const [autoNow, setAutoNow] = useState(0);
-  useEffect(() => {
-    if (autoMs == null) { setAutoAt(null); return undefined; }
-    const t = Date.now();
-    setAutoAt(t + autoMs);
-    setAutoNow(t);
-    const id = setInterval(() => setAutoNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [room, autoMs]);
-  const autoSec = autoAt == null ? null : Math.max(0, Math.ceil((autoAt - autoNow) / 1000));
+  // AUTO-START (nov12, every public lobby): the server's clock (room_update.autoStartInMs), counted down here
+  const autoSec = useAutoStartSec(room);
 
   // (Andy oct21: no COPY INVITE LINK / SHARE row — the code tiles copy the code; heroes get the room instead.)
   // R3 oct8: the CODE itself is copyable — tap the tiles, get the five letters (a friend on a call wants the code). Same brief ✓ beat, its own timer.

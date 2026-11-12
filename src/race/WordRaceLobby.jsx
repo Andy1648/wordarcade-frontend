@@ -9,6 +9,7 @@ import Mascot from '../components/Mascot';
 import { RACE_WORDS } from './config';
 import './WordRace.css';
 import FitText from '../components/kit/FitText.jsx';
+import useAutoStartSec from '../hooks/useAutoStartSec.js';
 
 const MAX_RACERS = 5;
 
@@ -25,6 +26,7 @@ export default function WordRaceLobby({
   onLeave,
 }) {
   const isHost = room.hostId === myId;
+  const autoSec = useAutoStartSec(room); // a public lobby starts on its own (server clock)
   // Only THIS room's queue state counts — never a leftover from a quick match the player left.
   const queue = race && race.status === 'queue' && race.code === room.code ? race : null;
   const [now, setNow] = useState(() => Date.now());
@@ -79,6 +81,9 @@ export default function WordRaceLobby({
         ))}
       </ol>
 
+      {!queue && autoSec != null ? (
+        <p className="wr-status" role="status" data-testid="room-autostart">{autoSec > 0 ? `STARTS IN ${autoSec}s` : 'STARTING…'}</p>
+      ) : null}
       {queue ? (
         <p className="wr-status" role="status">
           {fillIn > 0
@@ -97,7 +102,7 @@ export default function WordRaceLobby({
           </button>
           {humans < 2 && <p className="wr-status">BOTS FILL THE GRID TO 3.</p>}
         </div>
-      ) : (
+      ) : autoSec != null ? null : (
         <p className="wr-status" role="status">WAITING FOR HOST…</p>
       )}
       {serverError && <p className="wr-toast is-reject">{serverError}</p>}
