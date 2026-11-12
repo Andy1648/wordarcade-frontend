@@ -9,6 +9,7 @@ import Mascot from '../components/Mascot';
 import { RACE_WORDS } from './config';
 import './WordRace.css';
 import FitText from '../components/kit/FitText.jsx';
+import useAnnounceHero from '../cast/useAnnounceHero.js';
 
 const MAX_RACERS = 5;
 
@@ -23,7 +24,9 @@ export default function WordRaceLobby({
   onStart,
   onAddBot,
   onLeave,
+  onSetHero,
 }) {
+  useAnnounceHero(room, myId, onSetHero); // the other racers draw ME as my hero (nov12)
   const isHost = room.hostId === myId;
   // Only THIS room's queue state counts — never a leftover from a quick match the player left.
   const queue = race && race.status === 'queue' && race.code === room.code ? race : null;

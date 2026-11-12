@@ -5,12 +5,11 @@ import { spendGems } from '../progress/gems.js';
 import { itemPurchased } from '../lib/events.js';
 
 /** Buy + equip a priced hero (an ELITE or a priced crew member). Returns { ok, reason? } — reason 'unknown' |
- *  'unaffordable' | 'locked' (a GOLD not earned yet — GOLD is never for sale — a CHASE drop, or HOLLOW after its sale). A free or already-owned hero just equips. */
+ *  'unaffordable' | 'locked' (a GOLD not earned yet — GOLD is never for sale — or HOLLOW after its sale). A free or already-owned hero just equips. */
 export function buyHero(id) {
   const e = ALL_HEROES.find((x) => x.id === id);
   if (!e) return { ok: false, reason: 'unknown' };
   if (e.gold) { if (!ownsHero(id)) return { ok: false, reason: 'locked' }; writeMain(id); return { ok: true }; } // GOLD: earned, never sold
-  if (e.chase) { if (!ownsHero(id)) return { ok: false, reason: 'locked' }; writeMain(id); return { ok: true }; } // CHASE: only a drop, never sold
   if (!e.price) { writeMain(id); return { ok: true }; }
   const owned = ownedHeroes();
   if (!owned.includes(id) && !ownsHero(id)) {

@@ -6128,6 +6128,20 @@ html[data-beat='true'] .cb-category-display {
   background: rgba(154, 26, 255, 0.1);
   clip-path: polygon(0 30%, 100% 6%, 100% 20%, 0 44%);
 }
+/* THE HEAT (nov6): the band behind the prompt takes the streak's tier colour, deeper per tier. Quiet at T0. One opacity
+   transition on a tier change, nothing at rest. Same colours as the board edge (FeelLadder.css). */
+.wb-heat {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 20%, 0 44%);
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.game-stage[data-heat='1'] .wb-heat { background: #2EFFE0; opacity: 0.1; }
+.game-stage[data-heat='2'] .wb-heat { background: #FFE94A; opacity: 0.16; }
+.game-stage[data-heat='3'] .wb-heat { background: #FF6B3D; opacity: 0.24; }
+.game-stage[data-heat='4'] .wb-heat { background: #FF4FA3; opacity: 0.34; }
+@media (prefers-reduced-motion: reduce) { .wb-heat { transition: none; } }
 .wb-bandrule {
   position: absolute;
   left: 0;
@@ -7343,6 +7357,32 @@ html[data-beat='true'] .wb-belly {
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .player-status,
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-lastlife { display: none; }
 }
+
+/* ===== BLITZ ON A PHONE IS ONE SCREEN (Andy nov9: "the screen requires scrolling - only scroll inside") =====
+   At 360x640 the stacked round ran 190px past the bottom (YOUR ANSWERS + THE RACE under the fold) and the whole app scrolled.
+   Now the stage is the screen: the category, the clock and the field hold still, SEND sits beside the field again, the race
+   rows tighten, and the answers + race rail is the one box that scrolls if a big lobby still outgrows it. Static, nothing animates. */
+@media (max-width: 480px) {
+  .game-wrap:has(> .game-stage--blitz .cb-round) { height: var(--vvh, 100dvh); min-height: 0; box-sizing: border-box; }
+  .game-stage--blitz:has(.cb-round) { display: flex; flex-direction: column; max-height: 100%; min-height: 0; box-sizing: border-box; }
+  .game-stage--blitz .cb-round { display: flex; flex-direction: column; align-items: stretch; flex: 1 1 auto; min-height: 0; gap: 10px; }
+  .game-stage--blitz .cb-round-main { flex: none; }
+  .game-stage--blitz .cb-round-side { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .game-stage--blitz .cb-round-side > * { flex-shrink: 0; }
+  .game-stage--blitz .cb-round .game-input-row { flex-direction: row; }
+  .game-stage--blitz .cb-round .game-input-row .game-input { flex: 1 1 auto; width: auto; min-width: 0; }
+  .game-stage--blitz .cb-round .game-input-row .game-send-btn { width: auto; }
+  .game-stage--blitz .cb-round .cb-category-display { padding: 12px; }
+  .game-stage--blitz .rj-list { --rh: 28px; --rg: 4px; }
+}
+/* a short phone: the category steps down one size so THE RACE shows under your answers, and the game-over mascot gives up the
+   last few px the card ran over (it scrolled 5px at 360x640) */
+@media (max-width: 480px) and (max-height: 720px) {
+  .game-stage--blitz .cb-round .cb-category-display { font-size: var(--fs-h2); }
+  .game-over-mascot .mascot-img { height: clamp(60px, 10vh, 150px); }
+  .game-over-card { padding-top: 6px; padding-bottom: 6px; }
+}
+
 /* desktop sizing for the plates: the board's centre column is `auto`, so the plate area sets its own width (the rails are
    1fr and give way); the bomb takes the height the four plate rows leave in the ring row */
 @media (min-width: 701px) {

@@ -5,7 +5,7 @@
 //   * the GEAR inside the tier: evenly among the tier's gears you don't own yet (all of them evenly once you own every one),
 //     so for a collection that has none of them each gear is the tier's share ÷ its count — what `items` lists;
 //   * SHINY: the flat ticket chance (060 lb_ticket_roll, markRollsCore SHINY_CHANCE);
-//   * CHASE HEROES (DRAKE / MAGMA / FACET) never come from a pack: they stay drop-only from gear rolls you pay gems for.
+//   * never a hero: heroes are bought with gems only (nov12), no roll, pack or wheel gives one.
 import { ROLL_MARKS, SHINY_CHANCE } from '../progress/markRollsCore.js';
 import { ticketTierOdds } from '../progress/rollTickets.js';
 
