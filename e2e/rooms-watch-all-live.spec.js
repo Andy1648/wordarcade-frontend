@@ -9,7 +9,7 @@
 // No page errors, no red console errors.
 //
 // OPT-IN (a running backend + a build pointed at it):
-//   HOUSE_TIME_SCALE=0.5 HOUSE_TICK_MS=1000 PORT=3912 node server.js                   (chain-reaction-backend)
+//   HOUSE_TIME_SCALE=0.3 HOUSE_TICK_MS=1000 PORT=3912 node server.js                   (chain-reaction-backend)
 //   VITE_BACKEND_WS_URL=ws://localhost:3912 npx vite build --outDir dist-live && npx vite preview --outDir dist-live --port 4395
 //   LIVE_BASE=http://localhost:4395 npx playwright test e2e/rooms-watch-all-live.spec.js --workers=1
 import { test, expect } from '@playwright/test';
@@ -121,7 +121,7 @@ for (const { mode, lobby, start, input, label } of [
   });
 }
 
-test('HOUSE ROOM reads as a real room: small while waiting, players drift in one at a time, the host starts it (no countdown), two humans play together', async ({ browser }) => {
+test('HOUSE ROOM reads as a real room: small while waiting, players drift in one at a time, the same STARTS IN clock as any public room, two humans play together', async ({ browser }) => {
   test.setTimeout(240000);
   const a = await viewerOnMenu(browser, 'HOUSEGUEST');
   const b = await freshPage(browser, 'phone', 'HOUSEPAL', { width: 390, height: 844 });
@@ -133,7 +133,8 @@ test('HOUSE ROOM reads as a real room: small while waiting, players drift in one
   await expect(row).toBeVisible({ timeout: 60000 });
   const code = await row.getAttribute('data-code');
   const listed = Number(((await row.locator('[data-col="count"]').textContent()) || '').split('/')[0]);
-  expect(listed, 'an unvisited house room is small').toBeLessThanOrEqual(2);
+  expect(listed, 'a house lobby drifts between 1 and 6 players').toBeGreaterThanOrEqual(1);
+  expect(listed).toBeLessThanOrEqual(6);
   await expect(row.locator('[data-col="action"]')).not.toContainText(/STARTS/);
   if (SHOTS) await a.screenshot({ path: `${SHOTS}/house-list.png` });
   // the second human is on the list too, ready to join the same room
@@ -145,9 +146,8 @@ test('HOUSE ROOM reads as a real room: small while waiting, players drift in one
   await a.locator('.room-wrap').waitFor({ timeout: 30000 });
   await rowB.click();
   await b.locator('.room-wrap').waitFor({ timeout: 30000 });
-  // a lobby like any other: WAITING FOR HOST, no countdown
-  await expect(a.getByText('WAITING FOR HOST')).toBeVisible();
-  await expect(a.getByTestId('room-autostart')).toHaveCount(0);
+  // a lobby like any other public one (nov12): the same visible auto-start clock a real room shows
+  await expect(a.getByTestId('room-autostart')).toContainText(/STARTS IN|STARTING/, { timeout: 15000 });
   if (SHOTS) await a.screenshot({ path: `${SHOTS}/house-waiting.png` });
   // watch the roster until the game starts: it only ever grows by one at a time
   const counts = [];
@@ -164,4 +164,31 @@ test('HOUSE ROOM reads as a real room: small while waiting, players drift in one
   await a.locator('.game-leave-btn').first().click();
   await b.locator('.game-leave-btn').first().click();
   for (const p of [a, b]) expect(p.errors, 'no page errors, no red console errors').toEqual([]);
+});
+
+test('A LIVING LIST: more games PLAYING than lobbies waiting; a watcher follows a live house Word Bomb game to its end', async ({ browser }) => {
+  test.setTimeout(420000);
+  const viewer = await viewerOnMenu(browser, 'HOUSEWATCHER');
+  await openList(viewer);
+  const playing = viewer.locator('[data-testid="browser-room-row"][data-status="playing"]');
+  const waiting = viewer.locator('[data-testid="browser-room-row"][data-status="waiting"]');
+  // the house warms up: live games outnumber open lobbies (the list refreshes every 5 s)
+  await expect.poll(async () => (await playing.count()) > (await waiting.count()) && (await playing.count()) >= 3, { timeout: 120000, intervals: [2000] }).toBe(true);
+  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/living-list.png` });
+  // pick a live Word Bomb game and watch it
+  const row = playing.filter({ hasText: 'WORD BOMB' }).first();
+  await expect(row).toBeVisible({ timeout: 60000 });
+  await row.click();
+  await expect(viewer.getByTestId('watch-chip')).toBeVisible({ timeout: 20000 });
+  await expect(viewer.locator('.game-input')).toHaveCount(0);
+  const snap = () => viewer.locator('.wb-top').innerText().catch(() => '');
+  const first = await snap();
+  await expect.poll(snap, { timeout: 90000, intervals: [1500] }).not.toBe(first); // real turns: the prompt moves on
+  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/watching-house-game.png` });
+  // ...to its end: the result shows, then the house takes the room back to its lobby and the watcher gets a seat
+  await expect(viewer.locator('.game-over-overlay, .room-wrap').first()).toBeVisible({ timeout: 300000 });
+  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/house-game-over.png` });
+  await expect(viewer.locator('.room-wrap')).toBeVisible({ timeout: 60000 });
+  if (SHOTS) await viewer.screenshot({ path: `${SHOTS}/house-back-to-lobby.png` });
+  expect(viewer.errors, 'no page errors, no red console errors').toEqual([]);
 });
