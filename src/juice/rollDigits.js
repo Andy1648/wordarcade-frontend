@@ -26,6 +26,7 @@ function column(pool, i) {
   if (pool[i]) return pool[i];
   const col = document.createElement('span');
   col.className = 'rd-col';
+  col.setAttribute('aria-hidden', 'true');
   const strip = document.createElement('span');
   strip.className = 'rd-strip';
   for (let t = 0; t < TURNS * 10; t += 1) {
@@ -69,6 +70,14 @@ export function rollDigits(el, text, { delay = 0, ms = ROLL_MS } = {}) {
   if (!pool) { pool = []; POOL.set(el, pool); }
   el.textContent = '';
   el.setAttribute('data-rolling', '');
+  // the FULL figure stays readable mid-roll: a visually-hidden copy (first, so a text read / screen reader gets the real
+  // number); the columns and separators beside it are aria-hidden
+  if (!pool.sr) {
+    pool.sr = document.createElement('span');
+    pool.sr.className = 'rd-sr';
+  }
+  pool.sr.textContent = target;
+  el.appendChild(pool.sr);
   let n = 0;
   let left = 0;
   const land = () => {
@@ -79,7 +88,10 @@ export function rollDigits(el, text, { delay = 0, ms = ROLL_MS } = {}) {
   };
   for (const p of plan) {
     if (!p.digit) {
-      el.appendChild(document.createTextNode(p.ch));
+      const sep = document.createElement('span');
+      sep.setAttribute('aria-hidden', 'true');
+      sep.textContent = p.ch;
+      el.appendChild(sep);
       continue;
     }
     const { col, strip } = column(pool, n);

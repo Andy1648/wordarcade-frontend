@@ -8,7 +8,25 @@
   flex-direction: column;
   height: 1em;
   line-height: 1em;
-  clip-path: inset(-0.1em -0.5em); /* a sliver of vertical bleed for the stroke; the neighbour cells sit a full 1em away */
+  /* clip the strip VERTICALLY with overflow (not clip-path): clip-path only hides paint, so the 20-cell strip still counted
+     as layout overflow and made its scroll container (the K.O. results card) scrollable for the length of every roll.
+     overflow-y: clip clips without making a scroll container and keeps the strip out of the ancestors' scrollable
+     overflow; x stays visible so the stroke / hard shadow may spill sideways. The 0.1em padding/negative-margin pair
+     keeps a sliver of vertical bleed for the stroke without changing the column's layout box (the neighbour cells sit a
+     full 1em away). */
+  overflow-x: visible;
+  overflow-y: clip;
+  padding-block: 0.1em;
+  margin-block: -0.1em;
+}
+/* the full figure, readable by text reads and screen readers while the strips (aria-hidden) roll */
+.rd-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .rd-strip { display: block; }
 .rd-c { display: block; height: 1em; line-height: 1em; text-align: center; }
