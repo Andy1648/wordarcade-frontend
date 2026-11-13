@@ -7,8 +7,9 @@
 //   r.current.bump()            // a gain particle landed: 1 → 1.12 → 1 in 180 ms (NIGHT oct8 #3)
 //   r.current.countNext(ms)     // the NEXT gain counts over `ms` (gains/gainPlan countMs), then back to the default
 //
-// The pill is VALUE-DRIVEN: when `value` goes up it counts up (700 ms, number turns yellow while it
-// counts, then lands with a bump), the icon squashes, a sheen crosses, and a "+N" pops above — gains
+// The pill is VALUE-DRIVEN: when `value` goes up its digits ROLL to the new figure (juice/rollDigits — design research
+// move 11: odometer strips, staggered, an overshoot stop, landing with the gain's count; number yellow while it counts,
+// then lands with a bump), the icon squashes, a sheen crosses, and a "+N" pops above — gains
 // inside 750 ms of each other STACK into one pop with a ×n chip. When `value` goes down it counts
 // down (320 ms), the icon dips and a "−N" drops below. Every number is formatNum'd; the pill's own figure is
 // formatShort'd (always abbreviated) and SHRINKS TO FIT (Andy oct8): the free width and one glyph's width are
@@ -31,6 +32,15 @@ export const PILL_KINDS = {
   levels: { label: 'LEVELS', icon: 'levels', tone: 'purple' },
 };
 export const POP_STACK_MS = 750;
+// a burst of small gains (gems landing ~85 ms apart) COALESCES into one roll: each gain waits this long and a newer one
+// replaces it, so the figure rolls once to the final total (the +N stack and the bump still answer every gain)
+export const ROLL_COALESCE_MS = 90;
+// ROLLING DIGITS is a LAZY chunk (nov12, payload ratchet): the pill is on the menu's first paint, the roller is not — the
+// pill fetches juice/rollDigits.js on its first gain (the gain's own coalesce delay covers the fetch). ROLL_MS is inlined
+// for the same reason; it mirrors juice/rollPlan.js ROLL_MS.
+const ROLL_MS = 700;
+let rollMod = null;
+const loadRoll = () => (rollMod ||= import('../../juice/rollDigits.js'));
 // the gain BUMP (gains/gainPlan.js BUMP_MS / BUMP_SCALE — inlined: the pill is on the menu's first paint, the gain
 // module is not)
 const BUMP_MS = 180;
@@ -73,7 +83,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
     }
   };
   const nextMs = useRef(0); // a one-shot count duration for the next gain (GainLayer's first landing sets it)
-  const st = useRef({ prev: value, pop: { at: -1e9, dir: 0, amt: 0, n: 0 }, landDir: 1, gaining: false, denyT: 0 });
+  const st = useRef({ prev: value, pop: { at: -1e9, dir: 0, amt: 0, n: 0 }, landDir: 1, gaining: false, rolling: false, denyT: 0 });
 
   const tween = useRef(null);
   if (!tween.current) {
@@ -82,6 +92,11 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       onFrame: (v) => {
         const el = numRef.current;
         if (!el) return;
+        if (st.current.rolling) {
+          // a GAIN rolls its digits (rollDigits owns the text); the tween only keeps the counting state + the landing
+          if (!el.classList.contains('is-counting')) el.classList.add('is-counting');
+          return;
+        }
         const t = formatShort(v);
         if (el.textContent !== t) {
           el.textContent = t; // a text write only when the figure changes
@@ -93,6 +108,7 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
       onDone: () => {
         const el = numRef.current;
         if (!el) return;
+        st.current.rolling = false;
         el.classList.remove('is-counting');
         if (st.current.gaining) {
           st.current.landDir = -st.current.landDir;
@@ -145,6 +161,35 @@ export const KitPill = forwardRef(function KitPill({ kind = 'gems', value = 0, l
     const gainMs = nextMs.current > 0 ? nextMs.current : COUNT_GAIN_MS;
     nextMs.current = 0;
     tween.current.to(value, up ? gainMs : COUNT_SPEND_MS);
+    const num = numRef.current;
+    if (num) {
+      if (up) {
+        // the roll lands WITH the count (a long gain flight delays it, never stretches it past ROLL_MS); rapid gains
+        // coalesce into one roll (ROLL_COALESCE_MS — a newer roll supersedes a pending one)
+        const text = formatShort(value);
+        s.rolling = true;
+        fit(text);
+        // a newer gain or a spend while the chunk is still fetching supersedes this roll (the token)
+        const tok = (num.__rollTok = (num.__rollTok || 0) + 1);
+        const t0 = performance.now();
+        const delay = Math.max(ROLL_COALESCE_MS, gainMs - ROLL_MS);
+        loadRoll().then(({ rollDigits }) => {
+          if (num.__rollTok !== tok) return;
+          rollDigits(num, text, { delay: Math.max(0, delay - (performance.now() - t0)), ms: Math.min(ROLL_MS, gainMs) });
+        }, () => {
+          // the chunk failed to load: the gain counts in plain text as it did before the roll existed
+          rollMod = null;
+          if (num.__rollTok !== tok) return;
+          s.rolling = false;
+          num.textContent = text;
+        });
+      } else {
+        // a spend counts down in plain text: a roll still landing (or still loading) must not write over it
+        s.rolling = false;
+        num.__rollTok = (num.__rollTok || 0) + 1;
+        num.__rollId = (num.__rollId || 0) + 1;
+      }
+    }
     if (up) {
       fx(sqRef.current, FX.squashIcon);
       fx(sheenRef.current, FX.sheen);
