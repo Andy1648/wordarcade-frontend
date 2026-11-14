@@ -131,7 +131,7 @@ import useMediaQuery from '../lib/useMediaQuery';
 import { formatNum, formatShort } from '../format';
 import { hasPlayedBefore } from '../visitHistory';
 import { V3, SEASON2 } from '../progress/season';
-import { leagueOf, LEAGUE_ART } from '../leaderboard/leagues.js';
+import { leagueOf, leagueMove, LEAGUE_ART } from '../leaderboard/leagues.js';
 import { takeRefundNote } from '../progress/cosmeticsRetire';
 import DailyTile from './contracts/DailyTile.jsx'; // DAILY CONTRACTS + the streak flame (joins the rail)
 import { PAYMENTS_ON } from '../payments/flag.js'; // PAID GEMS (default OFF): the lazy pick-up below
@@ -1480,6 +1480,28 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // nov2 (Andy: titles out → RANK LEAGUES): the plate names your board league (leagues.js), UNRANKED with no board place
   const myLeague = leagueOf(boardRank);
   const titleName = myLeague ? myLeague.name : 'UNRANKED';
+  // nov12 (Andy "have the profile button on menu design correspond with league ranking"): the plate wears its league's trim,
+  // and the first menu after a PROMOTION powers its badge up once (a finite transform/opacity one-shot; never on a first look
+  // or a drop). The last rank the plate showed is the one storage key it reads.
+  const plateLeagueRef = useRef(null);
+  useEffect(() => {
+    if (!(Number(boardRank) >= 1)) return;
+    let prev = null;
+    try { prev = Number(localStorage.getItem('taw.plateRank')) || null; localStorage.setItem('taw.plateRank', `${Math.floor(Number(boardRank))}`); } catch { /* blocked */ }
+    const m = leagueMove(prev, boardRank);
+    const el = plateLeagueRef.current;
+    if (!m || m.dir !== 'up' || !el || typeof el.animate !== 'function') return;
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.style.willChange = 'transform, opacity';
+    const a = el.animate([
+      { transform: 'scale(.35) rotate(-14deg)', opacity: 0 },
+      { transform: 'scale(1.5) rotate(6deg)', opacity: 1, offset: 0.48 },
+      { transform: 'scale(.92) rotate(-2deg)', opacity: 1, offset: 0.74 },
+      { transform: 'scale(1) rotate(0)', opacity: 1 },
+    ], { duration: 640, delay: 700, easing: 'cubic-bezier(.25,1.2,.4,1)', fill: 'backwards' });
+    const off = () => { el.style.willChange = ''; };
+    a.finished.then(off, off);
+  }, [boardRank]);
   // NEW HERO! (oct18, was the profile chip's line): heroes earned since your last look wait in the profile. The check
   // reads the cast data, so it loads after paint (its own chunk, as the chip was) and re-checks when the popup closes.
   const [heroNews, setHeroNews] = useState(false);
@@ -1498,7 +1520,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   }, []);
   const face = <img className="hp-profplate-face" src={mainFaceSrc(mainId)} alt="" aria-hidden="true" draggable="false" />;
   const rankPlate = (
-    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" onClick={openProfile} disabled={navigating} aria-label={`Open your profile — ${titleName}${myLeague ? ' league' : ''}`} data-nav="profile" data-testid="profile-plate">
+    <button type="button" className="menu-xp-rank hp-rankplate hp-profplate" data-league={myLeague ? myLeague.key : 'unranked'} onClick={openProfile} disabled={navigating} aria-label={`Open your profile — ${titleName}${myLeague ? ' league' : ''}`} data-nav="profile" data-testid="profile-plate">
       {/* oct26 AVATAR FRAMES: the round frame you wear goes round your face (none worn = the plain tile, as before) */}
       {avFrame
         ? <Suspense fallback={face}><AvatarFrame src={mainFaceSrc(mainId)} className="hp-profplate-face">{face}</AvatarFrame></Suspense>
@@ -1506,7 +1528,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       <span className="hp-profplate-t">
         <span className={`hp-rankplate-k${heroNews ? ' is-new' : ''}`}>{heroNews ? 'NEW HERO!' : 'PROFILE'}</span>
         <span className="hp-rankplate-n" data-league={myLeague ? myLeague.key : 'unranked'}>
-          {myLeague ? <img className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="512" height="512" alt="" aria-hidden="true" draggable="false" /> : null}
+          {myLeague ? <img ref={plateLeagueRef} className="hp-plate-league" src={LEAGUE_ART[myLeague.key]} width="320" height="320" alt="" aria-hidden="true" draggable="false" /> : null}
           {titleName}
         </span>
       </span>
