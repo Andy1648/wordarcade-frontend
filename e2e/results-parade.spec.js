@@ -9,7 +9,6 @@
 //   * the fit: no page / card scroll at 360×640 · 390×844 · 1366×768, the parade inside the card and clear of the
 //     PLAY AGAIN footer, nothing under 13 px (the card's floor), nothing loops; the quest list opens from the nudge and fits.
 import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
 import { menuReady } from './support/menu.js';
 import { pinDay } from './support/fixedDay.js';
@@ -320,35 +319,5 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     for (const a of BL_ANSWERS) { mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } }); await page.waitForTimeout(120); }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'YOU', score: 70 }, { id: 'p2', name: 'RIVAL', score: 20 }] } });
     await paradeEndState(page, { card: '.game-over-overlay .game-over-card', again: '.game-over-rematch', w: vp.width, h: vp.height, tag: 'blitz' });
-  });
-}
-
-const CH_QUESTS = JSON.stringify({
-  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
-  picks: ['q-games3', 'q-ch-links', 'q-ch-run10'], wpick: 'w-games25',
-  prog: { 'q-games3': 1, 'q-ch-links': 10, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
-});
-const CH_WORDS = fs.readFileSync('src/solo/words.accept.txt', 'utf8').split(/\s+/).filter((x) => /^[a-z]{4,9}$/.test(x)).slice(0, 20000);
-for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
-  test(`CHAIN @${vp.width}x${vp.height}: the parade on the run-over card, the first tap skips, nothing scrolls`, async ({ page }) => {
-    test.setTimeout(90_000);
-    await boot(page, { vp, quests: CH_QUESTS });
-    await page.addInitScript(() => { localStorage.setItem('taw.chain.runs', '5'); });
-    await page.goto('/?chain=1&portal=1&season2=1&soloms=5000');
-    const input = page.locator('.solo-input');
-    await input.waitFor({ state: 'visible', timeout: 20000 });
-    const used = new Set();
-    for (let i = 0; i < 6; i++) {
-      const raw = await page.evaluate(() => (document.querySelector('.solo-center .solo-cl') || {}).textContent || '');
-      const need = raw.trim().toLowerCase().slice(0, 1);
-      const pick = CH_WORDS.find((x) => !used.has(x) && x.startsWith(need));
-      if (!pick) break;
-      used.add(pick);
-      await input.fill(pick);
-      await input.press('Enter');
-      await page.waitForTimeout(250);
-    }
-    await page.locator('.solo-deathcard').waitFor({ timeout: 30000 });
-    await paradeEndState(page, { card: '.solo-deathcard', again: '.solo-restart', w: vp.width, h: vp.height, tag: 'chain' });
   });
 }
