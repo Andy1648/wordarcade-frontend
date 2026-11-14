@@ -324,10 +324,24 @@ html[data-beat='true'] .homepage-logo {
 }
 /* nov2 RANK LEAGUES: the plate's name wears its league's ink (LeagueBadge.css colours) and its painted badge in front */
 .hp-rankplate-n:has(.hp-plate-league) { display: inline-flex; align-items: center; gap: 4px; }
-.hp-plate-league { width: 1.25em; height: 1.25em; object-fit: contain; flex: none; margin: -0.15em 0; }
+.hp-plate-league { width: 1.7em; height: 1.7em; object-fit: contain; flex: none; margin: -0.42em -0.05em -0.42em -0.2em; } /* bigger art, same line box: the plate never grows */
+/* nov12: the PROFILE plate wears its league (Andy "correspond with league ranking"): a trim in the league's ink and a deep
+   tint of it, climbing in loudness with the league; UNRANKED stays the neutral panel. Flat colours, the hard black shadow kept. */
+.hp-profplate[data-league] { --lg-ink: #5a1499; --lg-bg: #1a0b2e; background: var(--lg-bg); border-color: #000; box-shadow: var(--b4) var(--b4) 0 #000, inset 0 0 0 var(--b3, 3px) var(--lg-ink); }
+.hp-profplate[data-league='bronze'] { --lg-ink: #D98A4E; --lg-bg: #2a160c; }
+.hp-profplate[data-league='silver'] { --lg-ink: #8fa6c9; --lg-bg: #171c2a; }
+.hp-profplate[data-league='gold'] { --lg-ink: #FFC23D; --lg-bg: #2a1d05; }
+.hp-profplate[data-league='crystal'] { --lg-ink: #2EFFE0; --lg-bg: #062a2a; }
+.hp-profplate[data-league='master'] { --lg-ink: #C77BFF; --lg-bg: #24093d; }
+.hp-profplate[data-league='titan'] { --lg-ink: #FF6B3D; --lg-bg: #2e0b06; }
+.hp-profplate[data-league='champion'] { --lg-ink: #FF4FA3; --lg-bg: #33062a; }
+.hp-profplate[data-league='legend'] { --lg-ink: #FFE94A; --lg-bg: #3a1a00; box-shadow: var(--b4) var(--b4) 0 #000, inset 0 0 0 var(--b3, 3px) #FFE94A, inset 0 0 0 calc(var(--b3, 3px) * 2) #FF4FA3; }
+.hp-profplate[data-league='unranked'] { --lg-ink: #3a2a55; }
 .hp-rankplate-n[data-league='bronze'] { color: #D98A4E; }
 .hp-rankplate-n[data-league='silver'] { color: #D4DAE3; }
 .hp-rankplate-n[data-league='crystal'] { color: #2EFFE0; }
+.hp-rankplate-n[data-league='gold'] { color: #FFC23D; }
+.hp-rankplate-n[data-league='legend'] { color: #FFE94A; }
 .hp-rankplate-n[data-league='master'] { color: #C77BFF; }
 .hp-rankplate-n[data-league='titan'] { color: #FF6B3D; }
 .hp-rankplate-n[data-league='champion'] { color: #FF4FA3; }
