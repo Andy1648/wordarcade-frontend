@@ -282,6 +282,35 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     setPhase('run');
   }, [phase, rows]); // eslint-disable-line react-hooks/exhaustive-deps -- one pass per row set
 
+  // ---- IN FLOW, LATER: the end card can still grow after the fit (a line that arrives a beat late — XP, a contract). A resize of
+  // the card (never a frame loop) re-checks once it has landed: still too tall → drop the next least important row and land at
+  // once (no replay).
+  useEffect(() => {
+    if (!inFlow || phase !== 'done' || typeof ResizeObserver === 'undefined') return undefined;
+    const card = cardRef && cardRef.current;
+    const el = rootRef.current;
+    if (!card || !el || !rows) return undefined;
+    const ro = new ResizeObserver(() => {
+      let over;
+      if (foldFit) over = el.getBoundingClientRect().bottom > window.innerHeight - (narrow ? 76 : 8);
+      else {
+        let sc = card.parentElement;
+        while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+        const de = document.scrollingElement || document.documentElement;
+        over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1 || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
+      }
+      if (!over) return;
+      ro.disconnect();
+      earlySkip.current = true; // the re-fit lands at its end state, no replay
+      const kinds = rows.map((r) => r.kind);
+      const drop = DROP_ORDER.find((k) => (k === 'nudge' ? !!data.nudge && !el.dataset.noNudge : kinds.includes(k)));
+      if (drop === 'nudge') { el.dataset.noNudge = '1'; setRows(rows.slice()); setPhase('fit'); return; }
+      if (drop) { const i = kinds.lastIndexOf(drop); setRows(rows.filter((_, j) => j !== i)); setPhase('fit'); }
+    });
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, [phase, rows]); // eslint-disable-line react-hooks/exhaustive-deps -- one observer per landed row set
+
   // ---- RUN: the timeline. Desktop starts on the storyboard clock; a phone waits for its tally to land.
   useEffect(() => {
     if (phase !== 'run' || !rows) return undefined;
