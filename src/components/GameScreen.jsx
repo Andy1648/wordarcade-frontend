@@ -19,6 +19,7 @@ import { useCombo } from '../hooks/useCombo';
 import { WinsHudPill, WinsEarnedTotal } from './WinsHud';
 import MissedWordHold from './MissedWordHold.jsx';
 import ResultsCard from './results/ResultsCard.jsx';
+import { recordBestStreak } from '../solo/bestStreak.js';
 import { placementOrder, xpBetween } from './results/resultsModel.js';
 import { SEASON2, V3 } from '../progress/season';
 import { progressOf, loadProgress, need as levelNeed, getRebirths } from '../progress/xp';
@@ -4529,6 +4530,12 @@ function CategoryBlitzScreen({
   }, [roundResults, breakTotalMs]);
 
   const streak = useCombo();
+  // BEST STREAK (nov12, the Word Bomb pass): this screen remounts per game, so the peak is this game's; the game-over names it
+  // and whether it beat the Blitz record.
+  const cbPeakRef = useRef(0);
+  if (!gameOver && streak.count > cbPeakRef.current) cbPeakRef.current = streak.count;
+  const [cbPeak, setCbPeak] = useState(null);
+  useEffect(() => { setCbPeak(gameOver ? recordBestStreak('blitz', cbPeakRef.current) : null); }, [!!gameOver]); // eslint-disable-line react-hooks/exhaustive-deps
   // RIVAL JUICE (Andy oct21 "more visual stimulation - that addictive feel … playing with others"; preview behind
   // ?cbjuice=1): the live race, the overtake banner and the round-end reveal. Cosmetic: reads the roster, the broadcast
   // per-rival counts, my answers and round_end only.
@@ -4868,6 +4875,11 @@ function CategoryBlitzScreen({
               </div>
               <ContractDoneLine since={gemsSince} />
             </div>
+            {cbPeak && cbPeak.run >= 2 ? (
+              <div className="cb-peak" data-heat={heatTier(cbPeak.run)} data-testid="cb-peak">
+                <b>{formatNum(cbPeak.run)}</b> BEST STREAK{cbPeak.isNew ? <i> · NEW RECORD</i> : cbPeak.best > cbPeak.run ? <i>{` · RECORD ${formatNum(cbPeak.best)}`}</i> : null}
+              </div>
+            ) : null}
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (

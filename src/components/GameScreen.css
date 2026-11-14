@@ -7401,3 +7401,43 @@ html[data-beat='true'] .wb-belly {
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts svg,
   .game-stage--wb .wb-ring.wb-ring-6up .wb-seat .game-player-hearts > * { width: 12px; height: 12px; }
 }
+
+/* ===== BLITZ: THE STREAK, LOUDER PER TIER (nov12, the Word Bomb pass — Andy: "addiction corresponding to aggression (they need
+   to feel benefits of playing)") =====
+   The HITS count above the field climbs a size per tier; the category card takes the tier colour (a flat wash on a pseudo-element,
+   one opacity transition per change, quiet at T0); the game-over names the game's best streak and NEW RECORD. Nothing loops. */
+.game-stage--blitz .cb-combo-host .combo-count { font-size: var(--fs-panel); }
+.game-stage--blitz .cb-combo-host .combo-fire .combo-count { font-size: var(--fs-h2); }
+.game-stage--blitz .cb-combo-host .combo-max .combo-count { font-size: var(--fs-h2); }
+.game-stage--blitz .cb-category-display { isolation: isolate; } /* the wash sits over the card's fill, under its words */
+.game-stage--blitz .cb-category-display::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.game-stage--blitz[data-heat='1'] .cb-category-display::after { background: #2EFFE0; opacity: 0.08; }
+.game-stage--blitz[data-heat='2'] .cb-category-display::after { background: #FFE94A; opacity: 0.12; }
+.game-stage--blitz[data-heat='3'] .cb-category-display::after { background: #FF6B3D; opacity: 0.18; }
+.game-stage--blitz[data-heat='4'] .cb-category-display::after { background: #FF4FA3; opacity: 0.26; }
+@media (prefers-reduced-motion: reduce) { .game-stage--blitz .cb-category-display::after { transition: none; } }
+.cb-peak {
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.1;
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  margin: 4px 0;
+}
+.cb-peak b { font-size: var(--fs-h2); font-weight: 400; }
+.cb-peak i { font-style: normal; white-space: nowrap; display: inline-block; }
+.cb-peak[data-heat='2'] { color: #FFE94A; }
+.cb-peak[data-heat='3'] { color: #FF6B3D; }
+.cb-peak[data-heat='4'] { color: #FF4FA3; }
