@@ -25,7 +25,14 @@ for (const [w, h] of [[390, 844], [1366, 768]]) {
     await page.locator('.game-input').waitFor({ state: 'visible', timeout: 15000 });
     await page.waitForTimeout(5500); // the round countdown
     if (SHOTS) await page.screenshot({ path: `${SHOTS}/blitz-${w}-s0.png` });
-    const send = async (n, from) => { for (let i = from; i < n; i++) { mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: ANSWERS[i] } }); await page.waitForTimeout(200); } };
+    // one answer at a time, each counted before the next (the HITS count is the live readout; below 2 there is no badge)
+    const send = async (n, from) => {
+      for (let i = from; i < n; i++) {
+        mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: ANSWERS[i] } });
+        if (i + 1 >= 2) await expect(page.locator('.cb-combo-host .combo-count')).toHaveText(String(i + 1));
+        else await page.waitForTimeout(250);
+      }
+    };
     await send(5, 0);
     await expect(page.locator('.cb-combo-host .combo-count')).toHaveText('5');
     await expect(page.locator('.game-stage--blitz')).toHaveAttribute('data-heat', '2');
