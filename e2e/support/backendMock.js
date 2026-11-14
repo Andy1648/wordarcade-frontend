@@ -123,7 +123,13 @@ export async function mirrorReduceMotion(page) {
  * }>}
  */
 export async function installBackendMock(page, opts = {}) {
-  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false, autoName = false, freshReveal = false } = opts;
+  const { autoConnect = true, openDelayMs = 0, newTutorials = false, seedReduceMotion = true, patchNotes = false, autoName = false, freshReveal = false, quests = false } = opts;
+
+  // QUESTS (nov13): off in the suite (playwright.config storageState 'taw.e2e.noQuests') — a date-seeded quest finishing
+  // mid-spec would add a QUEST DONE credit to a card being measured. A spec about quests opts in ({ quests: true }).
+  await page.addInitScript((on) => {
+    if (on) { try { localStorage.removeItem('taw.e2e.noQuests'); } catch { /* blocked */ } } else { window.__TAW_NO_QUESTS = true; }
+  }, quests);
 
   // EVERY VISITOR GETS A NAME (Andy oct13): the menu claims a generated board name on the first key / tap. Every spec
   // written before it expects an UNCLAIMED browser (the CLAIM prompt, "named: false" boards), so it is off unless a

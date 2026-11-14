@@ -82,15 +82,29 @@ function worthSaying(t) {
   return q(t.to) > q(t.from);
 }
 
+// QUESTS (progression phase 1) ride the same events: every bus event is forwarded, in arrival order, to the lazy quests
+// half (one dynamic import, then a resolved promise — .then callbacks run in registration order, so FIFO holds).
+let questsMod = null;
+function forwardToQuests(e) {
+  if (!questsMod) questsMod = import('../questsLive.js');
+  questsMod.then((m) => m.handle(e), () => { questsMod = null; });
+}
+
+// ---- the toasts hold while an end card's PROGRESS PARADE plays it in the flow (results/ResultsParade.jsx sets the flag)
+const paradeUp = () => {
+  try { return typeof document !== 'undefined' && !!document.documentElement.dataset.paradeUp; } catch { return false; }
+};
+
 /** Handle one bus event. */
 export function handle(ev) {
-  // e2e: a layout spec that measures an end card sets this so today's random contracts can't add a CONTRACT DONE line mid-run
-  // (mirrors window.__TAW_NO_ACHIEVEMENT_GRANT)
-  if (typeof window !== 'undefined' && window.__TAW_NO_CONTRACTS) return;
   const e = { ...ev };
   if (e.type === 'word' && !e.band && e.word) {
     try { e.band = rarityOf(String(e.word).trim().toLowerCase()).band; } catch { /* unknown → no band */ }
   }
+  forwardToQuests(e);
+  // e2e: a layout spec that measures an end card sets this so today's random contracts can't add a CONTRACT DONE line mid-run
+  // (mirrors window.__TAW_NO_ACHIEVEMENT_GRANT)
+  if (typeof window !== 'undefined' && window.__TAW_NO_CONTRACTS) return;
   const cur = today();
   const { state, ticks } = applyEvent(cur, e);
   if (!ticks.length) return;
@@ -116,5 +130,6 @@ export function handle(ev) {
     said.push({ kind: 'sweep', gems });
   }
   write(next);
+  if (paradeUp()) return; // the end card's parade shows the CONTRACT / STREAK KEPT row instead (in the flow, not on top)
   for (const t of said) toast(t);
 }

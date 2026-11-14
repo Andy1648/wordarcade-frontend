@@ -1,0 +1,131 @@
+/* ResultsParade.css — the PROGRESS PARADE on the results card. The card's own construction (results/ResultsCard.css):
+   flat fills, black ink, hard offset shadows, a coloured left strip per row, Bungee + Space Mono, text ≥ 14 px. Only
+   transform / opacity animate (kitPlay, from JS); nothing loops. A row waiting for its beat is opacity 0 but keeps its
+   box (so the one fit pass measures the finished parade). */
+
+/* LAPTOP: the bottom of the PLAYERS column (same grid cell, under the podium rows) */
+.rs2 .rp {
+  grid-area: players;
+  align-self: end;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8px * var(--u, 1));
+}
+/* PHONE: one column, one end layout. Until the tally lands the parade is not drawn; then the card is COLLAPSED
+   (data-parade-collapsed): the tally keeps only its summary row — GEMS + the WINS TOTAL side by side — and the parade
+   takes the freed space above it, in flow (nothing is ever laid over anything). */
+.rs2 .rp.rp--narrow { display: none; gap: 7px; }
+.rs2--narrow[data-parade-collapsed] .rp.rp--narrow { display: flex; order: 1; flex: none; }
+.rs2--narrow[data-parade-collapsed] .rp.rp--narrow[data-phase='fit'] { visibility: hidden; }
+.rs2--narrow[data-parade-collapsed] .rs2-tally > :not(.rs2-sum):not(.rp) { display: none; }
+/* the freed height is shared above and below the progress block, so the PLAY AGAIN foot keeps its bottom edge */
+.rs2--narrow[data-parade-collapsed] .rs2-tally { flex: 1 1 auto; min-height: 0; justify-content: center; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum { order: 2; flex-direction: row; align-items: stretch; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum > .rs2-gems { flex: 0 0 auto; height: 52px; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum > .rs2-total { flex: 1 1 0; }
+.rs2--narrow[data-parade-collapsed] .rs2-gems .gems-earned-srcs,
+.rs2--narrow[data-parade-collapsed] .rs2-gems .gems-earned-label { display: none; }
+
+.rp-wait { opacity: 0; }
+
+.rp-row {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  height: calc(52px * var(--u, 1));
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 4px;
+  background: #1a0b2e;
+  border: 4px solid #000;
+  border-left: 10px solid var(--rp-c, #2EFFE0);
+  box-shadow: 5px 5px 0 #000;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  color: #fff;
+}
+.rp-row--quest { --rp-c: #2EFFE0; cursor: pointer; }
+.rp-row--quest.is-done { --rp-c: #FFE94A; }
+.rp-row--xp { --rp-c: #9A1AFF; }
+.rp-row--contract { --rp-c: #FF6B3D; }
+.rp-row--league { --rp-c: #FF4FA3; }
+.rp-row[role='button']:focus-visible,
+.rp-nudge:focus-visible { outline: 4px solid #2EFFE0; outline-offset: 2px; }
+
+.rp-art { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.rp-art img { display: block; width: 40px; height: 40px; object-fit: contain; }
+.rp-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rp-k {
+  display: flex; align-items: baseline; gap: 6px; min-width: 0;
+  font-size: var(--fs-k14); line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rp-tier { flex: none; font-weight: 400; color: var(--rp-c, #2EFFE0); }
+.rp-barline { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rp-bar { position: relative; display: block; flex: 1 1 auto; min-width: 0; height: 10px; background: #0d0618; border: 3px solid #000; overflow: hidden; }
+.rp-fill { position: absolute; inset: 0; background: var(--rp-c, #2EFFE0); transform-origin: 0 50%; }
+.rp-bar--xp .rp-fill { background: #B04BFF; }
+.rp-n {
+  flex: none; min-width: 44px; text-align: right;
+  font-size: var(--fs-k18); line-height: 1; color: #fff;
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+}
+.rp-lv { font-size: var(--fs-k15); color: #FFE94A; }
+.rp-place { color: #FFE94A; }
+.rp-pips { display: flex; gap: 4px; }
+.rp-pips i { display: block; width: 22px; height: 9px; background: #0d0618; border: 3px solid #000; }
+.rp-pips i.is-on { background: #FF6B3D; }
+
+/* the DONE moment: the stamp (the kit's DONE — a painted one replaces it via questArt.js) where the count was, the wins
+   it paid at the end of its bar */
+.rp-done { flex: none; display: flex; align-items: center; justify-content: center; min-width: 58px; height: 100%; pointer-events: none; }
+.rp-stamp { position: relative; width: 58px; height: 30px; }
+.rp-stamp img { width: 64px; height: auto; display: block; }
+.rp-stamp-kit { position: absolute; left: 50%; top: 50%; transform: scale(.52); }
+.rp-pay { flex: none; font-size: var(--fs-k16); line-height: 1; color: #FFE94A; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+.rp-chip {
+  display: inline-block; padding: 3px 7px 2px;
+  font-size: var(--fs-k14); line-height: 1; color: #000;
+  background: #FFE94A; border: 3px solid #a8740c; box-shadow: 3px 3px 0 #000;
+  transform: rotate(-6deg);
+}
+.rp-chip--kept { background: #FF6B3D; border-color: #b33c14; }
+.rp-chip--promo { background: #FF4FA3; border-color: #b3226a; }
+.rp-lvup { min-width: 0; }
+.rp-league { flex: none; font-size: var(--fs-k14); }
+.rp-league .lg-badge { font-size: var(--fs-k14); }
+
+/* the NUDGE: one line, the quest closest to done — a tap opens the list */
+.rp-nudge {
+  flex: none;
+  box-sizing: border-box;
+  min-height: 44px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 12px;
+  background: #FFE94A;
+  background-size: cover;
+  background-position: center;
+  border: 4px solid #a8740c;
+  box-shadow: 5px 5px 0 #000;
+  font-family: var(--k-display);
+  text-transform: uppercase;
+  color: #000;
+  cursor: pointer;
+}
+.rp-nudge-t { font-size: var(--fs-k16); line-height: 1.1; }
+.rp-nudge-go { flex: none; font-size: var(--fs-k20); line-height: 1; }
+
+.rp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* the PARADE takes the podium's spare room: the laptop column keeps the top 3 + YOU (the phone's own rule) */
+.rs2.has-parade:not(.rs2--narrow) .rs2-prow:not(.is-me):nth-child(n+4) { display: none; }
+/* a board climb the parade's LEAGUE row already shows is not said twice in the extras */
+.rs2[data-parade-league] .bc { display: none; }
+
+.rs2--narrow .rp-row { height: 46px; padding-right: 8px; }
+.rs2--narrow .rp-art,
+.rs2--narrow .rp-art img { width: 34px; height: 34px; }
