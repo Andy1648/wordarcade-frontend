@@ -3784,3 +3784,13 @@ body:has(.sr-app) .wpm-hud {
   .fr-app .sr-hud .sr-hud-ctl { grid-area: 1 / 3; flex-direction: row; border-right: 0; }
   .fr-app .sr-hud .sr-hud-ctl .sr-hud-sound { border-left: 0; border-right: 2px solid var(--ink); }
 }
+
+/* THE STREAK CLIMBS, IN INK (nov12, the Word Bomb pass — Andy: "they need to feel benefits of playing"). The shared ladder's tiers
+   (2 / 4 / 7 / 10) on the retro-print page: T3 the number steps up a size, T4 the cell prints in RED INK (the page's one hot colour).
+   Static per tier — the page stays quiet by default; nothing animates. The results name a NEW RECORD streak in red ink. */
+.sr-hcell-streak[data-tier='3'] .sr-hval,
+.sr-hcell-streak[data-tier='4'] .sr-hval { font-size: var(--fs-panel); }
+.sr-hcell-streak[data-tier='4'] { background: var(--redink, #C8321E); color: var(--paper); }
+.sr-hcell-streak[data-tier='4'] .sr-hlabel,
+.sr-hcell-streak[data-tier='4'] .sr-hval { color: var(--paper); }
+.sr-peak-new { font-style: normal; font-weight: 700; color: var(--redink, #C8321E); }
