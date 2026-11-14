@@ -228,6 +228,16 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
       mock.pushToClient({ type: 'turn_update', payload: { currentPlayerId: ME, players: players.map((p) => ({ ...p, lives: dead.has(p.id) ? 0 : 3 })), combo: 'ing', timerSeconds: 22, usedWords: [] } });
       await page.waitForTimeout(120);
     }
+    // ROLLING DIGITS: a figure that lands on 0 (the +0 WINS / GEMS bars, a 0 tally line) never builds roll strips — a
+    // slow box caught a 0 line still rolling at the check, its strip box over RANK / WORDS (PR #635 CI, nov12)
+    await page.evaluate(() => {
+      window.__zeroRolls = [];
+      new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) {
+        if (!(n instanceof Element) || !n.classList.contains('rd-col')) continue;
+        const host = n.parentElement;
+        if (host && (host.dataset.to === '0' || host.closest('[data-wins-total="0"], [data-gems-total="0"]'))) window.__zeroRolls.push(host.className);
+      } }).observe(document.body, { childList: true, subtree: true });
+    });
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME } });
     const card = page.locator('.game-over-overlay .rs2');
     await card.waitFor();
@@ -247,6 +257,7 @@ for (const [w, h] of [[1366, 768], [390, 844]]) {
     });
     if (st.amount === 0) expect(st.totalShown, 'a +0 WINS bar is hidden').toBe(false);
     expect(st.over, 'nothing covers RANK / WORDS').toEqual([]);
+    expect(await page.evaluate(() => window.__zeroRolls), 'a figure landing on 0 never rolls').toEqual([]);
     const zeroGems = await page.evaluate(() => [...document.querySelectorAll('.rs2-gems')].filter((g) => g.getClientRects().length && g.querySelector('.gems-earned[data-gems-total="0"]')).length);
     expect(zeroGems, 'a +0 GEMS box is hidden').toBe(0);
     const d = await layoutDefects(page, { scope: '.rs2' });

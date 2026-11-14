@@ -46,11 +46,11 @@ test('nextLeague: places to climb into the band above', () => {
   assert.equal(nextLeague(0), null);
 });
 
-test('every league ships its badge and knows where its plate is', () => {
+test('every league ships its badge and knows where its name-plate tab is', () => {
   for (const l of LEAGUES) {
     assert.ok(existsSync(join(PUBLIC, LEAGUE_ART[l.key])), l.key);
     const p = LEAGUE_PLATE[l.key];
-    assert.ok(p && p.x > 0.3 && p.x < 0.7 && p.y > 0.3 && p.y < 0.7 && p.w > 0.2 && p.w < 0.6, l.key);
+    assert.ok(p && p.x > 0.35 && p.x < 0.65 && p.y > 0.7 && p.y < 0.95 && p.w > 0.2 && p.w < 0.5, l.key); // the tab: bottom-centre
   }
 });
 

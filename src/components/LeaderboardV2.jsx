@@ -212,6 +212,14 @@ const SLAM = [
   { transform: 'scale(1.18) rotate(-3deg)', opacity: 1, offset: 0.7 },
   { transform: 'scale(1) rotate(0)', opacity: 1 },
 ];
+// YOUR league badge POWERS UP once on arrival (Andy nov12 "anime, addiction": a rank-up beat, not a loop) - YOUR CLIMB's
+// badge and MY LEAGUE's: it drops in small, swells past full size with a twist, snaps back. Transform/opacity, finite.
+const POWER_UP = [
+  { transform: 'scale(.35) rotate(-14deg)', opacity: 0 },
+  { transform: 'scale(1.22) rotate(5deg)', opacity: 1, offset: 0.48 },
+  { transform: 'scale(.94) rotate(-2deg)', opacity: 1, offset: 0.74 },
+  { transform: 'scale(1) rotate(0)', opacity: 1 },
+];
 const TAG_IN = [{ transform: 'translateX(-14px) scale(.4)', opacity: 0 }, { transform: 'translateX(0) scale(1.15)', opacity: 1, offset: 0.6 }, { transform: 'translateX(0) scale(1)', opacity: 1 }];
 const SINK = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)', offset: 0.5 }, { transform: 'translateY(0)' }];
 const pulse = (base) => [{ transform: `${base} scale(1)` }, { transform: `${base} scale(1.018)`, offset: 0.5 }, { transform: `${base} scale(1)` }];
@@ -511,6 +519,8 @@ export default function LeaderboardV2({ onBack }) {
       const land = (BLOCK_AT[Number(col.dataset.place) || 0] || 0) + 420;
       kitPlay(col.querySelector('.lb2-pod-seal'), STAMP_EDGE, { duration: 340, delay: land + 760, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
     });
+    kitPlay(root.querySelector('.lb2-climb-seal'), POWER_UP, { duration: 560, delay: 900, easing: 'cubic-bezier(.25,1.2,.4,1)', fill: 'backwards' });
+    kitPlay(root.querySelector('.lb2-lg-art'), POWER_UP, { duration: 600, delay: 450, easing: 'cubic-bezier(.25,1.2,.4,1)', fill: 'backwards' });
     if (newTier) {
       const mySeal = root.querySelector('.lb2-row.is-me .lb2-seal, .lb2-col.is-me .lb2-pod-seal');
       const at = 1700 + 120 * Math.min(myMove, 8);

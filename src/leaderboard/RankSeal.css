@@ -1,20 +1,16 @@
-/* RankSeal — a place on its league's badge. Size with --seal-k (unitless; 1 = a 40px slot). The art is drawn --grow times the
-   slot (the ornate top leagues, whose plate is small) and the number sits on the plate (--px / --py, fractions of the art from
-   its centre) at a size that follows the plate (--pf). All set by RankSeal.jsx from LEAGUE_PLATE. Static at rest — the motion
-   here is ONE shine sweep per badge on appear (staggered by rank), a replay on its row's hover, and LEGEND's pop on the
-   music beat. All finite. */
+/* RankSeal — a place on its league's badge. Size with --seal-k (unitless; 1 = a 40px slot). The art fills the slot; the
+   number rides a flat plum pill centred on the badge's bottom tab (--tx / --ty from LEAGUE_PLATE), its size following the
+   slot so it reads at row size. Static at rest — the motion here is ONE shine sweep per badge on appear (staggered by rank),
+   a replay on its row's hover, and LEGEND's pop on the music beat. All finite. */
 .rseal {
   --seal-k: 1;
-  --grow: 1;
-  --px: 0;
-  --py: 0;
-  --pf: 1;
+  --tx: 50%;
+  --ty: 86%;
   position: relative;
   flex: 0 0 auto;
   width: calc(40px * var(--seal-k));
   height: calc(40px * var(--seal-k));
-  display: inline-grid;
-  place-items: center;
+  display: inline-block;
   line-height: 1;
   vertical-align: middle;
 }
@@ -25,34 +21,38 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  transform: scale(var(--grow));
 }
 .rseal-art { object-fit: contain; }
 .rseal-n {
-  position: relative;
-  left: calc(var(--px) * 40px * var(--seal-k) * var(--grow));
-  top: calc(var(--py) * 40px * var(--seal-k) * var(--grow));
+  position: absolute;
+  left: var(--tx);
+  top: var(--ty);
+  z-index: 1;
+  min-width: 46%;
+  padding: 2px 4px 1px;
+  box-sizing: border-box;
+  text-align: center;
+  background: #2a1647;
+  border: 2px solid #000;
+  border-radius: 6px;
   font-family: var(--k-display, 'Bungee', cursive); text-transform: uppercase;
   font-weight: 400;
-  font-size: var(--fs-k18);
+  font-size: var(--fs-k15);
   color: #fff;
-  -webkit-text-stroke: 4px #000;
+  -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
-  text-shadow: 2px 2px 0 #000;
-  transform: scale(calc(var(--num-k, var(--seal-k)) * var(--pf) * var(--dk, 1)));
   white-space: nowrap;
+  transform: translate(-50%, -50%) scale(var(--num-k, var(--seal-k)));
 }
-.rseal[data-digits='2'] .rseal-n { font-size: var(--fs-k15); }
-.rseal[data-digits='3'] .rseal-n { font-size: var(--fs-k13); }
-.rseal[data-digits='4'] .rseal-n { font-size: var(--fs-k13); --dk: 0.82; }
-.rseal[data-digits='5'] .rseal-n { font-size: var(--fs-k13); --dk: 0.68; letter-spacing: -0.03em; }
+.rseal[data-digits='4'] .rseal-n { font-size: var(--fs-k13); }
+.rseal[data-digits='5'] .rseal-n { font-size: var(--fs-k13); letter-spacing: -0.03em; }
 
 /* on appear ONE white glint sweeps across the badge (masked to the art, so it never lights the row). Finite,
    transform/opacity only; reduced motion skips it. */
 .rseal-shine {
   overflow: hidden;
-  -webkit-mask: var(--seal-art, url('/lb/league2-legend-v1.webp')) center / contain no-repeat;
-  mask: var(--seal-art, url('/lb/league2-legend-v1.webp')) center / contain no-repeat;
+  -webkit-mask: var(--seal-art, url('/lb/league3-legend-v2.webp')) center / contain no-repeat;
+  mask: var(--seal-art, url('/lb/league3-legend-v2.webp')) center / contain no-repeat;
 }
 .rseal-shine > i {
   position: absolute;
@@ -82,7 +82,7 @@
 }
 /* THE BEAT: the one-of-one LEGEND badge pops with the music (the menu title's pattern - a transform transition on html[data-beat]) */
 .rseal[data-league='legend'] .rseal-art { transition: transform 120ms cubic-bezier(.3, 1.6, .5, 1); }
-html[data-beat] .rseal[data-league='legend'] .rseal-art { transform: scale(calc(var(--grow) * 1.09)); }
+html[data-beat] .rseal[data-league='legend'] .rseal-art { transform: scale(1.09); }
 @media (prefers-reduced-motion: reduce) {
   .rseal-shine { display: none; }
 }
