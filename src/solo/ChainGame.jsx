@@ -2,6 +2,7 @@
 // and drives it through the shared clock hook + shell. All rules live in chain.js; this
 // file is glue + presentation.
 import { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { contractEvent } from '../progress/contracts/bus.js';
 import { createChainEngine, DEAD_END_BELOW, FEW_LEFT_BELOW, heatMul } from './chain.js';
 import { loadSoloWords, loadSoloAcceptExt } from './words.js';
 import { exampleStartingWith } from '../progress/teachExample.js';
@@ -197,6 +198,8 @@ function ChainInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
+    // QUESTS + CONTRACTS: a finished CHAIN run is a finished game (the quests settle their payout on it)
+    if (g.phase === 'over') contractEvent('game', { mode: 'chain', won: false, rivals: 0 });
   }, [g.phase]);
 
   // Live wins tally (item 2): what the run HAS BANKED so far — the same running total the end

@@ -5,6 +5,7 @@
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // working untouched; only its container is styled to sit on the page.
 import { useEffect, useRef, useState } from 'react';
+import { contractEvent } from '../progress/contracts/bus.js';
 import { formatNum } from '../format';
 import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
@@ -93,6 +94,10 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const [score, setScore] = useState(0);
   const [ante, setAnte] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  // QUESTS + CONTRACTS: a finished SAT RUSH case is a finished game (once per results page; FRENCH RUSH is not a mode)
+  useEffect(() => {
+    if (economy) contractEvent('game', { mode: 'sat', won: false, rivals: 0 });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once per finished case
   const raf = useRef(null); // the count-up controller
   const timers = useRef([]);
 

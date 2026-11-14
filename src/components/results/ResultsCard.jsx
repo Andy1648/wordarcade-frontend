@@ -13,7 +13,7 @@
 // textContent (no React render per frame); reveals are finite WAAPI one-shots (kit/motion.js — transform/opacity,
 // will-change only while playing). REDUCE MOTION lands every line at its final value at once. A tap on the card
 // fast-forwards. Nothing loops (the mockup's spinning rays, glowing own row and pulsing button are one-shots here).
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatNum, formatMultExact, formatShort } from '../../format';
 import { rollDigits, ROLL_MS } from '../../juice/rollDigits.js';
 import { heatTier } from '../../juice/ladder';
@@ -33,6 +33,9 @@ import { castFor, castByColor, castSrc, hasPose, castFrames } from '../../cast/c
 import AvatarFrame from '../../cast/AvatarFrame.jsx';
 import CastArt from '../../cast/CastArt.jsx';
 import FitText from '../kit/FitText.jsx';
+
+// THE PROGRESS PARADE (progression phase 1): XP · quests · contract · league, then the nudge — its own lazy chunk
+const ResultsParade = lazy(() => import('./ResultsParade.jsx'));
 
 const mx = (m) => `×${formatMultExact(m)}`;
 const CHIP_TONES = ['#D88BFF', '#FFC23D', '#2EFFE0', '#FF3D7F', '#FFE94A', '#B04BFF'];
@@ -127,8 +130,9 @@ function N({ to, at, ms = T.count, prefix = '', className = '' }) {
  * @param {React.ReactNode} p.learn  the PAUSE-TO-LEARN hold (loss)
  * @param {React.ReactNode} p.actions the exits row (PLAY AGAIN / MENU / offer)
  * @param {React.ReactNode} p.extras  rebirth-ready, claim prompt, near miss, try-a-mode
+ * @param {boolean} p.parade        the PROGRESS PARADE after the tally (quests / contract / league + the nudge)
  */
-export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null }) {
+export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWon, place, of, winnerName = '', modeLabel = 'WORD BOMB', me, xp, ledger, wordsWins = 0, bonusLines = [], gemsSince = 0, table = [], learn = null, actions = null, extras = null, playerColors = null, parade = true }) {
   const local = useRef(null);
   const root = cardRef || local;
   // ONE drawing (the mockup's 1366×657 sheet) scaled by --rs-k to the window; a phone gets its own stack.
@@ -155,8 +159,15 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
   const winsWalletRef = useRef(null);
   const winsNumRef = useRef(null);
   const { lines, total } = tallyLines({ wordsWins, bonusLines, ledger });
-  const winsEnd = winsNow.current;
-  const winsStart = Math.max(0, winsEnd - Math.max(0, total));
+  // a credit that lands just AFTER the card mounts (the game's QUEST DONE line — questsLive settles on the game's end event)
+  // is a new tally line: the wallet's end moves with it, its start does not (both read from the totals, never storage)
+  const totalAtMount = useRef(null);
+  if (totalAtMount.current == null) totalAtMount.current = Math.max(0, total);
+  const winsEnd = winsNow.current + Math.max(0, total - totalAtMount.current);
+  const winsStart = Math.max(0, winsNow.current - totalAtMount.current);
+  const live = useRef({ winsEnd, total });
+  live.current = { winsEnd, total };
+  const lateRef = useRef(null); // schedules a tally line that arrived after mount into the running tally
   const chain = chainOf(ledger, wordsWins, split);
   const stamp = stampFor(place, iWon);
   const bestWord = `${me.best || ''}`.toUpperCase();
@@ -181,7 +192,7 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
     const nums = [...el.querySelectorAll('.rs2-n')];
     const reveals = [...el.querySelectorAll('[data-rv]')];
     const winsN = winsNumRef.current;
-    const winsFinal = () => { if (winsN) winsN.textContent = formatShort(winsEnd); };
+    const winsFinal = () => { if (winsN) winsN.textContent = formatShort(live.current.winsEnd); };
     if (reduceMotion()) {
       winsFinal();
       el.dataset.tally = 'done';
@@ -216,17 +227,17 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
     // THE GAIN (NIGHT oct8 #3): once WINS EARNED has counted, its wins fly from the total into the WINS wallet; the
     // wallet rolls from the FIRST landing and bumps on every landing
     let rolled = false;
-    if (total > 0) {
+    {
       timers.push(setTimeout(() => {
         const src = el.querySelector('.rs2-total-num');
-        if (!src || !gainRef.current) { winsFinal(); return; }
+        if (!(live.current.total > 0) || !src || !gainRef.current) { winsFinal(); return; }
         const r = src.getBoundingClientRect(); // once, when the flight starts (never per frame)
         gainRef.current.measure();
         gainRef.current.gain({
           from: { x: r.left + r.width / 2, y: r.top + r.height / 2 },
-          amount: total,
+          amount: live.current.total,
           // ROLLING DIGITS (design research move 11): the wallet rolls to its new balance on the first landing
-          onFirstLand: () => { rolled = true; rollDigits(winsN, formatShort(winsEnd), { ms: Math.min(ROLL_MS, countMs(total)) }); },
+          onFirstLand: () => { rolled = true; rollDigits(winsN, formatShort(live.current.winsEnd), { ms: Math.min(ROLL_MS, countMs(live.current.total)) }); },
           onLand: () => kitPlay(winsWalletRef.current, BUMP, { duration: BUMP_MS, easing: 'cubic-bezier(.2,1.4,.4,1)' }),
           onDone: () => { if (!rolled) winsFinal(); }, // a roll lands on its own; never snap it
         });
@@ -243,9 +254,32 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
     }
     const lastLand = nums.reduce((m, n) => Math.max(m, (Number(n.dataset.at) || 0) + Math.min(ROLL_MS, Number(n.dataset.ms) || T.count)), 0);
     let finished = false;
+    // A LATE LINE (a credit that lands just after mount — the game's QUEST DONE): it joins the running tally at its own beat
+    // (its data-at is computed like every line's), pending + rolled like the rest, instead of appearing out of order
+    const t0 = Date.now();
+    const seen = new Set([...reveals, ...nums]);
+    lateRef.current = () => {
+      if (finished) return;
+      const left = (n) => Math.max(0, (Number(n.dataset.at) || 0) - (Date.now() - t0));
+      for (const r of el.querySelectorAll('[data-rv]')) {
+        if (seen.has(r)) continue;
+        seen.add(r);
+        reveals.push(r);
+        r.classList.add('rs2-pending');
+        timers.push(setTimeout(() => fire(r), left(r)));
+      }
+      for (const n of el.querySelectorAll('.rs2-n')) {
+        if (seen.has(n)) continue;
+        seen.add(n);
+        nums.push(n);
+        n.textContent = `${n.dataset.pre}${formatNum(0)}`;
+        timers.push(setTimeout(() => rollDigits(n, `${n.dataset.pre}${formatNum(Number(n.dataset.to) || 0)}`, { ms: Math.min(ROLL_MS, Number(n.dataset.ms) || T.count) }), left(n)));
+      }
+    };
     const finish = () => {
       if (finished) return;
       finished = true;
+      lateRef.current = null;
       for (const n of nums) n.textContent = `${n.dataset.pre}${formatNum(Number(n.dataset.to) || 0)}`;
       for (const r of reveals) { r.classList.remove('rs2-pending'); done.add(r); }
       el.dataset.tally = 'done';
@@ -261,12 +295,15 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
     };
     el.addEventListener('pointerdown', skip);
     return () => {
+      lateRef.current = null;
       for (const id of timers) clearTimeout(id);
       el.removeEventListener('pointerdown', skip);
     };
     // mount-only: the card is re-keyed per game
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // a new tally line rendered while the tally runs (before paint, so it never flashes in early)
+  useLayoutEffect(() => { if (lateRef.current) lateRef.current(); }, [lines.length]);
 
   const heroLabel = iWon
     ? `You win. Placed #${place} of ${of}.`
@@ -278,7 +315,7 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
   const pose = iWon ? 'win' : 'ko';
   const rowCast = (p) => (p.me ? myCast || castFor(p.id, true) : castByColor(resolvePlayerColor(playerColors, p.id).color));
   return (
-    <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
+    <div ref={root} className={`game-over-card rs2${narrow ? ' rs2--narrow' : ''}${learn ? ' has-learn' : ''}${parade ? ' has-parade' : ''} ${iWon ? 'go-card-win' : 'go-card-loss'}`} data-place={place} data-outcome={iWon ? 'win' : 'loss'} data-stamp={stamp.tone}>
       <div className="rs2-top">
         <div className="rs2-mode">{modeLabel}<span className="rs2-mode-n">· {formatNum(of)}P</span></div>
         <div className="rs2-wallets">
@@ -405,6 +442,7 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
             <span className="rs2-total-num" data-wins-total={total} style={{ '--len': `+${formatNum(total)}`.length }}><N to={total} at={tTotal + 80} prefix="+" /></span>
           </div>
         </div>
+        {parade && narrow ? <Suspense fallback={null}><ResultsParade cardRef={root} narrow gemsSince={gemsSince} /></Suspense> : null}
       </section>
 
       {/* ===== PLAYERS ===== */}
@@ -424,6 +462,7 @@ export default function ResultsCard({ cardRef, split = null, peakStreak = 0, iWo
           ))}
         </ol>
       </section>
+      {parade && !narrow ? <Suspense fallback={null}><ResultsParade cardRef={root} gemsSince={gemsSince} /></Suspense> : null}
 
       <div className="rs2-foot">
         <div className="rs2-extras">{extras}</div>
