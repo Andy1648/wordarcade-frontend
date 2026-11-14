@@ -185,7 +185,7 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     const parade = page.getByTestId('results-parade');
     await expect(parade).toHaveAttribute('data-phase', 'done', { timeout: 5000 });
     await page.evaluate(() => document.fonts.ready);
-    if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/end-${vp.width}x${vp.height}.png` });
+    if (process.env.SHOTS) { await page.waitForTimeout(3500); await page.screenshot({ path: `${process.env.SHOTS}/end-${vp.width}x${vp.height}.png` }); } // after the K.O. slam settles
     const m = await page.evaluate(() => {
       const c = document.querySelector('.rs2');
       const rp = document.querySelector('.rp');

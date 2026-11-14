@@ -50,6 +50,15 @@
   color: #fff;
 }
 .rp-row--quest { --rp-c: #2EFFE0; cursor: pointer; }
+/* the painted QUEST PLATE (questArt.js card, nov14): a 9-slice — the rivet corners keep their own ratio, only the plain
+   edges stretch; its painted hard shadow replaces the CSS one. The art is the plate, so no flat fill / stripe under it. */
+.rp-row--quest.has-plate {
+  background: none;
+  border: 0 solid transparent;
+  padding: 0 14px 0 10px;
+  box-shadow: none;
+  border-image: url('/quests/quest-card-v1.webp') 50 52 44 52 fill / 15px 15px 13px 15px / 0 stretch;
+}
 .rp-row--quest.is-done { --rp-c: #FFE94A; }
 .rp-row--xp { --rp-c: #9A1AFF; }
 .rp-row--contract { --rp-c: #FF6B3D; }
@@ -115,6 +124,15 @@
   text-transform: uppercase;
   color: #000;
   cursor: pointer;
+}
+/* the painted NUDGE BANNER (questArt.js nudgeBanner, nov14): a 9-slice ribbon — the folded tails keep their ratio, the
+   plain band stretches; the text sits on the band, clear of the tails. */
+.rp-nudge.has-art {
+  background: none;
+  border: 0 solid transparent;
+  box-shadow: none;
+  padding: 7px 32px 7px 36px;
+  border-image: url('/quests/nudge-banner-v1.webp') 40 175 40 175 fill / 9px 40px 9px 40px / 0 stretch;
 }
 .rp-nudge-t { font-size: var(--fs-k16); line-height: 1.1; }
 .rp-nudge-go { flex: none; font-size: var(--fs-k20); line-height: 1; }
