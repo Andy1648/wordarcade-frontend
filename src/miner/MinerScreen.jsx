@@ -29,7 +29,7 @@ import FitText from '../components/kit/FitText.jsx';
 import './Miner.css';
 
 // THE PROGRESS PARADE on the end card (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
-const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx'));
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
 import CastArt from '../cast/CastArt.jsx';
 import useSeatHeroes from '../cast/useSeatHeroes.js';

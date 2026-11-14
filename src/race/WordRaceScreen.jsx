@@ -54,7 +54,7 @@ import useSeatHeroes from '../cast/useSeatHeroes.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
 // THE PROGRESS PARADE on the race-over (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
-const ResultsParade = lazyWithReload(() => import('../components/results/ResultsParade.jsx'), 'ResultsParade');
+const ResultsParade = lazyWithReload(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null })), 'ResultsParade');
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
 
 const ACCENT = '#FFE94A';
