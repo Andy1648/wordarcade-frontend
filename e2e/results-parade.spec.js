@@ -256,3 +256,132 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     expect(q.taps, 'every button at least 44 px').toBe(0);
   });
 }
+
+// ===== EVERY OTHER MODE (nov14): the same parade on each end screen, in the card's own column ===================
+// A shared end-state check: the parade is up with its rows (+ the nudge), neither the card nor the page scrolls, nothing in
+// the parade is under 11 px, it sits inside the card, the PLAY AGAIN of that mode is on screen, and the first tap skips.
+async function paradeEndState(page, { card, again, w, h, tag }) {
+  const rp = page.getByTestId('results-parade');
+  await expect(rp).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(400);
+  await page.locator(card).first().dispatchEvent('pointerdown'); // the first tap anywhere skips to the end state (a WINNER popup may sit over it)
+  await expect(rp).toHaveAttribute('data-phase', 'done', { timeout: 6000 });
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${tag}-${w}x${h}.png` });
+  const m = await page.evaluate(({ card, again }) => {
+    const c = document.querySelector(card);
+    const rp = document.querySelector('[data-testid="results-parade"]');
+    const vis = (el) => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0; };
+    const de = document.scrollingElement;
+    const cr = c.getBoundingClientRect();
+    const pr = rp.getBoundingClientRect();
+    const a = document.querySelector(again);
+    const ar = a && a.getBoundingClientRect();
+    const small = [...rp.querySelectorAll('*')].filter((el) => vis(el) && [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim()))
+      .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 11).map((el) => el.className || el.tagName);
+    const scrollers = [...document.querySelectorAll('body *')].filter((el) => {
+      const cs = getComputedStyle(el);
+      return /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight - el.clientHeight > 2 && vis(el) && !el.matches('.sr-casefile, .sr-casefile *, .wr-standings, .mn-standings, .cb-scoreboard');
+    }).map((el) => String(el.className).split(' ')[0]);
+    return {
+      doc: de.scrollHeight - innerHeight,
+      scrollers,
+      rows: rp.querySelectorAll('.rp-row').length,
+      inCard: pr.top >= cr.top - 1 && pr.bottom <= cr.bottom + 1 && pr.left >= cr.left - 1 && pr.right <= cr.right + 1,
+      small,
+      again: !!ar && ar.top >= 0 && ar.bottom <= innerHeight + 1,
+    };
+  }, { card, again });
+  expect(m.doc, `${tag}: no page scroll`).toBeLessThanOrEqual(1);
+  expect(m.scrollers, `${tag}: nothing scrolls but a real list`).toEqual([]);
+  expect(m.rows, `${tag}: the quest rows show`).toBeGreaterThanOrEqual(1);
+  expect(m.inCard, `${tag}: the parade sits inside the end card`).toBe(true);
+  expect(m.small, `${tag}: nothing in the parade under 11 px`).toEqual([]);
+  expect(m.again, `${tag}: PLAY AGAIN on screen`).toBe(true);
+}
+
+const BL_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-bl-words', 'q-bl-win'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-bl-words': 4, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const BL_ANSWERS = ['APPLE', 'PEAR', 'PLUM', 'KIWI', 'MANGO', 'LIME', 'FIG'];
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`CATEGORY BLITZ @${vp.width}x${vp.height}: the parade on the game-over card, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: BL_QUESTS });
+    const ps = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'category-blitz', hostId: ME, difficultyKey: 'chill', players: ps } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'FRUITS', categoryId: 'fruits', rerollsRemaining: 1 } });
+    await page.locator('.game-input').waitFor({ state: 'visible', timeout: 15000 });
+    for (const a of BL_ANSWERS) { mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } }); await page.waitForTimeout(120); }
+    mock.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'YOU', score: 70 }, { id: 'p2', name: 'RIVAL', score: 20 }] } });
+    await paradeEndState(page, { card: '.game-over-overlay .game-over-card', again: '.game-over-rematch', w: vp.width, h: vp.height, tag: 'blitz' });
+  });
+}
+
+const RA_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-ra-words', 'q-ra-win'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-ra-words': 8, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const RA_WORDS = ['planet', 'rocket', 'galaxy', 'meteor', 'comet', 'orbit', 'saturn', 'nebula'];
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`WORD RACE @${vp.width}x${vp.height}: the parade on the race-over, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: RA_QUESTS });
+    const racers = [{ id: ME, name: 'YOU' }, { id: 'b1', name: 'RIVAL', isBot: true }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-race', hostId: ME, difficultyKey: 'chill', players: racers.map((r, i) => ({ ...r, isHost: i === 0 })) } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-race' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'race_start', payload: { seed: 9, variant: 'words', words: RA_WORDS, target: RA_WORDS.length, capMs: 60000, racers, serverNow: now, goAt: now + 50 } });
+    mock.pushToClient({ type: 'race_go', payload: { serverNow: now, goAt: now + 50, endsAt: now + 60000 } });
+    await page.locator('.wr-root[data-race-status="racing"]').waitFor({ timeout: 15000 });
+    for (let i = 0; i < RA_WORDS.length; i++) {
+      await page.locator('.wr-input').pressSequentially(RA_WORDS[i], { delay: 5 });
+      mock.pushToClient({ type: 'race_word_result', payload: { accepted: true, word: RA_WORDS[i], index: i } });
+      mock.pushToClient({ type: 'race_progress', payload: { racerId: ME, index: i + 1, word: RA_WORDS[i] } });
+      await page.waitForTimeout(60);
+    }
+    mock.pushToClient({ type: 'race_over', payload: { winnerId: ME, reason: 'finish', standings: [{ id: ME, name: 'YOU', place: 1, words: RA_WORDS.length }, { id: 'b1', name: 'RIVAL', place: 2, words: 3, isBot: true }] } });
+    await page.locator('.wr-over').waitFor();
+    await paradeEndState(page, { card: '.wr-over', again: '.wr-over .wr-btn-go', w: vp.width, h: vp.height, tag: 'race' });
+  });
+}
+
+const MN_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-words25', 'q-modes3'], wpick: 'w-games25',
+  prog: { 'q-games3': 2, 'q-words25': 20, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`MINER @${vp.width}x${vp.height}: the parade on the end card, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: MN_QUESTS });
+    await page.goto('/miner/play');
+    await page.locator('.lobby-continue-btn').click();
+    await mock.waitForSent('create_room');
+    mock.pushToClient({ type: 'room_created', payload: { code: 'MINE1' } });
+    const miners = [{ id: ME, name: 'ANNA', depth: 0 }, { id: 'b1', name: 'BOT', isBot: true, depth: 0 }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'MINE1', hostId: ME, gameType: 'miner', isPublic: true, players: miners } });
+    await page.getByTestId('miner-lobby').waitFor();
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'miner' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'miner_start', payload: { serverNow: now, goAt: now + 50, miners, target: 500, lives: 3 } });
+    for (let n = 1; n <= 3; n++) {
+      const t = Date.now();
+      mock.pushToClient({ type: 'miner_round', payload: { serverNow: t, round: n, prompt: 'pizza toppings', ask: 'PIZZA TOPPING', endsAt: t + 15000, roundMs: 15000 } });
+      await page.getByTestId('miner-prompt').waitFor();
+      mock.pushToClient({ type: 'miner_result', payload: { accepted: true, answer: `anchovy${n}`, ore: 'gold', depth: 50 * n, top: 3 } });
+      await page.waitForTimeout(150);
+    }
+    mock.pushToClient({ type: 'miner_over', payload: { winnerIds: [ME], reason: 'core', rounds: 3, standings: [{ id: ME, name: 'ANNA', depth: 520, best: { ore: 'gold', text: 'ANCHOVY' } }, { id: 'b1', name: 'BOT', isBot: true, depth: 200 }] } });
+    await page.getByTestId('miner-over').waitFor();
+    await paradeEndState(page, { card: '[data-testid="miner-over"]', again: '.mn-over-actions .mn-btn-go', w: vp.width, h: vp.height, tag: 'miner' });
+  });
+}

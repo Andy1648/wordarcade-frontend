@@ -594,3 +594,14 @@
    the mascot car had */
 .wr-runner { width: 36px; height: 36px; object-fit: contain; }
 .wr-runner.cast-layered { display: inline-block; }
+
+/* THE PROGRESS PARADE (nov14) on the race-over: the lanes say the result a second time (the standings list says it first), so
+   while the parade is up they step aside and the parade takes their height — nothing scrolls. */
+.wr-root[data-race-status='over']:has(.rp--flow:not(.is-loading)) .wr-lanes { display: none; }
+/* a short phone: the race-over's reaction mascot steps aside too (the same move every parade card makes), so a quest row fits */
+@media (max-height: 720px) {
+  .wr-over[data-parade-collapsed] .wr-over-hero > :first-child { display: none; }
+  .wr-over[data-parade-collapsed] { gap: 8px; }
+}
+/* while the parade is up on a phone the GEMS line keeps its total and folds its sources (Word Bomb's card does the same) */
+.wr-over[data-parade-collapsed] .gems-earned-srcs { display: none; }
