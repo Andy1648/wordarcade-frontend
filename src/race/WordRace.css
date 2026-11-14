@@ -590,6 +590,53 @@
   .wr-earn { font-size: var(--fs-panel); }
 }
 
+/* ===== THE PERFECT STREAK (nov12, the Word Bomb pass — Andy: "addiction corresponding to aggression (they need to feel benefits of
+   playing)") =====
+   The streak count rides the hero's top-right corner and climbs a size per tier (the shared ComboMeter: its finite per-hit pop,
+   the shatter at a 4+ break); the tier slam plays once per crossing in a slot above the word; the panel takes the tier colour
+   (one opacity transition, quiet at T0); the race-over names the run's best. Nothing loops at rest. */
+.wr-streak { position: absolute; top: 0; right: 0; z-index: 4; pointer-events: none; }
+.wr-streak .combo-meter { position: static; flex-direction: column; align-items: flex-end; }
+.wr-streak .combo-count { font-size: var(--fs-panel); }
+.wr-streak .combo-fire .combo-count { font-size: var(--fs-h2); }
+.wr-streak .combo-max .combo-count { font-size: var(--fs-h1); }
+.wr-feel { position: absolute; left: 0; right: 0; top: 0; height: 45%; pointer-events: none; z-index: 5; }
+@media (max-width: 600px) {
+  .wr-streak .combo-badge { padding: 3px 6px; }
+  .wr-streak .combo-label { display: none; }
+  .wr-streak .combo-max .combo-count { font-size: var(--fs-h2); }
+}
+.wr-heat {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.wr-root[data-heat='1'] .wr-heat { background: #2EFFE0; opacity: 0.06; }
+.wr-root[data-heat='2'] .wr-heat { background: #FFE94A; opacity: 0.09; }
+.wr-root[data-heat='3'] .wr-heat { background: #FF6B3D; opacity: 0.13; }
+.wr-root[data-heat='4'] .wr-heat { background: #FF4FA3; opacity: 0.18; }
+@media (prefers-reduced-motion: reduce) { .wr-heat { transition: none; } }
+.wr-peak {
+  margin: 0;
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.1;
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.wr-peak b { font-size: var(--fs-h2); font-weight: 400; }
+.wr-peak i { font-style: normal; white-space: nowrap; display: inline-block; }
+.wr-peak[data-heat='2'] { color: #FFE94A; }
+.wr-peak[data-heat='3'] { color: #FF6B3D; }
+.wr-peak[data-heat='4'] { color: #FF4FA3; }
+.wr-play > .wr-hero { align-self: stretch; } /* the hero spans the column, so the streak's corner is the column's, never the word's */
 /* nov12: the runner is the racer's own hero (CastArt: an <img>, or a layered span with its rarity aura) - the same 36px
    the mascot car had */
 .wr-runner { width: 36px; height: 36px; object-fit: contain; }
