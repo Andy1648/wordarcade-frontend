@@ -9,7 +9,7 @@ import { contractEvent } from '../progress/contracts/bus.js';
 import { formatNum } from '../format';
 
 // THE PROGRESS PARADE on the results page (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
-const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx'));
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
