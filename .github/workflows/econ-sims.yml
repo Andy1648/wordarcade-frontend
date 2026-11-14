@@ -103,6 +103,13 @@ jobs:
             echo '```'
             echo "exit code: $rc"
           } >> "$GITHUB_STEP_SUMMARY"
+          # QUESTS (nov13): the gated run above pays the quests the bot's own play finishes (--quests=real, the default);
+          # this report line is the ceiling — every daily + the weekly cleared (--quests=max). Not gated: a report.
+          SIM_SRC=src node claude/econ-oct2/final-sim.mjs --tag=ci-qmax --quests=max --no-gate > final-qmax.txt 2>&1 || true
+          {
+            echo '## QUESTS ceiling (--quests=max: every quest cleared) vs the gated table above'
+            grep -E '^\|' final-qmax.txt || true
+          } >> "$GITHUB_STEP_SUMMARY"
           if [ -n "$S2PROBES" ]; then
             echo "$S2PROBES" > s2-probes.json
             node claude/econ-oct2/s2-probes.mjs s2-probes.json "${{ github.event.inputs.hours || '10' }}" > s2-probes.txt 2>&1 || true
@@ -119,6 +126,7 @@ jobs:
           name: econ-sims-season2
           path: |
             final-run.txt
+            final-qmax.txt
             s2-probes.txt
             claude/econ-oct2/final-sim-ci.json
           retention-days: 14

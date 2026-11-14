@@ -110,7 +110,7 @@ function Card({ id, i, s, onPlay, onSwap, swapKey, phone }) {
   );
 }
 
-export default function ContractsSheet({ onClose, onPlay }) {
+export default function ContractsSheet({ onClose, onPlay, onTab = null }) {
   const [s, setS] = useState(() => today());
   const [left, setLeft] = useState(() => msToReset());
   const [gems, setGems] = useState(() => getGems());
@@ -143,6 +143,8 @@ export default function ContractsSheet({ onClose, onPlay }) {
           <header className="cx3-head">
             <KitBackButton label="MENU" ariaLabel="Back to menu" onClick={onClose} className="cx3-back" />
             <h2 className="cx3-title"><span className="cx3-title-daily">DAILY </span>CONTRACTS</h2>
+            {/* QUESTS (progression phase 1) share this door: the menu's DAILY tile opens contracts, one tab over is quests */}
+            {onTab ? <KitGhostButton tone="cyan" className="qs-tab" label="QUESTS" ariaLabel="Daily quests" onClick={onTab} data-testid="quests-tab" /> : null}
             <div className="cx3-count" aria-label={`${n} of ${s.picks.length} done today`}><b>{n}</b><span>/{s.picks.length}</span><small>TODAY</small></div>
             <div className="cx3-gems"><KitPill kind="gems" value={gems} ariaLabel={`${formatNum(gems)} gems`} /></div>
           </header>

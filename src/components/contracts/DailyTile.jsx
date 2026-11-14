@@ -15,6 +15,7 @@ import { playWipe } from '../../lib/navWipe';
 import { useSound } from '../../contexts/SoundContext';
 
 const ContractsSheet = lazy(() => import('./ContractsSheet.jsx'));
+const QuestsSheet = lazy(() => import('../quests/QuestsSheet.jsx')); // QUESTS: the sheet's second tab (same door)
 const EMPTY = { picks: ['a', 'b', 'c'], done: [] }; // three empty pips until today is dealt
 const POP = [{ transform: 'scale(1)' }, { transform: 'scale(1.3) rotate(-8deg)', offset: 0.4 }, { transform: 'scale(1) rotate(0)' }];
 
@@ -23,6 +24,7 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
   const [s, setS] = useState(() => peekToday() || EMPTY);
   const [streak, setStreak] = useState(() => getStreak().count);
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('contracts');
   const flame = useRef(null);
   // NAV WIPE (oct24): the CONTRACTS sheet opens/closes under the same pooled wipe as every major door — after
   // the commit (an effect), so the sheet is already there; purely cosmetic.
@@ -55,9 +57,13 @@ export default function DailyTile({ onPlay, navigating = false, variant = 'chip'
   const n = s.done.length;
   const of = s.picks.length;
   const label = `Daily contracts — ${n} of ${of} done · ${streak} day streak`;
+  const play = onPlay ? (id, el) => { setOpen(false); onPlay(id, el); } : null;
+  const close = () => { setOpen(false); setTab('contracts'); };
   const sheet = open ? (
     <Suspense fallback={null}>
-      <ContractsSheet onClose={() => setOpen(false)} onPlay={onPlay ? (id, el) => { setOpen(false); onPlay(id, el); } : null} />
+      {tab === 'quests'
+        ? <QuestsSheet onClose={close} onPlay={play} onTab={() => setTab('contracts')} />
+        : <ContractsSheet onClose={close} onPlay={play} onTab={() => setTab('quests')} />}
     </Suspense>
   ) : null;
   if (variant === 'icon') {
