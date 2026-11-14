@@ -252,7 +252,10 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     if (inFlow) {
       // the card's own column: neither it nor the page may scroll (it scrolls only when it is the scroller, so both are read)
       const de = document.scrollingElement || document.documentElement;
-      over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1;
+      let sc = card.parentElement; // the card may sit in a scrolling scrim (CHAIN / FUSE): that box must not scroll either
+      while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+      over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1
+        || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
     } else if (narrow) {
       over = card.scrollHeight - card.clientHeight > 0; // in flow: the one column must not scroll
     } else {
