@@ -13,9 +13,6 @@ const WORDS = ['STRAND', 'MINSTREL', 'STRIDE', 'ABSTRACT', 'STRAY', 'STREAM'];
 async function playTo(page, winnerId) {
   const mock = await installBackendMock(page);
   await page.addInitScript(() => {
-    // this spec measures the WINNER BONUS alone: today's (unpinned, date-seeded) quests could finish in this game and add
-    // their own QUEST DONE credit (results-parade.spec.js covers that line)
-    window.__TAW_NO_QUESTS = true;
     try { localStorage.setItem('taw.xp', JSON.stringify({ lv: 12, into: 0 })); localStorage.setItem('taw.claims', '[]'); } catch { /* blocked */ }
   });
   await page.goto('/?portal=1');

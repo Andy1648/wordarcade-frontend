@@ -222,7 +222,22 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     return () => { live = false; clearTimeout(t1); clearTimeout(t2); window.removeEventListener(QUESTS_RESULT, onResult); };
   }, [gemsSince]); // eslint-disable-line react-hooks/exhaustive-deps -- cardRef is the card root (stable)
 
-  useEffect(() => { if (data) { setRows(data.rows); setPhase('fit'); } }, [data]);
+  // ---- a PHONE has one column: once the tally has landed (or a tap skipped it) the tally COLLAPSES to its summary row
+  // (gems + total) and the parade takes the freed space in flow — never laid over the tally. The laptop fits straight away.
+  useEffect(() => {
+    if (!data) return undefined;
+    const card = cardRef && cardRef.current;
+    const go = () => {
+      if (narrow && card && (data.rows.length || data.nudge)) card.dataset.paradeCollapsed = '1'; // nothing to show: the tally stays
+      setRows(data.rows);
+      setPhase('fit');
+    };
+    if (!narrow || !card || card.dataset.tally === 'done') { go(); return undefined; }
+    const mo = new MutationObserver(() => { if (card.dataset.tally === 'done') { mo.disconnect(); go(); } });
+    mo.observe(card, { attributes: true, attributeFilter: ['data-tally'] });
+    return () => mo.disconnect();
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps -- one end layout per card
+  useEffect(() => () => { const card = cardRef && cardRef.current; if (card) delete card.dataset.paradeCollapsed; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- FIT (one layout pass, never per frame): drop the least important row until the parade fits its column
   useLayoutEffect(() => {
@@ -230,18 +245,17 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     const el = rootRef.current;
     const card = cardRef && cardRef.current;
     if (!el || !card) { setPhase('run'); return; }
-    let avail;
+    let over;
     if (narrow) {
-      avail = (el.parentElement ? el.parentElement.clientHeight : el.clientHeight) - 62; // the tally less the TOTAL (CSS bottom)
+      over = card.scrollHeight - card.clientHeight > 0; // in flow: the one column must not scroll
     } else {
       const pr = el.getBoundingClientRect();
       const players = card.querySelector('.rs2-players');
       const list = players && players.offsetParent !== null ? players.querySelector('.rs2-plist') : null;
       const top = list ? list.getBoundingClientRect().bottom + 10 : (card.querySelector('.rs2-tally') || el).getBoundingClientRect().top;
-      avail = pr.bottom - top;
+      over = el.scrollHeight > pr.bottom - top + 1;
     }
-    const need = el.scrollHeight;
-    if (need > avail + 1) {
+    if (over) {
       const kinds = rows.map((r) => r.kind);
       const drop = DROP_ORDER.find((k) => (k === 'nudge' ? !!data.nudge && !el.dataset.noNudge : kinds.includes(k)));
       if (drop === 'nudge') { el.dataset.noNudge = '1'; setRows(rows.slice()); return; }
@@ -329,19 +343,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     };
     // a phone shows the parade over the tally once the tally has landed (the card marks data-tally="done")
     let mo = null;
-    if (narrow && card && card.dataset.tally !== 'done') {
-      el.classList.add('is-held');
-      mo = new MutationObserver(() => {
-        if (card.dataset.tally !== 'done') return;
-        mo.disconnect();
-        mo = null;
-        el.classList.remove('is-held');
-        timers.push(setTimeout(start, 250));
-      });
-      mo.observe(card, { attributes: true, attributeFilter: ['data-tally'] });
-    } else {
-      start();
-    }
+    start();
     // TAP TO SKIP: the first press anywhere on the card lands the parade (a button — PLAY AGAIN / MENU — is never eaten)
     skipRef.current = (e) => {
       if (finished) return;

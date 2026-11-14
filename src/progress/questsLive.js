@@ -101,9 +101,18 @@ function settle(state, ev) {
   return next;
 }
 
+// e2e: quests are OFF in the suite unless a spec opts in (installBackendMock({ quests: true })) — a date-seeded quest that
+// finished mid-spec would add its own QUEST DONE credit to a card a spec is measuring. The suite's storageState carries the
+// key (playwright.config.js); production never has it.
+function offForE2e() {
+  if (typeof window === 'undefined') return false;
+  if (window.__TAW_NO_QUESTS) return true;
+  try { return localStorage.getItem('taw.e2e.noQuests') === '1'; } catch { return false; }
+}
+
 /** Handle one game event (contracts/bus.js shape). Never throws. */
 export function handle(ev) {
-  if (typeof window !== 'undefined' && window.__TAW_NO_QUESTS) return;
+  if (offForE2e()) return;
   if (!ev || !ev.type) return;
   try {
     const cur = today();

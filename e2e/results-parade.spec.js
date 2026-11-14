@@ -27,7 +27,7 @@ async function boot(page, { vp = { width: 1366, height: 768 }, motion = false, q
   await page.setViewportSize(vp);
   await pinDay(page, `${DAY}T15:00:00`);
   await page.emulateMedia({ reducedMotion: motion ? 'no-preference' : 'reduce' });
-  const mock = await installBackendMock(page);
+  const mock = await installBackendMock(page, { quests: true }); // QUESTS are off in the suite unless a spec opts in
   page.on('pageerror', (e) => { console.log(`PAGEERROR ${e.message}`); });
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.continue());
   await page.addInitScript(({ quests, motion }) => {
@@ -197,6 +197,10 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
       const again = document.querySelector('.rs2 .game-over-rematch').getBoundingClientRect();
       const foot = document.querySelector('.rs2-foot').getBoundingClientRect();
       const kids = [...rp.querySelectorAll('.rp-row, .rp-nudge')].map((n) => n.getBoundingClientRect());
+      // NOTHING HALF-COVERED: no visible tally line / podium row / summary box shares pixels with the parade
+      const hit = (a, z) => Math.min(a.right, z.right) - Math.max(a.left, z.left) > 1 && Math.min(a.bottom, z.bottom) - Math.max(a.top, z.top) > 1;
+      const others = [...c.querySelectorAll('.rs2-tally > *:not(.rp), .rs2-sum > *, .rs2-prow, .rs2-foot > *')].filter(vis);
+      const covered = others.filter((o) => kids.some((k) => hit(o.getBoundingClientRect(), k))).map((o) => o.className);
       return {
         docScroll: document.documentElement.scrollHeight - innerHeight,
         docScrollX: document.documentElement.scrollWidth - innerWidth,
@@ -205,6 +209,9 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
         clearOfFoot: kids.every((k) => k.bottom <= foot.top + 1),
         kidsInside: kids.every((k) => k.top >= r.top - 1 && k.bottom <= r.bottom + 1),
         rows: kids.length,
+        covered,
+        allSmall: [...c.querySelectorAll('*')].filter((el) => vis(el) && [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim()))
+          .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 11).map((el) => el.className || el.tagName),
         small,
         play: again.top >= 0 && again.bottom <= innerHeight,
       };
@@ -217,6 +224,8 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     expect(m.kidsInside, 'no row spills out of the parade').toBe(true);
     expect(m.rows, 'at least the quests show').toBeGreaterThanOrEqual(2);
     expect(m.small, 'no parade text under 13 px').toEqual([]);
+    expect(m.covered, 'nothing on the card is half-covered by the parade').toEqual([]);
+    expect(m.allSmall, 'nothing on the card under 11 px').toEqual([]);
     expect(m.play, 'PLAY AGAIN on screen').toBe(true);
     // the quest list, from the nudge (or a quest row when the nudge did not fit)
     const nudge = page.getByTestId('parade-nudge');

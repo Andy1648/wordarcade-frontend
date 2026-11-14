@@ -14,26 +14,20 @@
   flex-direction: column;
   gap: calc(8px * var(--u, 1));
 }
-/* PHONE: over the tally once it has landed (the TOTAL stays in view under it) */
-.rs2--narrow.has-parade .rs2-tally { position: relative; }
-.rs2 .rp.rp--narrow {
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  top: 0;
-  bottom: 62px; /* the TOTAL (52) + the tally gap — ResultsCard.css .rs2--narrow .rs2-total */
-  align-self: end; /* an abspos box honours align-self: it shrinks to its rows and sits on the TOTAL, the tally's top stays */
-  z-index: 3;
-  gap: 7px;
-  padding: 2px 6px 6px 2px;
-  background: #0d0618;
-  visibility: hidden;
-  overflow: hidden;
-}
-.rs2 .rp.rp--narrow[data-phase='fit'] { visibility: hidden; }
-.rs2 .rp.rp--narrow[data-phase='run']:not(.is-held),
-.rs2 .rp.rp--narrow[data-phase='done'] { visibility: visible; }
-.rs2 .rp.rp--narrow[data-phase='done'][data-rows=''] { visibility: hidden; }
+/* PHONE: one column, one end layout. Until the tally lands the parade is not drawn; then the card is COLLAPSED
+   (data-parade-collapsed): the tally keeps only its summary row — GEMS + the WINS TOTAL side by side — and the parade
+   takes the freed space above it, in flow (nothing is ever laid over anything). */
+.rs2 .rp.rp--narrow { display: none; gap: 7px; }
+.rs2--narrow[data-parade-collapsed] .rp.rp--narrow { display: flex; order: 1; flex: none; }
+.rs2--narrow[data-parade-collapsed] .rp.rp--narrow[data-phase='fit'] { visibility: hidden; }
+.rs2--narrow[data-parade-collapsed] .rs2-tally > :not(.rs2-sum):not(.rp) { display: none; }
+/* the freed height is shared above and below the progress block, so the PLAY AGAIN foot keeps its bottom edge */
+.rs2--narrow[data-parade-collapsed] .rs2-tally { flex: 1 1 auto; min-height: 0; justify-content: center; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum { order: 2; flex-direction: row; align-items: stretch; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum > .rs2-gems { flex: 0 0 auto; height: 52px; }
+.rs2--narrow[data-parade-collapsed] .rs2-sum > .rs2-total { flex: 1 1 0; }
+.rs2--narrow[data-parade-collapsed] .rs2-gems .gems-earned-srcs,
+.rs2--narrow[data-parade-collapsed] .rs2-gems .gems-earned-label { display: none; }
 
 .rp-wait { opacity: 0; }
 
