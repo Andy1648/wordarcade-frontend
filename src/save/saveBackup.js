@@ -94,6 +94,9 @@ export const PROGRESS_KEYS = [
   'wa_daily',
   'taw.themeRefundPending',
   'taw.bio',
+  // QUESTS (progression phase 1, nov13): today's board, the weekly's progress, the quest seed (same quests on a restored
+  // device), the modes played + the daily wins history the payout cap reads, and what was already paid (never twice)
+  'taw.quests',
 ];
 // PV10 must-fix 4: migration keys that must NOT survive from THIS browser when a restored blob lacks them.
 // Without the blob's own econ stamp the v10 migration has to re-run on the restored (older) save after the

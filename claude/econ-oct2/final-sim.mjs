@@ -12,6 +12,16 @@
 //
 //   node claude/econ-oct2/final-sim.mjs                 # all bots, 10 h, table + HARD CHECK, exit 1 on any miss
 //   node claude/econ-oct2/final-sim.mjs --hours=4 --bots=median,fast --no-gate
+//   node claude/econ-oct2/final-sim.mjs --quests=off|real|max   # QUESTS (nov13, progression phase 1) — default real
+//
+// QUESTS (progress/quests.js, the shipped pure engine): the bot's own day is dealt (3 dailies + the weekly, seeded per
+// bot), every game word / run / finished game (a RUN_WORDS run = one game, won half the time vs one rival) is folded in,
+// and every finish is PAID the way questsLive pays it — +50% of that game's wins (capped at 2× the daily average) through
+// wins.grantWins, + XP_FRAC of the current level's bar through xp.creditXp. `real` = only what the bot's play finishes
+// (the sim plays ONE mode, so a quest for another mode never finishes — a floor); `max` = every daily finishes by the
+// day's 2nd / 5th / 10th game and the weekly by the week's 30th (the ceiling: a player who clears every quest every day).
+// The HARD CHECK below runs on whichever mode is chosen; CI runs `real` (what ships for a one-mode player) and prints
+// the `max` R1 / R3 / R5 beside it as a report line.
 //
 // ----------------------------------------------------------------------------- MODEL (the python's, stated)
 // BOTS: lpm_game · wpm_game · share of play in games (unchanged) + v4's MENU keys a minute, typed BETWEEN games over the
@@ -47,6 +57,7 @@ const GATE = !args['no-gate'];
 // The mode every game word is played in. The table was cut on FUSE at MODE ×1; FUSE pays ×6 since Andy oct13 (the
 // LV50 lock pays), so the baseline is now an UNGATED ×1 mode — the same numbers the table was cut on. --mode=fuse etc.
 const SIM_MODE = typeof args.mode === 'string' ? args.mode : 'category-blitz';
+const QUESTS_MODE = ['off', 'real', 'max'].includes(args.quests) ? args.quests : 'real';
 
 // ----------------------------------------------------------------------------- STORAGE SHIM + CLOCK
 function makeStore() {
@@ -82,6 +93,7 @@ const STORE = await imp('progress/v3/store.js');
 const RBRULES = await imp('leaderboard/rebirthRules.js');
 const RBFLOW = await imp('leaderboard/rebirthFlow.js');
 const FRULES = await imp('leaderboard/finalRules.js');
+const QUESTS = await imp('progress/quests.js'); // QUESTS (nov13): the shipped pure engine
 
 // ----------------------------------------------------------------------------- WORDS
 const readWords = (f) => fs.readFileSync(path.join(SRC, 'solo', f), 'utf8').split(/\s+/).filter(Boolean);
@@ -231,6 +243,41 @@ async function simulate(bot, hours = HOURS) {
   const totalMin = hours * 60;
   let gameXpSteps = 0; // steps where the typed-letter credit alone moved the bar — must stay 0 (only accepted words pay)
   const gxMark = GXP.gameXpMark();
+  // ---- QUESTS: the bot's board, its game ends, the payouts (the questsLive rules, on the sim clock)
+  const qrng = LUCK.mulberry32(777 + bot.seed * 13);
+  const ALL = ['wb', 'blitz', 'sat', 'chain', 'fuse', 'race'];
+  let qs = QUESTS_MODE === 'off' ? null : QUESTS.deal(null, SIM_NOW, ALL, qrng);
+  let qEndMark = WINS.winsLedgerMark();
+  const qDay = { day: null, games: 0 };
+  let qWeekGames = 0;
+  let qWeek = null;
+  const qStat = { done: 0, wins: 0, xp: 0, capped: 0 };
+  const qEvent = (ev) => { if (qs) qs = QUESTS.applyEvent(QUESTS.deal(qs, SIM_NOW, ALL, qrng), ev).state; };
+  const qForce = (id) => { if (qs && QUESTS.BY_ID[id] && !qs.done.includes(id)) qs = { ...qs, done: [...qs.done, id], pending: [...(qs.pending || []), id] }; };
+  const qGameEnd = () => {
+    if (!qs) return;
+    qs = QUESTS.deal(qs, SIM_NOW, ALL, qrng);
+    if (qDay.day !== qs.day) { qDay.day = qs.day; qDay.games = 0; }
+    if (qWeek !== qs.week) { qWeek = qs.week; qWeekGames = 0; }
+    qDay.games += 1;
+    qWeekGames += 1;
+    qEvent({ type: 'game', mode: SIM_MODE, won: rng() < 0.5, rivals: 1 });
+    if (QUESTS_MODE === 'max') {
+      [2, 5, 10].forEach((g, i) => { if (qDay.games === g) qForce(qs.picks[i]); });
+      if (qWeekGames === 30) qForce(qs.wpick);
+    }
+    const gameWins = WINS.winsLedgerSince(qEndMark).filter((e) => e.mode === SIM_MODE && !/QUESTS? DONE$/.test(e.label)).reduce((a, e) => a + e.amount, 0);
+    const p0 = XP.loadProgress();
+    const { state, payouts } = QUESTS.settleGame(qs, { mode: SIM_MODE, gameWins, now: SIM_NOW, need: XP.need(p0.level) });
+    qs = state;
+    const w = payouts.reduce((a, p) => a + p.wins, 0);
+    if (w > 0) WINS.grantWins(w, payouts.length > 1 ? `${payouts.length} QUESTS DONE` : 'QUEST DONE', { mode: SIM_MODE });
+    for (const p of payouts) {
+      if (p.xp > 0) XP.saveProgress(XP.creditXp(XP.loadProgress(), p.xp).state);
+      qStat.done += 1; qStat.wins += p.wins; qStat.xp += p.xp; qStat.capped += p.capped ? 1 : 0;
+    }
+    qEndMark = WINS.winsLedgerMark();
+  };
   while (minute < totalMin) {
     // ---- the game share of this step: words bank wins; typed letters pay 0 XP (v4)
     const xpBefore = XP.loadProgress();
@@ -243,7 +290,9 @@ async function simulate(bot, hours = HOURS) {
       const prev = runWords;
       runWords += 1;
       WINS.bankWordWins({ mode: SIM_MODE, wordLength: word.length, prevWords: prev, nowWords: runWords, prevWeight: runWeight, nowWeight: (runWeight += 1) });
-      if (runWords >= RUN_WORDS) { runWords = 0; runWeight = 0; }
+      qEvent({ type: 'word', mode: SIM_MODE, word, len: word.length });
+      qEvent({ type: 'run', mode: SIM_MODE, n: runWords });
+      if (runWords >= RUN_WORDS) { runWords = 0; runWeight = 0; qGameEnd(); }
       words += 1;
     }
     letterCarry += bot.lpm * bot.game * DT;
@@ -293,7 +342,7 @@ async function simulate(bot, hours = HOURS) {
     bot: bot.id, hours,
     times: { R1: first.R1 ?? null, R3: first.R3 ?? null, R5: first.R5 ?? null, R6: first.R6 ?? null, R7: first.R7 ?? null },
     final: { level: lv(), rebirths: XP.getRebirths(), stars: STORE.getStarsV3(), power: XP.getKeyTier(), wins: WINS.getWins() },
-    all: first, words, letters, menuXp, gameXp: GXP.gameXpSince(gxMark).xp, gameXpSteps,
+    all: first, words, letters, menuXp, gameXp: GXP.gameXpSince(gxMark).xp, gameXpSteps, quests: qStat,
     server: { calls: srv.calls, grants: srv.grants, ascends: srv.ascends, replays: srv.replays, refusals: srv.refusals, violations: srv.violations.slice(0, 10), violationCount: srv.violations.length, stored: { rebirths: srv.row.rebirths, stars: srv.row.stars, level: srv.row.level } },
     spam: bot.spam ? spam : null,
   };
@@ -309,6 +358,7 @@ for (const b of BOTS.filter((x) => want.includes(x.id))) {
   results.push(r);
   console.log(`=== FINAL ${b.id.toUpperCase()} (${b.lpm}/${b.wpm} game · ${b.mkpm} menu keys/min · ${Math.round(b.game * 100)}% games) ${(Number(process.hrtime.bigint() - t) / 1e9).toFixed(1)}s`);
   console.log(`  first: ${Object.entries(r.times).map(([k, v]) => `${k} ${fmt(v)}`).join(' · ')}`);
+  if (QUESTS_MODE !== 'off') console.log(`  quests (${QUESTS_MODE}): ${r.quests.done} done · +${r.quests.wins} wins · +${Math.round(r.quests.xp)} XP · ${r.quests.capped} capped`);
   console.log(`  at ${HOURS} h: R${r.final.rebirths} ★${r.final.stars} KEY T${r.final.power} LV${r.final.level} · ${r.words} game words · menu XP ${Math.round(r.menuXp)} · server ${r.server.grants} grants / ${r.server.ascends} ascends, refused ${JSON.stringify(r.server.refusals)}, violations ${r.server.violationCount}${r.spam ? ` · spam ${r.spam.calls} calls → ${r.spam.ok} ok, ${r.spam.replaysSent} replays` : ''}`);
   if (args.ladder) { // --ladder: every rebirth's arrival + the gap since the last one (the late-R wall)
     let prev = 0;
@@ -386,7 +436,7 @@ if (violations) misses.push(`${violations} server violations (grant below the v3
 
 table.push(`| FAST ÷ MEDIAN pace (≤ ×${PACE_LIMIT}) | ${paceRows.join(' · ') || '—'} |${tbots.slice(1).map(() => '').join(' |')}`);
 table.push(`| SPAMMER vs MEDIAN | ${sp && med ? `R${sp.final.rebirths} LV${sp.final.level} vs R${med.final.rebirths} LV${med.final.level} · ${sp.spam.calls} spam calls → ${sp.spam.ok} granted` : '—'} |${tbots.slice(1).map(() => '').join(' |')}`);
-console.log('\n=== FINAL v3 TABLE (claude/progression-FINAL.md "Sim", ±20%)');
+console.log(`\n=== FINAL v3 TABLE (claude/progression-FINAL.md "Sim", ±20%) — QUESTS ${QUESTS_MODE}`);
 for (const l of table) console.log(l);
 const pass = misses.length === 0;
 console.log(`\n=== FINAL HARD CHECK: ${pass ? 'PASS' : `FAIL (${misses.length})`}`);

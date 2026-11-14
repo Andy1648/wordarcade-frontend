@@ -2,6 +2,7 @@
 // builds the pure engine, and drives it through the shared clock hook + shell. Rules
 // live in fuse.js; this file is glue + presentation.
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { contractEvent } from '../progress/contracts/bus.js';
 import '../frenzy/MechanicScale.css';
 import { createFuseEngine, FUSE_MAX_LIVES } from './fuse.js';
 import { readRecent, writeRecent } from './recentFrags.js';
@@ -293,6 +294,8 @@ function FuseInner({ data, createEngine, adapter, onExit, offerMenu }) {
   // Lazy-load the acceptance extension on run-over (never on mount) — unrelated to wins.
   useEffect(() => {
     if (g.phase === 'over') loadSoloAcceptExt();
+    // QUESTS + CONTRACTS: a finished FUSE run is a finished game (the quests settle their payout on it)
+    if (g.phase === 'over') contractEvent('game', { mode: 'fuse', won: false, rivals: 0 });
   }, [g.phase]);
   // …and remember this run's fragments for the next one (recentFrags.js)
   useEffect(() => {
