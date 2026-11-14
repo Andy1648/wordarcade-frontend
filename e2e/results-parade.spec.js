@@ -321,3 +321,67 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     await paradeEndState(page, { card: '.game-over-overlay .game-over-card', again: '.game-over-rematch', w: vp.width, h: vp.height, tag: 'blitz' });
   });
 }
+
+const RA_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-ra-words', 'q-ra-win'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-ra-words': 8, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const RA_WORDS = ['planet', 'rocket', 'galaxy', 'meteor', 'comet', 'orbit', 'saturn', 'nebula'];
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`WORD RACE @${vp.width}x${vp.height}: the parade on the race-over, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: RA_QUESTS });
+    const racers = [{ id: ME, name: 'YOU' }, { id: 'b1', name: 'RIVAL', isBot: true }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-race', hostId: ME, difficultyKey: 'chill', players: racers.map((r, i) => ({ ...r, isHost: i === 0 })) } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-race' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'race_start', payload: { seed: 9, variant: 'words', words: RA_WORDS, target: RA_WORDS.length, capMs: 60000, racers, serverNow: now, goAt: now + 50 } });
+    mock.pushToClient({ type: 'race_go', payload: { serverNow: now, goAt: now + 50, endsAt: now + 60000 } });
+    await page.locator('.wr-root[data-race-status="racing"]').waitFor({ timeout: 15000 });
+    for (let i = 0; i < RA_WORDS.length; i++) {
+      await page.locator('.wr-input').pressSequentially(RA_WORDS[i], { delay: 5 });
+      mock.pushToClient({ type: 'race_word_result', payload: { accepted: true, word: RA_WORDS[i], index: i } });
+      mock.pushToClient({ type: 'race_progress', payload: { racerId: ME, index: i + 1, word: RA_WORDS[i] } });
+      await page.waitForTimeout(60);
+    }
+    mock.pushToClient({ type: 'race_over', payload: { winnerId: ME, reason: 'finish', standings: [{ id: ME, name: 'YOU', place: 1, words: RA_WORDS.length }, { id: 'b1', name: 'RIVAL', place: 2, words: 3, isBot: true }] } });
+    await page.locator('.wr-over').waitFor();
+    await paradeEndState(page, { card: '.wr-over', again: '.wr-over .wr-btn-go', w: vp.width, h: vp.height, tag: 'race' });
+  });
+}
+
+const MN_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-words25', 'q-modes3'], wpick: 'w-games25',
+  prog: { 'q-games3': 2, 'q-words25': 20, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`MINER @${vp.width}x${vp.height}: the parade on the end card, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: MN_QUESTS });
+    await page.goto('/miner/play');
+    await page.locator('.lobby-continue-btn').click();
+    await mock.waitForSent('create_room');
+    mock.pushToClient({ type: 'room_created', payload: { code: 'MINE1' } });
+    const miners = [{ id: ME, name: 'ANNA', depth: 0 }, { id: 'b1', name: 'BOT', isBot: true, depth: 0 }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'MINE1', hostId: ME, gameType: 'miner', isPublic: true, players: miners } });
+    await page.getByTestId('miner-lobby').waitFor();
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'miner' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'miner_start', payload: { serverNow: now, goAt: now + 50, miners, target: 500, lives: 3 } });
+    for (let n = 1; n <= 3; n++) {
+      const t = Date.now();
+      mock.pushToClient({ type: 'miner_round', payload: { serverNow: t, round: n, prompt: 'pizza toppings', ask: 'PIZZA TOPPING', endsAt: t + 15000, roundMs: 15000 } });
+      await page.getByTestId('miner-prompt').waitFor();
+      mock.pushToClient({ type: 'miner_result', payload: { accepted: true, answer: `anchovy${n}`, ore: 'gold', depth: 50 * n, top: 3 } });
+      await page.waitForTimeout(150);
+    }
+    mock.pushToClient({ type: 'miner_over', payload: { winnerIds: [ME], reason: 'core', rounds: 3, standings: [{ id: ME, name: 'ANNA', depth: 520, best: { ore: 'gold', text: 'ANCHOVY' } }, { id: 'b1', name: 'BOT', isBot: true, depth: 200 }] } });
+    await page.getByTestId('miner-over').waitFor();
+    await paradeEndState(page, { card: '[data-testid="miner-over"]', again: '.mn-over-actions .mn-btn-go', w: vp.width, h: vp.height, tag: 'miner' });
+  });
+}

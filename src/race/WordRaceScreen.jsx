@@ -53,6 +53,8 @@ import CastArt from '../cast/CastArt.jsx';
 import useSeatHeroes from '../cast/useSeatHeroes.js';
 
 // H4: the WINNER popup — its own lazy chunk (shared with GameScreen), fetched only on a win.
+// THE PROGRESS PARADE on the race-over (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazyWithReload(() => import('../components/results/ResultsParade.jsx'), 'ResultsParade');
 const WinnerPopup = lazyWithReload(() => import('../components/WinnerPopup'), 'WinnerPopup');
 
 const ACCENT = '#FFE94A';
@@ -105,6 +107,8 @@ export default function WordRaceScreen({
   const heroOf = useSeatHeroes(roomPlayers, myId);
   usePlayClock(); // TIME PLAYED on the profile (Andy oct21: race time was never counted)
   const [text, setText] = useState('');
+  const overRef = useRef(null); // the race-over panel: the parade's tap-to-skip surface + its fit box
+  const [overNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
   const [shakeSeq, setShakeSeq] = useState(0);
   const inputRef = useRef(null);
   const status = race ? race.status : 'countdown';
@@ -448,7 +452,7 @@ export default function WordRaceScreen({
       )}
 
       {over && (
-        <section className="wr-over" aria-live="polite">
+        <section className="wr-over" aria-live="polite" ref={overRef}>
           {/* H4: WINNER popup — a pointer-events:none layer inside this results panel. */}
           {iWon && winnerPay && (
             <Suspense fallback={null}>
@@ -496,12 +500,14 @@ export default function WordRaceScreen({
           {/* GEMS earned this race — always its own line, never hidden (Andy oct5) */}
           <GemsEarnedLine since={gemsSince} />
           <ContractDoneLine since={gemsSince} />
+          {/* THE PROGRESS PARADE: the quests / contract / league rows this race moved, in the panel's flow */}
+          {watchOnly ? null : <Suspense fallback={null}><ResultsParade cardRef={overRef} inFlow narrow={overNarrow} gemsSince={gemsSince} /></Suspense>}
           <div className="wr-over-actions">
             {/* REBIRTH READY → ×5 FOREVER (Andy oct3): first, when the gate is reached — leaves through
                 the race's EXISTING onLeave (the room leave path); the menu runs the rebirth + ceremony. */}
             {watchOnly ? null : <RebirthReadyButton onGo={onLeave} />}
             {watchOnly ? null : (
-              <button type="button" className="wr-btn wr-btn-go" onClick={onRematch} disabled={rematchPending}>
+              <button type="button" className="wr-btn wr-btn-go" data-parade-again onClick={onRematch} disabled={rematchPending}>
                 {isHost ? 'RACE AGAIN' : 'BACK TO LOBBY'}
               </button>
             )}

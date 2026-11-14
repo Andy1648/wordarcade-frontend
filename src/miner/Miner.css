@@ -1010,3 +1010,7 @@
 /* nov12: the digger is the player's own hero (CastArt: an <img>, or a layered span with its rarity aura) */
 .mn-run-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
 .mn-over-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
+
+/* THE PROGRESS PARADE (nov14) on a phone: the pay row keeps WINS + XP + the GEMS total and folds the gem sources (Word Bomb's card
+   does the same), so it holds one line inside the card while the parade takes the room below */
+.mn-over[data-parade-collapsed] .gems-earned-srcs { display: none; }
