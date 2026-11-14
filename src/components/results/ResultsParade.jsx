@@ -159,8 +159,10 @@ function LeagueRow({ row }) {
  * @param {boolean}   p.inFlow    EVERY OTHER MODE's end card (nov14): the parade is one more block in the card's own column —
  *                                no tally to wait for, and the fit drops rows until the CARD (and the page) does not scroll.
  *                                The card gets data-parade-collapsed on a phone so its CSS can fold secondary lines.
+ * @param {boolean}   p.foldFit   with inFlow, for a page that scrolls BY DESIGN (SAT's case file under the fold): the fit keeps
+ *                                the parade above the fold instead (rows drop until its bottom is on the first screen).
  */
-export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false }) {
+export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false, foldFit = false }) {
   const mountAt = useRef(Date.now());
   const [data, setData] = useState(null); // { rows, nudge }
   const [rows, setRows] = useState(null);
@@ -249,7 +251,9 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     const card = cardRef && cardRef.current;
     if (!el || !card) { setPhase('run'); return; }
     let over;
-    if (inFlow) {
+    if (inFlow && foldFit) {
+      over = el.getBoundingClientRect().bottom > window.innerHeight - 8;
+    } else if (inFlow) {
       // the card's own column: neither it nor the page may scroll (it scrolls only when it is the scroller, so both are read)
       const de = document.scrollingElement || document.documentElement;
       let sc = card.parentElement; // the card may sit in a scrolling scrim (CHAIN / FUSE): that box must not scroll either
