@@ -283,7 +283,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         {!RU && <div className="sr-resline in">
           <span>score <b>{fmt(results.score)}</b></span>
           <span>avg ante <b>{avgAnte}</b></span>
-          <span data-testid="sr-peak">best streak <b>{results.bestStreak || 0}</b>{peak && peak.isNew ? <em className="sr-peak-new"> new record</em> : peak && peak.best > (results.bestStreak || 0) ? <em> · record {peak.best}</em> : null}</span>
+          <span data-testid="sr-peak">best streak <b>{results.bestStreak || 0}</b>{peak && peak.isNew ? <em className="sr-peak-new"> new record</em> : peak && peak.best > (results.bestStreak || 0) ? <em> · record {formatNum(peak.best)}</em> : null}</span>
           <span>mastered <b>{results.mastered || 0}</b></span>
         </div>}
 
