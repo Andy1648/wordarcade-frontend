@@ -10,7 +10,7 @@
 //     PLAY AGAIN footer, nothing under 13 px (the card's floor), nothing loops; the quest list opens from the nudge and fits.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady } from './support/menu.js';
+import { menuReady, revealMode } from './support/menu.js';
 import { pinDay } from './support/fixedDay.js';
 
 const ME = 'e2e-player';
@@ -254,5 +254,113 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     expect(q.overflow, 'no quest card overflows').toBe(0);
     expect(q.small, 'no quest-list text under 13 px').toEqual([]);
     expect(q.taps, 'every button at least 44 px').toBe(0);
+  });
+}
+
+// ===== EVERY OTHER MODE (nov14): the same parade on each end screen, in the card's own column ===================
+// A shared end-state check: the parade is up with its rows (+ the nudge), neither the card nor the page scrolls, nothing in
+// the parade is under 11 px, it sits inside the card, the PLAY AGAIN of that mode is on screen, and the first tap skips.
+async function paradeEndState(page, { card, again, w, h, tag, pageScrolls = false }) {
+  const rp = page.getByTestId('results-parade');
+  await expect(rp).toBeAttached({ timeout: 10000 });
+  if (h > 640) await expect(rp).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(400);
+  await page.locator(card).first().dispatchEvent('pointerdown'); // the first tap anywhere skips to the end state (a WINNER popup may sit over it)
+  await expect(rp).toHaveAttribute('data-phase', 'done', { timeout: 6000 });
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${tag}-${w}x${h}.png` });
+  const m = await page.evaluate(({ card, again, pageScrolls }) => {
+    const c = document.querySelector(card);
+    const rp = document.querySelector('[data-testid="results-parade"]');
+    const vis = (el) => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0; };
+    const de = document.scrollingElement;
+    const cr = c.getBoundingClientRect();
+    const pr = rp.getBoundingClientRect();
+    const a = document.querySelector(again);
+    const ar = a && a.getBoundingClientRect();
+    const small = [...rp.querySelectorAll('*')].filter((el) => vis(el) && [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim()))
+      .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 11).map((el) => el.className || el.tagName);
+    const scrollers = [...document.querySelectorAll('body *')].filter((el) => {
+      const cs = getComputedStyle(el);
+      return /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight - el.clientHeight > 2 && vis(el) && !el.matches('.sr-casefile, .sr-casefile *, .wr-standings, .mn-standings, .cb-scoreboard')
+        && !(pageScrolls && el.matches('.sr-screen')); // SAT's results page scrolls BY DESIGN: the CASE FILE lives under the fold
+    }).map((el) => String(el.className).split(' ')[0]);
+    return {
+      doc: de.scrollHeight - innerHeight,
+      scrollers,
+      rows: rp.querySelectorAll('.rp-row').length,
+      nudge: rp.querySelectorAll('.rp-nudge').length,
+      inCard: pr.top >= cr.top - 1 && pr.bottom <= cr.bottom + 1 && pr.left >= cr.left - 1 && pr.right <= cr.right + 1,
+      small,
+      again: !!ar && ar.top >= 0 && ar.bottom <= innerHeight + 1,
+      fold: pr.bottom <= innerHeight + 1,
+    };
+  }, { card, again, pageScrolls });
+  expect(m.fold, `${tag}: the parade is on the first screen`).toBe(true);
+  expect(m.doc, `${tag}: no page scroll`).toBeLessThanOrEqual(1);
+  expect(m.scrollers, `${tag}: nothing scrolls but a real list`).toEqual([]);
+  // 360x640: the parade fits what room the card has (rows drop before the nudge, the nudge last) — its job there is never to
+  // scroll, and a full card may show nothing. Every larger screen shows the quest rows.
+  if (h > 640) expect(m.rows, `${tag}: the quest rows show`).toBeGreaterThanOrEqual(1);
+  else test.info().annotations.push({ type: 'parade-360', description: `${tag}: ${m.rows} rows, ${m.nudge} nudge` });
+  expect(m.inCard, `${tag}: the parade sits inside the end card`).toBe(true);
+  expect(m.small, `${tag}: nothing in the parade under 11 px`).toEqual([]);
+  expect(m.again, `${tag}: PLAY AGAIN on screen`).toBe(true);
+}
+
+const BL_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-bl-words', 'q-bl-win'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-bl-words': 4, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const BL_ANSWERS = ['APPLE', 'PEAR', 'PLUM', 'KIWI', 'MANGO', 'LIME', 'FIG'];
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`CATEGORY BLITZ @${vp.width}x${vp.height}: the parade on the game-over card, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: BL_QUESTS });
+    const ps = [{ id: ME, name: 'YOU', isHost: true }, { id: 'p2', name: 'RIVAL' }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'category-blitz', hostId: ME, difficultyKey: 'chill', players: ps } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'category-blitz' } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'round_start', payload: { round: 1, timerSeconds: 60, category: 'FRUITS', categoryId: 'fruits', rerollsRemaining: 1 } });
+    await page.locator('.game-input').waitFor({ state: 'visible', timeout: 15000 });
+    for (const a of BL_ANSWERS) { mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } }); await page.waitForTimeout(120); }
+    mock.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'YOU', score: 70 }, { id: 'p2', name: 'RIVAL', score: 20 }] } });
+    await paradeEndState(page, { card: '.game-over-overlay .game-over-card', again: '.game-over-rematch', w: vp.width, h: vp.height, tag: 'blitz' });
+  });
+}
+
+const SAT_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-sat-caps', 'q-modes3'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-sat-caps': 4, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const satContext = (loc, sel) => loc.evaluate((el, s) => { const i = el.querySelector(s); return el.textContent.replace(i ? i.textContent : '', '').replace(/\s+/g, ' ').trim(); }, sel);
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`SAT RUSH @${vp.width}x${vp.height}: the parade on the results page, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await boot(page, { vp, quests: SAT_QUESTS });
+    await page.goto('/?satRush=1&portal=1&season2=1');
+    await (await revealMode(page, 'sat-rush')).click();
+    await page.getByRole('button', { name: /BRIEFING/ }).click();
+    await page.locator('.sr-setup .sr-btn').click();
+    await page.locator('.sr-brief-page').waitFor();
+    const n = await page.locator('.sr-brief-card').count();
+    const briefed = [];
+    for (let i = 0; i < n; i++) {
+      const s = page.locator('.sr-brief-card').nth(i).locator('.sr-brief-sentence');
+      briefed.push({ word: (await s.locator('.sr-brief-fill').innerText()).trim().toLowerCase(), context: await satContext(s, '.sr-brief-fill') });
+    }
+    await page.getByRole('button', { name: 'Start the run' }).click();
+    await page.locator('.sr-slots').waitFor();
+    let last = '';
+    for (let k = 0; k < n; k++) {
+      await expect.poll(async () => (await page.locator('.sr-sentence').isVisible()) && (await satContext(page.locator('.sr-sentence'), '.sr-blank')) !== last, { timeout: 15000 }).toBe(true);
+      last = await satContext(page.locator('.sr-sentence'), '.sr-blank');
+      const t = briefed.find((b) => b.context === last);
+      await page.keyboard.type(t.word, { delay: 15 });
+    }
+    await page.locator('.sr-respage').waitFor({ timeout: 20000 });
+    await paradeEndState(page, { card: '.sr-respage', again: '.sr-respage [data-parade-again]', w: vp.width, h: vp.height, tag: 'sat', pageScrolls: true });
   });
 }

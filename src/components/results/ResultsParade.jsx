@@ -156,8 +156,13 @@ function LeagueRow({ row }) {
  * @param {React.Ref} p.cardRef   the results card root (the tap-to-skip surface + the PLAY AGAIN bump)
  * @param {boolean}   p.narrow    the phone stack: the parade takes the tally's place once the tally has landed
  * @param {number}    p.gemsSince the gems ledger mark for this game (contracts)
+ * @param {boolean}   p.inFlow    EVERY OTHER MODE's end card (nov14): the parade is one more block in the card's own column —
+ *                                no tally to wait for, and the fit drops rows until the CARD (and the page) does not scroll.
+ *                                The card gets data-parade-collapsed on a phone so its CSS can fold secondary lines.
+ * @param {boolean}   p.foldFit   with inFlow, for a page that scrolls BY DESIGN (SAT's case file under the fold): the fit keeps
+ *                                the parade above the fold instead (rows drop until its bottom is on the first screen).
  */
-export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }) {
+export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false, foldFit = false }) {
   const mountAt = useRef(Date.now());
   const [data, setData] = useState(null); // { rows, nudge }
   const [rows, setRows] = useState(null);
@@ -232,7 +237,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
       setRows(data.rows);
       setPhase('fit');
     };
-    if (!narrow || !card || card.dataset.tally === 'done') { go(); return undefined; }
+    if (!narrow || !card || inFlow || card.dataset.tally === 'done') { go(); return undefined; }
     const mo = new MutationObserver(() => { if (card.dataset.tally === 'done') { mo.disconnect(); go(); } });
     mo.observe(card, { attributes: true, attributeFilter: ['data-tally'] });
     return () => mo.disconnect();
@@ -246,7 +251,16 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     const card = cardRef && cardRef.current;
     if (!el || !card) { setPhase('run'); return; }
     let over;
-    if (narrow) {
+    if (inFlow && foldFit) {
+      over = el.getBoundingClientRect().bottom > window.innerHeight - (narrow ? 76 : 8); // a phone keeps the corner cog's row clear
+    } else if (inFlow) {
+      // the card's own column: neither it nor the page may scroll (it scrolls only when it is the scroller, so both are read)
+      const de = document.scrollingElement || document.documentElement;
+      let sc = card.parentElement; // the card may sit in a scrolling scrim (CHAIN / FUSE): that box must not scroll either
+      while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+      over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1
+        || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
+    } else if (narrow) {
       over = card.scrollHeight - card.clientHeight > 0; // in flow: the one column must not scroll
     } else {
       const pr = el.getBoundingClientRect();
@@ -267,6 +281,35 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     }
     setPhase('run');
   }, [phase, rows]); // eslint-disable-line react-hooks/exhaustive-deps -- one pass per row set
+
+  // ---- IN FLOW, LATER: the end card can still grow after the fit (a line that arrives a beat late — XP, a contract). A resize of
+  // the card (never a frame loop) re-checks once it has landed: still too tall → drop the next least important row and land at
+  // once (no replay).
+  useEffect(() => {
+    if (!inFlow || phase !== 'done' || typeof ResizeObserver === 'undefined') return undefined;
+    const card = cardRef && cardRef.current;
+    const el = rootRef.current;
+    if (!card || !el || !rows) return undefined;
+    const ro = new ResizeObserver(() => {
+      let over;
+      if (foldFit) over = el.getBoundingClientRect().bottom > window.innerHeight - (narrow ? 76 : 8);
+      else {
+        let sc = card.parentElement;
+        while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+        const de = document.scrollingElement || document.documentElement;
+        over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1 || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
+      }
+      if (!over) return;
+      ro.disconnect();
+      earlySkip.current = true; // the re-fit lands at its end state, no replay
+      const kinds = rows.map((r) => r.kind);
+      const drop = DROP_ORDER.find((k) => (k === 'nudge' ? !!data.nudge && !el.dataset.noNudge : kinds.includes(k)));
+      if (drop === 'nudge') { el.dataset.noNudge = '1'; setRows(rows.slice()); setPhase('fit'); return; }
+      if (drop) { const i = kinds.lastIndexOf(drop); setRows(rows.filter((_, j) => j !== i)); setPhase('fit'); }
+    });
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, [phase, rows]); // eslint-disable-line react-hooks/exhaustive-deps -- one observer per landed row set
 
   // ---- RUN: the timeline. Desktop starts on the storyboard clock; a phone waits for its tally to land.
   useEffect(() => {
@@ -302,7 +345,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
       kitPlay(n, RISE, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
       scoreTick(total > 1 ? i / (total - 1) : 1);
       if (n.classList.contains('rp-nudge')) {
-        const again = card && card.querySelector('.game-over-rematch');
+        const again = card && card.querySelector('.game-over-rematch, [data-parade-again]');
         if (again) kitPlay(again, BUMP, { duration: 200, easing: 'ease-out' });
         return;
       }
@@ -377,7 +420,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
   const noNudge = rootRef.current && rootRef.current.dataset.noNudge;
   const list = rows || [];
   return (
-    <section ref={rootRef} className={`rp${narrow ? ' rp--narrow' : ''}${data ? '' : ' is-loading'}`} aria-label="Your progress this game" data-testid="results-parade" data-phase={phase} data-rows={list.map((r) => r.kind).join(',')}>
+    <section ref={rootRef} className={`rp${narrow ? ' rp--narrow' : ''}${inFlow ? ' rp--flow' : ''}${data ? '' : ' is-loading'}`} aria-label="Your progress this game" data-testid="results-parade" data-phase={phase} data-rows={list.map((r) => r.kind).join(',')}>
       {list.map((r, i) => {
         const tap = r.kind === 'quest';
         return (

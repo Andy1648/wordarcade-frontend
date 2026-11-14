@@ -3784,3 +3784,23 @@ body:has(.sr-app) .wpm-hud {
   .fr-app .sr-hud .sr-hud-ctl { grid-area: 1 / 3; flex-direction: row; border-right: 0; }
   .fr-app .sr-hud .sr-hud-ctl .sr-hud-sound { border-left: 0; border-right: 2px solid var(--ink); }
 }
+
+/* THE PROGRESS PARADE (nov14) on the results page: the parade keeps to the first screen, so while it is up the page tightens —
+   smaller gaps, and the exits share rows (the primary on its own line, MENU / TRY side by side under it). Static. */
+.sr-respage:has(.rp--flow:not(.is-loading)) { gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+.sr-respage:has(.rp--flow:not(.is-loading)) .sr-results-actions { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.sr-respage:has(.rp--flow:not(.is-loading)) .sr-results-actions > * { flex: 1 1 auto; }
+.sr-respage:has(.rp--flow:not(.is-loading)) .sr-results-actions > [data-parade-again],
+.sr-respage:has(.rp--flow:not(.is-loading)) .sr-results-actions > .rr-ready-btn { flex-basis: 100%; }
+.sr-respage:has(.rp--flow:not(.is-loading)) .sr-dead { margin-bottom: 0; }
+/* on a phone (data-parade-collapsed) the per-source wins lines fold away — the total, XP and GEMS lines stay — like every other
+   mode's tally under the parade */
+.sr-respage[data-parade-collapsed] .sr-winsline[data-wins-line] { display: none; }
+.sr-respage[data-parade-collapsed] .sr-results-actions { gap: 6px; }
+/* a SHORT phone (360x640): the cross-mode TRY offer steps aside while the parade is up (the parade's own nudge is the "what next"),
+   the stamp and the result plate tighten — so a quest row fits the first screen above the corner cog */
+@media (max-height: 720px) {
+  .sr-respage[data-parade-collapsed] .try-mode-row { display: none; }
+  .sr-respage[data-parade-collapsed] .sr-dead { font-size: var(--fs-h2); }
+  .sr-respage[data-parade-collapsed] .sr-hero { padding-top: 8px; padding-bottom: 8px; }
+}

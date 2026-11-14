@@ -129,3 +129,22 @@
 .rs2--narrow .rp-row { height: 46px; padding-right: 8px; }
 .rs2--narrow .rp-art,
 .rs2--narrow .rp-art img { width: 34px; height: 34px; }
+
+/* EVERY OTHER MODE (nov14): the parade is one more block in its end card's own column (Blitz, CHAIN / FUSE, Word Race, MINER,
+   SAT). Same rows, same timings; the fit pass drops rows until neither the card nor the page scrolls. */
+.rp.rp--flow { position: relative; display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; flex: none; margin: 4px 0; text-align: left; }
+.rp.rp--flow.is-loading { display: none; }
+.rp.rp--flow[data-phase='fit'] { visibility: hidden; }
+.rp--flow .rp-row { height: 48px; }
+/* PHONE (data-parade-collapsed, set by the parade once it has rows): the tally keeps its summary — the WINS TOTAL, the XP + GEMS
+   line — and its per-source lines fold away (the same move Word Bomb's card makes); the reaction mascot steps down a size. The
+   freed height is the parade's. */
+[data-parade-collapsed] .wins-earned-line { display: none; }
+[data-parade-collapsed] .game-over-mascot .mascot-img { height: 64px; }
+[data-parade-collapsed] .game-over-mascot { margin-bottom: 0; }
+/* a SHORT phone (360x640): the reaction mascot steps aside and the best-streak line is one compact row of body type */
+@media (max-height: 720px) {
+  [data-parade-collapsed] .game-over-mascot { display: none; }
+  [data-parade-collapsed] .cb-peak { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); -webkit-text-stroke: 0; margin: 0; }
+  [data-parade-collapsed] .cb-peak b { font-size: var(--fs-body); }
+}

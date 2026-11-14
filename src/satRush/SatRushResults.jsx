@@ -4,9 +4,12 @@
 // count up on the shared JUICE.CELEBRATION timings (same staged sequence Category
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // working untouched; only its container is styled to sit on the page.
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { contractEvent } from '../progress/contracts/bus.js';
 import { formatNum } from '../format';
+
+// THE PROGRESS PARADE on the results page (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
@@ -77,6 +80,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const RU = (ui && ui.results) || null;
   const speak = !!(ui && ui.stamps); // FRENCH RUSH reads words aloud (its pack has its own stamps)
   const [copied, setCopied] = useState(false);
+  const pageRef = useRef(null); // the results page: the parade's tap-to-skip surface + its fit box
+  const [pageNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
   // economy=false (FRENCH RUSH, a standalone study link): no wins / gems / rebirth / cross-mode offers —
   // just the result, the case file and the way to go again.
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
@@ -170,7 +175,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
 
   return (
     <div className="sr-screen sr-results">
-      <div className="sr-respage">
+      <div className="sr-respage" ref={pageRef}>
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
         <div className="sr-dead">
           {finite && !results.complete ? (RU ? RU.out : 'OUT OF LIVES') : RU ? RU.done : 'CASE CLOSED'}
@@ -223,7 +228,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
               {RU ? RU.replay(unsettled) : `Replay the ${unsettled} that got away`}
             </button>
           )}
-          <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} onClick={onAgain}>
+          <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} data-parade-again onClick={onAgain}>
             {RU ? RU.again : finite ? 'New case' : 'Run it back'}
           </button>
           {/* COPY RESULTS (FRENCH RUSH): a plain-text summary to paste to a teacher */}
@@ -272,6 +277,10 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           {economy && <NearMiss mode="sat-rush" onPlay={onAgain} look="print" />}
           {offerMenu || !economy ? null : <TryModeRow current="sat-rush" />}
         </div>
+
+        {/* THE PROGRESS PARADE: the quests / contract / league rows this run moved, right under the exits (SAT only — FRENCH RUSH
+            has no economy). The page scrolls by design (the CASE FILE is under the fold), so the parade keeps to the first screen. */}
+        {economy && <Suspense fallback={null}><ResultsParade cardRef={pageRef} inFlow foldFit narrow={pageNarrow} gemsSince={gemsSince} /></Suspense>}
 
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
         {/* FRENCH RUSH keeps its page to the result + the words: no ante / mastery stat line */}
