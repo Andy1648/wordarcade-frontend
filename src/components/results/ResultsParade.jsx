@@ -252,7 +252,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     if (!el || !card) { setPhase('run'); return; }
     let over;
     if (inFlow && foldFit) {
-      over = el.getBoundingClientRect().bottom > window.innerHeight - 8;
+      over = el.getBoundingClientRect().bottom > window.innerHeight - (narrow ? 76 : 8); // a phone keeps the corner cog's row clear
     } else if (inFlow) {
       // the card's own column: neither it nor the page may scroll (it scrolls only when it is the scroller, so both are read)
       const de = document.scrollingElement || document.documentElement;
