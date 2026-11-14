@@ -46,7 +46,7 @@ import useFitCard from '../hooks/useFitCard.js';
 const NO_BREAK = Object.freeze({ key: 0, count: 0 });
 
 // THE PROGRESS PARADE on the run-over card (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
-const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx'));
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 const NARROW = () => typeof window !== 'undefined' && window.innerWidth < 700;
 
 function HeroRing({ remaining, tMax, redZone, armed }) {
