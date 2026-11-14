@@ -131,8 +131,8 @@
   background: none;
   border: 0 solid transparent;
   box-shadow: none;
-  padding: 7px 32px 7px 36px;
-  border-image: url('/quests/nudge-banner-v1.webp') 40 175 40 175 fill / 9px 40px 9px 40px / 0 stretch;
+  padding: 6px 16px 6px 20px; /* the text area of the old flat nudge (12px + 4px border): a 9-slice must never re-wrap it */
+  border-image: url('/quests/nudge-banner-v1.webp') 40 175 40 175 fill / 7px 30px 7px 30px / 0 stretch;
 }
 .rp-nudge-t { font-size: var(--fs-k16); line-height: 1.1; }
 .rp-nudge-go { flex: none; font-size: var(--fs-k20); line-height: 1; }
