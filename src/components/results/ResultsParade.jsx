@@ -383,7 +383,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
         return (
           <div
             key={r.key}
-            className={`rp-row rp-row--${r.kind}${r.done ? ' is-done' : ''}${phase === 'done' || i < shown ? '' : ' rp-wait'}`}
+            className={`rp-row rp-row--${r.kind}${r.kind === 'quest' && QUEST_ART.card ? ' has-plate' : ''}${r.done ? ' is-done' : ''}${phase === 'done' || i < shown ? '' : ' rp-wait'}`}
             data-kind={r.kind}
             data-quest={r.id || undefined}
             {...(tap ? { role: 'button', tabIndex: 0, onClick: openList, onKeyDown: onKey, 'aria-label': `${r.q.text}: ${formatNum(r.to)} of ${formatNum(r.target)}${r.done ? ', done' : ''}. Open the quest list` } : {})}
@@ -394,14 +394,13 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
       })}
       {nudge && !noNudge ? (
         <div
-          className={`rp-nudge${phase === 'done' || shown > list.length ? '' : ' rp-wait'}`}
+          className={`rp-nudge${QUEST_ART.nudgeBanner ? ' has-art' : ''}${phase === 'done' || shown > list.length ? '' : ' rp-wait'}`}
           role="button"
           tabIndex={0}
           onClick={openList}
           onKeyDown={onKey}
           aria-label={`${nudge.text}. Open the quest list`}
           data-testid="parade-nudge"
-          style={QUEST_ART.nudgeBanner ? { backgroundImage: `url(${QUEST_ART.nudgeBanner})` } : undefined}
         >
           <span className="rp-nudge-t">{nudge.text}</span>
           <span className="rp-nudge-go" aria-hidden="true">▸</span>
