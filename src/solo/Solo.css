@@ -1846,5 +1846,11 @@ html[data-beat='true'] .solo-strip-big span.is-lit {
 /* THE PROGRESS PARADE (nov14) on a phone: the run-over card stops above the corner settings cog's row (16 + 44 + 12 px), so the
    taller card never runs under it; the parade's fit drops rows until the card fits what is left. */
 @media (max-width: 480px) {
-  .solo-over:has(.rp--flow) { padding-bottom: 72px; }
+  .solo-over:has(.rp--flow .rp-row, .rp--flow .rp-nudge) { padding-bottom: 72px; }
+}
+/* while the parade is up on a phone the run's per-word list (each link and what it paid) folds away like the other modes' tally
+   lines — the total, the XP + GEMS line and the parade say what the run earned; the mascot steps aside on a short screen */
+.solo-deathcard[data-parade-collapsed] .solo-death-links { display: none; }
+@media (max-height: 720px) {
+  .solo-deathcard[data-parade-collapsed] .solo-death-mascot { display: none; }
 }
