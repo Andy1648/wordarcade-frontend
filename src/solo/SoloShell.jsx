@@ -9,7 +9,7 @@
 // one-shot pops in Solo.css, fired by html[data-beat] from useBeatSync).
 import BestPass from '../juice/BestPass.jsx';
 import UnlistedSlot from '../unlisted/UnlistedSlot.jsx';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import '../components/wall-system.css'; // .solo-root adopts .wall-surface (token overrides in Solo.css)
 import './Solo.css';
 import { WinsHudPill, WinsEarnedTotal } from '../components/WinsHud';
@@ -44,6 +44,10 @@ import useFitCard from '../hooks/useFitCard.js';
 // DEAD END signal, re-homed onto the hero's rim.
 // the streak meter beside the hero never plays its own break (SoloShell shows the shatter once, for T2+)
 const NO_BREAK = Object.freeze({ key: 0, count: 0 });
+
+// THE PROGRESS PARADE on the run-over card (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
+const NARROW = () => typeof window !== 'undefined' && window.innerWidth < 700;
 
 function HeroRing({ remaining, tMax, redZone, armed }) {
   const R = 44;
@@ -426,6 +430,8 @@ export default function SoloShell({
               {/* oct22: the CONTRACT DONE chip rides the same compact row (its own line ran a 360x640 card off-screen) */}
               <ContractDoneLine since={gemsSince} />
             </div>
+            {/* THE PROGRESS PARADE: the quests / contract / league rows this run moved, in the reward column's flow */}
+            {over.bare ? null : <Suspense fallback={null}><ResultsParade cardRef={deathCardRef} inFlow narrow={NARROW()} gemsSince={gemsSince} /></Suspense>}
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">
@@ -454,6 +460,7 @@ export default function SoloShell({
             <button
               type="button"
               className={`solo-restart${over.restartArmed ? ' is-armed' : ''}`}
+              data-parade-again
               onClick={over.restart}
             >
               {over.restartLabel || 'RESTART'}
