@@ -34,6 +34,8 @@ import WordLanding, { hasLanding } from './WordLanding';
 import { useUnlistedReveal } from '../unlisted/useUnlistedReveal.js';
 // THE UNLISTED stamp: lazy — it loads when a find fires (the hook above is the only part in this chunk)
 const UnlistedStamp = lazyWithReload(() => import('../unlisted/UnlistedStamp.jsx'), 'UnlistedStamp');
+// the PROGRESS PARADE on Blitz's end card (nov14: every mode's end screen, results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazyWithReload(() => import('./results/ResultsParade.jsx'), 'ResultsParade');
 import {
   burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,
@@ -4532,6 +4534,8 @@ function CategoryBlitzScreen({
   const streak = useCombo();
   // BEST STREAK (nov12, the Word Bomb pass): this screen remounts per game, so the peak is this game's; the game-over names it
   // and whether it beat the Blitz record.
+  const cbCardRef = useRef(null); // the end card: the parade's tap-to-skip surface + its fit box
+  const [cbNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
   const cbPeakRef = useRef(0);
   if (!gameOver && streak.count > cbPeakRef.current) cbPeakRef.current = streak.count;
   const [cbPeak, setCbPeak] = useState(null);
@@ -4839,7 +4843,7 @@ function CategoryBlitzScreen({
               <WinnerPopup pay={winnerPay} />
             </Suspense>
           )}
-          <div className="game-over-card">
+          <div className="game-over-card has-parade" ref={cbCardRef}>
             {/* The mascot's emotional reaction, large and centred above the title. */}
             <Mascot
               pose={iWon ? 'celebrate' : 'panic'}
@@ -4880,6 +4884,8 @@ function CategoryBlitzScreen({
                 <b>{formatNum(cbPeak.run)}</b> BEST STREAK{cbPeak.isNew ? <i> · NEW RECORD</i> : cbPeak.best > cbPeak.run ? <i>{` · RECORD ${formatNum(cbPeak.best)}`}</i> : null}
               </div>
             ) : null}
+            {/* THE PROGRESS PARADE (nov14): the quests / contract / league rows this game moved, in the card's own column */}
+            <Suspense fallback={null}><ResultsParade cardRef={cbCardRef} inFlow narrow={cbNarrow} gemsSince={gemsSince} /></Suspense>
             {/* Aggregate row (your/top/players) only earns its space at 3+; in a
                 1v1 the scoreboard below already shows both scores. */}
             {scores.length > 2 && (
@@ -4941,7 +4947,7 @@ function CategoryBlitzScreen({
               {watchOnly ? (
                 <p className="game-watch-note">WATCHING · IF THEY REMATCH YOU GET A SEAT</p>
               ) : (
-                <button className="game-over-rematch" onClick={onRematch} disabled={rematchPending}>
+                <button className="game-over-rematch" data-parade-again onClick={onRematch} disabled={rematchPending}>
                   {rematchPending ? 'REMATCHING...' : 'REMATCH'}
                 </button>
               )}

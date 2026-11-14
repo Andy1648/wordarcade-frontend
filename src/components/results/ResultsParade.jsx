@@ -156,8 +156,11 @@ function LeagueRow({ row }) {
  * @param {React.Ref} p.cardRef   the results card root (the tap-to-skip surface + the PLAY AGAIN bump)
  * @param {boolean}   p.narrow    the phone stack: the parade takes the tally's place once the tally has landed
  * @param {number}    p.gemsSince the gems ledger mark for this game (contracts)
+ * @param {boolean}   p.inFlow    EVERY OTHER MODE's end card (nov14): the parade is one more block in the card's own column —
+ *                                no tally to wait for, and the fit drops rows until the CARD (and the page) does not scroll.
+ *                                The card gets data-parade-collapsed on a phone so its CSS can fold secondary lines.
  */
-export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }) {
+export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false }) {
   const mountAt = useRef(Date.now());
   const [data, setData] = useState(null); // { rows, nudge }
   const [rows, setRows] = useState(null);
@@ -232,7 +235,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
       setRows(data.rows);
       setPhase('fit');
     };
-    if (!narrow || !card || card.dataset.tally === 'done') { go(); return undefined; }
+    if (!narrow || !card || inFlow || card.dataset.tally === 'done') { go(); return undefined; }
     const mo = new MutationObserver(() => { if (card.dataset.tally === 'done') { mo.disconnect(); go(); } });
     mo.observe(card, { attributes: true, attributeFilter: ['data-tally'] });
     return () => mo.disconnect();
@@ -246,7 +249,11 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
     const card = cardRef && cardRef.current;
     if (!el || !card) { setPhase('run'); return; }
     let over;
-    if (narrow) {
+    if (inFlow) {
+      // the card's own column: neither it nor the page may scroll (it scrolls only when it is the scroller, so both are read)
+      const de = document.scrollingElement || document.documentElement;
+      over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1;
+    } else if (narrow) {
       over = card.scrollHeight - card.clientHeight > 0; // in flow: the one column must not scroll
     } else {
       const pr = el.getBoundingClientRect();
@@ -302,7 +309,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
       kitPlay(n, RISE, { duration: 300, easing: 'cubic-bezier(.2,1.2,.4,1)', fill: 'backwards' });
       scoreTick(total > 1 ? i / (total - 1) : 1);
       if (n.classList.contains('rp-nudge')) {
-        const again = card && card.querySelector('.game-over-rematch');
+        const again = card && card.querySelector('.game-over-rematch, [data-parade-again]');
         if (again) kitPlay(again, BUMP, { duration: 200, easing: 'ease-out' });
         return;
       }
@@ -377,7 +384,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0 }
   const noNudge = rootRef.current && rootRef.current.dataset.noNudge;
   const list = rows || [];
   return (
-    <section ref={rootRef} className={`rp${narrow ? ' rp--narrow' : ''}${data ? '' : ' is-loading'}`} aria-label="Your progress this game" data-testid="results-parade" data-phase={phase} data-rows={list.map((r) => r.kind).join(',')}>
+    <section ref={rootRef} className={`rp${narrow ? ' rp--narrow' : ''}${inFlow ? ' rp--flow' : ''}${data ? '' : ' is-loading'}`} aria-label="Your progress this game" data-testid="results-parade" data-phase={phase} data-rows={list.map((r) => r.kind).join(',')}>
       {list.map((r, i) => {
         const tap = r.kind === 'quest';
         return (
