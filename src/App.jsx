@@ -1089,6 +1089,7 @@ function App() {
   const [miner, dispatchMiner] = useReducer(minerReducer, null);
   const [minerEarned, setMinerEarned] = useState({ wins: 0 });
   const minerWordsRef = useRef(0); // my accepted answers this dig (the payout gate's count)
+  const minerPromptRef = useRef(''); // this round's list name: a refused answer is logged against it (reject log)
   const minerWeightRef = useRef(0); // their summed ore weight (the banked unit)
   // H4 WINNER PAYS: the inputs winnerPayout() needs at game over, as refs so the drain reads them
   // live. Per-game wins banked (Blitz / RACE — WB reads its round ledger), WB valid words per player
@@ -1225,6 +1226,11 @@ function App() {
         minerWordsRef.current = 0;
         minerWeightRef.current = 0;
         setMinerEarned({ wins: 0 });
+      } else if (lastMessage.type === 'miner_round') {
+        minerPromptRef.current = mp.prompt || '';
+      } else if (lastMessage.type === 'miner_result' && !mp.accepted) {
+        // MINER judges with the Blitz lists, so its misses join the Blitz reject log under the same category
+        if (mp.reason === 'not_on_list' && mp.answer && minerPromptRef.current) logRejected(mp.answer, 'blitz', minerPromptRef.current);
       } else if (lastMessage.type === 'miner_result' && mp.accepted) {
         const paid = bankMinerAnswer({
           answer: mp.answer,
