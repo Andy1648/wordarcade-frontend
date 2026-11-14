@@ -1,5 +1,5 @@
 // GameScreen.jsx
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, lazy } from 'react';
 import { lazyWithReload } from '../lib/chunkReload';
 import { useSound } from '../contexts/SoundContext';
 import Mascot from './Mascot';
@@ -35,7 +35,8 @@ import { useUnlistedReveal } from '../unlisted/useUnlistedReveal.js';
 // THE UNLISTED stamp: lazy — it loads when a find fires (the hook above is the only part in this chunk)
 const UnlistedStamp = lazyWithReload(() => import('../unlisted/UnlistedStamp.jsx'), 'UnlistedStamp');
 // the PROGRESS PARADE on Blitz's end card (nov14: every mode's end screen, results/ResultsParade.jsx) — its own lazy chunk
-const ResultsParade = lazyWithReload(() => import('./results/ResultsParade.jsx'), 'ResultsParade');
+// optional: a chunk that cannot load (offline, a stale deploy) shows no parade — it never reloads the page or breaks the card
+const ResultsParade = lazy(() => import('./results/ResultsParade.jsx').catch(() => ({ default: () => null })));
 import {
   burst, flash, hitStop, ring, screenFlash, floater, validCue, JUICE, punch,
   tensionStart, tensionStop, tensionSetTier, tensionRefreshAudio,

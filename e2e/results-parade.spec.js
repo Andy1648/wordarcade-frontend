@@ -286,6 +286,7 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
       doc: de.scrollHeight - innerHeight,
       scrollers,
       rows: rp.querySelectorAll('.rp-row').length,
+      nudge: rp.querySelectorAll('.rp-nudge').length,
       inCard: pr.top >= cr.top - 1 && pr.bottom <= cr.bottom + 1 && pr.left >= cr.left - 1 && pr.right <= cr.right + 1,
       small,
       again: !!ar && ar.top >= 0 && ar.bottom <= innerHeight + 1,
@@ -293,7 +294,9 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
   }, { card, again });
   expect(m.doc, `${tag}: no page scroll`).toBeLessThanOrEqual(1);
   expect(m.scrollers, `${tag}: nothing scrolls but a real list`).toEqual([]);
-  expect(m.rows, `${tag}: the quest rows show`).toBeGreaterThanOrEqual(1);
+  // a tight screen keeps the NUDGE when no row fits (the parade's own drop order: rows go before the nudge)
+  if (h <= 640) expect(m.rows + m.nudge, `${tag}: the parade shows a row or its nudge`).toBeGreaterThanOrEqual(1);
+  else expect(m.rows, `${tag}: the quest rows show`).toBeGreaterThanOrEqual(1);
   expect(m.inCard, `${tag}: the parade sits inside the end card`).toBe(true);
   expect(m.small, `${tag}: nothing in the parade under 11 px`).toEqual([]);
   expect(m.again, `${tag}: PLAY AGAIN on screen`).toBe(true);
