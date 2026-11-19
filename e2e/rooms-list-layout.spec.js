@@ -88,6 +88,8 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1366, height: 768 }, { w
     const rows = page.getByTestId('browser-room-row');
     await expect(rows).toHaveCount(15);
     await freezeAnimations(page);
+    // the pointer that pressed +N MORE can come to rest over a row, whose :hover lift (1px) would read as an indent
+    await page.mouse.move(1, 1);
     await page.evaluate(() => document.fonts && document.fonts.ready);
 
     // two labelled groups, lobbies first
