@@ -30,6 +30,10 @@ import './Miner.css';
 
 // THE PROGRESS PARADE on the end card (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
 const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
+import ComboMeter from '../components/ComboMeter';
+import { TierSlam } from '../components/FeelLadder';
+import { heatTier } from '../juice/ladder';
+import { recordBestStreak } from '../solo/bestStreak.js';
 import { WatchPill, WatchBar, WatchersChip } from '../components/watch/WatchBits.jsx';
 import CastArt from '../cast/CastArt.jsx';
 import useSeatHeroes from '../cast/useSeatHeroes.js';
@@ -168,6 +172,36 @@ export default function MinerScreen({
   const counting = status === 'countdown' && goIn > 0;
   const canType = status === 'digging' && !myPick && !out;
 
+  // THE STRIKE STREAK (nov12, the Word Bomb pass — Andy: "they need to feel benefits of playing"): rounds in a row your answer
+  // struck COAL or better. DIRT, a round with no answer, or a cave-in breaks it. Display-only, never sent; the end names the best.
+  const [streak, setStreak] = useState(0);
+  const [brk, setBrk] = useState({ key: 0, count: 0 });
+  const streakRef = useRef(0);
+  const peakRef = useRef(0);
+  const pickedRoundRef = useRef(0);
+  const lastRoundRef = useRef(0);
+  const setStreakTo = (n) => {
+    const had = streakRef.current;
+    streakRef.current = n;
+    if (n > peakRef.current) peakRef.current = n;
+    if (n === 0 && had >= 2) setBrk((b) => ({ key: b.key + 1, count: had }));
+    setStreak(n);
+  };
+  const roundNow = miner?.round || 0;
+  useEffect(() => {
+    if (watchOnly || !myPick || pickedRoundRef.current === roundNow) return;
+    pickedRoundRef.current = roundNow;
+    setStreakTo(ORE_ORDER.indexOf(myPick.ore) >= 1 ? streakRef.current + 1 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myPick]);
+  useEffect(() => {
+    const prev = lastRoundRef.current;
+    lastRoundRef.current = roundNow;
+    if (!watchOnly && prev > 0 && roundNow > prev && pickedRoundRef.current !== prev) setStreakTo(0); // a round with no answer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundNow]);
+  useEffect(() => { if (out && streakRef.current > 0) setStreakTo(0); }, [out]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const round = miner?.round || 0;
   // the bell drains ONCE per round from what was left when the round arrived (never re-timed per render)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,6 +234,8 @@ export default function MinerScreen({
   const over = status === 'over' ? miner.over : null;
   const standings = over?.standings || [];
   const iWon = !!over && over.winnerIds.includes(myId);
+  const [peak, setPeak] = useState(null);
+  useEffect(() => { setPeak(over && !watchOnly ? recordBestStreak('miner', peakRef.current) : null); }, [!!over, watchOnly]); // eslint-disable-line react-hooks/exhaustive-deps
   const myPlace = over ? standings.findIndex((s) => s.id === myId) + 1 : 0;
 
   // GEMS: one payout at the end — a miner who finished shallower than me is beaten (gems.payGameResult dedupes).
@@ -229,7 +265,7 @@ export default function MinerScreen({
   const lockedN = active.filter((m) => m.locked).length;
 
   return (
-    <div className="mn-root" data-miner-status={status}>
+    <div className="mn-root" data-miner-status={status} data-heat={!watchOnly && (status === 'digging' || status === 'reveal') ? heatTier(streak) : 0}>
       <img className="mn-wall" src={WALL} alt="" aria-hidden="true" draggable="false" />
       <header className="mn-head">
         <span className="mn-chip">MINER</span>
@@ -247,6 +283,14 @@ export default function MinerScreen({
       <div className="mn-body">
         <section className="mn-dig" aria-live="polite">
           <GemPop />
+          {/* THE STRIKE STREAK rides the dig panel's top corner (outside the per-round sign, so a new round never replays a break)
+              and grows with the tier; one pooled tier slam over the sign */}
+          {!watchOnly && (status === 'digging' || status === 'reveal') ? (
+            <>
+              <div className="mn-streak"><ComboMeter count={streak} brk={brk} /></div>
+              <div className="mn-feel" aria-hidden="true"><TierSlam count={streak} /></div>
+            </>
+          ) : null}
           {counting && (
             <div className="mn-count-wrap">
               <span className="mn-count" key={Math.ceil(goIn / 1000)}>{Math.ceil(goIn / 1000)}</span>
@@ -360,6 +404,11 @@ export default function MinerScreen({
                     : iWon ? 'YOU HIT THE CORE!' : `${ordinal(myPlace || standings.length)} PLACE`}
                 </h2>
               </div>
+              {peak && peak.run >= 2 ? (
+                <p className="mn-peak" data-heat={heatTier(peak.run)} data-testid="miner-peak">
+                  <b>{formatNum(peak.run)}</b> STRIKES IN A ROW{peak.isNew ? <i> · NEW RECORD</i> : peak.best > peak.run ? <i>{` · RECORD ${formatNum(peak.best)}`}</i> : null}
+                </p>
+              ) : null}
               <ol className="mn-standings">
                 {standings.map((s, i) => (
                   <li key={s.id} className={`mn-st${s.id === myId ? ' is-me' : ''}${over.winnerIds.includes(s.id) ? ' is-winner' : ''}`}>
