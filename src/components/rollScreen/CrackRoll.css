@@ -1,0 +1,70 @@
+/* CrackRoll.css — the CRACK ROLL prototype. House look: a flat tier-tinted scrim (no gradient), Bungee with a black stroke,
+   hard black offset shadows, 8px corners. Every part's REST style is its end state; motion is WAAPI one-shots (JSX). */
+.cr {
+  --cr-line: #3D8BFF;
+  position: fixed; inset: 0; z-index: 9000;
+  display: grid; place-items: center;
+  background: #0d0618;
+  overflow: hidden;
+  font-family: var(--k-display, 'Bungee', sans-serif);
+  color: #fff;
+  text-transform: uppercase; /* Bungee is display type: all caps */
+  user-select: none; -webkit-user-select: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+/* the scrim takes the tier's colour, flat, swapped instantly under the jump's white pop (never animated) */
+.cr::before { content: ''; position: absolute; inset: 0; background: var(--cr-line); opacity: .16; pointer-events: none; }
+.cr-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 5; }
+
+.cr-stage { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.4vh, 22px); }
+
+/* the TIER NAME: the colour the core is now; slams on a jump */
+.cr-tier {
+  font-size: var(--fs-k38); line-height: 1; letter-spacing: .02em;
+  color: var(--cr-line); -webkit-text-stroke: 6px #000; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #000;
+  transform: rotate(-3deg);
+}
+
+.cr-pod { position: relative; display: grid; place-items: center; }
+.cr-glow { position: absolute; left: -50%; top: calc(-50% - var(--cr-v) * .488); /* the fan converges (74.4% of its box) on the core's centre */ width: 200%; height: 200%; transform-origin: 50% 74.4%; transform: scale(.3); opacity: 0; pointer-events: none; }
+.cr-glow-art { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 50% 74.4%; }
+.cr-glow-art.is-blue { filter: hue-rotate(-62deg) saturate(1.2); }
+.cr-glow-art.is-pink { filter: hue-rotate(50deg) saturate(1.2); }
+.cr-glow-art.is-cyan { filter: hue-rotate(-110deg) saturate(1.3); }
+.cr-glow-art.is-off { transform: rotate(8deg); }
+.cr-glow-art.is-off2 { transform: rotate(-8deg); }
+
+.cr-pop, .cr-squash { position: absolute; inset: 0; display: block; transform-origin: 50% 60%; }
+.cr-core { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; pointer-events: none; }
+.cr-core.is-on { opacity: 1; }
+/* the CRACKS sit on the shell, inside its rim, centred on the lock */
+.cr-crack { position: absolute; left: 12%; top: 13%; width: 76%; height: 76%; /* centred on the lock (keyhole at 50% / 51% of the box, measured) */ object-fit: contain; opacity: 0; pointer-events: none; }
+.cr-crack.is-on { opacity: 1; }
+.cr.is-burst .cr-pop, .cr.is-open .cr-pop { opacity: 0; }
+
+.cr-shards { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 3; }
+.cr-shard { position: absolute; left: calc(var(--cr-v) * -.11); top: calc(var(--cr-v) * -.11); width: calc(var(--cr-v) * .22); height: calc(var(--cr-v) * .22); opacity: 0; }
+
+.cr-card { position: absolute; z-index: 4; display: grid; place-items: center; }
+/* opened: the card names its own tier, so the core's tier plate steps aside (a state, not an animation) */
+.cr.is-open .cr-tier, .cr.is-open .cr-pips { opacity: 0; }
+.cr-tier { position: relative; z-index: 5; } /* the tier plate reads over the light fan */
+
+.cr-pips { display: flex; gap: 10px; }
+.cr-pip { width: 18px; height: 18px; border-radius: 50%; background: #1a0b2e; border: 3px solid #000; box-shadow: 3px 3px 0 #000; }
+.cr-pip.is-on { background: var(--cr-line); }
+
+.cr-hint {
+  min-height: 44px; display: grid; place-items: center;
+  font-size: var(--fs-k24); color: #fff; -webkit-text-stroke: 4px #000; paint-order: stroke fill; text-shadow: 3px 3px 0 #000;
+}
+.cr-btn {
+  min-width: 160px; min-height: 52px; padding: 0 26px;
+  font: inherit; font-size: var(--fs-k24); color: #000; background: #FFE94A;
+  border: 4px solid #a8740c; border-radius: 8px; box-shadow: 6px 6px 0 #000; cursor: pointer;
+}
+.cr-odds { position: absolute; top: 14px; right: 14px; z-index: 6; }
+
+@media (prefers-reduced-motion: reduce) { .cr-glow { opacity: .8; transform: none; } }

@@ -204,6 +204,9 @@ window.addEventListener('resize', applyAppScale);
 /* global __KIT_GALLERY__ */
 if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   import('./components/kit/gallery/boot.jsx')
+} else if (__KIT_GALLERY__ && location.search.includes('crack=1')) {
+  // DEV-ONLY CRACK ROLL prototype preview (nov18): compiled out of production with the gallery
+  import('./components/rollScreen/crackScene.jsx')
 } else {
   // FRENCH RUSH (oct18) is a standalone study link, not an arcade mode: /french-rush mounts its own
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
