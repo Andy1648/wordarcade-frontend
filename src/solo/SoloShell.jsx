@@ -431,7 +431,7 @@ export default function SoloShell({
               <ContractDoneLine since={gemsSince} />
             </div>
             {/* THE PROGRESS PARADE: the quests / contract / league rows this run moved, in the reward column's flow */}
-            {over.bare ? null : <Suspense fallback={null}><ResultsParade cardRef={deathCardRef} inFlow narrow={NARROW()} gemsSince={gemsSince} /></Suspense>}
+            {over.bare ? null : <Suspense fallback={null}><ResultsParade cardRef={deathCardRef} inFlow narrow={NARROW()} clearBottom={72} gemsSince={gemsSince} /></Suspense>}
             {/* First-run tutorial card (over.bare) shows NO score/BEST line. */}
             {over.bare ? null : (
               <div className="solo-scoreline">

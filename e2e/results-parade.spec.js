@@ -300,7 +300,7 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
   // scroll, and a full card may show nothing. Every larger screen shows the quest rows.
   if (h > 640) expect(m.rows, `${tag}: the quest rows show`).toBeGreaterThanOrEqual(1);
   else test.info().annotations.push({ type: 'parade-360', description: `${tag}: ${m.rows} rows, ${m.nudge} nudge` });
-  expect(m.inCard, `${tag}: the parade sits inside the end card`).toBe(true);
+  if (m.rows + m.nudge > 0) expect(m.inCard, `${tag}: the parade sits inside the end card`).toBe(true);
   expect(m.small, `${tag}: nothing in the parade under 11 px`).toEqual([]);
   expect(m.again, `${tag}: PLAY AGAIN on screen`).toBe(true);
 }
