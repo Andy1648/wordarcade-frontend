@@ -1010,3 +1010,53 @@
 /* nov12: the digger is the player's own hero (CastArt: an <img>, or a layered span with its rarity aura) */
 .mn-run-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
 .mn-over-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
+
+/* ===== THE STRIKE STREAK (nov12, the Word Bomb pass — Andy: "addiction corresponding to aggression (they need to feel benefits of
+   playing)") =====
+   Rounds in a row your answer struck COAL or better. The count rides the dig panel's top-right corner and climbs a size per tier
+   (the shared ComboMeter's finite pop + the 4+ break shatter); the tier slam plays once per crossing over the sign; the sign takes
+   the tier colour (a flat wash behind its words, one opacity transition, quiet at T0); the end names the game's best. No loops. */
+.mn-streak { position: absolute; top: -10px; right: -6px; z-index: 6; pointer-events: none; }
+.mn-streak .combo-meter { position: static; flex-direction: column; align-items: flex-end; }
+.mn-streak .combo-count { font-size: var(--fs-panel); }
+.mn-streak .combo-fire .combo-count { font-size: var(--fs-h2); }
+.mn-streak .combo-max .combo-count { font-size: var(--fs-h1); }
+@media (max-width: 600px) {
+  .mn-streak .combo-badge { padding: 3px 6px; }
+  .mn-streak .combo-label { display: none; }
+  .mn-streak .combo-fire .combo-count,
+  .mn-streak .combo-max .combo-count { font-size: var(--fs-panel); } /* a phone's sign is narrow: the count stays above the prompt line */
+}
+.mn-feel { position: absolute; left: 0; right: 0; top: 0; height: 30%; pointer-events: none; z-index: 7; }
+.mn-sign { isolation: isolate; }
+.mn-sign::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.mn-root[data-heat='1'] .mn-sign::after { background: #2EFFE0; opacity: 0.1; }
+.mn-root[data-heat='2'] .mn-sign::after { background: #FFE94A; opacity: 0.16; }
+.mn-root[data-heat='3'] .mn-sign::after { background: #FF6B3D; opacity: 0.22; }
+.mn-root[data-heat='4'] .mn-sign::after { background: #FF4FA3; opacity: 0.3; }
+@media (prefers-reduced-motion: reduce) { .mn-sign::after { transition: none; } }
+.mn-peak {
+  margin: 0;
+  text-align: center;
+  font-family: 'Bungee', cursive;
+  text-transform: uppercase;
+  font-size: var(--fs-panel);
+  line-height: 1.1;
+  color: #2EFFE0;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+}
+.mn-peak b { font-size: var(--fs-h2); font-weight: 400; }
+.mn-peak i { font-style: normal; white-space: nowrap; display: inline-block; }
+.mn-peak[data-heat='2'] { color: #FFE94A; }
+.mn-peak[data-heat='3'] { color: #FF6B3D; }
+.mn-peak[data-heat='4'] { color: #FF4FA3; }

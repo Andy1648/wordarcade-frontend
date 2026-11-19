@@ -5,6 +5,7 @@
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // working untouched; only its container is styled to sit on the page.
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { recordBestStreak } from '../solo/bestStreak.js';
 import { contractEvent } from '../progress/contracts/bus.js';
 import { formatNum } from '../format';
 
@@ -82,6 +83,15 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const [copied, setCopied] = useState(false);
   const pageRef = useRef(null); // the results page: the parade's tap-to-skip surface + its fit box
   const [pageNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
+  // BEST STREAK vs the all-time record (nov12, the Word Bomb pass): recorded ONCE per results page (a ref guards a re-run)
+  const [peak, setPeak] = useState(null);
+  const peakDone = useRef(false);
+  useEffect(() => {
+    if (peakDone.current || RU) return;
+    peakDone.current = true;
+    setPeak(recordBestStreak('sat', results.bestStreak || 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // economy=false (FRENCH RUSH, a standalone study link): no wins / gems / rebirth / cross-mode offers —
   // just the result, the case file and the way to go again.
   // STEP 57 (Andy oct2: "make CASE CLOSED clear, satisfying and consistent with the other modes"):
@@ -287,7 +297,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         {!RU && <div className="sr-resline in">
           <span>score <b>{fmt(results.score)}</b></span>
           <span>avg ante <b>{avgAnte}</b></span>
-          <span>best streak <b>{results.bestStreak || 0}</b></span>
+          <span data-testid="sr-peak">best streak <b>{results.bestStreak || 0}</b>{peak && peak.isNew ? <em className="sr-peak-new"> new record</em> : peak && peak.best > (results.bestStreak || 0) ? <em> · record {formatNum(peak.best)}</em> : null}</span>
           <span>mastered <b>{results.mastered || 0}</b></span>
         </div>}
 
