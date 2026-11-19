@@ -11,6 +11,7 @@
 // the only door to the other five modes. It is now labelled with its destination at
 // >=44x44, in SAT RUSH's own paper-and-ink language — NOT the neon house chip.
 import { useEffect, useState } from 'react';
+import { heatTier } from '../juice/ladder';
 import { formatNum } from '../format';
 import { rushSoundOn, setRushSound, syncRushSound } from './rushMute';
 
@@ -53,7 +54,9 @@ export default function Hud({ score, streak, wordNumber, settled = 0, caseSize =
       </div>
       {/* the STREAK reads louder once it is a streak (3+): the cell inverts to ink — a static state,
           not a loop; the capture stamp names the milestones */}
-      <div className={`sr-hcell sr-hcell-streak${streak >= 3 ? ' hot' : ''}`}>
+      {/* nov12 (the Word Bomb pass, Andy: "they need to feel benefits of playing"): the cell climbs the shared ladder (juice/ladder.js)
+          in ink — T3 the number grows, T4 the cell prints in red ink. Static per tier, nothing animates. */}
+      <div className={`sr-hcell sr-hcell-streak${streak >= 3 ? ' hot' : ''}`} data-tier={heatTier(streak)}>
         <span className="sr-hlabel">streak</span>
         <b className="sr-hval">{String(streak).padStart(2, '0')}</b>
       </div>
