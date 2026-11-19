@@ -32,7 +32,10 @@ const EDGE = 2 * 24 + 7 + 4;
 const PHONE_MAX = 600; // matches main.jsx: phones never zoom
 
 // `active` re-runs the fit when the box first mounts after an early `return null` (RoomScreen).
-export default function useFitZoom(ref, active = true) {
+// `observeContent: false` fits on mount + window resize only, never when the box's content changes size: for a screen
+// whose box has a fixed design size and a list that refreshes under it (PublicRoomsScreen), so a row arriving can't
+// re-fit (rescale) the screen.
+export default function useFitZoom(ref, active = true, { observeContent = true } = {}) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!active || !el || typeof window === 'undefined') return undefined;
@@ -68,13 +71,19 @@ export default function useFitZoom(ref, active = true) {
     };
 
     fit();
-    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
+    const ro = observeContent && typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
     if (ro) ro.observe(el);
     window.addEventListener('resize', schedule);
+    // not observing content: still re-fit once the web fonts land (they can change the box's design size)
+    let live = true;
+    if (!ro && typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { if (live) schedule(); }, () => {});
+    }
     return () => {
+      live = false;
       if (ro) ro.disconnect();
       window.removeEventListener('resize', schedule);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [ref, active]);
+  }, [ref, active, observeContent]);
 }
