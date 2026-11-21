@@ -166,3 +166,5 @@
   [data-parade-collapsed] .cb-peak { font-family: 'Space Mono', monospace; font-weight: 700; font-size: var(--fs-label); -webkit-text-stroke: 0; margin: 0; }
   [data-parade-collapsed] .cb-peak b { font-size: var(--fs-body); }
 }
+/* nothing to show (no row this game, or the fit dropped them all): the empty block leaves the card's flow — no margin, no gap */
+.rp.rp--flow[data-rows='']:not(:has(.rp-nudge)) { display: none; }
