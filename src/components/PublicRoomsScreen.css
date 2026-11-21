@@ -245,6 +245,21 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
 }
+/* THE LIST REGION HAS A FIXED HEIGHT (nov18, "why was the join public room screen vibrating"). The public list
+   refreshes every 5 s and house rooms churn; when the region grew with its rows, the centred box jumped up and down
+   and useFitZoom re-scaled it. Now loading / empty / 1 room / 15 rooms all take the same height and only the list
+   scrolls inside it, so the box's size never depends on the list. */
+.browser-list-area {
+  display: flex;
+  flex-direction: column;
+  height: var(--browser-list-h, 420px); /* natural px: useFitZoom scales the whole box to the window */
+  min-height: 0;
+}
+.browser-list-area > .browser-list { flex: 1 1 auto; min-height: 0; max-height: none; }
+/* a SHORT laptop window (1280x551): a shorter region, about the code column's height, so the fit-zoom stays near 1 */
+@media (max-height: 640px) {
+  .browser-list-area { --browser-list-h: 320px; }
+}
 .browser-group { display: flex; flex-direction: column; gap: 8px; }
 .browser-group-head {
   position: sticky;
@@ -505,11 +520,13 @@
     padding: 18px 14px;
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 32px);
+    /* a FIXED height (was max-height): the box no longer grows and shrinks with the list under it */
+    height: calc(100dvh - 32px);
     box-sizing: border-box;
   }
   .browser-title { font-size: var(--fs-panel); }
-  .browser-list { flex: 1 1 auto; min-height: 120px; max-height: none; }
+  .browser-list-area { flex: 1 1 auto; height: auto; min-height: 120px; }
+  .browser-list { flex: 1 1 auto; min-height: 0; max-height: none; }
   .browser-row { grid-template-columns: 40px minmax(0, 1fr) 96px; grid-template-areas: 'face main act' 'face count act'; row-gap: 2px; padding: 8px; column-gap: 8px; }
   .browser-row-face { grid-area: face; width: 40px; height: 40px; align-self: start; }
   .browser-row-main { grid-area: main; }
