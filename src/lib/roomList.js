@@ -9,8 +9,13 @@
 //   * A live game that can't take a watcher says WHY (NO SPECTATE: the mode can't be watched on this server; WATCH FULL:
 //     too many watching) and is never a pressable SPECTATE.
 
-/** A live game (watch it) rather than a lobby (join it). */
+/** A live game (watch it) rather than a lobby (join it). Any other status — 'waiting', 'finished', or one this client
+ *  doesn't know — is a lobby for joining. */
 export const isLive = (r) => !!r && r.status === 'playing';
+
+/** A room whose game just ended but which is still joinable (results → rematch). A newer server sends
+ *  status 'finished'; it joins like a lobby, but the JOIN ROOM list never moves it between groups (stickyRooms.js). */
+export const isFinished = (r) => !!r && r.status === 'finished';
 
 /** 'open' | 'full' | 'unsupported' for a live room; null for a lobby. An older server sends only canSpectate. */
 export function watchOf(r) {
@@ -57,6 +62,7 @@ export function startsInSec(r, receivedAt, now) {
 export function rowAction(r, { receivedAt = 0, now = 0 } = {}) {
   if (!isLive(r)) {
     if (fullLobby(r)) return { status: 'IN LOBBY', verb: 'FULL', kind: 'none' };
+    if (isFinished(r)) return { status: 'GAME OVER', verb: 'JOIN', kind: 'join' };
     const s = startsInSec(r, receivedAt, now);
     return { status: s == null ? 'IN LOBBY' : s > 0 ? `STARTS IN ${s}s` : 'STARTING', verb: 'JOIN', kind: 'join' };
   }

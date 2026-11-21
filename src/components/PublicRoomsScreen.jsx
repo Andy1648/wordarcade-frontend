@@ -9,7 +9,7 @@
 // Refresh strategy: fetch on mount (entering the screen), a light auto-refresh
 // on an interval so the list doesn't go stale while you read it, and a manual
 // REFRESH button for the impatient.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GAMES } from '../gameData';
 import { useSound } from '../contexts/SoundContext';
 import useFitZoom from '../hooks/useFitZoom';
@@ -19,6 +19,7 @@ import './PublicRoomsScreenV2.css';
 import { SEASON2 } from '../progress/season';
 import { isHeroId } from '../cast/mainFace.js';
 import { groupRooms, rowAction } from '../lib/roomList.js';
+import { stickyGroups } from '../lib/stickyRooms.js';
 import useRoomsClock from '../hooks/useRoomsClock.js';
 import FitText from './kit/FitText.jsx';
 
@@ -58,7 +59,7 @@ function RoomRow({ room, action, joining, locked, onPick }) {
         onClick={() => onPick(room)}
         disabled={locked || action.kind === 'none'}
         data-testid="browser-room-row"
-        data-status={live ? 'playing' : 'waiting'}
+        data-status={live ? 'playing' : room.status === 'finished' ? 'finished' : 'waiting'}
         data-code={room.code}
         aria-label={`${action.verb === 'JOIN' || action.verb === 'SPECTATE' ? action.verb.toLowerCase() : action.verb.toLowerCase() + ':'} ${who}'s ${label} ${live ? 'game' : 'room'}, ${room.playerCount} of ${room.maxPlayers} players${watchers ? `, ${watchers} watching` : ''}`}
       >
@@ -99,9 +100,10 @@ export default function PublicRoomsScreen({
   onBack,
 }) {
   const { sound } = useSound();
-  // Scale the screen to the viewport (see hooks/useFitZoom.js).
+  // Scale the screen to the viewport (see hooks/useFitZoom.js). WINDOW ONLY (nov18 "vibrating"): the box has a fixed
+  // design size (the list region is a fixed-height scroller), so a refresh that adds a row must never re-fit the zoom.
   const boxRef = useRef(null);
-  useFitZoom(boxRef);
+  useFitZoom(boxRef, true, { observeContent: false });
   // The row we've sent a join for, locked until we either transition into the
   // room (this screen unmounts) or the server bounces it (cleared below).
   const [joiningCode, setJoiningCode] = useState(null);
@@ -194,8 +196,15 @@ export default function PublicRoomsScreen({
   }
 
   const error = localError || serverError;
-  // TWO GROUPS (nov9, roomList.js): lobbies (starting soonest, then fullest), then live games (watchable first)
-  const { lobbies, live } = groupRooms(rooms, { keepFull: true });
+  // TWO GROUPS (nov9, roomList.js): lobbies (starting soonest, then fullest), then live games (watchable first).
+  // STICKY (nov18, lib/stickyRooms.js): that sort only orders a room the first time it appears — after that it keeps
+  // its slot across refreshes, and a status flicker can't hop it between groups until the new status has held ~10 s.
+  const stickyRef = useRef(null);
+  const { lobbies, live } = useMemo(() => {
+    const out = stickyGroups(stickyRef.current, groupRooms(rooms, { keepFull: true }), Date.now());
+    stickyRef.current = out.state;
+    return out;
+  }, [rooms]);
   const clock = useRoomsClock(rooms);
   const isEmpty = lobbies.length + live.length === 0;
   const pick = (room) => handleJoin(room.code, room.status === 'playing');
@@ -318,6 +327,9 @@ export default function PublicRoomsScreen({
           <span>OR PICK A PUBLIC GAME</span>
         </div>
 
+        {/* A FIXED-HEIGHT REGION (nov18): loading, empty and 1..n rooms all take the same height, so a refresh never
+            changes the box's size (the box is centred: a taller list moved the whole screen up and down). */}
+        <div className="browser-list-area" data-testid="browser-list-area">
         {loading && isEmpty ? (
           // Still waiting on the first list - a calm pulse, never the empty state
           // (which would wrongly read as "no games" before we've heard back).
@@ -352,6 +364,7 @@ export default function PublicRoomsScreen({
             {group('live', 'PLAYING', live)}
           </div>
         )}
+        </div>
         </div>
       </div>
     </div>
