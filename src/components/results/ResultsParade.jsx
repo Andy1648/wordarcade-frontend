@@ -159,10 +159,12 @@ function LeagueRow({ row }) {
  * @param {boolean}   p.inFlow    EVERY OTHER MODE's end card (nov14): the parade is one more block in the card's own column —
  *                                no tally to wait for, and the fit drops rows until the CARD (and the page) does not scroll.
  *                                The card gets data-parade-collapsed on a phone so its CSS can fold secondary lines.
+ * @param {number}    p.clearBottom with inFlow on a phone: px at the bottom of the screen the card must stay above (the corner
+ *                                settings cog) — rows drop until it does. A card already that tall shows no parade.
  * @param {boolean}   p.foldFit   with inFlow, for a page that scrolls BY DESIGN (SAT's case file under the fold): the fit keeps
  *                                the parade above the fold instead (rows drop until its bottom is on the first screen).
  */
-export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false, foldFit = false }) {
+export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, inFlow = false, foldFit = false, clearBottom = 0 }) {
   const mountAt = useRef(Date.now());
   const [data, setData] = useState(null); // { rows, nudge }
   const [rows, setRows] = useState(null);
@@ -259,7 +261,8 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
       let sc = card.parentElement; // the card may sit in a scrolling scrim (CHAIN / FUSE): that box must not scroll either
       while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
       over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1
-        || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
+        || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1)
+        || (narrow && clearBottom > 0 && card.getBoundingClientRect().bottom > window.innerHeight - clearBottom);
     } else if (narrow) {
       over = card.scrollHeight - card.clientHeight > 0; // in flow: the one column must not scroll
     } else {
@@ -282,11 +285,11 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     setPhase('run');
   }, [phase, rows]); // eslint-disable-line react-hooks/exhaustive-deps -- one pass per row set
 
-  // ---- IN FLOW, LATER: the end card can still grow after the fit (a line that arrives a beat late — XP, a contract). A resize of
+  // ---- IN FLOW, LATER: the end card can still grow after the fit (while the parade runs or once it has landed) (a line that arrives a beat late — XP, a contract). A resize of
   // the card (never a frame loop) re-checks once it has landed: still too tall → drop the next least important row and land at
   // once (no replay).
   useEffect(() => {
-    if (!inFlow || phase !== 'done' || typeof ResizeObserver === 'undefined') return undefined;
+    if (!inFlow || (phase !== 'run' && phase !== 'done') || typeof ResizeObserver === 'undefined') return undefined; // while it runs too
     const card = cardRef && cardRef.current;
     const el = rootRef.current;
     if (!card || !el || !rows) return undefined;
@@ -297,7 +300,8 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
         let sc = card.parentElement;
         while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
         const de = document.scrollingElement || document.documentElement;
-        over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1 || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1);
+        over = card.scrollHeight - card.clientHeight > 1 || de.scrollHeight - window.innerHeight > 1 || (!!sc && sc !== document.body && sc.scrollHeight - sc.clientHeight > 1)
+          || (narrow && clearBottom > 0 && card.getBoundingClientRect().bottom > window.innerHeight - clearBottom);
       }
       if (!over) return;
       ro.disconnect();
