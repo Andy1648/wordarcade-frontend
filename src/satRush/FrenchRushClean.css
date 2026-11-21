@@ -1,0 +1,544 @@
+/* FrenchRushClean.css — the CLEAN PASS (nov21). A teacher now runs whole classes on French Rush; Andy:
+   "REMOVE THE BS", "make text bigger (scale better)", "make proportions better", "work on animations and
+   transitions better (like hover etc)". Loaded LAST (after FrenchRush.css and ClassRoom.css), so it wins.
+
+   - The pages FILL the screen: sizes come off the viewport (vw AND vh), so a 1093x515 Chromebook, a
+     1366x768 laptop, a 1080p projector and a 360x640 phone each get the biggest type that fits.
+   - Motion: every control lifts on hover and presses on tap (transform only, ~200ms out / 60ms in; the
+     hard shadow is a STATIC toggle, never animated), every page lands with a one-shot rise, the run has a
+     Quizlet-style progress bar and a one-shot frame beat per answer. Nothing loops; reduced motion turns
+     all of it off. Retro-print palette only (ink, paper, red ink). */
+.fr-app {
+  /* one fluid step: grows with BOTH axes, so a short wide Chromebook does not get projector type */
+  --fr-k: min(1vw + 0.9vh, 2.2vh + 0.5vw);
+  --fs-frbtn: clamp(17px, calc(var(--fr-k) * 1.25), 30px);
+  --fr-btn-h: clamp(50px, calc(var(--fr-k) * 3.4), 84px);
+  /* the French Rush fluid type steps (font-size only ever reads a --fs-* token: perf/typeScale.test.js) */
+  --fs-fr1: clamp(28px, calc(var(--fr-k) * 2.4), 64px);
+  --fs-fr2: clamp(24px, calc(var(--fr-k) * 2), 56px);
+  --fs-fr3: clamp(13px, calc(var(--fr-k) * 0.62), 18px);
+  --fs-fr4: clamp(16px, calc(var(--fr-k) * 0.85), 22px);
+  --fs-fr5: clamp(30px, calc(var(--fr-k) * 2.3), 84px);
+  --fs-fr6: clamp(18px, calc(var(--fr-k) * 1.05), 34px);
+  --fs-fr7: clamp(17px, calc(var(--fr-k) * 0.95), 26px);
+  --fs-fr8: clamp(22px, 7vw, 32px);
+  --fs-fr9: clamp(26px, calc(var(--fr-k) * 2.1), 64px);
+  --fs-fr10: clamp(16px, calc(var(--fr-k) * 1.05), 26px);
+  --fs-fr11: clamp(18px, calc(var(--fr-k) * 1.4), 36px);
+  --fs-fr12: clamp(20px, calc(var(--fr-k) * 1.3), 40px);
+  --fs-fr13: clamp(13px, calc(var(--fr-k) * 0.7), 22px);
+  --fs-fr14: clamp(16px, calc(var(--fr-k) * 1.1), 34px);
+  --fs-fr15: clamp(28px, calc(var(--fr-k) * 2.6), 96px);
+}
+/* a phone is tall and narrow: its controls scale off the height it has */
+@media (max-width: 520px) {
+  .fr-app {
+    --fr-btn-h: clamp(50px, 7.6vh, 72px);
+    --fs-frbtn: clamp(17px, 2.5vh, 22px);
+  }
+}
+
+/* ---------- motion: hover / press on every control ---------- */
+.fr-app :is(.sr-btn, .sr-modecard, .sr-setup-opt, .sr-act, .sr-suspect-btn, .fr-pick-btn, .sr-exit-chip) {
+  transition: transform 200ms cubic-bezier(0.2, 0.9, 0.3, 1.35);
+}
+@media (hover: hover) {
+  .fr-app :is(.sr-btn, .sr-modecard, .sr-act, .fr-pick-btn):hover:not(:disabled) {
+    transform: translate(-2px, -2px) rotate(var(--rot, 0deg));
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .fr-app .sr-setup-opt:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .fr-app .sr-suspect-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+  }
+  .fr-app .sr-exit-chip:hover {
+    transform: translateY(-2px);
+  }
+}
+.fr-app :is(.sr-btn, .sr-modecard, .sr-setup-opt, .sr-act, .fr-pick-btn):active:not(:disabled) {
+  transform: translate(2px, 2px) rotate(var(--rot, 0deg));
+  box-shadow: 1px 1px 0 var(--ink);
+  transition-duration: 60ms;
+}
+.fr-app :is(.sr-suspect-btn, .sr-exit-chip):active:not(:disabled) {
+  transform: translateY(2px) scale(0.98);
+  transition-duration: 60ms;
+}
+/* a choice that was just picked settles in */
+.fr-app .sr-setup-opt.sel {
+  animation: fr-pick-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+}
+@keyframes fr-pick-in {
+  0% { transform: scale(0.94); }
+  100% { transform: none; }
+}
+
+/* ---------- screen to screen: every page lands with a quick rise ---------- */
+.fr-app .sr-screen > :is(.sr-cover, .sr-modeselect, .sr-respage, .sr-brief-page, .sr-bank),
+.fr-app .sr-stage:has(> .sr-body) {
+  animation: fr-page-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+@keyframes fr-page-in {
+  0% { opacity: 0; transform: translateY(14px) scale(0.985); }
+  100% { opacity: 1; transform: none; }
+}
+/* the cover's buttons step in one after another (finite, three) */
+.fr-app .fr-cover-actions > * {
+  animation: fr-item-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+.fr-app .fr-cover-actions > :nth-child(2) { animation-delay: 50ms; }
+.fr-app .fr-cover-actions > :nth-child(3) { animation-delay: 100ms; }
+@keyframes fr-item-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ---------- the primary button is INKED (paper on ink) ---------- */
+.fr-app .sr-btn.fr-go {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---------- COVER: the title and the ways in, nothing else ---------- */
+.fr-app .sr-cover.fr-cover {
+  width: min(820px, var(--fr-page-w));
+  justify-content: center;
+  gap: clamp(18px, 5vh, 52px);
+  padding: clamp(26px, 6vh, 72px) clamp(20px, 5vw, 72px) clamp(12px, 3vh, 32px);
+}
+.fr-app .fr-cover .sr-title {
+  font-size: min(12.5cqw, 15vh, 128px);
+}
+@media (max-width: 520px) {
+  .fr-app .sr-cover.fr-cover {
+    min-height: min(100%, 680px);
+  }
+  .fr-app .fr-cover .sr-title {
+    font-size: min(14cqw, 12vh);
+  }
+  .fr-app .fr-cover-pair .sr-btn {
+    letter-spacing: 0.01em;
+    padding-inline: 4px;
+  }
+}
+.fr-cover-actions {
+  width: min(560px, 100%);
+  display: grid;
+  gap: clamp(10px, 2.2vh, 20px);
+}
+.fr-cover-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 1.6vw, 20px);
+}
+.fr-app .fr-cover-actions .sr-btn {
+  width: 100%;
+  min-height: var(--fr-btn-h);
+  padding: 6px 10px;
+  font-size: var(--fs-frbtn);
+}
+.fr-app .fr-cover-actions .sr-btn.fr-go {
+  min-height: calc(var(--fr-btn-h) * 1.2);
+  font-size: calc(var(--fs-frbtn) * 1.3);
+}
+
+/* ---------- PICK A MODE: two big cards ---------- */
+.fr-app .sr-modeselect:not(.sr-setup) {
+  width: min(980px, var(--fr-page-w));
+  gap: clamp(16px, 4vh, 40px);
+  padding: clamp(24px, 5vh, 56px) clamp(20px, 4vw, 56px);
+}
+.fr-app .sr-modeselect-head.long,
+.fr-app .sr-modeselect .sr-modeselect-head {
+  font-size: var(--fs-fr1);
+  line-height: 1;
+}
+.fr-app .sr-modecards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(14px, 2.4vw, 32px);
+}
+.fr-app .sr-modecard {
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(110px, 32vh, 300px);
+  text-align: center;
+  transform: rotate(var(--rot, 0deg));
+}
+.fr-app .sr-modecard:nth-child(1) { --rot: -1.4deg; }
+.fr-app .sr-modecard:nth-child(2) { --rot: 1.2deg; }
+.fr-app .sr-modecard-title {
+  font-size: var(--fs-fr2);
+  line-height: 1.05;
+}
+@media (max-width: 520px) {
+  .fr-app .sr-modecards { grid-template-columns: 1fr; }
+  .fr-app .sr-modecard { min-height: clamp(96px, 22vh, 180px); }
+}
+
+/* ---------- SETUP: DIFFICULTY | theme · timer · words, then START ---------- */
+.fr-app .sr-modeselect.sr-setup.fr-setup {
+  width: min(1100px, var(--fr-page-w));
+  gap: clamp(10px, 3vh, 32px);
+  padding: clamp(20px, 4.5vh, 52px) clamp(18px, 3.6vw, 52px);
+}
+.fr-setup-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(10px, 2.4vh, 24px);
+  text-align: left;
+}
+.fr-setup-rest {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 2vh, 20px);
+  min-width: 0;
+}
+@media (min-width: 760px) {
+  .fr-setup-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: clamp(20px, 3vw, 44px);
+    align-items: stretch;
+  }
+  /* DIFFICULTY's three cards share the column's full height */
+  .fr-setup-grid > .sr-setup-row.stack {
+    display: flex;
+    flex-direction: column;
+  }
+  .fr-app .fr-setup-grid > .sr-setup-row.stack .sr-setup-opts {
+    flex: 1 1 auto;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+}
+.fr-app .fr-setup-grid .sr-setup-label {
+  font-size: var(--fs-fr3);
+}
+.fr-app .fr-setup-grid .sr-setup-row {
+  gap: clamp(4px, 0.9vh, 10px);
+}
+.fr-app .fr-setup-grid .sr-setup-opt {
+  min-height: var(--fr-btn-h);
+  padding: 4px 10px;
+}
+.fr-app .fr-setup-grid .sr-setup-opt-main {
+  font-size: var(--fs-frbtn);
+}
+/* the levels: name left, 1-2-3 ink pips right; HARD prints in red ink so the hardest is easy to find */
+.fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opts {
+  grid-template-columns: 1fr;
+  gap: clamp(8px, 1.6vh, 14px);
+}
+.fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opt {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: clamp(12px, 2vw, 24px);
+}
+.fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opt-main {
+  font-size: calc(var(--fs-frbtn) * 1.25);
+}
+.fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opt:last-child:not(.sel) {
+  color: var(--redink, #c8321e);
+}
+.fr-pips {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+.fr-pips i {
+  display: block;
+  width: clamp(8px, 0.8vw, 12px);
+  border: 2px solid currentColor;
+}
+.fr-pips i:nth-child(1) { height: 10px; }
+.fr-pips i:nth-child(2) { height: 16px; }
+.fr-pips i:nth-child(3) { height: 22px; }
+.fr-pips i.on { background: currentColor; }
+.fr-app .fr-setup-grid .fr-pick {
+  gap: clamp(4px, 0.9vh, 10px);
+}
+.fr-app .fr-setup-grid .fr-pick-btn {
+  min-height: var(--fr-btn-h);
+  font-size: var(--fs-fr4);
+}
+.fr-setup-foot {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+}
+.fr-app .fr-setup-foot .sr-btn.fr-go {
+  flex: 1 1 280px;
+  max-width: 560px;
+  width: auto;
+  min-height: calc(var(--fr-btn-h) * 1.1);
+  padding: 6px 20px;
+  font-size: calc(var(--fs-frbtn) * 1.2);
+}
+.fr-app .fr-setup-foot .sr-exit-chip {
+  margin-top: 0;
+  min-height: 48px;
+}
+/* a phone: the three levels sit side by side (name over pips), START shares its row with BACK, and the
+   teacher's COPY LINK stays on the big screens */
+@media (max-width: 520px) {
+  .fr-app {
+    --fr-btn-h: clamp(46px, 6.6vh, 64px);
+  }
+  .fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opt {
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-height: calc(var(--fr-btn-h) * 1.25);
+    padding: 6px 4px;
+  }
+  .fr-app .fr-setup-grid .sr-setup-row.stack .sr-setup-opt-main {
+    font-size: var(--fs-frbtn);
+  }
+  .fr-setup-foot {
+    flex-wrap: nowrap;
+  }
+  .fr-app .fr-setup-foot .sr-btn.fr-go {
+    flex: 1 1 auto;
+    order: 2;
+  }
+  .fr-app .fr-setup-foot .sr-exit-chip {
+    order: 1;
+  }
+  .fr-app .fr-setup-foot .sr-exit-chip[aria-label^='Copy'] {
+    display: none;
+  }
+}
+
+/* ---------- PLAY: progress under the HUD, a frame beat per answer, a bigger clue + choices ---------- */
+.fr-progress {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  height: clamp(8px, 1.2vh, 14px);
+  border-bottom: 3px solid var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+.fr-progress-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: 0 50%;
+  transition: transform 360ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.fr-beat {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border: clamp(6px, 1.2vmin, 12px) solid var(--ink);
+  animation: fr-beat 380ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.fr-beat.miss {
+  border-color: var(--redink, #c8321e);
+}
+@keyframes fr-beat {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.fr-app .sr-stage:has(> .sr-body) {
+  width: min(1240px, var(--fr-page-w));
+  height: min(100%, 980px);
+}
+@media (min-width: 900px) {
+  .fr-app .sr-gloss {
+    font-size: var(--fs-fr5);
+    line-height: 1.1;
+  }
+  .fr-app .sr-sentence {
+    font-size: var(--fs-fr6);
+  }
+  .fr-app .sr-suspect {
+    min-height: clamp(48px, calc(var(--fr-k) * 3), 84px);
+  }
+  .fr-app .sr-suspect-word {
+    font-size: max(16px, min(clamp(18px, calc(var(--fr-k) * 1.15), 34px), calc(100cqw / (var(--len, 8) * 0.8))));
+  }
+  .fr-app .sr-lineup-grid {
+    gap: clamp(8px, 1.2vh, 16px);
+  }
+  .fr-app .sr-slots {
+    --slot-max: clamp(44px, calc(var(--fr-k) * 3), 84px);
+    --gap: clamp(6px, 0.8vw, 12px);
+  }
+  .fr-app .sr-act {
+    min-height: clamp(48px, calc(var(--fr-k) * 2.8), 64px);
+    font-size: var(--fs-fr7);
+  }
+  /* the clue sits in the middle of its column at every desktop height (it hugged the left edge on a
+     short Chromebook) */
+  .fr-app .sr-stage .sr-fields {
+    justify-content: safe center;
+  }
+  .fr-app .sr-stage .sr-fields .sr-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .fr-app .sr-stage .sr-fields .sr-fieldlabel {
+    float: none;
+    margin: 0;
+  }
+}
+/* a phone: the clue and the choices take the room the empty paper had */
+@media (max-width: 520px) {
+  .fr-app .sr-gloss {
+    font-size: var(--fs-fr8);
+  }
+  .fr-app .sr-suspect {
+    min-height: clamp(44px, 7.5vh, 68px);
+  }
+  .fr-app .sr-suspect-word {
+    font-size: max(15px, min(22px, calc(100cqw / (var(--len, 8) * 0.85))));
+  }
+  .fr-app .sr-act {
+    min-height: 52px;
+  }
+}
+
+/* ---------- CREATE ROOM / JOIN ROOM ---------- */
+.fr-app .fr-class-page .sr-modeselect-head {
+  font-size: var(--fs-fr9);
+}
+.fr-app .fr-class-setup .sr-setup-opt {
+  min-height: clamp(46px, calc(var(--fr-k) * 2.8), 72px);
+}
+.fr-app .fr-class-setup .sr-setup-opt-main {
+  font-size: var(--fs-fr10);
+}
+.fr-app .fr-class-setup .sr-setup-row.stack .sr-setup-opt-main {
+  font-size: var(--fs-fr11);
+}
+.fr-app .fr-class-foot .sr-btn.fr-go {
+  min-height: var(--fr-btn-h);
+  font-size: var(--fs-frbtn);
+}
+.fr-app .fr-class-form input {
+  min-height: var(--fr-btn-h);
+  font-size: max(16px, var(--fs-frbtn));
+}
+
+/* ---------- THE TEACHER'S BOARD: the prompt is the biggest thing on it ---------- */
+.fr-class-progress {
+  width: min(640px, 100%);
+  border: 3px solid var(--ink);
+}
+.fr-app .fr-class-page.wide:has(.fr-class-console) {
+  height: min(100%, 1080px);
+}
+.fr-app .fr-class-page.wide:has(.fr-class-console) .sr-modeselect-head {
+  font-size: var(--fs-fr12);
+}
+.fr-app .fr-class-page.wide .fr-class-body:has(> .fr-class-console) {
+  justify-content: stretch;
+}
+.fr-app .fr-class-console {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+@media (min-width: 900px) {
+  .fr-app .fr-class-console,
+  .fr-app .fr-class-console.names {
+    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  }
+  .fr-app .fr-class-side {
+    justify-content: center;
+  }
+}
+.fr-app .fr-class-console .fr-class-clue {
+  justify-content: center;
+  align-items: center;
+  gap: clamp(6px, 2vh, 22px);
+  padding: clamp(12px, 3vh, 40px) clamp(12px, 2.4vw, 40px);
+  container-type: inline-size;
+}
+.fr-class-prompt-meta {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-fr13);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.fr-app .fr-class-console .fr-class-clue .fr-class-gloss {
+  font-size: min(clamp(32px, calc(var(--fr-k) * 4.4), 150px), calc(150cqw / var(--len, 8)), 18vh);
+  line-height: 1.05;
+}
+.fr-app .fr-class-console .fr-class-clue.revealed .fr-class-gloss {
+  font-size: min(clamp(22px, calc(var(--fr-k) * 1.7), 64px), calc(140cqw / var(--len, 8)));
+  opacity: 0.8;
+}
+.fr-app .fr-class-console .fr-class-clue .fr-class-answer {
+  font-size: min(clamp(34px, calc(var(--fr-k) * 3.4), 128px), calc(140cqw / var(--len, 8)), 17vh);
+}
+.fr-class-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 1.6vw, 22px);
+}
+.fr-class-boxword {
+  display: inline-flex;
+  gap: clamp(3px, 0.5vw, 8px);
+}
+.fr-class-boxword i {
+  display: block;
+  width: clamp(16px, min(2.4vw, 4.5vh), 48px);
+  aspect-ratio: 4 / 5;
+  border: 3px solid var(--ink);
+  background: var(--tile);
+}
+.fr-class-boxgap {
+  width: clamp(8px, 1vw, 16px);
+}
+.fr-app .fr-class-console .fr-class-legend {
+  font-size: var(--fs-fr14);
+}
+.fr-app .fr-class-console .fr-class-legend b {
+  font-size: var(--fs-fr15);
+}
+.fr-app .fr-class-console .fr-class-bar {
+  height: clamp(16px, 3vh, 40px);
+}
+/* a phone at the front of the room: the prompt panel takes the spare height */
+@media (max-width: 899px) {
+  .fr-app .fr-class-console {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .fr-app .fr-class-console .fr-class-clue .fr-class-gloss {
+    font-size: min(clamp(30px, 11vw, 56px), calc(150cqw / var(--len, 8)), 9vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fr-app .sr-screen > *,
+  .fr-app .sr-stage,
+  .fr-app .fr-cover-actions > *,
+  .fr-app .sr-setup-opt.sel,
+  .fr-beat {
+    animation: none !important;
+  }
+  .fr-progress-fill {
+    transition: none;
+  }
+}

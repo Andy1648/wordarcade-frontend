@@ -30,12 +30,13 @@ export const DIFFICULTY_ORDER = ['easy', 'standard', 'hard'];
 // for AP exam"). A word's `tier` is how hard it is for an English speaker to LEARN — real frequency
 // (OpenSubtitles fr top-50k rank) blended with a teacher rating, one step easier for a true cognate —
 // and its `ap` is how much the AP exam leans on it (1 must-know, 2 common, 3 extra). The levels cut on
-// BOTH: BASICS is must-know AND easy, EXAM CORE is everything the exam uses a lot, SCORE 5 is the
-// harder tail.
+// BOTH: EASY is must-know AND easy, MEDIUM is everything the exam uses a lot, HARD is the harder tail.
+// (nov21, a teacher found the class "a bit too easy" without ever picking the old "SCORE 5": the names
+// are now the plain EASY / MEDIUM / HARD a student reads at a glance; `rank` drives the 1-2-3 ink pips.)
 export const FR_DIFFICULTIES = {
-  easy: { id: 'easy', label: 'BASICS', line: 'must-know', tiers: [1, 2], apMax: 1 },
-  standard: { id: 'standard', label: 'EXAM CORE', line: 'most on the AP', tiers: [1, 4], apMax: 2 },
-  hard: { id: 'hard', label: 'SCORE 5', line: 'harder + rarer', tiers: [3, 5], apMax: 3 },
+  easy: { id: 'easy', label: 'EASY', line: 'must-know', rank: 1, tiers: [1, 2], apMax: 1 },
+  standard: { id: 'standard', label: 'MEDIUM', line: 'most on the AP', rank: 2, tiers: [1, 4], apMax: 2 },
+  hard: { id: 'hard', label: 'HARD', line: 'harder + rarer', rank: 3, tiers: [3, 5], apMax: 3 },
 };
 
 /** The level table for a pack (FRENCH RUSH has its own; everything else uses the SAT one). */
