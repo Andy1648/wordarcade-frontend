@@ -389,6 +389,8 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     mock.pushToClient({ type: 'miner_over', payload: { winnerIds: [ME], reason: 'core', rounds: 3, standings: [{ id: ME, name: 'ANNA', depth: 520, best: { ore: 'gold', text: 'ANCHOVY' } }, { id: 'b1', name: 'BOT', isBot: true, depth: 200 }] } });
     await page.getByTestId('miner-over').waitFor();
     await paradeEndState(page, { card: '[data-testid="miner-over"]', again: '.mn-over-actions .mn-btn-go', w: vp.width, h: vp.height, tag: 'miner' });
+  });
+}
 
 const CH_QUESTS = JSON.stringify({
   v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
