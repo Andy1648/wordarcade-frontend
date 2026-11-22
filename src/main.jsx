@@ -14,6 +14,9 @@ try {
 } catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
+// POWERS LAB (nov21 PROTOTYPE): /?powers=1 mounts a local Word Bomb round with ascension powers to feel.
+// Its own lazy root - App, the socket and the economy never load on that link; '/' never downloads it.
+const PowersLab = React.lazy(() => import('./powersLab/PowersLab.jsx'))
 import './index.css'
 import './theme/type.css'
 import './theme/values.css'
@@ -208,11 +211,14 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // FRENCH RUSH (oct18) is a standalone study link, not an arcade mode: /french-rush mounts its own
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
   const isFrenchRush = /^\/french-rush\/?$/i.test(window.location.pathname)
-  const Root = isFrenchRush ? FrenchRushApp : App
+  let isPowersLab = false
+  try { isPowersLab = new URLSearchParams(window.location.search).get('powers') === '1' } catch { /* no URL */ }
+  const lazyRoot = isFrenchRush || isPowersLab
+  const Root = isPowersLab ? PowersLab : isFrenchRush ? FrenchRushApp : App
   const renderApp = () => ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
-        {isFrenchRush ? (
+        {lazyRoot ? (
           <React.Suspense fallback={null}>
             <Root />
           </React.Suspense>
