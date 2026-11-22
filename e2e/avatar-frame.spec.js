@@ -22,15 +22,29 @@ async function menuWith(page, frame, main = 'riot') {
   await menuReady(page);
 }
 
-test('a worn frame goes round the menu profile face; the ring art loads', async ({ page }) => {
+test('a worn ring frame goes round the menu profile face; the ring art loads', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await menuWith(page, 'frost');
-  const avf = page.locator('[data-testid="profile-plate"] .avf[data-avf="frost"]');
+  await menuWith(page, 'bomb');
+  const avf = page.locator('[data-testid="profile-plate"] .avf[data-avf="bomb"]');
   await expect(avf).toBeVisible();
   const ok = await avf.locator('.avf-ring').evaluate((img) => img.complete && img.naturalWidth > 0);
   expect(ok).toBe(true);
   const face = await avf.locator('.avf-face').evaluate((el) => getComputedStyle(el).borderRadius);
   expect(face).toBe('22%');
+});
+
+// nov21 STICKER-BADGE frames (badgeFrames.js): FLAME / FROST / JACKPOT are the painted badge + the WHOLE hero (no square
+// crop) + their own props; every part loads; the motion is finite one-shots (no infinite animation on the plate).
+test('a sticker-badge frame: badge, whole hero and props load; nothing loops', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await menuWith(page, 'frost');
+  const avf = page.locator('[data-testid="profile-plate"] .avf[data-avf="frost"][data-badge="1"]');
+  await expect(avf).toBeVisible();
+  await expect(avf.locator('.avf-face')).toHaveCount(0);
+  await expect(avf.locator('.avf-b-prop')).toHaveCount(2);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="profile-plate"] .avf-b img')].every((i) => i.complete && i.naturalWidth > 0));
+  const loops = await avf.evaluate((el) => el.getAnimations({ subtree: true }).filter((a) => a.effect.getTiming().iterations === Infinity).length);
+  expect(loops).toBe(0);
 });
 
 test('no frame worn: the plain tile face, no ring', async ({ page }) => {
@@ -58,17 +72,18 @@ if (SHOTS) {
     await page.locator('[data-testid="profile-plate"]').first().click();
     await page.locator('.pf-kit').first().click();
     await page.locator('.cz-tab[data-cz="frame"]').click();
-    await expect(page.locator('[data-testid="kit-picker"] .skp-avatar .avf-ring')).toBeVisible();
+    await expect(page.locator('[data-testid="kit-picker"] .skp-avatar .avf')).toBeVisible();
     await page.waitForTimeout(800);
     await page.screenshot({ path: `${SHOTS}/customize.png` });
   });
   for (const [w, h] of [[1366, 768], [390, 844]]) {
+    test.setTimeout(90_000);
     for (const id of FRAMES) {
       test(`shot ${id} ${w}`, async ({ page }) => {
         await page.setViewportSize({ width: w, height: h });
         await menuWith(page, id, ['riot', 'brawl', 'glitch', 'hype', 'hex'][FRAMES.indexOf(id) % 5]);
         const plate = page.locator('[data-testid="profile-plate"]').first();
-        await expect(plate.locator('.avf-ring')).toBeVisible();
+        await expect(plate.locator('.avf')).toBeVisible();
         await page.waitForFunction(() => [...document.querySelectorAll('.avf img')].every((i) => i.complete));
         await page.waitForTimeout(2500); // the intro's knife-split + wipe finish first
         const b = await plate.boundingBox();

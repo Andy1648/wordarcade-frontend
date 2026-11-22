@@ -17,3 +17,10 @@
   position: absolute; z-index: 1; display: block; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0;
   translate: none; transform: none; object-fit: contain; filter: none; pointer-events: none;
 }
+
+/* the STICKER-BADGE frame (badgeFrames.js): the badge a bit bigger than the slot (it breaks the box like the old ring),
+   the whole hero standing on its lower half, the props round it. Parts rest still; motion is WAAPI one-shots (JSX). */
+.avf.avf .avf-b-badge { position: absolute; left: -14%; top: -14%; width: 128%; height: 128%; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; object-fit: contain; filter: none; pointer-events: none; transform-origin: 50% 85%; }
+.avf.avf .avf-b-hero { position: absolute; z-index: 1; left: 8%; bottom: -4%; width: 84%; height: auto; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; object-fit: contain; filter: none; pointer-events: none; transform-origin: 50% 100%; translate: none; }
+.avf.avf .avf-b-prop { position: absolute; z-index: 2; display: block; translate: -50% -50%; pointer-events: none; }
+.avf.avf .avf-b-prop img { display: block; width: 100%; height: auto; max-width: none; margin: 0; padding: 0; border: 0; border-radius: 0; filter: none; transform-origin: 50% 85%; }
