@@ -1011,6 +1011,9 @@
 .mn-run-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
 .mn-over-digger.cast-layered { display: inline-block; position: relative; aspect-ratio: 1; }
 
+/* THE PROGRESS PARADE (nov14) on a phone: the pay row keeps WINS + XP + the GEMS total and folds the gem sources (Word Bomb's card
+   does the same), so it holds one line inside the card while the parade takes the room below */
+.mn-over[data-parade-collapsed] .gems-earned-srcs { display: none; }
 /* ===== THE STRIKE STREAK (nov12, the Word Bomb pass — Andy: "addiction corresponding to aggression (they need to feel benefits of
    playing)") =====
    Rounds in a row your answer struck COAL or better. The count rides the dig panel's top-right corner and climbs a size per tier
