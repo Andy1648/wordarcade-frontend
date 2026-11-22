@@ -1362,7 +1362,7 @@
 .lb2-climb-band { font-size: max(var(--fs-k16), calc(var(--fs-k20) * var(--lb2-k))); }
 .lb2-climb-prizes { font-size: max(var(--fs-k16), calc(var(--fs-k16) * var(--lb2-k))); row-gap: 0; }
 .lb2-climb.is-week { justify-content: flex-start; gap: calc(6px * var(--lb2-k)); }
-.lb2-climb.is-week .lb2-climb-hero { width: calc(84px * var(--lb2-k)); height: calc(84px * var(--lb2-k)); }
+.lb2-climb.is-week .lb2-climb-hero { width: calc(110px * var(--lb2-k)); height: calc(110px * var(--lb2-k)); }
 .lb2-climb.is-week .lb2-climb-seal { --seal-k: calc(1.6 * var(--lb2-k)); }
 .lb2-climb.is-week .lb2-climb-n { font-size: calc(var(--fs-k38) * var(--lb2-k)); }
 .lb2-climb.is-week .lb2-climb-bar { height: calc(12px * var(--lb2-k)); }
@@ -1463,3 +1463,15 @@
 .lb2:not(.lb2--narrow) .lb2-lg-next { width: calc(60px * var(--lb2-k)); height: calc(60px * var(--lb2-k)); }
 /* nov12 v3: the place pill rides the badge's bottom tab - YOUR CLIMB's big badge keeps a modest pill (it scaled with the art) */
 .lb2-climb-seal { --num-k: calc(1.25 * var(--lb2-k)); }
+
+/* SAVE YOUR RANK (nov21, account/SignInPrompt): desktop = the last block of YOUR CLIMB; phone = a row over the list */
+.lb2-signin { flex: none; }
+.lb2-signin.is-narrow { padding: 8px 10px; }
+.lb2-signin.is-narrow .sip-h { font-size: var(--fs-k14); }
+/* while the ask is up, YOUR CLIMB makes room for it: a smaller hero, and the "N TO <band>" line steps aside (your own
+   row in the list says the same, and PASS <rival> too) — the ask stays inside the panel */
+.lb2-climb:has(.lb2-signin) { gap: calc(6px * var(--lb2-k)); }
+.lb2-climb:has(.lb2-signin) .lb2-climb-hero { width: calc(110px * var(--lb2-k)); height: calc(110px * var(--lb2-k)); }
+.lb2-climb:has(.lb2-signin) .lb2-climb-band,
+.lb2-climb:has(.lb2-signin) .lb2-climb-next { display: none; }
+.lb2-climb .lb2-signin { gap: 6px 10px; padding: 8px 10px; }

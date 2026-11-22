@@ -200,3 +200,7 @@ html[data-reduce-motion] .pg { animation: none; }
   .pg .pg-odds { flex: none; }
   .pg-pack.is-first .pg-art { max-width: 56px; margin-top: 12px; } /* under the stamp, not behind it */
 }
+
+/* nov21: the guest line over the packs — buying signs you in first (said before the tap, not after) */
+.pg-guest { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.04em; color: #2EFFE0; line-height: 1.3; }
+@media (max-width: 600px) { .pg-guest { font-size: var(--fs-k16); } }

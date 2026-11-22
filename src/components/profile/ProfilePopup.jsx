@@ -26,6 +26,7 @@ import LeagueBadge from '../../leaderboard/LeagueBadge.jsx';
 import { readPlaySec, formatPlayTime } from '../../progress/playClock.js';
 import { formatNum } from '../../format';
 import { unlistedIndex } from '../../unlisted/unlisted.js';
+import SignInPrompt from '../account/SignInPrompt.jsx';
 import './ProfilePopup.css';
 
 // SAVE CODE (save-safety oct28): your short code + COPY under your name — lazy (the save-code chunk carries the codec)
@@ -131,6 +132,8 @@ export default function ProfilePopup({ onClose, onMainChange, view0 = 'profile',
                 {!me ? <span className="pf-hint">CLAIM A NAME ON THE LEADERBOARD</span> : null}
                 {me ? <Suspense fallback={null}><SaveCodeChip /></Suspense> : null}
               </div>
+              {/* SAVE YOUR PROFILE (nov21): a guest with a name is asked here once (SignInPrompt: NOT NOW rests it a week) */}
+              {me ? <SignInPrompt place="profile" className="pf-signin" title="SAVE YOUR PROFILE" why={`KEEP ${me.username}, YOUR HEROES AND LEVEL ON ANY DEVICE`} /> : null}
               {/* THE BANNER (nov2 design audit #14, research 5.1): three trackers, not a six-tile dashboard — the rest lives
                   in STATS — and up to three badges, your best */}
               <div className="pf-medals">
