@@ -78,11 +78,13 @@
 
 /* ---------- screen to screen: every page lands with a quick rise ---------- */
 .fr-app .sr-screen > :is(.sr-cover, .sr-modeselect, .sr-respage, .sr-brief-page, .sr-bank),
-.fr-app .sr-stage:has(> .sr-body) {
+.fr-app .sr-stage > .sr-body {
   animation: fr-page-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
 }
+/* translate + fade only: a page never changes SIZE while it lands, so a control measured (or tapped) mid-entry
+   is already its full >=44px (a scale here measured the HUD's 44px sound switch at 43.9) */
 @keyframes fr-page-in {
-  0% { opacity: 0; transform: translateY(14px) scale(0.985); }
+  0% { opacity: 0; transform: translateY(14px); }
   100% { opacity: 1; transform: none; }
 }
 /* the cover's buttons step in one after another (finite, three) */
@@ -532,7 +534,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fr-app .sr-screen > *,
-  .fr-app .sr-stage,
+  .fr-app .sr-stage > .sr-body,
   .fr-app .fr-cover-actions > *,
   .fr-app .sr-setup-opt.sel,
   .fr-beat {
