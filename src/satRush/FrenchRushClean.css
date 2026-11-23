@@ -532,6 +532,116 @@
   }
 }
 
+/* ---------- FIT (nov23, Andy: "answers are cut off a bit", "study cards are cut off too") ----------
+   The longest rows in the French data (DÉSINFORMATION, l'épanouissement, "wait, waiting (dans l'attente de =
+   looking forward to)") set the sizes: e2e/french-rush-longest.spec.js holds every one of them inside its box. */
+
+/* CHOICES: a choice's name sizes to its chip MINUS the chip's own padding + key badge (it was sized to the
+   whole chip, so a 14-letter name printed edge to edge, into the rule) */
+@media (min-width: 900px) {
+  .fr-app .sr-suspect-word {
+    font-size: max(16px, min(clamp(18px, calc(var(--fr-k) * 1.15), 34px), calc((100cqw - 40px) / (var(--len, 8) * 0.8))));
+  }
+}
+@media (max-width: 520px) {
+  .fr-app .sr-suspect-word,
+  .fr-app .sr-card.tap .sr-suspect-word {
+    font-size: max(16px, min(22px, calc((100cqw - 20px) / (var(--len, 8) * 0.64))));
+  }
+  /* two to a row leaves a phone chip ~125px: a 12+ letter choice gets the whole row instead (still >= 44px tall) */
+  .fr-app .sr-lineup-grid.long,
+  .fr-app .sr-card.tap .sr-lineup-grid.long {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .fr-app .sr-lineup-grid.long .sr-suspect,
+  .fr-app .sr-card.tap .sr-lineup-grid.long .sr-suspect,
+  .fr-app .sr-card.tap .sr-lineup-grid.long .sr-suspect-btn {
+    min-height: 46px;
+  }
+}
+
+/* THE ANSWER CARD (WordCard ReEncode `lean`): the verdict, the word, its meaning, CONTINUE — big, centred, and
+   sized to the card so the longest word with its article never leaves it */
+.fr-app .sr-reencode.lean {
+  container-type: inline-size;
+  justify-content: safe center;
+  gap: clamp(10px, 2.6vh, 28px);
+  padding: clamp(14px, 3vh, 40px) clamp(14px, 4cqw, 48px);
+}
+.fr-app .sr-reencode.lean .sr-reencode-tag {
+  font-size: var(--fs-fr4);
+  letter-spacing: 0.16em;
+  opacity: 1;
+}
+.fr-app .sr-reencode.lean.miss .sr-reencode-tag {
+  color: var(--redink, #c8321e);
+}
+.fr-app .sr-reencode.lean .sr-reencode-word {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  max-width: 100%;
+  font-size: max(22px, min(var(--fs-fr15), calc(100cqw / (var(--len, 8) * 0.8))));
+  line-height: 1.05;
+}
+.fr-app .sr-reencode.lean .sr-reencode-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere; /* a last resort only: the size above already fits the longest word */
+}
+.fr-app .sr-reencode.lean .sr-reencode-def {
+  max-width: 32ch;
+  font-size: var(--fs-fr6);
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  opacity: 1;
+}
+.fr-app .sr-reencode.lean .sr-continue {
+  margin-top: clamp(2px, 1vh, 12px);
+  min-height: var(--fr-btn-h);
+  padding-inline: clamp(28px, 5cqw, 64px);
+  font-size: var(--fs-frbtn);
+}
+
+/* STUDY: the cards are tilted and carry a 3px hard shadow, and the list that scrolls them sliced both off at its
+   top and sides (padding 0 / 4px). The list now leaves the tilt + shadow room on every side, a card is always
+   shorter than the list (a phone card is tighter), and a scroll comes to rest on a card's top edge. */
+.fr-app .sr-brief-list {
+  padding: 8px 12px 12px 8px;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 8px;
+}
+.fr-app .sr-brief-card {
+  scroll-snap-align: start;
+}
+/* French Rush has no corner settings cog, so the study page does not keep the cog's row free below it */
+.fr-app .sr-brief-screen {
+  --sr-cog-room: clamp(12px, 2.5vh, 32px);
+}
+@media (max-width: 520px) {
+  .fr-app .sr-brief-page {
+    gap: 10px;
+    padding: 18px 14px 14px;
+  }
+  .fr-app .sr-brief-head {
+    padding-bottom: 8px;
+  }
+  .fr-app .sr-brief-card {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .fr-app .sr-brief-def,
+  .fr-app .sr-brief-sentence {
+    line-height: 1.4;
+  }
+  .fr-app .sr-brief-root {
+    padding-top: 6px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fr-app .sr-screen > *,
   .fr-app .sr-stage > .sr-body,
