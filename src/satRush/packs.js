@@ -81,7 +81,8 @@ export const PACKS = {
       hud: { heat: false },
       reward: { caption: false },
       stamps: { got: 'BRAVO !', miss: 'RATÉ', streak: 'SÉRIE ×' },
-      review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'THE ANSWER' },
+      // the review card is LEAN (WordCard ReEncode): the verdict, the word, its meaning, CONTINUE
+      review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'MISSED', lean: true },
       lineup: { label: 'Choices', standing: 'left', cleared: 'NON' },
       // nov21 (Andy: "REMOVE THE BS … directions are too AI slop"): titles, choices and buttons only — no
       // pitch lines, no sub-heads, no counts.

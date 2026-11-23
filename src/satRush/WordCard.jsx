@@ -46,6 +46,27 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
   useEffect(() => {
     if (selfPaced && contRef.current) contRef.current.focus({ preventScroll: true });
   }, [selfPaced]);
+  // THE LEAN CARD (FRENCH RUSH, nov23 — Andy: "too much in answer page"): whether you got it, the word, what it
+  // means, and CONTINUE. Nothing else: no example, no English line, no false-friend note, no word family, no
+  // "press any key" (the example and the family live on the study cards and the results list).
+  if (review.lean) {
+    const shown = speak ? withArticle(word, pos, gender) : word;
+    return (
+      <div className={`sr-reencode lean ${kind}`} role="status" onClick={tap && !selfPaced && onContinue ? () => onContinue() : undefined}>
+        <div className="sr-reencode-tag">{tag}</div>
+        <div className="sr-reencode-word" style={{ '--len': shown.length }}>
+          <span className="sr-reencode-text" lang="fr">{shown}</span>
+          {speak && <SayButton word={word} hint />}
+        </div>
+        <p className="sr-reencode-def">{gloss}</p>
+        {selfPaced && (
+          <button type="button" ref={contRef} className="sr-btn sr-continue" onClick={onContinue}>
+            Continue <span className="sr-kbd" aria-hidden="true">⏎</span>
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <div className={`sr-reencode ${kind}`} role="status" onClick={tap && !selfPaced && onContinue ? () => onContinue() : undefined}>
       <div className="sr-reencode-tag">{tag}</div>
@@ -89,6 +110,9 @@ function SuspectLineup({ suspects, ui, onPick, picked, keyed, disabled }) {
   const { lineup, standing, count } = suspects;
   const L = (ui && ui.lineup) || {};
   const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
+  // a choice longer than 11 letters cannot sit two to a row on a phone at 16px (DÉSINFORMATION ran into its
+  // chip's edge at 360px): the grid says so, and the phone layout stacks those choices one to a row
+  const long = lineup.some((s) => s.word.length > 11);
   return (
     <div className={`sr-lineup${onPick ? ' pickable' : ''}`}>
       <div className="sr-lineup-head">
@@ -97,7 +121,7 @@ function SuspectLineup({ suspects, ui, onPick, picked, keyed, disabled }) {
           {standing} {(L.standing || 'standing').toUpperCase()}
         </span>
       </div>
-      <ul className="sr-lineup-grid" style={{ '--cols': cols }}>
+      <ul className={`sr-lineup-grid${long ? ' long' : ''}`} style={{ '--cols': cols }}>
         {lineup.map((s, i) => {
           const mine = picked && picked.word === s.word ? (picked.ok ? ' picked ok' : ' picked bad') : '';
           return (
