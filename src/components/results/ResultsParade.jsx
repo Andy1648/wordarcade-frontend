@@ -34,6 +34,8 @@ import { today, lastGameResult, QUESTS_RESULT } from '../../progress/questsLive.
 import { QUEST_ART, MODE_ART } from './questArt.js';
 import '../kit/tokens.css';
 import './ResultsParade.css';
+import { readSession } from '../../leaderboard/auth.js';
+import { guestAsk, noteMoment, SignInSheet } from '../account/SignInPrompt.jsx';
 
 const QuestsSheet = lazy(() => import('../quests/QuestsSheet.jsx'));
 
@@ -171,6 +173,7 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
   const [phase, setPhase] = useState('load'); // load → fit → run → done
   const [shown, setShown] = useState(0); // rows revealed (the nudge is index rows.length)
   const [sheet, setSheet] = useState(false);
+  const [signSheet, setSignSheet] = useState(false);
   const rootRef = useRef(null);
   const skipRef = useRef(() => {});
   const swallow = useRef(false);
@@ -205,6 +208,11 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
       if (result) shownAt = Math.max(shownAt, result.at);
       let n = result && result.nudge;
       if (!n) { try { n = nudgeOf(today()); } catch { n = null; } }
+      // SAVE YOUR RANK (nov21): a guest PROMOTED into a new league is asked once (signInNudge.js caps it: 3 days between
+      // asks, NOT NOW rests it a week). The quest nudge steps aside for that game; the tap opens the sign-in sheet.
+      try {
+        if (league && league.move && league.move.dir === 'up' && guestAsk('parade', readSession())) n = { text: `SAVE YOUR #${formatNum(league.to)} · SIGN IN WITH GOOGLE`, signin: true };
+      } catch { /* the quest nudge stays */ }
       let rows = [];
       try { rows = buildRows({ result, contract: contractRow(gemsSince), league }); } catch { rows = []; } // never a stuck card
       setData({ rows, nudge: n });
@@ -419,9 +427,16 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
     setSheet(true);
   };
   const onKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (phase === 'done') setSheet(true); } };
-
   const nudge = data && data.nudge;
   const noNudge = rootRef.current && rootRef.current.dataset.noNudge;
+  // the sign-in nudge: its own tap (the sheet, not the quest list); the ask counts as shown once it has landed on screen
+  const signNudge = !!(nudge && nudge.signin && !noNudge);
+  const openSign = () => {
+    if (swallow.current) { swallow.current = false; return; }
+    if (phase === 'done') setSignSheet(true);
+  };
+  const onSignKey = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (phase === 'done') setSignSheet(true); } };
+  useEffect(() => { if (signNudge && phase === 'done') noteMoment('parade'); }, [signNudge, phase]);
   const list = rows || [];
   return (
     <section ref={rootRef} className={`rp${narrow ? ' rp--narrow' : ''}${inFlow ? ' rp--flow' : ''}${data ? '' : ' is-loading'}`} aria-label="Your progress this game" data-testid="results-parade" data-phase={phase} data-rows={list.map((r) => r.kind).join(',')}>
@@ -441,18 +456,19 @@ export default function ResultsParade({ cardRef, narrow = false, gemsSince = 0, 
       })}
       {nudge && !noNudge ? (
         <div
-          className={`rp-nudge${QUEST_ART.nudgeBanner ? ' has-art' : ''}${phase === 'done' || shown > list.length ? '' : ' rp-wait'}`}
+          className={`rp-nudge${QUEST_ART.nudgeBanner ? ' has-art' : ''}${nudge.signin ? ' is-signin' : ''}${phase === 'done' || shown > list.length ? '' : ' rp-wait'}`}
           role="button"
           tabIndex={0}
-          onClick={openList}
-          onKeyDown={onKey}
-          aria-label={`${nudge.text}. Open the quest list`}
-          data-testid="parade-nudge"
+          onClick={nudge.signin ? openSign : openList}
+          onKeyDown={nudge.signin ? onSignKey : onKey}
+          aria-label={nudge.signin ? `${nudge.text}. Save your progress` : `${nudge.text}. Open the quest list`}
+          data-testid={nudge.signin ? 'parade-signin' : 'parade-nudge'}
         >
           <span className="rp-nudge-t">{nudge.text}</span>
           <span className="rp-nudge-go" aria-hidden="true">▸</span>
         </div>
       ) : null}
+      {signSheet ? <SignInSheet place="parade" title="SAVE YOUR RANK" why="YOU JUST MOVED UP A LEAGUE. SIGN IN SO A NEW DEVICE OR A WIPED CHROMEBOOK CAN'T TAKE IT AWAY." onClose={() => setSignSheet(false)} /> : null}
       {sheet ? (
         <Suspense fallback={null}>
           <QuestsSheet onClose={() => setSheet(false)} />

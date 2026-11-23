@@ -194,7 +194,7 @@ function SaveRow() {
     <Group title="SAVE CODE" tone="#FF4FA3" edge="#b0206a" className="sp-save">
       {/* SIGN IN WITH GOOGLE (085) heads the save group: the account keeps the progress on every device; the code below
           still works without it (optional — school Google accounts often block third-party sign-in) */}
-      {authAvailable() ? <div className="sp-account" data-testid="sp-account"><AccountLine why="KEEP YOUR PROGRESS ON EVERY DEVICE" /></div> : null}
+      {authAvailable() ? <div className="sp-account" data-testid="sp-account"><AccountLine why="EASIER THAN A CODE · SIGN IN ONCE, KEEP YOUR PROGRESS ON EVERY DEVICE" /></div> : null}
       {ask ? (
         <div className="sp-load-confirm" role="alertdialog" aria-label="Confirm restore" data-testid="sp-load-confirm">
           <p className="sp-msg" data-testid="sp-load-compare">{ask.undo ? 'PUT BACK' : 'THIS CODE'}: {ask.mine.text} · THIS DEVICE: {ask.here.text}</p>
