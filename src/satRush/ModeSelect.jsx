@@ -44,7 +44,7 @@ export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit, ui
               onClick={() => onChoose(m.id)}
             >
               <span className="sr-modecard-title">{m.title}</span>
-              <span className="sr-modecard-line">{m.line}</span>
+              {m.line && <span className="sr-modecard-line">{m.line}</span>}
             </button>
           ))}
         </div>
