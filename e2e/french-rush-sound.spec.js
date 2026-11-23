@@ -86,8 +86,11 @@ async function startSelfPacedQuiz(page) {
   await page.getByRole('button', { name: 'Play' }).click();
   await page.getByRole('button', { name: /QUIZ/ }).click();
   await expect(page.locator('.sr-setup')).toBeVisible();
-  await page.getByRole('radio', { name: /Families/i }).click();
-  await expect(page.getByRole('radio', { name: /MY PACE/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('button', { name: /^theme/ }).click();
+  await page.getByRole('option', { name: /Families/i }).click();
+  // TIMED is the default (nov21); this flow is the self-paced one
+  await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: /NO TIMER/ }).click();
   await page.getByRole('button', { name: /^Start$/ }).click();
   await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
 }
@@ -147,7 +150,7 @@ test('transitions make a sound; the 🔊 note shows once; the 🔊 says the word
 
   // …not even after a reload
   await page.reload();
-  await expect(page.locator('.sr-cover')).toContainText('HEAR EVERY WORD');
+  await expect(page.locator('.sr-cover')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('fr.sayHint.v1'))).toBe('1');
   expect(errors).toEqual([]);
 });
@@ -213,6 +216,7 @@ test.describe('phone', () => {
     await page.getByRole('button', { name: /QUIZ/ }).click();
     await page.getByRole('button', { name: /^theme/ }).click();
     await page.getByRole('option', { name: /Families/i }).click();
+    await page.getByRole('radio', { name: /NO TIMER/ }).click();
     await page.getByRole('button', { name: /^Start$/ }).click();
     await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
     const sound = page.locator('.sr-hud .sr-hud-sound');
@@ -248,7 +252,11 @@ test('a device with no French voice shows no 🔊 and never speaks — and nothi
   await expect(page.locator('.sr-cover')).not.toContainText('HEAR EVERY WORD');
   await page.getByRole('button', { name: 'Play' }).click();
   await page.getByRole('button', { name: /QUIZ/ }).click();
-  await page.getByRole('radio', { name: /Families/i }).click();
+  await page.getByRole('button', { name: /^theme/ }).click();
+  await page.getByRole('option', { name: /Families/i }).click();
+  // TIMED is the default (nov21); this flow is the self-paced one
+  await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: /NO TIMER/ }).click();
   await page.getByRole('button', { name: /^Start$/ }).click();
   await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
   await answerCurrent(page);

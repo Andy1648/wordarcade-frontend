@@ -40,11 +40,30 @@ function Choice({ label, options, value, onPick, render, stack = false, grid = f
   );
 }
 
+// a level as a student reads it: the name, and 1-2-3 ink pips (the hardest is the fullest and prints in red ink)
+export function LevelLabel({ level }) {
+  const rank = level.rank || 0;
+  return (
+    <>
+      <span className="sr-setup-opt-main">{level.label}</span>
+      {rank > 0 && (
+        <span className={`fr-pips r${rank}`} aria-hidden="true">
+          {[1, 2, 3].map((i) => (
+            <i key={i} className={i <= rank ? 'on' : ''} />
+          ))}
+        </span>
+      )}
+    </>
+  );
+}
+
 export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 0, packSize = 0, categories = [], pack = 'sat', ui = null, onStart, onBack, onExit }) {
   const DIFFICULTIES = difficultiesFor(pack);
   const U = ui || {};
   const p = prefs || {};
-  const initial = normalizeSpec({ mode, difficulty: p.difficulty, length: p[mode] });
+  // a pack may set its own first-visit length (FRENCH RUSH: 20 words in a quiz)
+  const firstLength = U.defaultLength && U.defaultLength[mode];
+  const initial = normalizeSpec({ mode, difficulty: p.difficulty, length: p[mode] != null ? p[mode] : firstLength });
   const [difficulty, setDifficulty] = useState(initial.difficulty);
   const [length, setLength] = useState(initial.length);
   // THEME (packs with categories — FRENCH RUSH's six AP themes + connectors): 'all' or one theme
@@ -80,6 +99,94 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
   }, []);
 
   const isBrief = mode === 'briefing';
+  const start = () =>
+    onStart({
+      difficulty,
+      length,
+      category: category === 'all' ? null : category,
+      pace: hasPace ? pace : null,
+      skipStudied: offerSkip ? skipStudied : null,
+    });
+
+  // FRENCH RUSH (nov21, Andy: "a bit too much stuff, try to make it more concise"): the title, four
+  // choices and START — no sub-head, no pitch lines, no word counts. DIFFICULTY leads, big, with 1-2-3
+  // ink pips so HARD is impossible to miss; the theme is one printed picker.
+  if (U.compactSetup) {
+    const title = (U.modes && U.modes[mode] && U.modes[mode].title) || (isBrief ? 'BRIEFING' : 'LINEUP');
+    return (
+      <div className="sr-screen">
+        <div className="sr-modeselect sr-setup fr-setup">
+          <div className="sr-modeselect-head sr-print" data-v={title}>
+            {title}
+          </div>
+          <div className="fr-setup-grid">
+            <Choice
+              label="difficulty"
+              stack
+              options={DIFFICULTY_ORDER}
+              value={difficulty}
+              onPick={setDifficulty}
+              render={(d) => <LevelLabel level={DIFFICULTIES[d]} />}
+            />
+            <div className="fr-setup-rest">
+              {catIds.length > 0 && (
+                <PrintPicker
+                  className="fr-setup-theme"
+                  label="theme"
+                  value={category}
+                  options={['all', ...catIds].map((id) => ({ value: id, label: catLabel(id) }))}
+                  onChange={setCategory}
+                />
+              )}
+              {hasPace && (
+                <Choice
+                  label="timer"
+                  duo
+                  options={['timed', 'self']}
+                  value={pace}
+                  onPick={setPace}
+                  render={(v) => <span className="sr-setup-opt-main">{v === 'self' ? 'NO TIMER' : 'TIMED'}</span>}
+                />
+              )}
+              <Choice
+                label="words"
+                options={LENGTHS[mode]}
+                value={length}
+                onPick={setLength}
+                render={(n) => <span className="sr-setup-opt-main">{n}</span>}
+                aside={
+                  offerSkip ? (
+                    <button type="button" role="checkbox" aria-checked={skipStudied} className="fr-tick" onClick={() => setSkipStudied((v) => !v)}>
+                      <span className="fr-tick-box" aria-hidden="true">
+                        {skipStudied ? '✓' : ''}
+                      </span>
+                      <span>skip studied</span>
+                    </button>
+                  ) : null
+                }
+              />
+            </div>
+          </div>
+          <div className="fr-setup-foot">
+            <button type="button" ref={goRef} className="sr-btn fr-go" onClick={start}>
+              {isBrief ? 'Study' : U.startLabel || 'Start'}
+            </button>
+            {onBack && (
+              <button type="button" className="sr-exit-chip" onClick={onBack}>
+                <span aria-hidden="true">←</span> BACK
+              </button>
+            )}
+            {hasPace && (
+              <button type="button" className="sr-exit-chip" onClick={copyLink} aria-label="Copy a link to this set">
+                {copied ? 'COPIED' : 'COPY LINK'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sr-screen">
       <div className="sr-modeselect sr-setup">
@@ -169,13 +276,7 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               </div>
             )}
 
-            <button type="button" ref={goRef} className="sr-btn" onClick={() => onStart({
-                  difficulty,
-                  length,
-                  category: category === 'all' ? null : category,
-                  pace: hasPace ? pace : null,
-                  skipStudied: offerSkip ? skipStudied : null,
-                })}>
+            <button type="button" ref={goRef} className="sr-btn" onClick={start}>
               {U.startLabel ? (isBrief ? 'Study the words' : U.startLabel) : isBrief ? 'Study the words' : 'Open the case'}
             </button>
 

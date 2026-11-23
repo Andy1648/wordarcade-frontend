@@ -84,14 +84,14 @@ test('the poster never prints the answer inside its word family', () => {
   }
 });
 
-test('levels follow the AP: BASICS is must-know only, SCORE 5 is the harder tail', () => {
+test('levels follow the AP: EASY is must-know only, HARD is the harder tail', () => {
   const basics = bandWords(WORDS, 'easy', null, 'fr');
   assert.ok(basics.every((r) => r.ap === 1 && r.tier <= 2));
   const core = bandWords(WORDS, 'standard', null, 'fr');
   assert.ok(core.every((r) => r.ap <= 2));
   const hard = bandWords(WORDS, 'hard', null, 'fr');
   assert.ok(hard.every((r) => r.tier >= 3));
-  // a BASICS case leads with must-know words even when the band is mixed
+  // an EASY case leads with must-know words even when the band is mixed
   const { rows } = buildRunQueue({ spec: { pack: 'fr', mode: 'lineup', difficulty: 'standard', length: 10 }, words: WORDS });
   assert.ok(rows.filter((r) => r.ap === 1).length >= 6, 'a STANDARD case is mostly must-know words');
 });
