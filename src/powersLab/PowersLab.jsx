@@ -20,21 +20,21 @@ import * as sfx from './labSounds';
 import './PowersLab.css';
 
 const LIVES = 3;
-const FUSE_PATH = 'M 80 40 Q 120 14 110 2';
+export const FUSE_PATH = 'M 80 40 Q 120 14 110 2';
 const P0 = [80, 40], P1 = [120, 14], P2 = [110, 2];
-function fusePoint(t) {
+export function fusePoint(t) {
   const u = 1 - t;
   return [u * u * P0[0] + 2 * u * t * P1[0] + t * t * P2[0], u * u * P0[1] + 2 * u * t * P1[1] + t * t * P2[1]];
 }
-const MASCOT = { idle: '/mascot-idle.png', panic: '/mascot-panic.png' };
+export const MASCOT = { idle: '/mascot-idle.png', panic: '/mascot-panic.png' };
 
-const reduceMotion = () => {
+export const reduceMotion = () => {
   try { return document.documentElement.hasAttribute('data-reduce-motion'); } catch { return false; }
 };
-const isTouch = () => {
+export const isTouch = () => {
   try { return matchMedia('(pointer: coarse)').matches; } catch { return false; }
 };
-function play(el, frames, opts) {
+export function play(el, frames, opts) {
   if (!el || !el.animate) return null;
   el.style.willChange = 'transform, opacity';
   const a = el.animate(frames, { fill: 'forwards', ...opts });
@@ -741,7 +741,7 @@ const PHONE_COPY = {
   windup: 'Hold GO before you send. A full wind-up slams the word: ×2 and the bot gets half a clock.',
 };
 
-function Hearts({ n }) {
+export function Hearts({ n }) {
   return (
     <span className="pl-hearts" aria-label={`${n} lives`}>
       {Array.from({ length: LIVES }, (_, i) => (

@@ -17,6 +17,7 @@ const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
 // POWERS LAB (nov21 PROTOTYPE): /?powers=1 mounts a local Word Bomb round with ascension powers to feel.
 // Its own lazy root - App, the socket and the economy never load on that link; '/' never downloads it.
 const PowersLab = React.lazy(() => import('./powersLab/PowersLab.jsx'))
+const PowersLab2 = React.lazy(() => import('./powersLab/PowersLab2.jsx')) // round 2: /?powers=2
 import './index.css'
 import './theme/type.css'
 import './theme/values.css'
@@ -212,9 +213,11 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
   const isFrenchRush = /^\/french-rush\/?$/i.test(window.location.pathname)
   let isPowersLab = false
-  try { isPowersLab = new URLSearchParams(window.location.search).get('powers') === '1' } catch { /* no URL */ }
+  let powersRound = null
+  try { powersRound = new URLSearchParams(window.location.search).get('powers') } catch { /* no URL */ }
+  isPowersLab = powersRound === '1' || powersRound === '2'
   const lazyRoot = isFrenchRush || isPowersLab
-  const Root = isPowersLab ? PowersLab : isFrenchRush ? FrenchRushApp : App
+  const Root = isPowersLab ? (powersRound === '2' ? PowersLab2 : PowersLab) : isFrenchRush ? FrenchRushApp : App
   const renderApp = () => ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>

@@ -134,3 +134,76 @@ export function boom() {
 export function tick(urgent) {
   tone(now(), { freq: urgent ? 1400 : 1000, dur: 0.025, type: 'square', gain: urgent ? 0.05 : 0.03 });
 }
+
+// ================= ROUND 2 =================
+// SLINGSHOT: a rubber band creaking tighter while held; a whoosh + thwack on release; a thwang on a dud
+export function slingPull() {
+  return held({ freq: 90, type: 'sawtooth', gain: 0.05, glideTo: 360, glideS: 1.0, lowpass: 1200 });
+}
+export function slingFire(pull) {
+  const t = now();
+  tone(t, { freq: 900, glideTo: 140, dur: 0.22, type: 'sawtooth', gain: 0.08, lowpass: 3000 });
+  tone(t + 0.02, { freq: 200 + 300 * pull, glideTo: 60, dur: 0.18, type: 'sine', gain: 0.25 });
+  tone(t + 0.12, { freq: pentFreq(NOTE.G5), dur: 0.14, type: 'triangle', gain: 0.1 });
+}
+export function slingSnap() {
+  const t = now();
+  tone(t, { freq: 320, glideTo: 180, dur: 0.18, type: 'square', gain: 0.06, lowpass: 1600 });
+  tone(t + 0.05, { freq: 240, glideTo: 200, dur: 0.12, type: 'square', gain: 0.04, lowpass: 1600 });
+}
+// CAPS RAGE: a growl up on, a sigh down off
+export function rageOn() {
+  const t = now();
+  tone(t, { freq: 70, glideTo: 160, dur: 0.35, type: 'sawtooth', gain: 0.18, lowpass: 900 });
+  tone(t, { freq: 72, glideTo: 170, dur: 0.35, type: 'square', gain: 0.07, lowpass: 700 });
+  tone(t + 0.05, { freq: pentFreq(NOTE.C4), dur: 0.2, type: 'square', gain: 0.06 });
+}
+export function rageOff() {
+  tone(now(), { freq: 300, glideTo: 120, dur: 0.3, type: 'triangle', gain: 0.08, lowpass: 1500 });
+}
+// STOMP: each stomp a thud one step higher
+export function stomp(i) {
+  const t = now();
+  tone(t, { freq: 90, glideTo: 50, dur: 0.08, type: 'sine', gain: 0.3 });
+  tone(t, { freq: pentFreq(NOTE.C4 + Math.min(i, 10)), dur: 0.06, type: 'square', gain: 0.05 });
+}
+export function stompUp() {
+  const t = now();
+  tone(t, { freq: pentFreq(NOTE.C5), dur: 0.06, type: 'square', gain: 0.06 });
+  tone(t + 0.08, { freq: pentFreq(NOTE.C5), dur: 0.06, type: 'square', gain: 0.06 });
+}
+// ASCEND: a riser while held, a big chord on full, a falling sigh when let go early
+export function ascendRiser() {
+  return held({ freq: 55, type: 'sawtooth', gain: 0.09, glideTo: 440, glideS: 2.0, lowpass: 2200 });
+}
+export function ascendBoom() {
+  const t = now();
+  tone(t, { freq: 140, glideTo: 30, dur: 0.7, type: 'sine', gain: 0.35 });
+  [NOTE.C5, NOTE.Eb5, NOTE.G5, NOTE.C6].forEach((n, i) => tone(t + 0.04 + i * 0.05, { freq: pentFreq(n), dur: 0.9, type: 'triangle', gain: 0.09 }));
+}
+export function ascendDrop() {
+  tone(now(), { freq: 300, glideTo: 80, dur: 0.35, type: 'triangle', gain: 0.08 });
+}
+// CHEST: a knock per hit (climbing), a pop when it opens
+export function chestHit(i) {
+  const t = now();
+  tone(t, { freq: 130 + i * 6, glideTo: 70, dur: 0.07, type: 'square', gain: 0.07, lowpass: 900 });
+  tone(t, { freq: pentFreq(NOTE.C4 + (i % 12)), dur: 0.05, type: 'triangle', gain: 0.06 });
+}
+export function chestOpen(gold) {
+  const t = now();
+  tone(t, { freq: 200, glideTo: 900, dur: 0.18, type: 'sawtooth', gain: 0.07, lowpass: 3000 });
+  const notes = gold ? [NOTE.C5, NOTE.Eb5, NOTE.G5, NOTE.Bb5, NOTE.C6] : [NOTE.C5, NOTE.G5, NOTE.C6];
+  notes.forEach((n, i) => tone(t + 0.12 + i * 0.06, { freq: pentFreq(n), dur: 0.3, type: 'triangle', gain: 0.1 }));
+}
+// LEVEL UP: each typed letter stamps one note higher; a fanfare at the end
+export function stampLetter(i) {
+  const t = now();
+  tone(t, { freq: 110, glideTo: 60, dur: 0.06, type: 'sine', gain: 0.25 });
+  tone(t, { freq: pentFreq(NOTE.C5 + i), dur: 0.12, type: 'square', gain: 0.06 });
+}
+export function levelFanfare() {
+  const t = now();
+  [NOTE.C5, NOTE.Eb5, NOTE.G5, NOTE.C6].forEach((n, i) => tone(t + i * 0.08, { freq: pentFreq(n), dur: 0.35, type: 'square', gain: 0.06 }));
+  tone(t + 0.32, { freq: pentFreq(NOTE.C6), dur: 0.6, type: 'triangle', gain: 0.12 });
+}
