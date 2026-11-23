@@ -13,7 +13,8 @@
 // back to this cover, never to the arcade. A teacher can hand out a set as a link
 // (?mode=&level=&n=&theme=&pace=) — it opens CASE SETUP with that set preselected.
 //
-// CLASS ROOM (oct19, Andy: "can you do a create/join room for this?"): a teacher opens a class with a
+// CREATE ROOM / JOIN ROOM (oct19, Andy: "can you do a create/join room for this?"; the copy said CLASS ROOM
+// until nov21 — the code and the class_* protocol keep the class name): a teacher opens a class with a
 // code, students join it (or open ?class=CODE), everyone plays the same words and the teacher moves
 // everyone on. See class/ClassRoom.jsx; a reload mid-class goes straight back in.
 //
@@ -37,46 +38,54 @@ import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
 import PressWipe from './PressWipe';
 import { usePressOnChange } from './press';
-import { useFrVoice } from './useFrVoice';
+// last, so the nov21 clean pass wins over SatRush.css / FrenchRush.css / ClassRoom.css
+import './FrenchRushClean.css';
 
-// The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
-function Cover({ onPlay, onBank, onClass, wordCount }) {
-  const canSay = useFrVoice(); // say up front that every word can be HEARD (only when this device can)
+// The cover (nov21, Andy: "REMOVE THE BS"): the title and the ways in. Nothing else — no tagline, no
+// worked example, no word count, no reassurance lines.
+function Cover({ onPlay, onBank, onCreate, onJoin }) {
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
         <div className="sr-title sr-print" data-v={'FRENCH RUSH'}>
           FRENCH&nbsp;RUSH
         </div>
-        <p className="sr-cover-tag">AP French vocab. See the meaning — type the French.</p>
-
-        <div className="sr-cover-example">
-          <div className="sr-cover-ex-label">EXAMPLE</div>
-          <div className="sr-cover-ex-clue">to travel</div>
-          <div className="sr-cover-ex-arrow" aria-hidden="true">▼</div>
-          <div className="sr-cover-ex-answer">VOYAGER</div>
+        <div className="fr-cover-actions">
+          <button type="button" className="sr-btn fr-go" onClick={onPlay}>
+            Play
+          </button>
+          <div className="fr-cover-pair">
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onCreate}>
+              Create room
+            </button>
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onJoin}>
+              Join room
+            </button>
+          </div>
+          <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
+            Word bank
+          </button>
         </div>
-
-        <div className="sr-cover-meta">
-          <span className="sr-cover-pay">6 AP THEMES + ESSAY &amp; EXAM WORDS · {wordCount} WORDS</span>
-          <span className="sr-cover-round">NO TIMER UNLESS YOU WANT ONE · ACCENTS OPTIONAL</span>
-          {canSay && <span className="sr-cover-round fr-cover-say">🔊 HEAR EVERY WORD SAID IN FRENCH</span>}
-        </div>
-
-        <button type="button" className="sr-btn" onClick={onPlay}>
-          Play
-        </button>
-        <button type="button" className="sr-btn sr-btn-ghost" onClick={onClass}>
-          Class room
-        </button>
-        <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
-          Word bank
-        </button>
         <a className="sr-cover-credit" href="/">
           a TYPE A WORD game
         </a>
       </div>
     </div>
+  );
+}
+
+// The run's progress, Quizlet-style: one ink bar under the HUD that fills as words settle (transform only),
+// and a one-shot frame beat on every answer — ink for a capture, red ink for a miss.
+function RunProgress({ settled, total, stamp }) {
+  const frac = total > 0 ? Math.min(1, settled / total) : 0;
+  const beat = stamp && (stamp.kind === 'miss' ? 'miss' : 'got');
+  return (
+    <>
+      <div className="fr-progress" role="progressbar" aria-label="words done" aria-valuemin={0} aria-valuemax={total} aria-valuenow={settled}>
+        <span className="fr-progress-fill" style={{ transform: `scaleX(${frac})` }} />
+      </div>
+      {beat && <div className={`fr-beat ${beat}`} key={`beat-${stamp.id}`} aria-hidden="true" />}
+    </>
   );
 }
 
@@ -100,9 +109,9 @@ function readPreset() {
     return {
       mode: q.get('mode') === 'briefing' ? 'briefing' : 'lineup',
       difficulty: q.get('level') || 'standard',
-      length: Number(q.get('n')) || 10,
+      length: Number(q.get('n')) || 20,
       category: q.get('theme') || null,
-      pace: q.get('pace') === 'timed' ? 'timed' : 'self',
+      pace: q.get('pace') === 'self' ? 'self' : 'timed',
     };
   } catch {
     return null;
@@ -129,6 +138,11 @@ export default function FrenchRushGame() {
   // link, or when this tab already holds a class seat (a reload mid-class).
   const [classCode] = useState(readClassCode);
   const [classOpen, setClassOpen] = useState(() => !!classCode || hasClassSeat());
+  const [classEntry, setClassEntry] = useState(classCode ? 'join' : 'setup'); // CREATE ROOM | JOIN ROOM
+  const openClass = (entry) => {
+    setClassEntry(entry);
+    setClassOpen(true);
+  };
   const [classState, setClassState] = useState({ playing: false, hostAway: false, offline: false });
   const classLeaveRef = useRef(null);
   const classStandbyRef = useRef(null); // a student's results → back to the class screen, seat kept
@@ -197,6 +211,7 @@ export default function FrenchRushGame() {
               caseLabel="words"
               onExit={inClassRun ? leaveClassRun : home}
             />
+            <RunProgress settled={view.settled} total={view.runTotal} stamp={view.stamp} />
             <div className="sr-body">
               <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} onPick={game.pickChoice} />
               {inClassRun && (classState.offline || classState.hostAway || view.pending !== 'idle') && (
@@ -217,7 +232,7 @@ export default function FrenchRushGame() {
           game={game}
           words={(view.pack && view.pack.words) || []}
           categories={(view.pack && view.pack.categories) || []}
-          entry={classCode ? 'join' : 'choose'}
+          entry={classEntry}
           initialCode={classCode}
           onExit={closeClass}
           onStudentState={setClassState}
@@ -235,7 +250,7 @@ export default function FrenchRushGame() {
         />
       )}
       {!bank && !classOpen && view.phase === 'start' && (
-        <Cover onPlay={game.startGame} onBank={() => setBank(true)} onClass={() => setClassOpen(true)} wordCount={view.packSize} />
+        <Cover onPlay={game.startGame} onBank={() => setBank(true)} onCreate={() => openClass('setup')} onJoin={() => openClass('join')} />
       )}
       {!classOpen && view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={home} ui={ui} />

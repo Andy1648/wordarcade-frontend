@@ -64,9 +64,10 @@ export const PACKS = {
     recentKey: 'wa_frenchrush_recent',
     meaningFirst: true,
     accentFold: true,
-    // the run is the student's: no clock by default (HINT for the next clue, CONTINUE after every word);
-    // the TIMED pace is slow — a stage is 7s (×1.4 with choices) and the letters print every 1.8s
-    defaultPace: 'self',
+    // TIMED by default (nov21, Andy: defaults TIMED + 20 words); NO TIMER is one tap away (HINT for the next
+    // clue, CONTINUE after every word). The TIMED pace is slow — a stage is 7s (×1.4 with choices) and the
+    // letters print every 1.8s
+    defaultPace: 'timed',
     // STUDY FIRST deals only words an English speaker could not guess (`guessable: false`)
     studyNonGuessable: true,
     timing: { stageMs: 7000, lineupScale: 1.4, spellMs: 1800 },
@@ -82,13 +83,17 @@ export const PACKS = {
       stamps: { got: 'BRAVO !', miss: 'RATÉ', streak: 'SÉRIE ×' },
       review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'THE ANSWER' },
       lineup: { label: 'Choices', standing: 'left', cleared: 'NON' },
-      modeHead: 'HOW DO YOU WANT TO PRACTICE?',
+      // nov21 (Andy: "REMOVE THE BS … directions are too AI slop"): titles, choices and buttons only — no
+      // pitch lines, no sub-heads, no counts.
+      modeHead: 'PRACTICE',
       modes: {
-        briefing: { title: 'STUDY FIRST', line: "learn the words you can't guess from English" },
-        lineup: { title: 'QUIZ', line: 'every word — a few choices help you' },
+        briefing: { title: 'STUDY FIRST', line: '' },
+        lineup: { title: 'QUIZ', line: '' },
       },
-      setupSub: 'set up your practice',
-      pace: 'self', // CASE SETUP offers a pace row, preselected to no timer
+      setupSub: 'set up your practice', // a flag for CASE SETUP's French Rush layout (never printed)
+      compactSetup: true,
+      pace: 'timed', // CASE SETUP offers a timer row, preselected to TIMED
+      defaultLength: { lineup: 20, briefing: 10 }, // briefing tops out at 15 (LENGTHS.briefing)
       briefingTitle: 'STUDY',
       startLabel: 'Start',
       results: {
