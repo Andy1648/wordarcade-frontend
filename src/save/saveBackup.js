@@ -92,10 +92,7 @@ export const PROGRESS_KEYS = [
   'wa_satrush_lexicon',
   'wa_frenchrush_lexicon',
   // LANGUAGE RUSH (nov24): each language's learning memory, like French's
-  'wa_spanishrush_lexicon',
-  'wa_italianrush_lexicon',
-  'wa_latinrush_lexicon',
-  'wa_chineserush_lexicon',
+  ...['spanish', 'italian', 'latin', 'chinese'].map((n) => `wa_${n}rush_lexicon`),
   'wa_daily',
   'taw.themeRefundPending',
   'taw.bio',

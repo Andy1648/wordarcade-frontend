@@ -12,16 +12,9 @@ try {
   const sc = new URLSearchParams(window.location.search).get('cbshow') // break-showcase off switch (?cbshow=0)
   if (sc) sessionStorage.setItem('taw.cbshow', sc)
 } catch { /* storage blocked */ }
-// FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
-const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
-// LANGUAGE RUSH (nov24): the same mode for the other AP world languages, one link + one lazy chunk each
-const LANGUAGE_RUSH_APPS = {
-  'french-rush': FrenchRushApp,
-  'spanish-rush': React.lazy(() => import('./satRush/rushApps/SpanishRushApp.jsx')),
-  'italian-rush': React.lazy(() => import('./satRush/rushApps/ItalianRushApp.jsx')),
-  'latin-rush': React.lazy(() => import('./satRush/rushApps/LatinRushApp.jsx')),
-  'chinese-rush': React.lazy(() => import('./satRush/rushApps/ChineseRushApp.jsx')),
-}
+// FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it. LANGUAGE RUSH (nov24): the other
+// AP languages mount the same way; RushRoot picks the language's own lazy chunk, so this bundle names one chunk
+const FrenchRushApp = React.lazy(() => import('./satRush/rushApps/RushRoot.jsx'))
 import './index.css'
 import './theme/type.css'
 import './theme/values.css'
@@ -216,9 +209,8 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
   // FRENCH RUSH (oct18) is a standalone study link, not an arcade mode: /french-rush mounts its own
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
   // (nov24: /spanish-rush, /italian-rush, /latin-rush and /chinese-rush mount the same way)
-  const rushPath = /^\/(french|spanish|italian|latin|chinese)-rush\/?$/i.exec(window.location.pathname)
-  const isFrenchRush = !!rushPath
-  const Root = isFrenchRush ? LANGUAGE_RUSH_APPS[`${rushPath[1].toLowerCase()}-rush`] : App
+  const isFrenchRush = /^\/(french|spanish|italian|latin|chinese)-rush\/?$/i.test(window.location.pathname)
+  const Root = isFrenchRush ? FrenchRushApp : App
   const renderApp = () => ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>
