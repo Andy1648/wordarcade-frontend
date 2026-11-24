@@ -8,6 +8,7 @@
 //
 // Pure module: no React, no DOM, no storage — and no JSON import, so node:test can load it. The word
 // rows are attached by packWords.js (bundled by Vite) under the same ids.
+import { RUSH_LANGS, LANGUAGE_PACK_IDS } from './rushLang.js';
 
 export const PACKS = {
   sat: {
@@ -112,11 +113,46 @@ export const PACKS = {
   },
 };
 
+// LANGUAGE RUSH (nov24): Spanish, Italian, Latin and Chinese are FRENCH RUSH with their own words, themes,
+// storage and a few labels in that language (rushLang.js). Everything else — the slow TIMED pace, the
+// study deck, the lean review card, the results — is the French pack's, so they behave the same.
+function languagePack(lang) {
+  const fr = PACKS.fr;
+  const L = RUSH_LANGS[lang];
+  const name = L.name;
+  return {
+    ...fr,
+    id: L.pack,
+    title: L.title,
+    lang,
+    words: [], // filled by that language's root (its own lazy chunk)
+    categories: L.categories,
+    storageKey: `wa_${name.toLowerCase()}rush_lexicon`,
+    recentKey: `wa_${name.toLowerCase()}rush_recent`,
+    timing: { ...fr.timing },
+    ui: {
+      ...fr.ui,
+      fields: { ...fr.ui.fields, sentence: L.sentence, ...(L.glossLabel ? { gloss: L.glossLabel } : null) },
+      stamps: { ...L.stamps },
+      review: { ...fr.ui.review, got: L.stamps.got },
+      lineup: { ...fr.ui.lineup, cleared: L.cleared },
+      results: { ...fr.ui.results, done: L.press.over[0], menu: `${name} Rush home` },
+    },
+  };
+}
+for (const id of ['es', 'it', 'la', 'zh']) PACKS[id] = languagePack(id);
+
+/** Is this pack one of the LANGUAGE RUSH packs (French and its siblings)? */
+export function isLanguagePack(id) {
+  return LANGUAGE_PACK_IDS.has(id);
+}
+
 /** "noun (f.)" — the case id's part of speech, with a noun's gender when the row has one. */
 export function posLabelOf(pack, row, short = false) {
   const labels = (short ? pack.posShort : pack.posLabels) || {};
   const base = labels[row.pos] || row.pos;
-  if (row.pos === 'n' && (row.gender === 'm' || row.gender === 'f')) return `${base} (${row.gender}.)`;
+  // (Latin nouns can be neuter: "noun (n.)")
+  if (row.pos === 'n' && (row.gender === 'm' || row.gender === 'f' || row.gender === 'n')) return `${base} (${row.gender}.)`;
   return base;
 }
 

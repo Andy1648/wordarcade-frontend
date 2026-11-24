@@ -642,6 +642,50 @@
   }
 }
 
+/* ---------- LANGUAGE RUSH (nov24): one accent ink per language ----------
+   French is the original and sets no data-lang, so none of this touches it. The others print ONE second ink
+   (--lang, from rushLang.js) on three things only: the cover title's tone plate, the primary button and the
+   progress fill. Static colour — no new animation. */
+.fr-app[data-lang] .fr-cover .sr-title.sr-print::before {
+  background-image: radial-gradient(circle, var(--lang) 42%, transparent 46%);
+}
+.fr-app[data-lang] .sr-btn.fr-go {
+  background: var(--lang);
+  color: var(--lang-on);
+}
+.fr-app[data-lang] .fr-progress-fill {
+  background: var(--lang);
+}
+/* a 12-letter title (SPANISH / ITALIAN / CHINESE RUSH) prints a size down so it stays inside the page */
+.fr-app .fr-cover .sr-title.fr-title-long {
+  font-size: min(10.6cqw, 14vh, 112px);
+}
+@media (max-width: 520px) {
+  .fr-app .fr-cover .sr-title.fr-title-long {
+    font-size: min(12cqw, 11vh);
+  }
+}
+/* the language picker sits beside WORD BANK, as tall as the buttons; its "language" label is read by a
+   screen reader but not printed (the choice — Français, Español… — names itself) */
+.fr-app .fr-cover-pair .fr-lang-pick {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+.fr-app .fr-cover-pair .fr-lang-pick .fr-pick-btn {
+  width: 100%;
+  min-height: var(--fr-btn-h);
+  font-size: var(--fs-frbtn);
+}
+.fr-app .fr-cover-pair .fr-lang-pick .sr-setup-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fr-app .sr-screen > *,
   .fr-app .sr-stage > .sr-body,

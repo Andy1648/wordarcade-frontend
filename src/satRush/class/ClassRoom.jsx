@@ -27,12 +27,13 @@ import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
 import FitText from '../../components/kit/FitText.jsx';
 import { LevelLabel } from '../CaseSetup';
-import { PACKS, posLabelOf } from '../packs';
+import { getPack, posLabelOf } from '../packs';
+import { rushLang } from '../rushLang';
 
 const LENGTHS = [10, 20, 30];
 const MODES = [
-  { id: 'briefing', label: 'TYPE IT', line: 'meaning → type the French' },
-  { id: 'lineup', label: 'PICK IT', line: 'a lineup of French words' },
+  { id: 'briefing', label: 'TYPE IT' },
+  { id: 'lineup', label: 'PICK IT' },
 ];
 // nov21: the room's first set is 20 words (Andy: defaults TIMED + 20 words — a room is always teacher-paced)
 const DEFAULT_WORDS = 20;
@@ -154,7 +155,7 @@ const Kbd = () => (
 
 // ---- TEACHER: pick the set (a new class, or a new set in the class you're running) ----
 function ClassSetup({ words, categories, onCreate, onBack, busy, again = null }) {
-  const levels = difficultiesFor('fr');
+  const levels = difficultiesFor(rushLang().pack);
   const prev = (again && again.set) || {};
   const [mode, setMode] = useState(prev.mode || 'briefing');
   const [level, setLevel] = useState(prev.level || 'standard');
@@ -162,9 +163,14 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
   const [theme, setTheme] = useState(prev.theme || 'all');
   const [voice, setVoice] = useState(prev.voice || 'projector');
   const label = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
-  const pool = bandWords(words, level, theme === 'all' ? null : theme, 'fr');
+  const pool = bandWords(words, level, theme === 'all' ? null : theme, rushLang().pack);
   const go = () => {
-    const rows = shuffled(pool).slice(0, n);
+    // LANGUAGE RUSH: a non-French row carries its language, so a student who opened another language's
+    // page is sent to the right one (ClassFlow); French rows go out exactly as before
+    const lang = rushLang().id;
+    const rows = shuffled(pool)
+      .slice(0, n)
+      .map((r) => (lang === 'fr' ? r : { ...r, lang }));
     if (!rows.length) return;
     onCreate({ set: { theme: theme === 'all' ? null : theme, level, mode, voice }, rows });
   };
@@ -204,16 +210,16 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
 
 function joinUrl(code) {
   try {
-    return `${window.location.origin}/french-rush?class=${code}`;
+    return `${window.location.origin}/${rushLang().slug}?class=${code}`;
   } catch {
-    return `typeaword.com/french-rush?class=${code}`;
+    return `typeaword.com/${rushLang().slug}?class=${code}`;
   }
 }
 function joinHost() {
   try {
-    return `${window.location.host}/french-rush`;
+    return `${window.location.host}/${rushLang().slug}`;
   } catch {
-    return 'typeaword.com/french-rush';
+    return `typeaword.com/${rushLang().slug}`;
   }
 }
 
@@ -563,7 +569,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
             stamps in under it. */}
         {row && (
           <div className={`sr-panel fr-class-clue${review ? ' revealed' : ''}`}>
-            <div className="fr-class-prompt-meta">{posLabelOf(PACKS.fr, row)}</div>
+            <div className="fr-class-prompt-meta">{posLabelOf(getPack(rushLang().pack), row)}</div>
             <div className="fr-class-gloss" style={{ '--len': longest(row.gloss) }}>
               {row.gloss}
             </div>
@@ -718,6 +724,20 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     setPending(false);
     if (snap.role === 'host') setNewSet(false);
     if (snap.role !== 'student' || !snap.rows) return;
+    // LANGUAGE RUSH: this room plays another language's words (a student typed a Spanish room's code on the
+    // French page) — go to that language's page; the seat is in this tab's sessionStorage, so it rejoins
+    const roomLang = (snap.rows[0] && snap.rows[0].lang) || 'fr';
+    if (roomLang !== rushLang().id) {
+      const to = { fr: 'french-rush', es: 'spanish-rush', it: 'italian-rush', la: 'latin-rush', zh: 'chinese-rush' }[roomLang];
+      if (to) {
+        try {
+          window.location.assign(`/${to}`);
+        } catch {
+          /* stay */
+        }
+        return;
+      }
+    }
     const g = gameRef.current;
     let run = runRef.current;
     // a NEW SET (class_restart): drop the old run and wait for the teacher like a fresh join

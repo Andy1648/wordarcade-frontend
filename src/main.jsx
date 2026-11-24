@@ -14,6 +14,14 @@ try {
 } catch { /* storage blocked */ }
 // FRENCH RUSH's own root (see renderApp) — lazy, so '/' never downloads it
 const FrenchRushApp = React.lazy(() => import('./satRush/FrenchRushApp.jsx'))
+// LANGUAGE RUSH (nov24): the same mode for the other AP world languages, one link + one lazy chunk each
+const LANGUAGE_RUSH_APPS = {
+  'french-rush': FrenchRushApp,
+  'spanish-rush': React.lazy(() => import('./satRush/rushApps/SpanishRushApp.jsx')),
+  'italian-rush': React.lazy(() => import('./satRush/rushApps/ItalianRushApp.jsx')),
+  'latin-rush': React.lazy(() => import('./satRush/rushApps/LatinRushApp.jsx')),
+  'chinese-rush': React.lazy(() => import('./satRush/rushApps/ChineseRushApp.jsx')),
+}
 import './index.css'
 import './theme/type.css'
 import './theme/values.css'
@@ -207,8 +215,10 @@ if (__KIT_GALLERY__ && location.search.includes('kit=1')) {
 } else {
   // FRENCH RUSH (oct18) is a standalone study link, not an arcade mode: /french-rush mounts its own
   // root (a lazy chunk with the French words) in place of the arcade. Nothing else changes for '/'.
-  const isFrenchRush = /^\/french-rush\/?$/i.test(window.location.pathname)
-  const Root = isFrenchRush ? FrenchRushApp : App
+  // (nov24: /spanish-rush, /italian-rush, /latin-rush and /chinese-rush mount the same way)
+  const rushPath = /^\/(french|spanish|italian|latin|chinese)-rush\/?$/i.exec(window.location.pathname)
+  const isFrenchRush = !!rushPath
+  const Root = isFrenchRush ? LANGUAGE_RUSH_APPS[`${rushPath[1].toLowerCase()}-rush`] : App
   const renderApp = () => ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <ErrorBoundary fallback={({ error }) => <CrashFallback error={error} />}>

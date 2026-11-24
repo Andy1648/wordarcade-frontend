@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import PrintPicker from './PrintPicker';
 import { withArticle } from './speak';
 import SayButton from './SayButton';
+import { rushLang } from './rushLang';
 
 const fold = (s) =>
   String(s || '')
@@ -37,7 +38,7 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
     const f = fold(q.trim());
     return words
       .filter((r) => theme === 'all' || r.category === theme)
-      .filter((r) => !f || fold(r.word).includes(f) || fold(r.gloss).includes(f))
+      .filter((r) => !f || fold(r.word).includes(f) || fold(r.gloss).includes(f) || (r.pinyin && fold(r.pinyin).replace(/\s+/g, '').includes(f.replace(/\s+/g, ''))))
       .map((r) => ({ ...r, status: masteryOf ? masteryOf(r.word) : 'new', studied: studiedOf ? studiedOf(r.word) : false }))
       .filter((r) => {
         if (show === 'todo') return r.status !== 'known';
@@ -48,7 +49,7 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
         if (show === 'false') return r.falseFriend;
         return true;
       })
-      .sort((a, b) => a.ap - b.ap || a.tier - b.tier || a.word.localeCompare(b.word, 'fr'));
+      .sort((a, b) => a.ap - b.ap || a.tier - b.tier || a.word.localeCompare(b.word, rushLang().locale));
   }, [words, theme, q, show, masteryOf, studiedOf]);
 
   const known = useMemo(() => words.filter((r) => masteryOf && masteryOf(r.word) === 'known').length, [words, masteryOf]);
@@ -78,7 +79,7 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
             <input
               type="search"
               value={q}
-              placeholder="French or English"
+              placeholder={rushLang().flipped ? `English, pinyin or 汉字` : `${rushLang().name} or English`}
               onChange={(e) => setQ(e.target.value)}
               autoComplete="off"
               spellCheck="false"

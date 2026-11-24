@@ -16,6 +16,7 @@
 //
 // Pure: no React, no DOM, no storage. The RNG and the lexicon state are passed in.
 import { dueWords, needsReview, isMastered, hasSeen } from './lexicon.js';
+import { LANGUAGE_PACK_IDS } from './rushLang.js';
 
 export const MODES = ['briefing', 'lineup'];
 
@@ -39,9 +40,9 @@ export const FR_DIFFICULTIES = {
   hard: { id: 'hard', label: 'HARD', line: 'harder + rarer', rank: 3, tiers: [3, 5], apMax: 3 },
 };
 
-/** The level table for a pack (FRENCH RUSH has its own; everything else uses the SAT one). */
+/** The level table for a pack (FRENCH RUSH and the other LANGUAGE RUSH packs have their own; SAT uses the SAT one). */
 export function difficultiesFor(pack) {
-  return pack === 'fr' ? FR_DIFFICULTIES : DIFFICULTIES;
+  return LANGUAGE_PACK_IDS.has(pack) ? FR_DIFFICULTIES : DIFFICULTIES;
 }
 
 // LINEUP: how many words the case file holds. BRIEFING: how many words you study (and then hunt).
