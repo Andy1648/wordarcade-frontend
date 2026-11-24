@@ -38,6 +38,8 @@ export const RUSH_LANGS = {
   fr: {
     id: 'fr',
     pack: 'fr',
+    // the class room's own press sheets (ClassRoom.jsx; French = what it always printed)
+    classPress: { bye: 'AU REVOIR', newSet: 'NOUVEAU', open: 'OUVERT !', done: 'BRAVO !', go: "C'EST PARTI !", word: (n) => `MOT ${n}`, wait: 'EN ATTENTE', welcome: 'BIENVENUE', teacher: 'LE PROF', join: 'REJOINS', room: 'EN CLASSE' },
     slug: 'french-rush',
     name: 'French',
     native: 'Français',
@@ -55,6 +57,7 @@ export const RUSH_LANGS = {
   es: {
     id: 'es',
     pack: 'es',
+    classPress: { bye: 'ADIÓS', newSet: 'NUEVO', open: '¡ABIERTO!', done: '¡HECHO!', go: '¡VAMOS!', word: (n) => `PALABRA ${n}`, wait: 'EN ESPERA', welcome: '¡HOLA!', teacher: 'EL PROFE', join: 'ÚNETE', room: 'EN CLASE' },
     slug: 'spanish-rush',
     name: 'Spanish',
     native: 'Español',
@@ -76,6 +79,7 @@ export const RUSH_LANGS = {
   it: {
     id: 'it',
     pack: 'it',
+    classPress: { bye: 'ARRIVEDERCI', newSet: 'NUOVO', open: 'APERTO!', done: 'BRAVI!', go: 'ANDIAMO!', word: (n) => `PAROLA ${n}`, wait: 'IN ATTESA', welcome: 'CIAO!', teacher: 'IL PROF', join: 'ENTRA', room: 'IN CLASSE' },
     slug: 'italian-rush',
     name: 'Italian',
     native: 'Italiano',
@@ -97,6 +101,7 @@ export const RUSH_LANGS = {
   la: {
     id: 'la',
     pack: 'la',
+    classPress: { bye: 'VALĒTE', newSet: 'NOVUM', open: 'APERTUM!', done: 'OPTIMĒ!', go: 'INCIPE!', word: (n) => `VERBUM ${n}`, wait: 'EXSPECTĀ', welcome: 'SALVĒ!', teacher: 'MAGISTER', join: 'INTRĀ', room: 'IN SCHOLĀ' },
     slug: 'latin-rush',
     name: 'Latin',
     native: 'Latīna',
@@ -128,6 +133,7 @@ export const RUSH_LANGS = {
   zh: {
     id: 'zh',
     pack: 'zh',
+    classPress: { bye: '再见', newSet: '新一组', open: '开课了！', done: '太棒了！', go: '开始！', word: (n) => `第${n}个词`, wait: '请稍等', welcome: '欢迎！', teacher: '老师', join: '加入', room: '教室' },
     slug: 'chinese-rush',
     name: 'Chinese',
     native: '中文',
