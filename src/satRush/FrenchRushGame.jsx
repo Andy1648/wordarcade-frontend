@@ -215,7 +215,7 @@ export default function FrenchRushGame({ lang = 'fr' }) {
 
   return (
     <div
-      className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`}
+      className={`sr-app fr-app${inClassRun ? ' fr-class-on' : ''}`}
       ref={appRef}
       data-lang={L.accent ? L.id : undefined}
       style={L.accent ? { '--lang': L.accent.ink, '--lang-on': L.accent.on } : undefined}
@@ -234,8 +234,6 @@ export default function FrenchRushGame({ lang = 'fr' }) {
               caseSize={view.runTotal}
               lives={view.lives}
               maxLives={view.maxLives}
-              heat={view.heat}
-              heatCap={view.heatCap}
               showHeat={false}
               exitLabel="HOME"
               caseLabel="words"

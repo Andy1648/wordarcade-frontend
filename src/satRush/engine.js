@@ -53,6 +53,13 @@ export const DEFAULT_CONFIG = {
   // normally and keeps the streak, but leaves heat unchanged (never reset), so
   // SILVER TONGUE stays something you earn by knowing words.
   heatMaxRevealed: 1,
+  // SILVER TONGUE on/off (nov24, Andy: "remove for now as it's education setting"): false = heat never builds,
+  // so no silver, no doubled multipliers. SAT Rush keeps it; the LANGUAGE rushes turn it off (packs.js).
+  silverTongue: true,
+  // how many choices a word offers: LINEUP's full suspect lineup and BRIEFING's tap set (the language rushes
+  // ask for more — packs.js lineupSize / briefingChoices)
+  lineupSize: 6,
+  briefingChoices: 4,
   tierEvery: 20, // tier = min(5, 1 + floor(wordNumber / tierEvery)). BA1: was 12 — every slot was tier 5 from word 48, 64% of words shown were unknowable to a median player
   tierMax: 5,
   deepCutEvery: 15, // every Nth word is a deep cut (forced tier 5 when fresh)
@@ -264,7 +271,7 @@ export function buildChoices({ answer, pool = [], rng = Math.random, mode = 'bri
     }));
     return { count: choices.length, tickElims: 0, choices };
   }
-  const cands = distractorCandidates(answer, pool);
+  const cands = distractorCandidates(answer, pool, Math.max(3, size - 1));
   const tierOf = (r) => (Number.isFinite(r.tier) ? r.tier : 3);
   const ranked = shuffle(cands, rng)
     .map((d, i) => ({ d, i, pos: d.pos === answer.pos ? 0 : 1, tier: Math.abs(tierOf(d) - tierOf(answer)) }))
@@ -449,7 +456,12 @@ export function createSatRushEngine({
     { isRevenant, isDeepCut, missCount = 0, isBriefed = false, isReturn = false, requeues = 0 }
   ) {
     const length = row.word.length;
-    const suspects = cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng }) : null;
+    // MORE CHOICES (lineupSize / briefingChoices) only for words that sit two to a row: a 12+ letter choice gets a
+    // whole row on a phone, and eight such rows cannot fit — a long word keeps the standard 6 / 4 (#746's fit).
+    // (Briefing distractors run up to 2 letters longer than the answer, so its cut-off is 9.)
+    const lineupSize = length > 11 ? Math.min(6, cfg.lineupSize) : cfg.lineupSize;
+    const briefingSize = length > 9 ? Math.min(TAP_CHOICES_BRIEFING, cfg.briefingChoices) : cfg.briefingChoices;
+    const suspects = cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng, size: lineupSize }) : null;
     const choices = cfg.choices
       ? buildChoices({
           answer: row,
@@ -458,6 +470,7 @@ export function createSatRushEngine({
           mode: cfg.mode,
           suspects,
           finalStage: cfg.stageMultipliers.length - 1,
+          size: briefingSize,
         })
       : null;
     return {
@@ -742,7 +755,7 @@ export function createSatRushEngine({
     // the spell-along auto-reveals scores normally and keeps the streak, but
     // leaves heat UNCHANGED — never reset — so SILVER TONGUE stays something you
     // earn by knowing words, not by waiting for the letters.
-    const bumpsHeat = revealed <= cfg.heatMaxRevealed;
+    const bumpsHeat = cfg.silverTongue !== false && revealed <= cfg.heatMaxRevealed;
     // Silver is read from the heat AFTER this clear's (possible) bump, so a clear
     // that REACHES the cap is itself doubled — the state change (UI goes chrome)
     // and the score spike land on the same frame, and a player who earns silver

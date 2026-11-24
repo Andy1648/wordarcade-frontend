@@ -823,6 +823,10 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         deepCutEvery: deepEvery,
         ...(finite ? {} : { revenantOffset: revGap }),
         tierEvery: climb,
+        // LANGUAGE RUSH (nov24): more choices per word, and no SILVER TONGUE in a classroom (packs.js)
+        ...(packRef.current.lineupSize ? { lineupSize: packRef.current.lineupSize } : {}),
+        ...(packRef.current.briefingChoices ? { briefingChoices: packRef.current.briefingChoices } : {}),
+        ...(packRef.current.silverTongue === false ? { silverTongue: false } : {}),
         ...(extra || {}),
       },
     });

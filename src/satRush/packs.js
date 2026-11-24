@@ -63,6 +63,12 @@ export const PACKS = {
     ],
     storageKey: 'wa_frenchrush_lexicon',
     recentKey: 'wa_frenchrush_recent',
+    // nov24 (Andy: "give more answer choices" / silver tongue "remove for now as it's education setting"):
+    // 8 suspects in QUIZ (8 → 5 → 2), 6 choices in STUDY FIRST, and no SILVER TONGUE. Every LANGUAGE pack
+    // (languagePack below) inherits these; SAT keeps its 6 / 4 and its silver.
+    lineupSize: 8,
+    briefingChoices: 6,
+    silverTongue: false,
     meaningFirst: true,
     accentFold: true,
     // TIMED by default (nov21, Andy: defaults TIMED + 20 words); NO TIMER is one tap away (HINT for the next
