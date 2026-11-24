@@ -4,6 +4,7 @@
 // the engine, every slot/alt decision from input.js. Timing constants that ARE
 // rules (deep-cut interval scale, grace length) are read from engine.config; the
 // only thing this hook decides is the base stage interval (dev-tunable).
+import { RUSH_LANGS } from './rushLang';
 import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
 import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG, effectiveStageIntervalMs, lineupWindowMs } from './engine';
@@ -81,7 +82,8 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // THE PACK this hook plays (packs.js): its words, its memory keys, its clue order, its accents.
   const packRef = useRef(null);
   if (packRef.current === null) packRef.current = getPack(packId);
-  const ulModeRef = useRef(packId === 'fr' ? 'french' : 'sat'); // THE UNLISTED: which mode a find came from
+  // THE UNLISTED: which mode a find came from (LANGUAGE RUSH: the language's name — 'french', 'spanish', …)
+  const ulModeRef = useRef(packId === 'sat' ? 'sat' : (RUSH_LANGS[packId] && RUSH_LANGS[packId].unlisted) || 'french');
   // (read through packRef.current inside callbacks: the pack is fixed for the hook's lifetime)
   const [, force] = useReducer((x) => x + 1, 0);
 
@@ -181,7 +183,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // 7-day return, briefing vs lineup. `word_resolved`'s `stage`/`suspectsStanding`
   // answer whether players are actually anteing (answering early).
   const trackSR = useCallback((event, props = {}) => {
-    track(event, { game: packRef.current.id === 'sat' ? 'sat-rush' : 'french-rush', mode: modeRef.current, ...props });
+    track(event, { game: packRef.current.id === 'sat' ? 'sat-rush' : (RUSH_LANGS[packRef.current.id] || RUSH_LANGS.fr).slug, mode: modeRef.current, ...props });
   }, []);
 
   const trackRunEnd = useCallback(() => {

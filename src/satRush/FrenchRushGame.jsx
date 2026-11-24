@@ -20,6 +20,9 @@
 //
 // NOT PART OF THE ARCADE ECONOMY: nothing here banks wins, XP, gems, records or leaderboard rows. Its
 // learning memory lives under its own storage keys.
+// LANGUAGE RUSH (nov24): this is now the screen for every AP world language — French, Spanish, Italian, Latin
+// and Chinese — keyed by `lang` (rushLang.js holds what differs). Each language has its own link and root
+// (FrenchRushApp + rushApps/); the cover's language picker moves between them.
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import './FrenchRush.css';
@@ -37,18 +40,44 @@ import ClassFlow from './class/ClassRoom';
 import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
 import PressWipe from './PressWipe';
+import PrintPicker from './PrintPicker';
+import { RUSH_LANGS, RUSH_LANG_ORDER } from './rushLang';
 import { usePressOnChange } from './press';
 // last, so the nov21 clean pass wins over SatRush.css / FrenchRush.css / ClassRoom.css
 import './FrenchRushClean.css';
 
 // The cover (nov21, Andy: "REMOVE THE BS"): the title and the ways in. Nothing else — no tagline, no
 // worked example, no word count, no reassurance lines.
-function Cover({ onPlay, onBank, onCreate, onJoin }) {
+// The LANGUAGE picker (nov24) is the one way between the languages: each has its own link, so a pick is a page
+// load — the next language's words are their own chunk, and nothing of this one's run carries over.
+function LangPicker({ lang }) {
+  const go = (id) => {
+    if (id === lang) return;
+    try {
+      window.location.assign(`/${RUSH_LANGS[id].slug}`);
+    } catch {
+      /* never break the cover */
+    }
+  };
+  return (
+    <PrintPicker
+      className="fr-lang-pick"
+      label="language"
+      value={lang}
+      options={RUSH_LANG_ORDER.map((id) => ({ value: id, label: RUSH_LANGS[id].native }))}
+      onChange={go}
+    />
+  );
+}
+
+function Cover({ lang, onPlay, onBank, onCreate, onJoin }) {
+  const L = RUSH_LANGS[lang] || RUSH_LANGS.fr;
+  const [first, second] = L.title.split(' ');
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
-        <div className="sr-title sr-print" data-v={'FRENCH RUSH'}>
-          FRENCH&nbsp;RUSH
+        <div className={`sr-title sr-print${L.title.length > 11 ? ' fr-title-long' : ''}`} data-v={L.title}>
+          {first}&nbsp;{second}
         </div>
         <div className="fr-cover-actions">
           <button type="button" className="sr-btn fr-go" onClick={onPlay}>
@@ -62,9 +91,13 @@ function Cover({ onPlay, onBank, onCreate, onJoin }) {
               Join room
             </button>
           </div>
-          <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
-            Word bank
-          </button>
+          {/* the language sits beside the word bank: one row, so the cover is no taller than before */}
+          <div className="fr-cover-pair">
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
+              Word bank
+            </button>
+            <LangPicker lang={lang} />
+          </div>
         </div>
         <a className="sr-cover-credit" href="/">
           a TYPE A WORD game
@@ -89,17 +122,7 @@ function RunProgress({ settled, total, stamp }) {
   );
 }
 
-// the press sheet for each solo screen: [French headline, English line, direction]
-const PRESS_BY_SCREEN = {
-  start: ['FRENCH RUSH', 'home', 'back'],
-  mode: ['À TOI !', 'your turn'],
-  setup: ['RÉGLAGES', 'set it up'],
-  briefing: ['ÉTUDIE', 'study'],
-  playing: ["C'EST PARTI !", 'here we go'],
-  over: ['TERMINÉ !', 'done'],
-  bank: ['LES MOTS', 'word bank'],
-  class: null, // ClassFlow presses its own
-};
+// the press sheet for each solo screen: [headline in the language, English line, direction] — rushLang.js `press`
 
 // ?mode=&level=&n=&theme=&pace= — a teacher's set (CaseSetup's "copy a link")
 function readPreset() {
@@ -128,9 +151,11 @@ function readClassCode() {
   }
 }
 
-export default function FrenchRushGame() {
+export default function FrenchRushGame({ lang = 'fr' }) {
   usePlayClock(); // TIME PLAYED on the profile (Andy oct21: French Rush time was never counted)
-  const game = useSatRushGame({ packId: 'fr' });
+  const L = RUSH_LANGS[lang] || RUSH_LANGS.fr;
+  const PRESS_BY_SCREEN = L.press;
+  const game = useSatRushGame({ packId: L.pack });
   const { view } = game;
   const appRef = useRef(null);
   const [bank, setBank] = useState(false);
@@ -189,7 +214,12 @@ export default function FrenchRushGame() {
   };
 
   return (
-    <div className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`} ref={appRef}>
+    <div
+      className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`}
+      ref={appRef}
+      data-lang={L.accent ? L.id : undefined}
+      style={L.accent ? { '--lang': L.accent.ink, '--lang-on': L.accent.on } : undefined}
+    >
       {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
@@ -250,7 +280,7 @@ export default function FrenchRushGame() {
         />
       )}
       {!bank && !classOpen && view.phase === 'start' && (
-        <Cover onPlay={game.startGame} onBank={() => setBank(true)} onCreate={() => openClass('setup')} onJoin={() => openClass('join')} />
+        <Cover lang={L.id} onPlay={game.startGame} onBank={() => setBank(true)} onCreate={() => openClass('setup')} onJoin={() => openClass('join')} />
       )}
       {!classOpen && view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={home} ui={ui} />
@@ -262,7 +292,7 @@ export default function FrenchRushGame() {
           knownCount={view.knownCount}
           packSize={view.packSize}
           categories={(view.pack && view.pack.categories) || []}
-          pack="fr"
+          pack={L.pack}
           ui={ui}
           onStart={game.confirmSetup}
           onBack={game.backToModes}

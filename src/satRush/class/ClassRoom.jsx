@@ -27,12 +27,13 @@ import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
 import FitText from '../../components/kit/FitText.jsx';
 import { LevelLabel } from '../CaseSetup';
-import { PACKS, posLabelOf } from '../packs';
+import { getPack, posLabelOf } from '../packs';
+import { rushLang } from '../rushLang';
 
 const LENGTHS = [10, 20, 30];
 const MODES = [
-  { id: 'briefing', label: 'TYPE IT', line: 'meaning → type the French' },
-  { id: 'lineup', label: 'PICK IT', line: 'a lineup of French words' },
+  { id: 'briefing', label: 'TYPE IT' },
+  { id: 'lineup', label: 'PICK IT' },
 ];
 // nov21: the room's first set is 20 words (Andy: defaults TIMED + 20 words — a room is always teacher-paced)
 const DEFAULT_WORDS = 20;
@@ -154,7 +155,7 @@ const Kbd = () => (
 
 // ---- TEACHER: pick the set (a new class, or a new set in the class you're running) ----
 function ClassSetup({ words, categories, onCreate, onBack, busy, again = null }) {
-  const levels = difficultiesFor('fr');
+  const levels = difficultiesFor(rushLang().pack);
   const prev = (again && again.set) || {};
   const [mode, setMode] = useState(prev.mode || 'briefing');
   const [level, setLevel] = useState(prev.level || 'standard');
@@ -162,9 +163,14 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
   const [theme, setTheme] = useState(prev.theme || 'all');
   const [voice, setVoice] = useState(prev.voice || 'projector');
   const label = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
-  const pool = bandWords(words, level, theme === 'all' ? null : theme, 'fr');
+  const pool = bandWords(words, level, theme === 'all' ? null : theme, rushLang().pack);
   const go = () => {
-    const rows = shuffled(pool).slice(0, n);
+    // LANGUAGE RUSH: a non-French row carries its language, so a student who opened another language's
+    // page is sent to the right one (ClassFlow); French rows go out exactly as before
+    const lang = rushLang().id;
+    const rows = shuffled(pool)
+      .slice(0, n)
+      .map((r) => (lang === 'fr' ? r : { ...r, lang }));
     if (!rows.length) return;
     onCreate({ set: { theme: theme === 'all' ? null : theme, level, mode, voice }, rows });
   };
@@ -204,16 +210,16 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
 
 function joinUrl(code) {
   try {
-    return `${window.location.origin}/french-rush?class=${code}`;
+    return `${window.location.origin}/${rushLang().slug}?class=${code}`;
   } catch {
-    return `typeaword.com/french-rush?class=${code}`;
+    return `typeaword.com/${rushLang().slug}?class=${code}`;
   }
 }
 function joinHost() {
   try {
-    return `${window.location.host}/french-rush`;
+    return `${window.location.host}/${rushLang().slug}`;
   } catch {
-    return 'typeaword.com/french-rush';
+    return `typeaword.com/${rushLang().slug}`;
   }
 }
 
@@ -563,7 +569,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
             stamps in under it. */}
         {row && (
           <div className={`sr-panel fr-class-clue${review ? ' revealed' : ''}`}>
-            <div className="fr-class-prompt-meta">{posLabelOf(PACKS.fr, row)}</div>
+            <div className="fr-class-prompt-meta">{posLabelOf(getPack(rushLang().pack), row)}</div>
             <div className="fr-class-gloss" style={{ '--len': longest(row.gloss) }}>
               {row.gloss}
             </div>
@@ -718,6 +724,20 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     setPending(false);
     if (snap.role === 'host') setNewSet(false);
     if (snap.role !== 'student' || !snap.rows) return;
+    // LANGUAGE RUSH: this room plays another language's words (a student typed a Spanish room's code on the
+    // French page) — go to that language's page; the seat is in this tab's sessionStorage, so it rejoins
+    const roomLang = (snap.rows[0] && snap.rows[0].lang) || 'fr';
+    if (roomLang !== rushLang().id) {
+      const to = { fr: 'french-rush', es: 'spanish-rush', it: 'italian-rush', la: 'latin-rush', zh: 'chinese-rush' }[roomLang];
+      if (to) {
+        try {
+          window.location.assign(`/${to}`);
+        } catch {
+          /* stay */
+        }
+        return;
+      }
+    }
     const g = gameRef.current;
     let run = runRef.current;
     // a NEW SET (class_restart): drop the old run and wait for the teacher like a fresh join
@@ -797,39 +817,41 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
 
   // THE PRESS (oct26): each class screen comes off the press titled in French (English underneath); on the
   // console every new word is a quick sheet — MOT 4 — so the room sees the page turn.
+  // (LANGUAGE RUSH: titled in the page's language — rushLang classPress)
+  const P = rushLang().classPress;
   let screen;
   let press = null;
   if (cr.closed) {
     screen = 'closed';
-    press = ['AU REVOIR', 'class over', 'back'];
+    press = [P.bye, 'class over', 'back'];
   } else if (snap && snap.role === 'host') {
     if (newSet) {
       screen = 'newset';
-      press = ['NOUVEAU', 'new set'];
+      press = [P.newSet, 'new set'];
     } else if (snap.phase === 'lobby') {
       screen = `lobby-${snap.round}`;
-      press = ['OUVERT !', 'the class is open'];
+      press = [P.open, 'the class is open'];
     } else if (snap.phase === 'done') {
       screen = `done-${snap.round}`;
-      press = ['BRAVO !', 'class done'];
+      press = [P.done, 'class done'];
     } else {
       screen = `run-${snap.round}-${snap.index}`;
-      press = snap.index === 0 ? ["C'EST PARTI !", 'here we go'] : [`MOT ${snap.index + 1}`, `word ${snap.index + 1} of ${snap.total}`, 'forward', true];
+      press = snap.index === 0 ? [P.go, 'here we go'] : [P.word(snap.index + 1), `word ${snap.index + 1} of ${snap.total}`, 'forward', true];
     }
   } else if (snap && snap.role === 'student') {
     if (runRef.current.started) screen = 'student-run'; // the game presses its own sheet
     else if (snap.phase === 'done') {
       screen = 'student-done';
-      press = ['BRAVO !', 'class done'];
+      press = [P.done, 'class done'];
     } else {
       screen = 'student-wait';
-      press = snap.round > 1 ? ['EN ATTENTE', 'next set soon'] : ['BIENVENUE', "you're in"];
+      press = snap.round > 1 ? [P.wait, 'next set soon'] : [P.welcome, "you're in"];
     }
   } else if (cr.hasSeat || offline) {
     screen = 'connecting';
   } else {
     screen = stage;
-    press = stage === 'setup' ? ['LE PROF', 'create room'] : stage === 'join' ? ['REJOINS', 'join room'] : ['EN CLASSE', 'room'];
+    press = stage === 'setup' ? [P.teacher, 'create room'] : stage === 'join' ? [P.join, 'join room'] : [P.room, 'room'];
   }
   usePressOnChange(screen, press, entry !== 'join');
 

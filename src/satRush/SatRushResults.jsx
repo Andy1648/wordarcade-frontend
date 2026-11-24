@@ -25,6 +25,7 @@ import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine } from '../components/xp/XpEarned';
 import { withArticle } from './speak';
 import SayButton from './SayButton';
+import { rushLang } from './rushLang';
 
 const C = JUICE.CELEBRATION;
 
@@ -250,7 +251,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
                 const sp = results.spec || {};
                 const missed = caseFile.filter((c) => c.outcome !== 'clean').map((c) => c.word);
                 const text = [
-                  `French Rush — ${capturedWords}/${results.runTotal} correct`,
+                  `${rushLang().name} Rush — ${capturedWords}/${results.runTotal} correct`,
                   sp.category ? `Theme: ${sp.category}` : 'Theme: all',
                   `Level: ${sp.difficulty || '—'} · ${sp.pace === 'self' ? 'my pace' : 'timed'}`,
                   missed.length ? `To review: ${missed.join(', ')}` : 'No words to review',

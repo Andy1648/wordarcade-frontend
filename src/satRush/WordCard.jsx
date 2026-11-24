@@ -19,6 +19,7 @@ import { useEffect, useRef } from 'react';
 import Slots from './Slots';
 import AnteMeter from './AnteMeter';
 import { speakFr, hasFrVoice, withArticle, autoSpeakOn } from './speak';
+import { rushLang } from './rushLang';
 import SayButton from './SayButton';
 import { rushSoundOn } from './rushMute';
 import EnglishLine from './EnglishLine';
@@ -55,7 +56,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
       <div className={`sr-reencode lean ${kind}`} role="status" onClick={tap && !selfPaced && onContinue ? () => onContinue() : undefined}>
         <div className="sr-reencode-tag">{tag}</div>
         <div className="sr-reencode-word" style={{ '--len': shown.length }}>
-          <span className="sr-reencode-text" lang="fr">{shown}</span>
+          <span className="sr-reencode-text" lang={rushLang().htmlLang}>{shown}</span>
           {speak && <SayButton word={word} hint />}
         </div>
         <p className="sr-reencode-def">{gloss}</p>
@@ -431,7 +432,7 @@ export default function WordCard({ view, onHint, onSkip, onContinue, onPick }) {
         <ReEncode
           data={reEncode}
           ui={UI}
-          speak={!!(view.pack && view.pack.lang === 'fr')}
+          speak={!!(view.pack && view.pack.lang && view.pack.lang !== 'en')} /* the LANGUAGE RUSH packs */
           selfPaced={view.pace === 'self'}
           onContinue={onContinue}
           tap={tap}
