@@ -698,3 +698,76 @@
     transition: none;
   }
 }
+
+/* ---------- THE CORRECT ANSWER (nov24, Andy: "make correct words have better animation") ----------
+   One finite beat, transform + opacity only, done by ~380ms: the verdict slams down like an inked stamp, the word
+   punches up with a small overshoot, a rule wipes in under it (the language's colour), the meaning follows.
+   Nothing loops; the resting pose is the 100% frame. A miss keeps its plain landing. */
+.fr-app .sr-reencode.lean.got .sr-reencode-tag {
+  padding: 4px 12px 3px;
+  background: var(--lang, var(--ink));
+  color: var(--lang-on, var(--paper));
+  transform: rotate(-3deg);
+  animation: fr-got-stamp 240ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+.fr-app .sr-reencode.lean.got .sr-reencode-word {
+  animation: fr-got-word 320ms cubic-bezier(0.2, 0.9, 0.25, 1.35) 50ms both;
+}
+.fr-app .sr-reencode.lean.got .sr-reencode-text {
+  display: inline-block;
+}
+.fr-app .sr-reencode.lean.got .sr-reencode-text::after {
+  content: '';
+  display: block;
+  height: 5px;
+  margin-top: 2px;
+  background: var(--lang, var(--ink));
+  transform-origin: left center;
+  animation: fr-got-rule 220ms cubic-bezier(0.3, 0.8, 0.3, 1) 150ms both;
+}
+.fr-app .sr-reencode.lean.got .sr-reencode-def {
+  animation: fr-got-def 200ms ease-out 170ms both;
+}
+@keyframes fr-got-stamp {
+  0% { opacity: 0; transform: scale(1.9) rotate(-10deg); }
+  60% { opacity: 1; transform: scale(0.94) rotate(-2deg); }
+  100% { opacity: 1; transform: rotate(-3deg); }
+}
+@keyframes fr-got-word {
+  0% { opacity: 0; transform: translateY(18px) scale(0.86); }
+  55% { opacity: 1; transform: translateY(-4px) scale(1.06); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes fr-got-rule {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+@keyframes fr-got-def {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-app .sr-reencode.lean.got :is(.sr-reencode-tag, .sr-reencode-word, .sr-reencode-def),
+  .fr-app .sr-reencode.lean.got .sr-reencode-text::after {
+    animation: none;
+  }
+}
+
+/* ---------- EIGHT CHOICES (nov24, Andy: "give more answer choices") ----------
+   QUIZ offers 8 suspects (engine lineupSize): four to a row across a tall desktop card (as six sat three to a
+   row), two to a row in the short-landscape side column and on a phone. On a phone the four rows give back the
+   height six tall chips used to take, never below a 44px thumb target. */
+@media (max-width: 520px) {
+  .fr-app .sr-lineup-grid[data-count='8'],
+  .fr-app .sr-card.tap .sr-lineup-grid[data-count='8'] {
+    gap: 6px;
+  }
+  .fr-app .sr-lineup-grid[data-count='8'] .sr-suspect,
+  .fr-app .sr-card.tap .sr-lineup-grid[data-count='8'] .sr-suspect,
+  .fr-app .sr-card.tap .sr-lineup-grid[data-count='8'] .sr-suspect-btn {
+    min-height: clamp(46px, 7.4vh, 64px);
+  }
+  .fr-app .sr-card.tap .sr-lineup-grid[data-count='8'] .sr-suspect-btn {
+    padding-block: 4px;
+  }
+}

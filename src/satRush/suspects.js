@@ -166,7 +166,11 @@ function candidatesAt(answer, pool, altSet, tol) {
  *                   // surviving distractor (which differs at the first letter).
  * }
  */
-export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) {
+// `size` (nov24, Andy: "give more answer choices"): the FULL lineup count. SAT Rush keeps 6; the LANGUAGE
+// rushes ask for 8 (packs.js lineupSize). Only the full rungs use it — a pool too thin for `size` falls back
+// to the honest 6 / 4 / 2 ladder below, exactly as before.
+export function generateSuspects({ answer, pool = [], rng = Math.random, size = 6 } = {}) {
+  const full = Math.max(6, Math.floor(size) || 6);
   const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
   const aFirst = answer.word[0];
 
@@ -181,12 +185,16 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
   let fallbackTier;
   let widened = false;
 
-  if (exactSamePos.length >= 5) {
+  if (exactSamePos.length >= full - 1) {
     candidates = exactSamePos; // rung 0 — ideal: same length + same POS
-    count = 6;
+    count = full;
     fallbackTier = 0;
-  } else if (exactLen.length >= 5) {
+  } else if (exactLen.length >= full - 1) {
     candidates = exactLen; // rung 1 — same length, any POS (POS is preferred in the pick)
+    count = full;
+    fallbackTier = 1;
+  } else if (exactLen.length >= 5) {
+    candidates = exactLen; // rung 1b — too thin for a bigger `size`: the standard six
     count = 6;
     fallbackTier = 1;
   } else if (exactLen.length >= 1) {
@@ -213,7 +221,7 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
     }
     count = candidates.length >= 5 ? 6 : candidates.length >= 3 ? 4 : 2;
   }
-  const reducedCount = count < 6;
+  const reducedCount = count < full;
   const distractorsNeeded = count - 1;
 
   // 2. Choose the SURVIVOR — a distractor that differs from the answer at the first
@@ -282,14 +290,14 @@ export function suspectsStanding(lineup, stage) {
 // sits out — measured on the first play-test card: "A fallen tree began to ___ traffic" offered
 // IMPEDE / STYMIE / HINDER (glosses "block progress" / "block, thwart" / "progress difficult"), three
 // right answers. Relaxed back to the lineup's >= 2 rule only if the strict pool is too thin.
-export function distractorCandidates(answer, pool = []) {
+export function distractorCandidates(answer, pool = [], need = 3) {
   const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
   const strict = (d) =>
     !(d.gloss && answer.gloss && glossOverlap(d.gloss, answer.gloss) >= 1) &&
     !(d.alts || []).some((a) => String(a).toLowerCase() === answer.word);
   let out = [];
-  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol).filter(strict);
-  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol);
+  for (let tol = 0; tol <= 2 && out.length < need; tol++) out = candidatesAt(answer, pool, altSet, tol).filter(strict);
+  for (let tol = 0; tol <= 2 && out.length < need; tol++) out = candidatesAt(answer, pool, altSet, tol);
   const seen = new Set([answer.word]);
   return out.filter((d) => {
     if (seen.has(d.word)) return false;

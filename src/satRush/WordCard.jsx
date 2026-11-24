@@ -110,7 +110,7 @@ function ReEncode({ data, ui, speak, selfPaced, onContinue, tap }) {
 function SuspectLineup({ suspects, ui, onPick, picked, keyed, disabled }) {
   const { lineup, standing, count } = suspects;
   const L = (ui && ui.lineup) || {};
-  const cols = count >= 6 ? 3 : 2; // 6 → 3×2, 4 → 2×2, 2 → 2×1
+  const cols = count >= 8 ? 4 : count >= 6 ? 3 : 2; // 8 → 4×2 (language rushes), 6 → 3×2, 4 → 2×2, 2 → 2×1 (phones + the side column: 2 wide)
   // a choice longer than 11 letters cannot sit two to a row on a phone at 16px (DÉSINFORMATION ran into its
   // chip's edge at 360px): the grid says so, and the phone layout stacks those choices one to a row
   const long = lineup.some((s) => s.word.length > 11);
@@ -122,7 +122,7 @@ function SuspectLineup({ suspects, ui, onPick, picked, keyed, disabled }) {
           {standing} {(L.standing || 'standing').toUpperCase()}
         </span>
       </div>
-      <ul className={`sr-lineup-grid${long ? ' long' : ''}`} style={{ '--cols': cols }}>
+      <ul className={`sr-lineup-grid${long ? ' long' : ''}`} data-count={count} style={{ '--cols': cols }}>
         {lineup.map((s, i) => {
           const mine = picked && picked.word === s.word ? (picked.ok ? ' picked ok' : ' picked bad') : '';
           return (
