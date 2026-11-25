@@ -200,7 +200,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             </div>
             <div className="sr-capt-side">
               <span className="sr-capt-label">
-                {finite ? `of ${results.runTotal} ${RU ? RU.captured : 'captured'}` : 'captured'}
+                {finite ? (RU && RU.of ? RU.of(results.runTotal) : `of ${results.runTotal} ${RU ? RU.captured : 'captured'}`) : 'captured'}
               </span>
               <span className="sr-capt-away">
                 {finite
@@ -268,7 +268,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
                 }
               }}
             >
-              {copied ? 'Copied!' : 'Copy my results'}
+              {copied ? (RU.copied || 'Copied!') : RU.copy || 'Copy my results'}
             </button>
           )}
           {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —

@@ -6,6 +6,9 @@
 //   - and a first visit's setup is TIMED + 20 words (solo QUIZ and CREATE ROOM alike).
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
+import { RUSH_LANGS, re } from './support/rushMenu.js';
+// the menus speak the language (nov24 round 2): match them by the language's own words
+const M = RUSH_LANGS.fr.menu;
 
 const SIZES = [
   [1920, 1080],
@@ -52,21 +55,21 @@ for (const [w, h] of SIZES) {
     await expect(page.locator('.sr-cover')).toBeVisible();
     // the cover is the title and the ways in — no blurbs, no word counts
     await expect(page.locator('.sr-cover')).not.toContainText(/WORDS|THEMES|TIMER|ACCENTS/);
-    await expect(page.getByRole('button', { name: /^Create room$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: re(M.create) })).toBeVisible();
     await audit(page, 'cover');
 
-    await page.getByRole('button', { name: /^Play$/ }).click();
+    await page.getByRole('button', { name: re(M.play) }).click();
     await expect(page.locator('.sr-modecard').first()).toBeVisible();
     await audit(page, 'modes');
 
-    await page.getByRole('button', { name: /QUIZ/ }).click();
+    await page.getByRole('button', { name: re(M.quiz) }).click();
     await expect(page.locator('.sr-setup')).toBeVisible();
-    await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByRole('radio', { name: re(M.timed) })).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByRole('radio', { name: /^20$/ })).toHaveAttribute('aria-checked', 'true');
-    for (const level of ['EASY', 'MEDIUM', 'HARD']) await expect(page.getByRole('radio', { name: new RegExp(`^${level}`) })).toBeVisible();
+    for (const level of Object.values(M.levels)) await expect(page.getByRole('radio', { name: re(level, false) })).toBeVisible();
     await audit(page, 'setup');
 
-    await page.getByRole('button', { name: /^Start$/ }).click();
+    await page.getByRole('button', { name: re(M.start) }).click();
     await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
     await expect(page.locator('.sr-hud')).toContainText(/\/20/);
     await expect(page.locator('.fr-progress')).toBeVisible();
@@ -77,7 +80,7 @@ for (const [w, h] of SIZES) {
     await page.setViewportSize({ width: w, height: h });
     const mock = await installBackendMock(page);
     await page.goto('/french-rush');
-    await page.getByRole('button', { name: /^Create room$/i }).click();
+    await page.getByRole('button', { name: re(M.create) }).click();
     await expect(page.locator('.fr-class-setup')).toBeVisible();
     await expect(page.getByRole('radio', { name: /^20$/ })).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByRole('radio', { name: /^HARD/ })).toBeVisible();

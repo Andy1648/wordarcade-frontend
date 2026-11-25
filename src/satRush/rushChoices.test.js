@@ -64,3 +64,56 @@ test('silverTongue:false — a run of perfect clears never heats, never doubles 
   assert.deepEqual(run(false), { heat: 0, silver: false });
   assert.equal(run(true).silver, true);
 });
+
+// ---- nov24 round 2 ----
+import { RUSH_LANGS, RUSH_LANG_ORDER } from './rushLang.js';
+import { plausibility } from './suspects.js';
+
+test('every language prints every menu key in its own words, and SAT keeps none', () => {
+  const keys = Object.keys(RUSH_LANGS.fr.menu).sort();
+  for (const id of RUSH_LANG_ORDER) {
+    const M = RUSH_LANGS[id].menu;
+    assert.deepEqual(Object.keys(M).sort(), keys, id);
+    assert.equal(getPack(id).ui.menu, M, id);
+    assert.equal(getPack(id).ui.modes.briefing.title, M.studyFirst);
+    assert.equal(getPack(id).ui.defaultDifficulty, 'hard', id);
+    assert.equal(RUSH_LANGS[id].categories.length, 8, id);
+  }
+  // Andy's own examples for STUDY
+  assert.deepEqual(RUSH_LANG_ORDER.map((id) => RUSH_LANGS[id].menu.studyFirst), ['ÉTUDIER', 'ESTUDIAR', 'STUDIARE', 'DISCE', '学习']);
+  assert.equal(getPack('sat').ui && getPack('sat').ui.menu, undefined);
+  assert.equal(getPack('sat').plausibleDistractors, undefined);
+});
+
+test('plausible lineups: more same-gender and same-theme suspects than a random draw, never a synonym', () => {
+  let seed = 7;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const share = (plausible) => {
+    let gender = 0;
+    let theme = 0;
+    let n = 0;
+    for (const answer of ES) {
+      const s = generateSuspects({ answer, pool: ES, rng, size: 8, plausible });
+      for (const x of s.lineup) {
+        if (x.isAnswer) continue;
+        const row = ES.find((r) => r.word === x.word);
+        n++;
+        if (answer.pos === 'n' && row.gender === answer.gender) gender++;
+        if (row.category === answer.category) theme++;
+        if (plausible) assert.ok(!(answer.alts || []).includes(x.word), `${x.word} is an alt of ${answer.word}`);
+      }
+    }
+    return { gender: gender / n, theme: theme / n };
+  };
+  const rand = share(false);
+  const plaus = share(true);
+  assert.ok(plaus.gender > rand.gender + 0.15, `gender ${rand.gender} → ${plaus.gender}`);
+  assert.ok(plaus.theme > rand.theme + 0.1, `theme ${rand.theme} → ${plaus.theme}`);
+});
+
+test('plausibility prefers the look-alike of the same kind', () => {
+  const a = { word: 'bandera', pos: 'n', gender: 'f', category: 'identidades', tier: 2 };
+  const near = { word: 'bandeja', pos: 'n', gender: 'f', category: 'identidades', tier: 2 };
+  const far = { word: 'correr', pos: 'v', gender: null, category: 'vida', tier: 5 };
+  assert.ok(plausibility(a, near) > plausibility(a, far) + 5);
+});

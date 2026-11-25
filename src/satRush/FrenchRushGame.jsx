@@ -62,7 +62,7 @@ function LangPicker({ lang }) {
   return (
     <PrintPicker
       className="fr-lang-pick"
-      label="language"
+      label={RUSH_LANGS[lang].menu.language}
       value={lang}
       options={RUSH_LANG_ORDER.map((id) => ({ value: id, label: RUSH_LANGS[id].native }))}
       onChange={go}
@@ -72,29 +72,36 @@ function LangPicker({ lang }) {
 
 function Cover({ lang, onPlay, onBank, onCreate, onJoin }) {
   const L = RUSH_LANGS[lang] || RUSH_LANGS.fr;
+  const M = L.menu;
   const [first, second] = L.title.split(' ');
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
+        {/* the language's own stamp (nov24 round 2, Andy: "we can do better with the design"): its name and its
+            hello, printed in its ink like a passport stamp */}
+        <div className="fr-visa" lang={L.htmlLang === 'en' ? 'zh' : L.htmlLang}>
+          <span className="fr-visa-native">{L.native}</span>
+          <span className="fr-visa-hello">{M.hello}</span>
+        </div>
         <div className={`sr-title sr-print${L.title.length > 11 ? ' fr-title-long' : ''}`} data-v={L.title}>
           {first}&nbsp;{second}
         </div>
         <div className="fr-cover-actions">
           <button type="button" className="sr-btn fr-go" onClick={onPlay}>
-            Play
+            {M.play}
           </button>
           <div className="fr-cover-pair">
             <button type="button" className="sr-btn sr-btn-ghost" onClick={onCreate}>
-              Create room
+              {M.create}
             </button>
             <button type="button" className="sr-btn sr-btn-ghost" onClick={onJoin}>
-              Join room
+              {M.join}
             </button>
           </div>
           {/* the language sits beside the word bank: one row, so the cover is no taller than before */}
           <div className="fr-cover-pair">
             <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
-              Word bank
+              {M.bank}
             </button>
             <LangPicker lang={lang} />
           </div>
@@ -131,7 +138,7 @@ function readPreset() {
     if (!q.has('mode') && !q.has('level') && !q.has('theme')) return null;
     return {
       mode: q.get('mode') === 'briefing' ? 'briefing' : 'lineup',
-      difficulty: q.get('level') || 'standard',
+      difficulty: q.get('level') || 'hard', // a teacher link with no level: HARD, like the setup's default
       length: Number(q.get('n')) || 20,
       category: q.get('theme') || null,
       pace: q.get('pace') === 'self' ? 'self' : 'timed',
@@ -217,7 +224,7 @@ export default function FrenchRushGame({ lang = 'fr' }) {
     <div
       className={`sr-app fr-app${inClassRun ? ' fr-class-on' : ''}`}
       ref={appRef}
-      data-lang={L.accent ? L.id : undefined}
+      data-lang={L.id}
       style={L.accent ? { '--lang': L.accent.ink, '--lang-on': L.accent.on } : undefined}
     >
       {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
@@ -304,7 +311,7 @@ export default function FrenchRushGame({ lang = 'fr' }) {
         <SatRushResults
           results={view.results}
           economy={false}
-          ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: 'Back to the class', menu: 'Leave the class' } } : ui}
+          ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: ui.results.classAgain || 'Back to the class', menu: ui.results.classLeave || 'Leave the class' } } : ui}
           onAgain={inClassRun ? () => (classStandbyRef.current ? classStandbyRef.current() : leaveClassRun()) : game.startGame}
           onReplay={inClassRun ? null : game.replayMisses}
           onExit={inClassRun ? leaveClassRun : home}

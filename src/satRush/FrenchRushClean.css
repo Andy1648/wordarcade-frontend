@@ -643,9 +643,9 @@
 }
 
 /* ---------- LANGUAGE RUSH (nov24): one accent ink per language ----------
-   French is the original and sets no data-lang, so none of this touches it. The others print ONE second ink
-   (--lang, from rushLang.js) on three things only: the cover title's tone plate, the primary button and the
-   progress fill. Static colour — no new animation. */
+   Every language (French too, since round 2) prints ONE second ink (--lang, from rushLang.js): the cover title's
+   tone plate, its stamp, the primary button, a chosen option, the mode cards' top rule and the progress fill.
+   Static colour — no new animation. */
 .fr-app[data-lang] .fr-cover .sr-title.sr-print::before {
   background-image: radial-gradient(circle, var(--lang) 42%, transparent 46%);
 }
@@ -770,4 +770,67 @@
   .fr-app .sr-card.tap .sr-lineup-grid[data-count='8'] .sr-suspect-btn {
     padding-block: 4px;
   }
+}
+
+/* ---------- THE LANGUAGE'S LOOK (nov24 round 2, Andy: "we can do better with the design") ----------
+   The menus speak the language (rushLang.js `menu`) and wear its ink. All flat, all static: no gradient, no new
+   animation; the stamp is a double-ruled plate in the language's ink, tilted like a passport stamp. */
+.fr-app .fr-visa {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  max-width: 100%;
+  padding: 6px 14px 5px;
+  border: 4px double var(--lang, var(--ink));
+  color: var(--lang, var(--ink));
+  transform: rotate(-4deg);
+  white-space: nowrap;
+}
+.fr-app .fr-visa-native {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-fr10);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.fr-app .fr-visa-hello {
+  font-size: var(--fs-fr4);
+  font-style: italic;
+}
+/* the chosen option and the mode cards carry the ink too */
+.fr-app[data-lang] .sr-setup-opt.sel {
+  background: var(--lang);
+  border-color: var(--lang);
+  color: var(--lang-on);
+}
+.fr-app[data-lang] .sr-setup-opt.sel :is(.sr-setup-opt-main, .sr-setup-opt-sub) {
+  color: var(--lang-on);
+}
+.fr-app[data-lang] .sr-modecard {
+  border-top: 10px solid var(--lang);
+}
+.fr-app[data-lang] .sr-modecard.sel {
+  background: var(--lang);
+  color: var(--lang-on);
+}
+/* the language picker never breaks its name across two lines (ESPAÑO / L on a phone) */
+.fr-app .fr-cover-pair .fr-lang-pick .fr-pick-btn {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  font-size: min(var(--fs-frbtn), 5.4cqi);
+}
+/* a word on a button never splits mid-word either: it wraps between words, or the size steps down */
+.fr-app .fr-cover-actions .sr-btn {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+/* Chinese: a label or a button never splits a word between its characters (学 / 习); long sentences still wrap */
+.fr-app :is(.sr-btn, .sr-exit-chip, .sr-setup-opt, .sr-modecard, .sr-setup-label, .fr-tick, .sr-brief-cousin) {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.fr-app[data-lang='zh'] :is(.sr-btn, .sr-exit-chip) {
+  letter-spacing: 0.04em;
 }
