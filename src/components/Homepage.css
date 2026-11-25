@@ -451,89 +451,41 @@ html[data-beat='true'] .homepage-logo {
 .homepage-cards-grid[data-cols='4'] .game-card-magnet { grid-column: span 2; }
 .homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(5):nth-last-child(3) { grid-column: 2 / span 2; }
 .homepage-cards-grid[data-cols='2'] .game-card-magnet:last-child:nth-child(odd) { grid-column: 1 / -1; }
-/* SIX CARDS (feat/menu-six-grid): no paging — every desktop shows six cards at once. On the short-wide stage
-   (data-paged) the grid is shrink-wrapped on the page's centre line at the fit-math's exact card size, 3x2 or 6x1. */
+/* SCROLLING GRID (feat/menu-six-grid, Andy nov25 "make it scrollable downwards"): no paging, no arrows. On the
+   short-wide stage (data-paged) the cards are one 3-across grid at the fit-math's exact card size: two rows (the six
+   modes you open most) fill the first screen, the third row peeks in under them, and ONLY the cards area scrolls —
+   the wordmark, the rail and the right column never move. Elsewhere the row wrapper is display:contents. */
 .homepage-cards-pagerow { display: contents; }
 .homepage-stage[data-paged] .homepage-cards-pagerow {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   width: 100%;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .homepage-stage[data-paged] .homepage-cards-scroll,
 .homepage-stage[data-paged][data-fit='short'] .homepage-cards-scroll {
-  width: auto;
-  flex: 0 0 auto;
-  padding: 0 8px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* room for the cards' 6px hard shadow + hover lean inside the scrollport (the fit-math pays it) */
+  padding: 8px 8px 12px;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: #9A1AFF transparent;
 }
 .homepage-stage[data-paged] .homepage-cards-grid {
   width: auto;
+  justify-content: center;
   grid-template-columns: repeat(var(--cards-cols, 3), var(--card-w, 200px));
 }
-.homepage-stage[data-paged] .homepage-cards-grid .game-card-magnet { grid-column: auto; }
-
-/* MORE GAMES: the modes past six (progress/menuModes.js), in flow under the grid — the fit-math pays its height. */
-.homepage-cards-more {
-  align-self: center;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin-top: 12px;
-  padding: 6px 16px;
-  font-family: 'Bungee', cursive;
-  font-size: var(--fs-panel);
-  text-transform: uppercase;
-  line-height: 1;
-  color: #fff;
-  background: #1a0b2e;
-  border: 3px solid #9A1AFF;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #000;
-  cursor: pointer;
-  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.5, 1), box-shadow 0.1s;
-}
-.homepage-cards-more:hover:not(:disabled),
-.homepage-cards-more:active:not(:disabled) { will-change: transform; }
-.homepage-cards-more:hover:not(:disabled) { transform: scale(1.05); }
-.homepage-cards-more:active:not(:disabled) { transform: scale(0.94); box-shadow: 1px 1px 0 #000; }
-.homepage-cards-more:focus-visible { outline: 3px solid #2EFFE0; outline-offset: 3px; }
-.homepage-cards-more:disabled { opacity: 0.5; cursor: default; }
-/* the short-wide stage: a slim tile BESIDE the grid (the cards there are height-bound — the width is spare) */
-.homepage-stage[data-paged] .homepage-cards-more {
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  width: 96px;
-  min-height: 140px;
-  margin: 0 0 0 10px;
-  font-size: var(--fs-hptilelabel); /* the rail tiles' label size: "GAMES" fits the 96px tile */
-  padding: 14px 6px;
-  text-align: center;
-  line-height: 1.15;
-}
-/* …and a twin spacer on the LEFT, so the six cards themselves stay on the page's centre line (Andy oct6 "centre the
-   game cards exactly"); the fit-math pays both widths */
-.homepage-stage[data-paged] .homepage-cards-pagerow[data-spacer]::before {
-  content: '';
-  flex: 0 0 auto;
-  width: 106px; /* = the tile's 96px + its 10px margin */
-}
-.homepage-cards-more-count {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: max(13px, var(--fs-label));
-  color: #000;
-  background: #FFE94A;
-  border: 2px solid #B8A400;
-  border-radius: 6px;
-  padding: 3px 7px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .homepage-cards-more { transition: none; }
-}
+/* plain 3-across tracks: beat the 5/7-card half-track rules above ([data-cols] + :nth-child), and a lone last card
+   (7 = 3 + 3 + 1) takes the MIDDLE track */
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols] .game-card-magnet:nth-child(n):nth-child(n) { grid-column: auto; }
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(3n+1):last-child:nth-child(n) { grid-column: 2; }
 
 /* ---- a narrow desktop window (481-760px): a slimmer rail, a smaller wordmark floor ---- */
 @media (max-width: 760px) {

@@ -5,7 +5,8 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady } from './support/menu.js';
+import { GAMES } from '../src/gameData.js';
+import { menuReady, measureEveryCard } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -13,7 +14,7 @@ const VIEWPORTS = [
   { w: 1440, h: 900 },
   { w: 1366, h: 768 },
   { w: 1163, h: 501 },
-  // Chromebook sizes — the menu pages its cards here (3 a page); both pages are checked.
+  // Chromebook sizes — the cards area scrolls here (two rows + a peek); every card is checked in view.
   { w: 1366, h: 657 },
   { w: 1280, h: 551 },
 ];
@@ -54,9 +55,9 @@ for (const { w, h } of VIEWPORTS) {
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.waitForTimeout(300);
-    const cards = await perCardMargins(page);
-    // SIX CARDS (feat/menu-six-grid): no pages — six on the grid at once; the rest are in MORE GAMES (chromebook-cards)
-    expect(cards.length).toBe(6);
+    // feat/menu-six-grid: every card, each measured on a screen where it is fully in the scrolling cards area
+    const cards = await measureEveryCard(page, perCardMargins, 'name');
+    expect(cards.length).toBe(GAMES.length);
     for (const c of cards) {
       // eslint-disable-next-line no-console
       console.log(`[card-clip ${w}x${h}] ${c.name}: worst=${c.worst}px @${c.worstAnc}`);

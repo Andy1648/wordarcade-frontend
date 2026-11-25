@@ -23,11 +23,12 @@
 // aria-hidden subtrees (the corner ribbon, deliberately cropped by the card corner) are skipped.
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+import { scrollCards, cardsInView } from './support/menu.js';
 import { installBackendMock } from './support/backendMock.js';
 
 const VIEWPORTS = [
   [1366, 625], [1366, 768], [1280, 800], [1163, 501], [1440, 900],
-  // Chromebook / 125%-scaled laptop: six cards at once (feat/menu-six-grid; squat last resort at the shortest).
+  // Chromebook / 125%-scaled laptop: two rows + a peek, the cards area scrolls (feat/menu-six-grid).
   [1366, 657], [1280, 551],
   [1920, 1080], [2560, 1440], [3440, 1440], [1024, 768],
 ];
@@ -189,9 +190,19 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
   for (const [w, h] of VIEWPORTS) {
     test(`${profile} ${w}x${h}: card text fits, >=13px, no scroll`, async ({ page }) => {
       await boot(page, w, h, seed);
-      const m = await measure(page);
-      // SIX CARDS (feat/menu-six-grid): no pages — all six on the grid are measured at once
-      expect(m.cards.length, 'six cards on the menu').toBe(6);
+      // feat/menu-six-grid: the cards area scrolls (two rows + a peek) — every card is measured on a screen where it is
+      // fully in view (the top, then the end), and the smallest text over both screens counts
+      let m = null;
+      const byGame = new Map();
+      for (const where of ['top', 'end']) {
+        await scrollCards(page, where);
+        const ids = new Set(await cardsInView(page));
+        const mm = await measure(page);
+        if (!m || mm.smallest.px < m.smallest.px) m = { ...mm, cards: [] };
+        for (const c of mm.cards) if (ids.has(c.game) && !byGame.has(c.game)) byGame.set(c.game, c);
+      }
+      await scrollCards(page, 'top');
+      m.cards = [...byGame.values()];
       const row = {
         profile, vp: `${w}x${h}`,
         payoutClip: Math.max(0, ...m.cards.map((c) => c.payoutClip)),
@@ -206,8 +217,8 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
         covered: m.cards.flatMap((c) => c.covered.map((x) => `${c.game} ${x}`)),
       };
       if (OUT) fs.appendFileSync(OUT, `${JSON.stringify(row)}\n`);
-      expect(m.cards.length, 'six mode cards (exact .game-card class) — feat/menu-six-grid').toBe(6);
-      expect(new Set(m.cards.map((c) => c.game)).size, 'six DIFFERENT modes').toBe(6);
+      expect(m.cards.length, 'seven mode cards (exact .game-card class) — WORD RACE (R1) + MINER (oct26)').toBe(7);
+      expect(new Set(m.cards.map((c) => c.game)).size, 'seven DIFFERENT modes').toBe(7);
       for (const c of m.cards) {
         expect(c.clip, `${c.game}: text "${c.clipText}" clipped by ${c.clipBy}`).toBeLessThanOrEqual(TOL);
         expect(c.escape, `${c.game}: text "${c.escText}" escapes its card`).toBeLessThanOrEqual(TOL);

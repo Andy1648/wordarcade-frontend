@@ -995,7 +995,12 @@ html[data-beat='true'] .game-card.featured {
    ribbon in the card's accessible name) so nothing lands on the name. Any 3:4-ish card keeps them. */
 @container (min-aspect-ratio: 9 / 10) {
   .game-card-gems,
-  .game-card-ribbon { display: none; }
+  .game-card-ribbon,
+  .game-card-badge { display: none; } /* the badge: what the short-screen rule already drops on every non-featured card */
+  /* the name sizes off the card's HEIGHT (a 162x128 card at 1163x501 had a 144px title bar) and the bar drops its top
+     padding — the name and the pay line both stay, whole */
+  .game-card .game-card-titlebar { padding-top: 4px; }
+  .game-card-magnet .game-card .game-card-titlebar .game-card-name { font-size: clamp(16px, min(15cqh, 18cqw), 30px); }
 }
 /* A NARROW paper card (SAT RUSH's foot, six cards at the 162px minimum): "BASE 50 / WORD" is a nowrap row that ran
    ~3px past the card on CI's font metrics (viewport-integrity 1163x501). Under 176px the row may wrap — "/ WORD" drops

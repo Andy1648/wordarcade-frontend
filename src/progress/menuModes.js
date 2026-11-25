@@ -1,15 +1,16 @@
-// menuModes.js — WHICH SIX CARDS the desktop menu shows (feat/menu-six-grid).
+// menuModes.js — WHICH SIX CARDS fill the desktop menu's first screen (feat/menu-six-grid).
 //
-// The menu used to page its cards three at a time behind ← / → arrows. It now shows SIX cards at once in
-// one grid, and any mode past six sits behind a MORE GAMES button under the grid.
+// The menu used to page its cards three at a time behind ← / → arrows. It is now one 3-across grid with no arrows:
+// the first two rows (six cards) fill the first screen, the next row peeks in under them, and the cards area
+// scrolls down to the rest (Andy nov25). This module orders them: the six below come first, `more` after.
 //
-// THE RULE (one line for Andy): "the six games you open most; the rest are under MORE".
+// THE RULE (one line for Andy): "the six games you open most are on top; scroll down for the rest".
 //   - score = how many times this browser opened the mode from the menu (`taw.menu.picks`), then the mode's
 //     lifetime game words (mastery) as the tie-break, so an existing save starts from what it has actually
 //     played instead of all-zero;
 //   - the FEATURED mode is pinned (the first-run tour points at its card, and it is the flagship);
 //   - ties fall back to the gameData order, so a fresh account always sees the same six (the last mode in
-//     GAMES — WORD RACE today — is the one under MORE);
+//     GAMES — WORD RACE today — is the one in the row below);
 //   - the six SHOWN keep the gameData order: a card never jumps seats because its count moved.
 //
 // PURE core (pickMenuModes) + two tiny storage helpers. No gameData import (see nextMode.js for why).

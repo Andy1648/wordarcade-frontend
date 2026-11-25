@@ -90,14 +90,11 @@ export function modeEntry(page, id) {
 }
 
 /**
- * SIX CARDS + MORE GAMES (feat/menu-six-grid): the desktop menu shows six cards at once (no paging) — the six
- * modes this browser opens most (src/progress/menuModes.js) — and the rest sit in the MORE GAMES panel
- * (.mm-panel), as the same .game-card-magnet[data-game] cards. A spec that wants a mode under MORE opens the
- * panel first. No-op on a phone (every mode has its own row there) or when the card is already on the grid.
- * Returns modeEntry(page, id), so `await (await revealMode(page, id)).click()`.
- *
- * isPagedMenu still names the short-wide desktop stage (Homepage.jsx PAGED_MENU_QUERY: the cards on the centre
- * column, MORE GAMES as a slim tile beside the grid) — it no longer pages.
+ * THE SCROLLING CARD GRID (feat/menu-six-grid, Andy nov25): the desktop menu has no pages and no arrows. On the
+ * short-wide stage (isPagedMenu — the name is historical) the cards are one 3-across grid inside a vertically
+ * scrolling area (.homepage-cards-scroll): two rows (the six modes this browser opens most — src/progress/menuModes.js)
+ * fill the first screen, the third row peeks in under them, and only the cards area scrolls (the wordmark and menu
+ * chrome never move). revealMode scrolls a card into view; a click would too, but a spec that MEASURES wants it in view.
  */
 export const PAGED_MENU_MIN_W = 761;
 export const PAGED_MENU_MIN_ASPECT = 5 / 4;
@@ -105,21 +102,50 @@ export function isPagedMenu(page) {
   const vp = page.viewportSize();
   return !!vp && vp.width >= PAGED_MENU_MIN_W && vp.width / vp.height >= PAGED_MENU_MIN_ASPECT;
 }
-/** The six cards on the menu grid (not the MORE panel's). */
+/** Every card on the menu grid. */
 export function gridCards(page) {
   return page.locator('.homepage-cards-grid > .game-card-magnet');
 }
-/** Open the MORE GAMES panel (no-op when it is already open). */
-export async function openMoreGames(page) {
-  if (await page.locator('.mm-panel').isVisible()) return;
-  await page.locator('.homepage-cards-more').click();
-  await page.locator('.mm-panel').waitFor({ state: 'visible' });
+/** Scroll the cards area to its top ('top') or its end ('end'); a no-op where it does not scroll. */
+export async function scrollCards(page, where) {
+  await page.evaluate((w) => {
+    const s = document.querySelector('.homepage-cards-scroll');
+    if (s) s.scrollTop = w === 'end' ? s.scrollHeight : 0;
+  }, where);
+  await page.waitForTimeout(150);
+}
+/** The cards whose whole box is inside the cards area's scrollport right now (every rendered card if it does not scroll). */
+export function cardsInView(page) {
+  return page.evaluate(() => {
+    const s = document.querySelector('.homepage-cards-scroll');
+    const port = s && /^(auto|scroll)$/.test(getComputedStyle(s).overflowY) ? s.getBoundingClientRect() : null;
+    return [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')]
+      .filter((m) => m.getClientRects().length)
+      .filter((m) => {
+        if (!port) return true;
+        const r = m.querySelector('.game-card').getBoundingClientRect();
+        return r.top >= port.top - 0.5 && r.bottom <= port.bottom + 0.5;
+      })
+      .map((m) => m.getAttribute('data-game'));
+  });
+}
+/**
+ * Run `measure(page)` (an array of per-card rows keyed by `key`) at the top of the cards area and, where it scrolls,
+ * at its end — keeping each card's row from a screen where the card is fully in view. Returns the union.
+ */
+export async function measureEveryCard(page, measure, key = 'game') {
+  const seen = new Map();
+  for (const where of ['top', 'end']) {
+    await scrollCards(page, where);
+    const ids = new Set(await cardsInView(page));
+    for (const row of await measure(page)) if (ids.has(row[key]) && !seen.has(row[key])) seen.set(row[key], row);
+  }
+  await scrollCards(page, 'top');
+  return [...seen.values()];
 }
 export async function revealMode(page, id) {
   const entry = modeEntry(page, id);
-  if (isPhoneMenu(page)) return entry;
-  const onGrid = await page.locator(`.homepage-cards-grid > .game-card-magnet[data-game="${id}"]`).count();
-  if (!onGrid && await page.locator('.homepage-cards-more').count()) await openMoreGames(page);
+  if (!isPhoneMenu(page)) await entry.first().scrollIntoViewIfNeeded();
   await entry.first().waitFor({ state: 'visible' });
   return entry;
 }

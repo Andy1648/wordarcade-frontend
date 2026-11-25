@@ -42,7 +42,7 @@ test.describe('mode dialog', () => {
     await expect(modeDialog(page)).toHaveCount(0);
     await expect(page.locator('.mode-dialog-overlay')).toHaveCount(0);
     // …and the menu underneath is interactive again.
-    await expect(page.locator('.game-card')).toHaveCount(Math.min(6, GAMES.length)) /* feat/menu-six-grid: six on the menu, the rest under MORE GAMES */;
+    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
   });
 
   test('closes cleanly via the Escape key', async ({ page }) => {

@@ -37,6 +37,12 @@ test.describe('no game card sits under the corner nav (landscape)', () => {
         for (const card of cards) {
           const r = card.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) continue;
+          // a card below the fold of the scrolling cards area (feat/menu-six-grid) is reached by scrolling, not tapped here
+          const port = card.closest('.homepage-cards-scroll');
+          if (port && /^(auto|scroll)$/.test(getComputedStyle(port).overflowY)) {
+            const pr = port.getBoundingClientRect();
+            if (r.top < pr.top - 0.5 || r.bottom > pr.bottom + 0.5) continue;
+          }
           const cx = Math.round(r.left + r.width / 2);
           const cy = Math.round(r.top + r.height / 2);
           const el = document.elementFromPoint(cx, cy);
