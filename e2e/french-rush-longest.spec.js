@@ -11,6 +11,9 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { installBackendMock } from './support/backendMock.js';
+import { RUSH_LANGS, re } from './support/rushMenu.js';
+// the menus speak the language (nov24 round 2): match them by the language's own words
+const M = RUSH_LANGS.fr.menu;
 
 const WORDS = JSON.parse(readFileSync(new URL('../src/data/frenchRush/words.json', import.meta.url), 'utf8'));
 const SHOTS = process.env.FR_SHOTS || '';
@@ -36,7 +39,7 @@ const LONG_CHOICES = [...WORDS].filter((r) => inMedium(r) && r.word.length === 1
 const cardLen = (r) => r.word.length + r.gloss.length + r.context.length + r.contextEn.length + (r.root ? JSON.stringify(r.root).length : 0);
 const LONG_STUDY = [...WORDS].filter((r) => inHard(r) && !r.guessable).sort(byLen(cardLen)).slice(0, 5);
 
-const THEMES = { familles: /Families/, identites: /identities/, esthetique: /Beauty/, sciences: /Science/, vie: /Contemporary/, defis: /Global/, connecteurs: /connectors/, examen: /Exam/ };
+const THEMES = Object.fromEntries(RUSH_LANGS.fr.categories.map((c) => [c.id, re(c.label)]));
 
 // a device with a French voice, so the 🔊 sits on the answer + study cards (the widest version of them)
 function stubVoices() {
@@ -84,18 +87,18 @@ async function openWith(page, w, h, lexicon) {
 }
 
 async function setUp(page, mode, level, theme, length) {
-  await page.getByRole('button', { name: /^Play$/ }).click();
+  await page.getByRole('button', { name: re(M.play) }).click();
   await page.getByRole('button', { name: mode }).click();
   await expect(page.locator('.sr-setup')).toBeVisible();
-  await page.getByRole('radio', { name: new RegExp(`^${level}`) }).click();
+  await page.getByRole('radio', { name: re(M.levels[level], false) }).click();
   if (theme) {
-    await page.getByRole('button', { name: /^theme/ }).click();
+    await page.getByRole('button', { name: re(M.theme, false) }).click();
     await page.getByRole('option', { name: THEMES[theme] }).click();
   }
-  const noTimer = page.getByRole('radio', { name: /NO TIMER/ });
+  const noTimer = page.getByRole('radio', { name: re(M.noTimer) });
   if (await noTimer.count()) await noTimer.click();
   await page.getByRole('radio', { name: new RegExp(`^${length}$`) }).click();
-  await page.getByRole('button', { name: /^(Start|Study)$/ }).click();
+  await page.getByRole('button', { name: new RegExp(`^(${M.start}|${M.study})$`) }).click();
 }
 
 // let every finite one-shot (page rise, card landing) finish, so the boxes are measured at rest
@@ -252,13 +255,13 @@ for (const [w, h] of SIZES) {
     if (phone) test.use({ hasTouch: true, isMobile: true });
 
     for (const [label, row, level] of [
-      ['long-meaning', LONG_GLOSS, 'MEDIUM'],
-      ['long-word', LONG_WORD, 'HARD'],
-      ['long-choices', LONG_CHOICES, 'MEDIUM'],
+      ['long-meaning', LONG_GLOSS, 'standard'],
+      ['long-word', LONG_WORD, 'hard'],
+      ['long-choices', LONG_CHOICES, 'standard'],
     ]) {
       test(`play + answer cards never clip the ${label} word (${row.word})`, async ({ page }) => {
         await openWith(page, w, h, seedMastered([row.word]));
-        await setUp(page, /QUIZ/, level, row.category, 10);
+        await setUp(page, re(M.quiz), level, row.category, 10);
         await expect(page.locator('.sr-gloss')).toHaveText(row.gloss);
         // every clue on the card: the meaning, then HINT prints the French example
         const hint = page.getByRole('button', { name: /^Hint/ });
@@ -285,7 +288,7 @@ for (const [w, h] of SIZES) {
 
     test('study cards never clip the longest cards', async ({ page }) => {
       await openWith(page, w, h, seedStudyDeck(LONG_STUDY.map((r) => r.word)));
-      await setUp(page, /STUDY FIRST/, 'HARD', null, 5);
+      await setUp(page, re(M.studyFirst), 'hard', null, 5);
       await expect(page.locator('.sr-brief-card')).toHaveCount(5);
       for (const r of LONG_STUDY) await expect(page.locator('.sr-brief-list')).toContainText(r.word);
       const bad = await audit(page, 'study', '.sr-brief-page', { phone });

@@ -69,6 +69,9 @@ export const PACKS = {
     lineupSize: 8,
     briefingChoices: 6,
     silverTongue: false,
+    // nov24 round 2 ("people say you can't get any wrong"): the choices are words a student could really mistake
+    // for the answer — same part of speech + gender + theme, look-alike spellings (suspects.js plausibility)
+    plausibleDistractors: true,
     meaningFirst: true,
     accentFold: true,
     // TIMED by default (nov21, Andy: defaults TIMED + 20 words); NO TIMER is one tap away (HINT for the next
@@ -119,6 +122,25 @@ export const PACKS = {
   },
 };
 
+// THE MENUS IN THE LANGUAGE (nov24 round 2, Andy: a one-word label like "STUDY" should simply be ÉTUDIER /
+// ESTUDIAR / STUDIARE / DISCE / 学习): every label, button and heading the menus print comes from the language's
+// `menu` (rushLang.js). The pack's `ui` carries it, so screens shared with SAT Rush (modes, setup, study, results)
+// stay English there — SAT has no `ui.menu`.
+function menuUi(base, L) {
+  const M = L.menu;
+  return {
+    ...base.ui,
+    menu: M,
+    modeHead: M.practice,
+    modes: { briefing: { title: M.studyFirst, line: '' }, lineup: { title: M.quiz, line: '' } },
+    briefingTitle: M.studyTitle,
+    startLabel: M.start,
+    review: { ...base.ui.review, weak: M.review.weak, miss: M.review.miss },
+    results: { ...base.ui.results, ...M.results, copied: M.copied, done: L.press.over[0] },
+    defaultDifficulty: 'hard', // nov24 round 2 (Andy: "default difficulty = HARD everywhere")
+  };
+}
+
 // LANGUAGE RUSH (nov24): Spanish, Italian, Latin and Chinese are FRENCH RUSH with their own words, themes,
 // storage and a few labels in that language (rushLang.js). Everything else — the slow TIMED pace, the
 // study deck, the lean review card, the results — is the French pack's, so they behave the same.
@@ -142,11 +164,15 @@ function languagePack(lang) {
       stamps: { ...L.stamps },
       review: { ...fr.ui.review, got: L.stamps.got },
       lineup: { ...fr.ui.lineup, cleared: L.cleared },
-      results: { ...fr.ui.results, done: L.press.over[0], menu: `${name} Rush home` },
     },
   };
 }
-for (const id of ['es', 'it', 'la', 'zh']) PACKS[id] = languagePack(id);
+for (const id of ['es', 'it', 'la', 'zh']) {
+  const p = languagePack(id);
+  PACKS[id] = { ...p, ui: menuUi(p, RUSH_LANGS[id]) };
+}
+// French: its themes and menus in French too (the play card's labels stay as they were)
+PACKS.fr = { ...PACKS.fr, categories: RUSH_LANGS.fr.categories, ui: menuUi(PACKS.fr, RUSH_LANGS.fr) };
 
 /** Is this pack one of the LANGUAGE RUSH packs (French and its siblings)? */
 export function isLanguagePack(id) {

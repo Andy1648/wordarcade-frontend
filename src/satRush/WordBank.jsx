@@ -15,20 +15,14 @@ const fold = (s) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
-// the level a word sits in, matching CASE SETUP's bands (runSpec FR_DIFFICULTIES)
-const LEVEL = (r) => (r.ap === 1 && r.tier <= 2 ? 'basics' : r.ap <= 2 && r.tier <= 4 ? 'exam core' : 'score 5');
-const SHOW = [
-  { value: 'all', label: 'All words' },
-  { value: 'todo', label: 'Still to learn' },
-  { value: 'known', label: 'Known' },
-  { value: 'studied', label: 'Studied' },
-  { value: 'unstudied', label: 'Not studied yet' },
-  { value: 'study', label: "Can't guess from English" },
-  { value: 'false', label: 'False friends' },
-];
-const STATUS_LABEL = { known: 'known', learning: 'learning', new: 'new' };
+// the level a word sits in, matching CASE SETUP's bands (runSpec FR_DIFFICULTIES), named like the setup's levels
+const LEVEL = (r) => (r.ap === 1 && r.tier <= 2 ? 'easy' : r.ap <= 2 && r.tier <= 4 ? 'standard' : 'hard');
+const SHOW_IDS = ['all', 'todo', 'known', 'studied', 'unstudied', 'study', 'false'];
 
 export default function WordBank({ words = [], categories = [], masteryOf, studiedOf, onBack }) {
+  // every label in the page's language (rushLang.js `menu`, nov24 round 2)
+  const M = rushLang().menu;
+  const SHOW = SHOW_IDS.map((value) => ({ value, label: M.filters[value] }));
   const [theme, setTheme] = useState('all');
   const [q, setQ] = useState('');
   const [show, setShow] = useState('all');
@@ -58,28 +52,26 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
     <div className="sr-screen">
       <div className="sr-bank">
         <div className="sr-bank-head">
-          <div className="sr-modeselect-head sr-print" data-v="WORD BANK">
-            WORD BANK
+          <div className="sr-modeselect-head sr-print" data-v={M.bankTitle}>
+            {M.bankTitle}
           </div>
-          <div className="sr-setup-sub">
-            {words.length} words · you know {known}
-          </div>
+          <div className="sr-setup-sub">{M.bankLine(words.length, known)}</div>
         </div>
         <div className="sr-bank-filters">
           <PrintPicker
             className="sr-bank-field"
-            label="theme"
+            label={M.theme}
             value={theme}
-            options={[{ value: 'all', label: 'All themes' }, ...categories.map((c) => ({ value: c.id, label: c.label }))]}
+            options={[{ value: 'all', label: M.allThemes }, ...categories.map((c) => ({ value: c.id, label: c.label }))]}
             onChange={setTheme}
           />
-          <PrintPicker className="sr-bank-field" label="show" value={show} options={SHOW} onChange={setShow} />
+          <PrintPicker className="sr-bank-field" label={M.show} value={show} options={SHOW} onChange={setShow} />
           <label className="sr-bank-field grow">
-            <span className="sr-setup-label">search</span>
+            <span className="sr-setup-label">{M.search}</span>
             <input
               type="search"
               value={q}
-              placeholder={rushLang().flipped ? `English, pinyin or 汉字` : `${rushLang().name} or English`}
+              placeholder={M.searchHint}
               onChange={(e) => setQ(e.target.value)}
               autoComplete="off"
               spellCheck="false"
@@ -96,18 +88,18 @@ export default function WordBank({ words = [], categories = [], masteryOf, studi
               </div>
               <div className="sr-bank-meta">
                 <span>{label(r.category)}</span>
-                <span>{LEVEL(r)}</span>
-                <span className={`sr-bank-status ${r.status}`}>{STATUS_LABEL[r.status]}</span>
-                {r.studied && <span className="sr-bank-tag">studied</span>}
-                {r.falseFriend && <span className="sr-bank-tag warn">false friend</span>}
+                <span>{M.levels[LEVEL(r)]}</span>
+                <span className={`sr-bank-status ${r.status}`}>{M.status[r.status]}</span>
+                {r.studied && <span className="sr-bank-tag">{M.studiedTag}</span>}
+                {r.falseFriend && <span className="sr-bank-tag warn">{M.falseTag}</span>}
               </div>
             </li>
           ))}
-          {rows.length === 0 && <li className="sr-bank-empty">No words match.</li>}
+          {rows.length === 0 && <li className="sr-bank-empty">{M.none}</li>}
         </ul>
         <div className="sr-setup-exits">
           <button type="button" className="sr-exit-chip" onClick={onBack}>
-            <span aria-hidden="true">←</span> BACK
+            <span aria-hidden="true">←</span> {M.back}
           </button>
         </div>
       </div>

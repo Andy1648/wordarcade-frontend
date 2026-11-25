@@ -54,9 +54,9 @@ export default function ModeSelect({ lastMode = 'briefing', onChoose, onExit, ui
             type="button"
             onClick={onExit}
             className="sr-exit-chip sr-modeselect-exit"
-            aria-label="Exit"
+            aria-label={U.menu ? undefined : 'Exit'}
           >
-            EXIT
+            {U.menu ? U.menu.exit : 'EXIT'}
           </button>
         )}
       </div>

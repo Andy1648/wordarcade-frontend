@@ -9,6 +9,9 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
+import { RUSH_LANGS, re } from './support/rushMenu.js';
+// the menus speak the language (nov24 round 2): match them by the language's own words
+const M = RUSH_LANGS.fr.menu;
 
 const WORDS = JSON.parse(readFileSync(new URL('../src/data/frenchRush/words.json', import.meta.url), 'utf8'));
 const fold = (s) => s.replace(/œ/g, 'oe').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -19,15 +22,15 @@ test('French Rush: self-paced — no clock, accent-free typing, a review card th
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/french-rush');
   await expect(page.locator('.sr-cover')).toContainText('FRENCH');
-  await page.getByRole('button', { name: 'Play' }).click();
-  await page.getByRole('button', { name: /QUIZ/ }).click();
+  await page.getByRole('button', { name: re(M.play) }).click();
+  await page.getByRole('button', { name: re(M.quiz) }).click();
   await expect(page.locator('.sr-setup')).toBeVisible();
-  await page.getByRole('button', { name: /^theme/ }).click();
-  await page.getByRole('option', { name: /Families/i }).click();
+  await page.getByRole('button', { name: re(M.theme, false) }).click();
+  await page.getByRole('option', { name: /^Familles/ }).click();
   // TIMED is the default (nov21); this flow is the self-paced one
-  await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('radio', { name: /NO TIMER/ }).click();
-  await page.getByRole('button', { name: /^Start$/ }).click();
+  await expect(page.getByRole('radio', { name: re(M.timed) })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: re(M.noTimer) }).click();
+  await page.getByRole('button', { name: re(M.start) }).click();
 
   // the MEANING prints first — and with no clock, the French example does NOT appear by itself
   await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
@@ -64,16 +67,16 @@ test("a teacher's link opens CASE SETUP with the set preselected", async ({ page
   await installBackendMock(page);
   await page.goto('/french-rush?mode=briefing&level=easy&n=5&theme=examen&pace=self');
   await expect(page.locator('.sr-setup')).toBeVisible();
-  await expect(page.getByRole('radio', { name: /^EASY/ })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: re(M.levels.easy, false) })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: /^5$/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('radio', { name: /NO TIMER/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('button', { name: /^theme/ })).toContainText(/Exam & email/i);
+  await expect(page.getByRole('radio', { name: re(M.noTimer) })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: re(M.theme, false) })).toContainText(/Examen & courriel/i);
 });
 
 test('the word bank lists every word and searches without accents', async ({ page }) => {
   await installBackendMock(page);
   await page.goto('/french-rush');
-  await page.getByRole('button', { name: 'Word bank' }).click();
+  await page.getByRole('button', { name: re(M.bank) }).click();
   await expect(page.locator('.sr-bank-row')).toHaveCount(WORDS.length);
   await page.getByRole('searchbox').fill('ecole');
   await expect(page.locator('.sr-bank-row').first()).toContainText('école');
@@ -83,11 +86,11 @@ test('the word bank lists every word and searches without accents', async ({ pag
 test('the word bank filters are printed pickers — tap and keyboard both work', async ({ page }) => {
   await installBackendMock(page);
   await page.goto('/french-rush');
-  await page.getByRole('button', { name: 'Word bank' }).click();
+  await page.getByRole('button', { name: re(M.bank) }).click();
   await expect(page.locator('.sr-bank select')).toHaveCount(0);
-  const show = page.getByRole('button', { name: /^show/i });
+  const show = page.getByRole('button', { name: re(M.show, false) });
   await show.click();
-  await page.getByRole('option', { name: 'False friends' }).click();
+  await page.getByRole('option', { name: re(M.filters.false) }).click();
   await expect(page.getByRole('listbox')).toHaveCount(0);
   const ff = WORDS.filter((w) => w.falseFriend).length;
   await expect(page.locator('.sr-bank-row')).toHaveCount(ff);
@@ -118,7 +121,7 @@ test('the arcade never downloads French Rush', async ({ page }) => {
 test('STUDY FIRST only teaches words you cannot guess from English', async ({ page }) => {
   await installBackendMock(page);
   await page.goto('/french-rush?mode=briefing&level=standard&n=10&pace=self');
-  await page.getByRole('button', { name: /^Study$/ }).click();
+  await page.getByRole('button', { name: re(M.study) }).click();
   await expect(page.locator('.sr-brief-card')).toHaveCount(10);
   const studied = (await page.locator('.sr-brief-word').allInnerTexts()).map((t) =>
     t.replace('🔊', '').trim().replace(/^(le\/la |le |la |l')/, '')

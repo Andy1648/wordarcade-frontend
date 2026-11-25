@@ -87,6 +87,7 @@ function BriefCard({ card, speak, hint = false }) {
 
 export default function Briefing({ briefing, onStart, onExit, ui = null }) {
   const title = (ui && ui.briefingTitle) || 'THE BRIEFING';
+  const M = (ui && ui.menu) || null; // a LANGUAGE pack's menus, in its language
   if (!briefing) return null;
   const { familyMorpheme, familyCount, cards, isReplay } = briefing;
   // Spell the count so the header matches how many words actually share the root (was a
@@ -100,8 +101,8 @@ export default function Briefing({ briefing, onStart, onExit, ui = null }) {
         {/* EXIT to menu (item 4) — top-right, away from the bottom Start button, so the one
             SAT Rush screen that lacked a way back now has one, consistent with the others. */}
         {onExit && (
-          <button type="button" className="sr-brief-exit" onClick={onExit} aria-label="Exit to menu">
-            EXIT
+          <button type="button" className="sr-brief-exit" onClick={onExit} aria-label={M ? undefined : 'Exit to menu'}>
+            {M ? M.exit : 'EXIT'}
           </button>
         )}
         <div className="sr-brief-head">
@@ -109,13 +110,13 @@ export default function Briefing({ briefing, onStart, onExit, ui = null }) {
             {title}
           </div>
           {isReplay ? (
-            <div className="sr-brief-family">The ones that got away — study them again</div>
+            <div className="sr-brief-family">{M ? M.replayLine : 'The ones that got away — study them again'}</div>
           ) : familyMorpheme ? (
             <div className="sr-brief-family">
               {familyCountWord} SHARE A ROOT — <b>{familyMorpheme}</b>
             </div>
           ) : (
-            <div className="sr-brief-family">{cards.length} words to know before the run</div>
+            <div className="sr-brief-family">{M ? M.studyLine(cards.length) : `${cards.length} words to know before the run`}</div>
           )}
         </div>
 
@@ -127,7 +128,7 @@ export default function Briefing({ briefing, onStart, onExit, ui = null }) {
 
         <div className="sr-brief-actions">
           <button type="button" className="sr-btn" onClick={onStart}>
-            Start the run
+            {M ? M.startRun : 'Start the run'}
           </button>
         </div>
       </div>

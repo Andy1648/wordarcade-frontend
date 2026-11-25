@@ -7,73 +7,26 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
+import { noClip } from './support/noClip.js';
+import { RUSH_LANGS, re } from './support/rushMenu.js';
+
 
 const LANGS = [
-  { id: 'es', slug: 'spanish-rush', dir: 'spanishRush', title: 'SPANISH', theme: /Families/i },
-  { id: 'it', slug: 'italian-rush', dir: 'italianRush', title: 'ITALIAN', theme: /Families/i },
-  { id: 'la', slug: 'latin-rush', dir: 'latinRush', title: 'LATIN', theme: /People & family/i },
-  { id: 'zh', slug: 'chinese-rush', dir: 'chineseRush', title: 'CHINESE', theme: /Families/i },
+  { id: 'es', slug: 'spanish-rush', dir: 'spanishRush', title: 'SPANISH', theme: /^Familias/ },
+  { id: 'it', slug: 'italian-rush', dir: 'italianRush', title: 'ITALIAN', theme: /^Famiglie/ },
+  { id: 'la', slug: 'latin-rush', dir: 'latinRush', title: 'LATIN', theme: /^Hominēs et familia/ },
+  { id: 'zh', slug: 'chinese-rush', dir: 'chineseRush', title: 'CHINESE', theme: /^家庭与社区/ },
 ];
 const SIZES = [
   [1366, 768],
   [360, 640],
 ];
 const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
-const LISTS = ['.sr-bank-list', '.sr-brief-list', '.sr-lineup', '.fr-class-chips', '.fr-class-summary', '.fr-pick-list'];
-
-// CLIPPING: any element that prints its own text must show all of it — not wider/taller than a box that hides
-// overflow, and not past the screen edge. Plus the French Rush fit rules: no page scroll, no text under 11px.
-async function noClip(page, where) {
-  const bad = await page.evaluate((lists) => {
-    const out = [];
-    const se = document.scrollingElement;
-    if (se.scrollHeight > window.innerHeight + 1 || se.scrollWidth > window.innerWidth + 1) out.push(`page scrolls ${se.scrollWidth}x${se.scrollHeight}`);
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    for (const el of document.querySelectorAll('#root *')) {
-      const cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) continue;
-      if (el.closest('[aria-hidden="true"]')) continue; // decorative stamps (a ruled-out choice's NON band) are meant to overhang
-      const r = el.getBoundingClientRect();
-      if (r.width <= 1 || r.height <= 1) continue; // empty, or a screen-reader-only label
-      const inList = lists.some((s) => el.closest(s));
-      const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-      if (!ownText) continue;
-      const label = `"${el.textContent.trim().slice(0, 40)}" (${String(el.className).slice(0, 40)})`;
-      if (parseFloat(cs.fontSize) < 11) out.push(`${parseFloat(cs.fontSize)}px text: ${label}`);
-      const hidesX = /(hidden|clip)/.test(cs.overflowX) || cs.textOverflow === 'ellipsis';
-      const hidesY = /(hidden|clip)/.test(cs.overflowY);
-      if (hidesX && el.scrollWidth > el.clientWidth + 1) out.push(`cut off sideways: ${label} ${el.scrollWidth}>${el.clientWidth}`);
-      if (hidesY && el.scrollHeight > el.clientHeight + 2) out.push(`cut off below: ${label} ${el.scrollHeight}>${el.clientHeight}`);
-      if (!inList && (r.left < -1 || r.right > vw + 1 || r.top < -1 || r.bottom > vh + 1)) out.push(`off screen: ${label} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.right)},${Math.round(r.bottom)}`);
-      // an ancestor that hides overflow and cuts this text off
-      for (let a = el.parentElement; a && a.id !== 'root'; a = a.parentElement) {
-        const acs = getComputedStyle(a);
-        if (!/(hidden|clip)/.test(acs.overflowX + acs.overflowY)) continue;
-        if (lists.some((s) => a.matches(s))) break;
-        const ar = a.getBoundingClientRect();
-        if (r.left < ar.left - 1 || r.right > ar.right + 1 || r.bottom > ar.bottom + 2 || r.top < ar.top - 2) out.push(`cut off by ${String(a.className).slice(0, 30)}: ${label}`);
-        break;
-      }
-    }
-    // the cover title must sit inside its page (a longer language name must not run past the frame)
-    const title = document.querySelector('.sr-cover .sr-title');
-    if (title) {
-      const range = document.createRange();
-      range.selectNodeContents(title);
-      const t = range.getBoundingClientRect(); // the printed letters, not the box
-      const c = title.closest('.sr-cover').getBoundingClientRect();
-      if (t.left < c.left - 1 || t.right > c.right + 1) out.push(`title runs past the page: ${Math.round(t.left)}..${Math.round(t.right)} vs ${Math.round(c.left)}..${Math.round(c.right)}`);
-    }
-    return out;
-  }, LISTS);
-  expect(bad, where).toEqual([]);
-}
-
 for (const L of LANGS) {
   const WORDS = JSON.parse(readFileSync(new URL(`../src/data/${L.dir}/words.json`, import.meta.url), 'utf8'));
   for (const [w, h] of SIZES) {
     test(`${L.title} RUSH at ${w}x${h}: one round plays, nothing clips`, async ({ page }) => {
+      const M = RUSH_LANGS[L.id].menu;
       await page.setViewportSize({ width: w, height: h });
       await installBackendMock(page);
       const errors = [];
@@ -83,14 +36,14 @@ for (const L of LANGS) {
       await expect(page.locator('.sr-cover')).not.toContainText(/FRENCH/);
       await noClip(page, 'cover');
 
-      await page.getByRole('button', { name: /^Play$/ }).click();
-      await page.getByRole('button', { name: /QUIZ/ }).click();
+      await page.getByRole('button', { name: re(M.play) }).click();
+      await page.getByRole('button', { name: re(M.quiz) }).click();
       await expect(page.locator('.sr-setup')).toBeVisible();
-      await page.getByRole('button', { name: /^theme/ }).click();
+      await page.getByRole('button', { name: re(M.theme, false) }).click();
       await page.getByRole('option', { name: L.theme }).click();
-      await page.getByRole('radio', { name: /NO TIMER/ }).click();
+      await page.getByRole('radio', { name: re(M.noTimer) }).click();
       await noClip(page, 'setup');
-      await page.getByRole('button', { name: /^Start$/ }).click();
+      await page.getByRole('button', { name: re(M.start) }).click();
 
       await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
       await noClip(page, 'play: meaning');
@@ -119,7 +72,7 @@ for (const L of LANGS) {
     await page.setViewportSize({ width: 1366, height: 768 });
     const mock = await installBackendMock(page);
     await page.goto(`/${L.slug}`);
-    await page.getByRole('button', { name: /^Create room$/i }).click();
+    await page.getByRole('button', { name: re(RUSH_LANGS[L.id].menu.create) }).click();
     await page.locator('.fr-class-foot').getByRole('button', { name: /^Create room$/i }).click();
     const sent = await mock.waitForSent('class_create');
     const rows = sent.payload.rows;
@@ -143,7 +96,7 @@ for (const L of LANGS) {
 test('the cover picks the language: each one is its own link', async ({ page }) => {
   await installBackendMock(page);
   await page.goto('/french-rush');
-  await page.getByRole('button', { name: /^language/ }).click();
+  await page.getByRole('button', { name: re(RUSH_LANGS.fr.menu.language, false) }).click();
   await page.getByRole('option', { name: 'Español' }).click();
   await page.waitForURL('**/spanish-rush');
   await expect(page.locator('.sr-cover .sr-title')).toContainText('SPANISH');
