@@ -24,11 +24,10 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
-import { isPagedMenu } from './support/menu.js';
 
 const VIEWPORTS = [
   [1366, 625], [1366, 768], [1280, 800], [1163, 501], [1440, 900],
-  // Chromebook / 125%-scaled laptop: the menu PAGES its cards here (3 a page) — both pages measured.
+  // Chromebook / 125%-scaled laptop: six cards at once (feat/menu-six-grid; squat last resort at the shortest).
   [1366, 657], [1280, 551],
   [1920, 1080], [2560, 1440], [3440, 1440], [1024, 768],
 ];
@@ -191,22 +190,8 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
     test(`${profile} ${w}x${h}: card text fits, >=13px, no scroll`, async ({ page }) => {
       await boot(page, w, h, seed);
       const m = await measure(page);
-      if (isPagedMenu(page)) {
-        // CARD PAGES: three showing; flip and measure the other three under the same rules.
-        expect(m.cards.length, 'a paged menu shows three cards a page').toBe(3);
-        // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
-        // skews every rect this measures (a 3D lean read as "text clipped by its card").
-        await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
-        // seven cards (MINER oct26): pages 2 and 3 hold three and one
-        for (const [pg, n] of [[2, 3], [3, 1]]) {
-          await page.keyboard.press('ArrowRight');
-          await page.waitForTimeout(400);
-          const m2 = await measure(page);
-          expect(m2.cards.length, `page ${pg} shows ${n}`).toBe(n);
-          m.cards = [...m.cards, ...m2.cards];
-          if (m2.smallest.px < m.smallest.px) m.smallest = m2.smallest;
-        }
-      }
+      // SIX CARDS (feat/menu-six-grid): no pages — all six on the grid are measured at once
+      expect(m.cards.length, 'six cards on the menu').toBe(6);
       const row = {
         profile, vp: `${w}x${h}`,
         payoutClip: Math.max(0, ...m.cards.map((c) => c.payoutClip)),
@@ -221,8 +206,8 @@ for (const [profile, seed] of Object.entries(PROFILES)) {
         covered: m.cards.flatMap((c) => c.covered.map((x) => `${c.game} ${x}`)),
       };
       if (OUT) fs.appendFileSync(OUT, `${JSON.stringify(row)}\n`);
-      expect(m.cards.length, 'seven mode cards (exact .game-card class) — WORD RACE (R1) + MINER (oct26)').toBe(7);
-      expect(new Set(m.cards.map((c) => c.game)).size, 'seven DIFFERENT modes').toBe(7);
+      expect(m.cards.length, 'six mode cards (exact .game-card class) — feat/menu-six-grid').toBe(6);
+      expect(new Set(m.cards.map((c) => c.game)).size, 'six DIFFERENT modes').toBe(6);
       for (const c of m.cards) {
         expect(c.clip, `${c.game}: text "${c.clipText}" clipped by ${c.clipBy}`).toBeLessThanOrEqual(TOL);
         expect(c.escape, `${c.game}: text "${c.escText}" escapes its card`).toBeLessThanOrEqual(TOL);

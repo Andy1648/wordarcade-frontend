@@ -44,7 +44,7 @@ test.describe('intro sequence', () => {
 
     // 4) We end on the menu: the wordmark + the mode cards are present.
     await expect(menuMark(page)).toBeVisible();
-    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
+    await expect(page.locator('.game-card')).toHaveCount(Math.min(6, GAMES.length)) /* feat/menu-six-grid: six on the menu, the rest under MORE GAMES */;
 
     // The whole time, the only backend contact was the intercepted socket attempt
     // — never the real server.
@@ -58,6 +58,6 @@ test.describe('intro sequence', () => {
     // No splash — the menu is shown immediately (loading is pre-completed).
     await expect(menuMark(page)).toBeVisible();
     await expect(page.locator('.splash-screen')).toHaveCount(0);
-    await expect(page.locator('.game-card')).toHaveCount(GAMES.length);
+    await expect(page.locator('.game-card')).toHaveCount(Math.min(6, GAMES.length)) /* feat/menu-six-grid: six on the menu, the rest under MORE GAMES */;
   });
 });

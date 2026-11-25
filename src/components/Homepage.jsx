@@ -3,7 +3,9 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { lazyWithReload } from '../lib/chunkReload';
 import OverlaySkeleton from './OverlaySkeleton';
 import { rollsEnabled } from '../progress/rollsFlag';
-import { GAMES } from '../gameData';
+import { GAMES, FEATURED_GAME } from '../gameData';
+import { pickMenuModes, readMenuPicks, bumpMenuPick, MENU_CARD_MAX } from '../progress/menuModes.js';
+import { masteryWords } from '../progress/mastery.js';
 import { useSound } from '../contexts/SoundContext';
 import { playWipe } from '../lib/navWipe';
 import { sfx, setMuted as setJuiceMuted } from '../juice';
@@ -87,8 +89,8 @@ import { useMomentHold } from '../lib/useMomentSlot';
 import { LEADERBOARD_ENABLED, getMyProfile, submitStats as submitBoardStats, checkRankUp, markBoardSeen, getBoardSeenEpoch, hasRankNews, setRankNews, getLastRank, restoreFromCloud, hasDevResetNotice, clearDevResetNotice } from '../leaderboard/client.js';
 // Rare one-shot moments ride their own lazy chunks: they render on a tiny fraction of menu visits,
 // so they stay out of the homepage's initial payload (e2e/payload-budget ratchet).
-// CARD PAGES controls (arrows, dots, keys, swipe): only a short-wide desktop ever fetches these.
-const CardPager = lazyWithReload(() => import('./CardPager.jsx'), 'CardPager');
+// MORE GAMES (feat/menu-six-grid): the panel holding the modes past the six on the menu — fetched on first open.
+const MoreModes = lazyWithReload(() => import('./MoreModes.jsx'), 'MoreModes');
 const ProfilePopup = lazyWithReload(() => import('./profile/ProfilePopup.jsx'), 'ProfilePopup');
 const RankUpMoment = lazyWithReload(() => import('../leaderboard/RankUpMoment.jsx'), 'RankUpMoment');
 const DevResetNotice = lazyWithReload(() => import('../leaderboard/DevResetNotice.jsx'), 'DevResetNotice');
@@ -144,17 +146,14 @@ import './MobileMenu.css';
 // RENDER branch, not a CSS one, because the win is the ~390 card nodes never mounting.
 const PHONE_MENU_QUERY = '(max-width: 480px)';
 
-// CHROMEBOOK PAGES (feat/chromebook-card-pages, Andy oct5: "game cards are flattened and look
-// horrendous" at 1366x657 / 1280x551). A short-wide desktop cannot give six cards a 3:4 box at a
-// readable width — the fit-math fell back to SQUAT cards. On these viewports the menu shows
-// CARDS_PER_PAGE cards at the full 3:4 ratio and flips between pages (arrows, swipe, ←/→ keys) with
-// a two-dot indicator. Tall screens (> 700px) and anything ≤ 760px wide keep their layout exactly.
+// SHORT-WIDE DESKTOP (the old CHROMEBOOK PAGES query). The menu used to page three cards at a time here
+// behind ← / → arrows; since feat/menu-six-grid every desktop shows SIX cards at once in a 3x2 grid (or
+// one row of six where that is the bigger 3:4 card) and the modes past six sit behind MORE GAMES
+// (progress/menuModes.js). The query still picks the stage's centre-column arrangement (data-paged).
 const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 // the right-column PROFILE layout on the wide paged menu: 'chip' (default) | 'slab' (?menu=slab — for comparing)
 const MENU_VARIANT = (() => { try { return new URLSearchParams(window.location.search).get('menu') === 'slab' ? 'slab' : 'chip'; } catch { return 'chip'; } })();
-const CARDS_PER_PAGE = 3;
 const PAGED_CARD_MAX_W = 560;
-const CARD_PAGES = Math.ceil(GAMES.length / CARDS_PER_PAGE);
 
 // How long a queued connect attempt shows the plain CONNECTING… state before we
 // assume a COLD START (the Render free tier sleeps when idle and takes ~30-60s to
@@ -204,7 +203,17 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   // the paged desktop's right column (≥ 1200px, Homepage.css .hp-main) carries the DAILY chip; the icon cluster's
   // flame is only RENDERED where that column isn't — a CSS-hidden twin kept its dot in the DOM under nothing (oct19-ui)
   const hasMainColumn = useMediaQuery('(min-width: 1200px)') && isPagedMenu;
-  const [cardPage, setCardPage] = useState(0);
+  // THE SIX CARDS (progress/menuModes.js): the six modes this browser opens most (featured pinned), the rest
+  // under MORE GAMES. Read ONCE per menu mount, so a card never swaps seats while the menu is up.
+  const [menuModes] = useState(() => {
+    const words = {};
+    for (const g of GAMES) { try { words[g.id] = masteryWords(g.id); } catch { words[g.id] = 0; } }
+    return pickMenuModes({ games: GAMES, picks: readMenuPicks(), words, pinned: [FEATURED_GAME.id], max: MENU_CARD_MAX });
+  });
+  const shownGames = menuModes.shown;
+  const moreGames = menuModes.more;
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreBtnRef = useRef(null);
   // The phone menu's TYPE A WORD hook (WordHook.jsx) is for visitors who have never started a
   // game. Read once per mount: starting a round navigates away, so it is gone on the way back.
   const [firstTimer] = useState(() => !hasPlayedBefore());
@@ -517,16 +526,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
       const grid = stage.querySelector('.homepage-cards-grid');
       const scroll = stage.querySelector('.homepage-cards-scroll');
       if (!region || !grid || !scroll) return;
-      // PAGED: every page is shown while measuring (data-measuring lifts the off-page hide), so the
-      // minimum width and each card's --bar-text-h come from ALL six cards — flipping never re-fits.
-      // The region's height is the stage's leftover either way (flex-grown, min-height 0), so the
-      // extra row this costs for the length of this synchronous pass changes nothing it reads.
-      if (isPagedMenu) grid.setAttribute('data-measuring', '');
-      try {
-        fit(region, grid, scroll);
-      } finally {
-        grid.removeAttribute('data-measuring');
-      }
+      fit(region, grid, scroll);
     };
     const fit = (region, grid, scroll) => {
       const minW = measureMinW(grid);
@@ -548,32 +548,34 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           const scale = Math.max(0.4, Math.min(1, cur * (1 - deficit / logoH)));
           stage.style.setProperty('--menu-scale', scale.toFixed(4));
         }
+        // The region shares an AUTO grid row (the foot), so two rows of tall cards can stretch it past the
+        // stage: read its height with the cards collapsed (mount / resize only — the real size is set below).
+        grid.style.setProperty('--card-h', '0px');
         let regionH = region.clientHeight;
         // Available WIDTH from the REGION (full, stable) minus the scroll's gutter — never from the
         // shrink-to-content grid, which would feed its own card width back in.
         const scs = getComputedStyle(scroll);
         const gutter = (parseFloat(scs.paddingLeft) || 0) + (parseFloat(scs.paddingRight) || 0);
         let availW = region.clientWidth - gutter;
-        // PAGED: the pager row (← • • →) sits UNDER the cards, in flow — paid for here so the 3:4 cards
-        // never overlap or clip it. The arrows are not beside the cards any more (Andy oct6 SEASON 2 #5:
-        // the cards sit on the page's centre line, under the wordmark — the region is the centre column).
-        if (isPagedMenu) {
-          const nav = region.querySelector('.homepage-cards-nav');
-          if (nav) regionH -= nav.offsetHeight + (parseFloat(getComputedStyle(nav).marginTop) || 0);
-        }
-        if (regionH <= 0 || availW <= 0) return null;
+        // MORE GAMES, in flow — paid for here so the cards never overlap or clip it. On the short-wide stage it is a
+        // slim tile BESIDE the grid (the cards there are height-bound, so the width is spare and the height is not);
+        // elsewhere it sits under the grid.
+        const more = region.querySelector('.homepage-cards-more');
+        const moreW = more && isPagedMenu ? more.offsetWidth + (parseFloat(getComputedStyle(more).marginLeft) || 0) : 0;
+        if (more && !isPagedMenu) regionH -= more.offsetHeight + (parseFloat(getComputedStyle(more).marginTop) || 0);
+        availW -= moreW * 2; // the tile on the right + its twin spacer on the left (the cards stay centred)
+        if (regionH <= 0 || availW <= 0) { grid.style.removeProperty('--card-h'); return null; }
         const gcs = getComputedStyle(grid);
         const colGap = parseFloat(gcs.columnGap) || 14;
         const rGap = parseFloat(gcs.rowGap) || colGap;
         const count = grid.querySelectorAll('.game-card-magnet').length || 5;
         // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
-        // PAGED: one row of CARDS_PER_PAGE, the other cards are a flip away.
-        // rows = ceil(count / cols): seven cards (MINER oct26) are 4+3 / 3+3+1 / 2+2+2+1.
+        // SIX CARDS (feat/menu-six-grid): a 3x2 grid or one row of six — whichever gives the bigger 3:4 card;
+        // 2x3 only where neither fits (a portrait window). Never a ragged row: six divides all three.
         const LAYOUTS = isPagedMenu
-          ? [[Math.min(CARDS_PER_PAGE, count), 1]]
-          : (narrow ? [2] : [count, 4, 3, 2, 1]).map((c) => [c, Math.ceil(count / c)]);
+          ? [3, count].map((c) => [Math.min(c, count), Math.ceil(count / Math.min(c, count))])
+          : (narrow ? [2] : [count, 3, 2]).map((c) => [c, Math.ceil(count / c)]);
         let best = null;
-        let owed = 0;
         for (const [cols, rows] of LAYOUTS) {
           if (!isPagedMenu && cols * rows < count) continue; // must hold all five
           const colW = (availW - (cols - 1) * colGap) / cols;
@@ -582,19 +584,20 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           if (narrow) {
             f = { w: colW, h: (colW * 4) / 3, cols, rows, aspect: true };
           } else if (isPagedMenu) {
-            // ALWAYS 3:4 — the whole point of paging. Under the text minimum the card keeps the
-            // minimum (3:4 still) and the height it owes goes to the short arrangement + the
-            // wordmark shrink below, exactly like a six-up row's shortfall.
+            // ALWAYS 3:4 (Andy oct5: squat cards "look horrendous"). Under the text minimum the card keeps
+            // the minimum (3:4 still) and the height it owes goes to the short arrangement + the
+            // wordmark shrink below.
             // PAGED_CARD_MAX_W: a card past ~560px is a poster, and its payout line clips by a sub-pixel on an
             // ultrawide (card-fit 3440x1440) — the row never needs to be that big.
+            // a layout whose column cannot hold the text minimum is never a candidate (one row of six on a laptop)
+            if (colW < minW) continue;
             let w = Math.min(colW, (rowH * 3) / 4, PAGED_CARD_MAX_W);
-            if (w < minW) w = Math.min(colW, minW);
+            if (w < minW) w = minW;
             f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
-            // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent, e.g.
-            // 1163x501): the card stops at the row's height rather than run into the dots and the
-            // CREDITS row under it. Never reached at 1366x657 / 1280x551.
+            // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent): the card
+            // stops at the row's height rather than run into MORE GAMES and the CREDITS row under it.
             if (clampPaged && f.h > rowH) f = { ...f, h: rowH, aspect: false };
-            owed = Math.max(0, f.h - rowH);
+            f.owed = Math.max(0, f.h - rowH);
           } else {
             const w0 = Math.min(colW, (rowH * 3) / 4);
             if (w0 >= minW) f = { w: w0, h: (w0 * 4) / 3, cols, rows, aspect: true };
@@ -609,7 +612,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             || (f.aspect === best.aspect && (f.aspect ? f.w > best.w + 0.5 : f.h > best.h + 0.5));
           if (better) best = f;
         }
-        if (!best) return { wide: minW, tall: 0, rows: 1 };
+        if (!best) { grid.style.removeProperty('--card-h'); return { wide: minW, tall: 0, rows: 1 }; }
         grid.style.setProperty('--cards-cols', String(best.cols));
         grid.style.setProperty('--card-w', `${Math.floor(best.w)}px`);
         grid.style.setProperty('--card-h', `${Math.floor(best.h)}px`);
@@ -619,15 +622,18 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // the row scrolls sideways, so width is never owed — but a full 3:4 height still is (the short
         // arrangement + the wordmark shrink below pay it as far as they can)
         const sf = cardShortfall(grid);
-        return { ...sf, tall: Math.max(sf.tall, owed), rows: best.rows };
+        // the height owed is the CHOSEN layout's (each candidate carries its own — a 3x2 grid and a row of six differ)
+        return { ...sf, tall: Math.max(sf.tall, best.owed || 0), rows: best.rows };
       };
 
       // WHERE THE LEFTOVER GOES on a wide screen: the 3:4 cards are width-bound and the region
       // hugs its TOP, so the surplus sits below the cards (see .homepage-cards-region).
       let clampPaged = false;
       let r = pass('normal', 0);
-      if (!r || narrow) return;
-      if (r.wide > 0.5 || r.tall > 0.5) r = pass('short', 0);
+      if (narrow) return;
+      // no room at all in the normal arrangement (a short screen, measured with the cards collapsed): go short
+      if (!r || r.wide > 0.5 || r.tall > 0.5) r = pass('short', 0);
+      if (!r) return;
       // Still short of height: take it out of the wordmark, a row's worth per row of cards.
       for (let i = 0; r && r.tall > 0.5 && i < 2; i += 1) r = pass('short', Math.ceil(r.tall * r.rows) + 2);
       if (r && isPagedMenu && r.tall > 0.5) {
@@ -665,22 +671,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     };
   }, [isPhoneMenu, isPagedMenu]);
 
-  // ---- CARD PAGES (short-wide desktop only) -----------------------------------------------------
-  // Homepage owns the page and the fit; the arrows, dots, keys, swipe and the flip slide are the lazy
-  // CardPager (only a paged viewport ever fetches it). A pager that stops matching shows everything.
   const cardsGridRef = useRef(null);
   const cardsRowRef = useRef(null);
-  const pageCount = isPagedMenu ? CARD_PAGES : 1;
-  const shownPage = isPagedMenu ? Math.min(cardPage, pageCount - 1) : 0;
-  const flipCards = (to) => setCardPage(Math.max(0, Math.min(pageCount - 1, to)));
-  // the keys never flip under an open dialog / panel
-  const pagerBlockedRef = useRef(false);
-  pagerBlockedRef.current = !!(dialog || lockedPreview || showClaims || showMarks || claimReveal || navigating);
-  const pager = (slot) => (
-    <Suspense fallback={null}>
-      <CardPager slot={slot} page={shownPage} pageCount={pageCount} onFlip={flipCards} gridRef={cardsGridRef} rowRef={cardsRowRef} blockedRef={pagerBlockedRef} />
-    </Suspense>
-  );
 
   // NOTE (fix/logic-and-onboarding): the old peek-scroll + "N MORE" pager machinery was
   // REMOVED here. The card-sizing effect above sizes all five cards to fit ONE screen and
@@ -697,8 +689,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
   const xpFxRef = useRef(null);
   const dialogOpenRef = useRef(false);
   useEffect(() => {
-    dialogOpenRef.current = !!dialog;
-  }, [dialog]);
+    dialogOpenRef.current = !!dialog || moreOpen;
+  }, [dialog, moreOpen]);
   // Wins balance shown in the chip — LIVE off the one balance channel (W, Andy oct2 22:28): a claim
   // from STATS, a code, a purchase or a level-up payout all land here at once, no remount needed.
   const wins = useWinsBalance();
@@ -1072,6 +1064,8 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     // Word Bomb / Blitz — a solo variant with one PLAY button — so entering a mode
     // reads consistent across the menu. The PLAY button calls onChain/onFuse.
     evModeOpened(game.id); // analytics: a mode dialog opened
+    bumpMenuPick(game.id); // the six-card menu keeps the modes you open most (progress/menuModes.js)
+    setMoreOpen(false);
     setDialog({ game, el });
   }
 
@@ -1290,6 +1284,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     if (!game) return;
     sound.click();
     evLockedModeClicked(gameId, game.unlockLevel); // analytics: interest in a still-locked mode
+    setMoreOpen(false);
     setLockedPreview({ game });
   }
 
@@ -1395,7 +1390,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
     stats: !reveal.core ? null : { onClick: handleStats, onHover: hover, value: !SEASON2 ? null : { full: `×${formatShort(statsMult)} XP`, short: `×${formatShort(statsMult)}`, big: `×${formatShort(statsMult)}`, unit: 'TOTAL MULTIPLIER' }, valueSays: SEASON2 ? `total multiplier ${formatNum(statsMult)}` : '' },
   };
   // the first-run tour never draws over a screen that covers the menu (overlap audit oct29 — see its render below)
-  const tourCovered = !!(dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showPatch);
+  const tourCovered = !!(moreOpen || dialog || showMarks || showClaims || claimReveal || lockedPreview || showProfile || showPatch);
   const trophy = V3.Trophy && reveal.core && <V3.Trophy variant={isPhoneMenu ? 'phone' : 'desk'} disabled={navigating} />;
   const board = reveal.core && LEADERBOARD_ENABLED && onLeaderboard ? { rank: boardShown, myRank: boardRank, news: boardNews, onClick: handleLeaderboard } : null;
   const ach = reveal.core ? { count: claims.length, onClick: handleAchievements } : null;
@@ -1705,23 +1700,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
 
         {titlePlay || (
         <div className="homepage-cards-region">
-          {/* CARD PAGES: on a short-wide desktop (PAGED_MENU_QUERY) the row is the three cards on the page's
-              centre line, with ONE pager row under them (← • • →), all in flow inside the region (no fixed
-              UI). Elsewhere the row is display:contents. */}
+          {/* SIX CARDS (feat/menu-six-grid): every desktop shows six cards at once — a 3x2 grid or one row
+              of six, sized by the fit above — with no arrows. The modes past six sit behind MORE GAMES,
+              in flow under the grid (no fixed UI). On the short-wide (data-paged) stage the row is the
+              page's centre line; elsewhere it is display:contents. */}
           <div className="homepage-cards-pagerow" ref={cardsRowRef}>
-            <div className="homepage-cards-scroll" data-count={GAMES.length}>
+            <div className="homepage-cards-scroll" data-count={shownGames.length}>
               <div
                 ref={cardsGridRef}
                 className="homepage-cards-grid"
-                style={{ '--card-count': GAMES.length }}
-                data-page={isPagedMenu ? shownPage : undefined}
+                style={{ '--card-count': shownGames.length }}
               >
-                {GAMES.map((game, i) => (
+                {shownGames.map((game) => (
                   <GameCard
                     key={game.id}
                     game={game}
-                    // the FIRST PAGE's art loads first and shows together; later cards wait (lazy) — Andy nov4
-                    priority={i < CARDS_PER_PAGE}
+                    // all six are on screen together: their art loads first and shows together (Andy nov4)
+                    priority
                     onSelect={handleOpenDialog}
                     onLockedSelect={handleLockedSelect}
                     onHover={handleHover}
@@ -1733,15 +1728,22 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
                 ))}
               </div>
             </div>
+            {moreGames.length > 0 && (
+              <button
+                type="button"
+                ref={moreBtnRef}
+                className="homepage-cards-more"
+                aria-haspopup="dialog"
+                aria-expanded={moreOpen}
+                disabled={navigating}
+                onMouseEnter={() => sfx('hover')}
+                onClick={() => { if (navigating) return; sound.click(); setMoreOpen(true); }}
+              >
+                <span className="homepage-cards-more-label">MORE GAMES</span>
+                <span className="homepage-cards-more-count">+{formatNum(moreGames.length)}</span>
+              </button>
+            )}
           </div>
-          {isPagedMenu && (
-            <div className="homepage-cards-nav">
-              {pager('prev')}
-              {pager('dots')}
-              {pager('next')}
-            </div>
-          )}
-          {isPagedMenu && pager('ctl')}
         </div>
         )}
         </>
@@ -1756,6 +1758,23 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           and the app zoom never clip it; closes back into the source card. */}
       {/* fix/error-boundaries — each menu OVERLAY gets its own boundary so a crash inside a dialog
           shows the inline panel + closes cleanly (GO BACK), never blanking the live menu behind it. */}
+      {/* MORE GAMES (feat/menu-six-grid): the modes past the six cards, as the same painted cards. A pick
+          closes it and opens the same mode dialog / locked preview a grid card does. */}
+      {moreOpen && moreGames.length > 0 && (
+        <ScreenBoundary name="more-modes" onBack={() => setMoreOpen(false)}>
+          <Suspense fallback={null}>
+            <MoreModes
+              games={moreGames}
+              level={xpProgress.level}
+              isLocked={(g) => isModeLocked(g, xpProgress.level)}
+              onSelect={handleOpenDialog}
+              onLockedSelect={handleLockedSelect}
+              onHover={handleHover}
+              onClose={() => { setMoreOpen(false); if (moreBtnRef.current) moreBtnRef.current.focus(); }}
+            />
+          </Suspense>
+        </ScreenBoundary>
+      )}
       {dialog && (
         <ScreenBoundary name="mode-dialog" onBack={() => setDialog(null)}>
           <Suspense fallback={<OverlaySkeleton title="LOADING" />}>

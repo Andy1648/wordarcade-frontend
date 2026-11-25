@@ -988,3 +988,12 @@ html[data-beat='true'] .game-card.featured {
   .game-card:hover .gc-l-hero { rotate: none; }
   .gc-l-fx { transition: none; }
 }
+
+/* SQUAT CARD (feat/menu-six-grid): six cards on a very short desktop (1280x551, 1163x501) are wider than 0.9:1 —
+   the fit-math's last resort. The name then rises into the top corners, where the gem badge and the FEATURED /
+   AI JUDGED ribbon sit; drop those two decorations (no text the card owes: the rating is in the mode dialog, the
+   ribbon in the card's accessible name) so nothing lands on the name. Any 3:4-ish card keeps them. */
+@container (min-aspect-ratio: 9 / 10) {
+  .game-card-gems,
+  .game-card-ribbon { display: none; }
+}

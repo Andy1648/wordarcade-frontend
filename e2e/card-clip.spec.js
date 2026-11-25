@@ -5,7 +5,7 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, isPagedMenu } from './support/menu.js';
+import { menuReady } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -54,20 +54,9 @@ for (const { w, h } of VIEWPORTS) {
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.waitForTimeout(300);
-    let cards = await perCardMargins(page);
-    if (isPagedMenu(page)) {
-      expect(cards.length, 'three cards a page').toBe(3);
-      // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
-      // skews every rect this measures (a 3D lean read as "text clipped by its card").
-      await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
-      // MINER (oct26) made it 7 cards: three pages (3 + 3 + 1)
-      for (let pg = 1; pg < 3; pg++) {
-        await page.keyboard.press('ArrowRight');
-        await page.waitForTimeout(400);
-        cards = [...cards, ...(await perCardMargins(page))];
-      }
-    }
-    expect(cards.length).toBe(7); // R1: WORD RACE is on for everyone; MINER oct26
+    const cards = await perCardMargins(page);
+    // SIX CARDS (feat/menu-six-grid): no pages — six on the grid at once; the rest are in MORE GAMES (chromebook-cards)
+    expect(cards.length).toBe(6);
     for (const c of cards) {
       // eslint-disable-next-line no-console
       console.log(`[card-clip ${w}x${h}] ${c.name}: worst=${c.worst}px @${c.worstAnc}`);
