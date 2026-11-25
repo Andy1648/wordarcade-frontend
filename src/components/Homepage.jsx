@@ -563,10 +563,16 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         const more = region.querySelector('.homepage-cards-more');
         const moreW = more && isPagedMenu ? more.offsetWidth + (parseFloat(getComputedStyle(more).marginLeft) || 0) : 0;
         if (more && !isPagedMenu) regionH -= more.offsetHeight + (parseFloat(getComputedStyle(more).marginTop) || 0);
-        availW -= moreW * 2; // the tile on the right + its twin spacer on the left (the cards stay centred)
-        if (regionH <= 0 || availW <= 0) { grid.style.removeProperty('--card-h'); return null; }
         const gcs = getComputedStyle(grid);
         const colGap = parseFloat(gcs.columnGap) || 14;
+        // the tile on the right + a twin spacer on the left so the cards stay centred — the spacer only where three
+        // columns still clear the card's text minimum with it (a 1366 laptop does not: there the cards sit left of
+        // centre by half the tile rather than drop under the minimum)
+        const spacer = moreW > 0 && (availW - 2 * moreW - 2 * colGap) / 3 >= minW;
+        const row = region.querySelector('.homepage-cards-pagerow');
+        if (row) row.toggleAttribute('data-spacer', spacer);
+        availW -= moreW + (spacer ? moreW : 0);
+        if (regionH <= 0 || availW <= 0) { grid.style.removeProperty('--card-h'); return null; }
         const rGap = parseFloat(gcs.rowGap) || colGap;
         const count = grid.querySelectorAll('.game-card-magnet').length || 5;
         // NEVER THREE ACROSS ON A <360px SCREEN (exactly two columns there; the region scrolls).
@@ -589,10 +595,10 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             // wordmark shrink below.
             // PAGED_CARD_MAX_W: a card past ~560px is a poster, and its payout line clips by a sub-pixel on an
             // ultrawide (card-fit 3440x1440) — the row never needs to be that big.
-            // a layout whose column cannot hold the text minimum is never a candidate (one row of six on a laptop)
-            if (colW < minW) continue;
+            // one row of six is only a candidate where its column holds the text minimum (never on a laptop)
+            if (colW < minW && cols > 3) continue;
             let w = Math.min(colW, (rowH * 3) / 4, PAGED_CARD_MAX_W);
-            if (w < minW) w = minW;
+            if (w < minW) w = Math.min(colW, minW);
             f = { w, h: (w * 4) / 3, cols, rows, aspect: true };
             // LAST RESORT (only once the short arrangement and the 0.4 wordmark are both spent): the card
             // stops at the row's height rather than run into MORE GAMES and the CREDITS row under it.

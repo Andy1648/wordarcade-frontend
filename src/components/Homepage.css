@@ -484,7 +484,8 @@ html[data-beat='true'] .homepage-logo {
   margin-top: 12px;
   padding: 6px 16px;
   font-family: 'Bungee', cursive;
-  font-size: max(14px, var(--fs-body));
+  font-size: var(--fs-panel);
+  text-transform: uppercase;
   line-height: 1;
   color: #fff;
   background: #1a0b2e;
@@ -505,19 +506,20 @@ html[data-beat='true'] .homepage-logo {
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  width: 104px;
+  width: 96px;
   min-height: 140px;
-  margin: 0 0 0 14px;
-  padding: 14px 8px;
+  margin: 0 0 0 10px;
+  font-size: var(--fs-hptilelabel); /* the rail tiles' label size: "GAMES" fits the 96px tile */
+  padding: 14px 6px;
   text-align: center;
   line-height: 1.15;
 }
 /* …and a twin spacer on the LEFT, so the six cards themselves stay on the page's centre line (Andy oct6 "centre the
    game cards exactly"); the fit-math pays both widths */
-.homepage-stage[data-paged] .homepage-cards-pagerow:has(> .homepage-cards-more)::before {
+.homepage-stage[data-paged] .homepage-cards-pagerow[data-spacer]::before {
   content: '';
   flex: 0 0 auto;
-  width: 118px; /* = the tile's 104px + its 14px margin */
+  width: 106px; /* = the tile's 96px + its 10px margin */
 }
 .homepage-cards-more-count {
   font-family: 'Space Mono', monospace;

@@ -38,6 +38,8 @@ async function measure(page) {
       gapL: +(grid.left - region.left).toFixed(1),
       gapR: +(region.right - grid.right).toFixed(1),
       regionW: region.width,
+      regionH: region.height,
+      gridH: grid.height,
       stageL: +(region.left - inner.left).toFixed(1),
       cards,
     };
@@ -55,13 +57,15 @@ for (const { w, h } of VIEWPORTS) {
     // eslint-disable-next-line no-console
     console.log(`[menu-frame] ${w}x${h} gutter L=${m.gapL} R=${m.gapR} | ${m.cards.map((c) => `${c.name}(L${c.insideL},R${c.insideR})`).join(' ')}`);
 
-    // Item 2 (feat/menu-centre): the row is centred in the console — equal gutters (±1.5px), each at least the
-    // scroll gutter (8px) and never a dead band (≤ 15% of the region: the cards fill it, height-bound at most).
+    // Item 2 (feat/menu-centre): the grid is centred in the console — equal gutters (±1.5px), each at least the
+    // scroll gutter (8px). SIX CARDS (feat/menu-six-grid): the 3x2 grid is HEIGHT-bound on a landscape screen, so the
+    // side bands are no longer capped at 15% of the width — instead the grid must fill the console's height (no dead
+    // band under it): its two rows take >= 75% of the region (1440x900 is width-bound at ~80%).
     expect(Math.abs(m.gapL - m.gapR), `centred in the console at ${w}x${h}`).toBeLessThanOrEqual(1.5);
     for (const side of ['gapL', 'gapR']) {
       expect(m[side], `${side} at ${w}x${h}`).toBeGreaterThanOrEqual(8);
-      expect(m[side], `${side} at ${w}x${h}`).toBeLessThanOrEqual(m.regionW * 0.15);
     }
+    expect(m.gridH, `the grid fills the console's height at ${w}x${h}`).toBeGreaterThanOrEqual(m.regionH * 0.75);
     // the console starts right of the rail, never at the stage edge (the rail column is real)
     expect(m.stageL, `rail column at ${w}x${h}`).toBeGreaterThan(100);
     // Item 3: every card sits horizontally inside the scroll region (its clipping parent).

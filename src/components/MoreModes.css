@@ -49,7 +49,8 @@
   margin: 0;
   font-family: 'Bungee', cursive;
   font-weight: 400;
-  font-size: var(--fs-h2, 28px);
+  font-size: var(--fs-h2);
+  text-transform: uppercase;
   line-height: 1;
   color: #FFE94A;
   -webkit-text-stroke: 1.5px #000;
@@ -67,7 +68,7 @@
   color: #fff;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-body, 16px);
+  font-size: var(--fs-body);
   line-height: 1;
   cursor: pointer;
 }
@@ -87,7 +88,7 @@
   text-align: center;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: max(12px, var(--fs-label, 12px));
+  font-size: var(--fs-label);
   letter-spacing: 0.06em;
   color: #A89EC4;
 }
