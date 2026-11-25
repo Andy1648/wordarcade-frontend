@@ -997,3 +997,10 @@ html[data-beat='true'] .game-card.featured {
   .game-card-gems,
   .game-card-ribbon { display: none; }
 }
+/* A NARROW paper card (SAT RUSH's foot, six cards at the 162px minimum): "BASE 50 / WORD" is a nowrap row that ran
+   ~3px past the card on CI's font metrics (viewport-integrity 1163x501). Under 176px the row may wrap — "/ WORD" drops
+   whole to its own centred line (the same height the per's own internal wrap already took) instead of overflowing. */
+@container (max-width: 175px) {
+  .game-card-foot .game-card-payout { flex-wrap: wrap; row-gap: 0; }
+  .game-card-foot .game-card-payout-per { white-space: nowrap; }
+}
