@@ -10,6 +10,9 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
+import { RUSH_LANGS, re } from './support/rushMenu.js';
+// the menus speak the language (nov24 round 2): match them by the language's own words
+const M = RUSH_LANGS.fr.menu;
 
 const WORDS = JSON.parse(readFileSync(new URL('../src/data/frenchRush/words.json', import.meta.url), 'utf8'));
 const fold = (s) => s.replace(/œ/g, 'oe').normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -83,15 +86,15 @@ const EN_ONLY = [{ name: 'Samantha', lang: 'en-US', localService: true, default:
 async function startSelfPacedQuiz(page) {
   await page.goto('/french-rush');
   await expect(page.locator('.sr-cover')).toContainText('FRENCH');
-  await page.getByRole('button', { name: 'Play' }).click();
-  await page.getByRole('button', { name: /QUIZ/ }).click();
+  await page.getByRole('button', { name: re(M.play) }).click();
+  await page.getByRole('button', { name: re(M.quiz) }).click();
   await expect(page.locator('.sr-setup')).toBeVisible();
-  await page.getByRole('button', { name: /^theme/ }).click();
-  await page.getByRole('option', { name: /Families/i }).click();
+  await page.getByRole('button', { name: re(M.theme, false) }).click();
+  await page.getByRole('option', { name: /^Familles/ }).click();
   // TIMED is the default (nov21); this flow is the self-paced one
-  await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('radio', { name: /NO TIMER/ }).click();
-  await page.getByRole('button', { name: /^Start$/ }).click();
+  await expect(page.getByRole('radio', { name: re(M.timed) })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: re(M.noTimer) }).click();
+  await page.getByRole('button', { name: re(M.start) }).click();
   await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
 }
 
@@ -212,12 +215,12 @@ test.describe('phone', () => {
     await installBackendMock(page);
     await page.addInitScript(stubAudioAndSpeech, FR_VOICES);
     await page.goto('/french-rush');
-    await page.getByRole('button', { name: 'Play' }).click();
-    await page.getByRole('button', { name: /QUIZ/ }).click();
-    await page.getByRole('button', { name: /^theme/ }).click();
-    await page.getByRole('option', { name: /Families/i }).click();
-    await page.getByRole('radio', { name: /NO TIMER/ }).click();
-    await page.getByRole('button', { name: /^Start$/ }).click();
+    await page.getByRole('button', { name: re(M.play) }).click();
+    await page.getByRole('button', { name: re(M.quiz) }).click();
+    await page.getByRole('button', { name: re(M.theme, false) }).click();
+    await page.getByRole('option', { name: /^Familles/ }).click();
+    await page.getByRole('radio', { name: re(M.noTimer) }).click();
+    await page.getByRole('button', { name: re(M.start) }).click();
     await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
     const sound = page.locator('.sr-hud .sr-hud-sound');
     await expect(sound).toBeVisible();
@@ -250,14 +253,14 @@ test('a device with no French voice shows no 🔊 and never speaks — and nothi
   await page.goto('/french-rush');
   await expect(page.locator('.sr-cover')).toBeVisible();
   await expect(page.locator('.sr-cover')).not.toContainText('HEAR EVERY WORD');
-  await page.getByRole('button', { name: 'Play' }).click();
-  await page.getByRole('button', { name: /QUIZ/ }).click();
-  await page.getByRole('button', { name: /^theme/ }).click();
-  await page.getByRole('option', { name: /Families/i }).click();
+  await page.getByRole('button', { name: re(M.play) }).click();
+  await page.getByRole('button', { name: re(M.quiz) }).click();
+  await page.getByRole('button', { name: re(M.theme, false) }).click();
+  await page.getByRole('option', { name: /^Familles/ }).click();
   // TIMED is the default (nov21); this flow is the self-paced one
-  await expect(page.getByRole('radio', { name: /^TIMED$/ })).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('radio', { name: /NO TIMER/ }).click();
-  await page.getByRole('button', { name: /^Start$/ }).click();
+  await expect(page.getByRole('radio', { name: re(M.timed) })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: re(M.noTimer) }).click();
+  await page.getByRole('button', { name: re(M.start) }).click();
   await expect(page.locator('.sr-field--gloss.in')).toBeVisible();
   await answerCurrent(page);
   await expect(page.locator('.sr-say')).toHaveCount(0);

@@ -58,18 +58,22 @@ export function LevelLabel({ level }) {
 }
 
 export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 0, packSize = 0, categories = [], pack = 'sat', ui = null, onStart, onBack, onExit }) {
-  const DIFFICULTIES = difficultiesFor(pack);
   const U = ui || {};
+  // a LANGUAGE pack prints its menus in its language (packs.js menuUi); SAT has no `menu` and stays English
+  const M = U.menu || null;
+  const levelTable = difficultiesFor(pack);
+  const DIFFICULTIES = M ? Object.fromEntries(Object.entries(levelTable).map(([k, v]) => [k, { ...v, label: M.levels[k] || v.label }])) : levelTable;
   const p = prefs || {};
   // a pack may set its own first-visit length (FRENCH RUSH: 20 words in a quiz)
   const firstLength = U.defaultLength && U.defaultLength[mode];
-  const initial = normalizeSpec({ mode, difficulty: p.difficulty, length: p[mode] != null ? p[mode] : firstLength });
+  // a pack may set its own first-visit level (the LANGUAGE rushes: HARD — nov24 round 2, Andy: "default difficulty = HARD")
+  const initial = normalizeSpec({ mode, difficulty: p.difficulty || U.defaultDifficulty, length: p[mode] != null ? p[mode] : firstLength });
   const [difficulty, setDifficulty] = useState(initial.difficulty);
   const [length, setLength] = useState(initial.length);
   // THEME (packs with categories — FRENCH RUSH's six AP themes + connectors): 'all' or one theme
   const catIds = categories.map((c) => c.id);
   const [category, setCategory] = useState(catIds.includes(p.category) ? p.category : 'all');
-  const catLabel = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
+  const catLabel = (id) => (id === 'all' ? (M ? M.allThemes : 'All themes') : (categories.find((c) => c.id === id) || {}).label || id);
   // PACE (packs with a default pace — FRENCH RUSH): 'self' (no clock) | 'timed'
   const hasPace = !!U.pace;
   const [pace, setPace] = useState(p.pace === 'timed' || p.pace === 'self' ? p.pace : U.pace || 'timed');
@@ -121,7 +125,7 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
           </div>
           <div className="fr-setup-grid">
             <Choice
-              label="difficulty"
+              label={M ? M.difficulty : 'difficulty'}
               stack
               options={DIFFICULTY_ORDER}
               value={difficulty}
@@ -132,7 +136,7 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               {catIds.length > 0 && (
                 <PrintPicker
                   className="fr-setup-theme"
-                  label="theme"
+                  label={M ? M.theme : 'theme'}
                   value={category}
                   options={['all', ...catIds].map((id) => ({ value: id, label: catLabel(id) }))}
                   onChange={setCategory}
@@ -140,16 +144,16 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
               )}
               {hasPace && (
                 <Choice
-                  label="timer"
+                  label={M ? M.timer : 'timer'}
                   duo
                   options={['timed', 'self']}
                   value={pace}
                   onPick={setPace}
-                  render={(v) => <span className="sr-setup-opt-main">{v === 'self' ? 'NO TIMER' : 'TIMED'}</span>}
+                  render={(v) => <span className="sr-setup-opt-main">{v === 'self' ? (M ? M.noTimer : 'NO TIMER') : M ? M.timed : 'TIMED'}</span>}
                 />
               )}
               <Choice
-                label="words"
+                label={M ? M.words : 'words'}
                 options={LENGTHS[mode]}
                 value={length}
                 onPick={setLength}
@@ -160,7 +164,7 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
                       <span className="fr-tick-box" aria-hidden="true">
                         {skipStudied ? '✓' : ''}
                       </span>
-                      <span>skip studied</span>
+                      <span>{M ? M.skipStudied : 'skip studied'}</span>
                     </button>
                   ) : null
                 }
@@ -169,16 +173,16 @@ export default function CaseSetup({ mode = 'lineup', prefs = null, knownCount = 
           </div>
           <div className="fr-setup-foot">
             <button type="button" ref={goRef} className="sr-btn fr-go" onClick={start}>
-              {isBrief ? 'Study' : U.startLabel || 'Start'}
+              {isBrief ? (M ? M.study : 'Study') : U.startLabel || 'Start'}
             </button>
             {onBack && (
               <button type="button" className="sr-exit-chip" onClick={onBack}>
-                <span aria-hidden="true">←</span> BACK
+                <span aria-hidden="true">←</span> {M ? M.back : 'BACK'}
               </button>
             )}
             {hasPace && (
-              <button type="button" className="sr-exit-chip" onClick={copyLink} aria-label="Copy a link to this set">
-                {copied ? 'COPIED' : 'COPY LINK'}
+              <button type="button" className="sr-exit-chip" onClick={copyLink} aria-label={M ? undefined : 'Copy a link to this set'}>
+                {copied ? (M ? M.copied : 'COPIED') : M ? M.copyLink : 'COPY LINK'}
               </button>
             )}
           </div>
