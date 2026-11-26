@@ -30,14 +30,14 @@ test.describe('menu', () => {
   });
 
   test('renders all mode cards with correct name + badge labels', async ({ page }) => {
-    const cards = page.locator('.game-card');
-    await expect(cards).toHaveCount(CARDS.length);
+    // feat/menu-six-grid: every mode is on the grid (the cards area scrolls to the third row)
+    await expect(page.locator('.homepage-cards-grid .game-card')).toHaveCount(CARDS.length);
 
     for (const { id, name, cardName, badge } of CARDS) {
       // Each card is a role="button" whose accessible name combines its title and
       // badge, e.g. "WORD BOMB - SOLO · MULTI".
       const card = page.getByRole('button', { name: new RegExp(`${name}\\b`, 'i'), includeHidden: true });
-      // feat/menu-centre: every desktop pages the row (3 a page) — flip to the card's page before looking
+      // a mode in the third row is below the first screen — revealMode scrolls it into view
       await revealMode(page, id);
       await expect(card).toBeVisible();
       // The name renders across two lines ("WORD\nBOMB"); toHaveText normalizes
@@ -59,7 +59,7 @@ test.describe('menu', () => {
     // …and the BACK control returns us to the menu — the path is reversible.
     await back.click();
     await expect(menuMark(page)).toBeVisible();
-    await expect(page.locator('.game-card')).toHaveCount(CARDS.length);
+    await expect(page.locator('.homepage-cards-grid .game-card')).toHaveCount(CARDS.length);
   });
 
   test('a mode card CREATE reaches the lobby and back returns to the menu', async ({ page }) => {

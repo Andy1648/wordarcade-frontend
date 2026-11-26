@@ -5,7 +5,8 @@
 // the card and the viewport clips it tighter than the stage, which clears every card.
 import { test, expect } from '@playwright/test';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady, isPagedMenu } from './support/menu.js';
+import { GAMES } from '../src/gameData.js';
+import { menuReady, measureEveryCard } from './support/menu.js';
 
 const VIEWPORTS = [
   { w: 2560, h: 1440 },
@@ -13,7 +14,7 @@ const VIEWPORTS = [
   { w: 1440, h: 900 },
   { w: 1366, h: 768 },
   { w: 1163, h: 501 },
-  // Chromebook sizes — the menu pages its cards here (3 a page); both pages are checked.
+  // Chromebook sizes — the cards area scrolls here (two rows + a peek); every card is checked in view.
   { w: 1366, h: 657 },
   { w: 1280, h: 551 },
 ];
@@ -54,20 +55,9 @@ for (const { w, h } of VIEWPORTS) {
     await page.goto('/?portal=1');
     await menuReady(page);
     await page.waitForTimeout(300);
-    let cards = await perCardMargins(page);
-    if (isPagedMenu(page)) {
-      expect(cards.length, 'three cards a page').toBe(3);
-      // Flip by KEY, not a click: moving the pointer swings the cards' cursor-magnetic lean, which
-      // skews every rect this measures (a 3D lean read as "text clipped by its card").
-      await page.locator('.homepage-cards-arrow.is-next').waitFor(); // the lazy pager (keys) is in
-      // MINER (oct26) made it 7 cards: three pages (3 + 3 + 1)
-      for (let pg = 1; pg < 3; pg++) {
-        await page.keyboard.press('ArrowRight');
-        await page.waitForTimeout(400);
-        cards = [...cards, ...(await perCardMargins(page))];
-      }
-    }
-    expect(cards.length).toBe(7); // R1: WORD RACE is on for everyone; MINER oct26
+    // feat/menu-six-grid: every card, each measured on a screen where it is fully in the scrolling cards area
+    const cards = await measureEveryCard(page, perCardMargins, 'name');
+    expect(cards.length).toBe(GAMES.length);
     for (const c of cards) {
       // eslint-disable-next-line no-console
       console.log(`[card-clip ${w}x${h}] ${c.name}: worst=${c.worst}px @${c.worstAnc}`);

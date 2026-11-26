@@ -21,6 +21,7 @@ const ALLOW = [
   ['.cz:is(.is-pop, .is-sound) .cz-body', 'CUSTOMIZE · POP STYLE / SOUND: every look'],
   ['.sp2-grid', 'the UPGRADES stock: more boosts below ("SCROLL FOR MORE")'],
   ['.ppp-window-scroll', 'the Category Blitz pack picker (Andy\'s named exception)'],
+  ['.homepage-cards-scroll', 'the desktop menu\'s GAME CARDS: six on the first screen, the rest below (Andy nov25 "make it scrollable downwards")'],
   ['.sr-bank-list', 'the French Rush word bank'],
   ['.sr-brief-list', 'the SAT / French briefing: the words to study'],
 ];
