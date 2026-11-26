@@ -13,16 +13,16 @@ for (const [w, h] of SIZES) {
     const phone = w < 500;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: phone, hasTouch: phone });
     const page = await ctx.newPage();
-    await installBackendMock(page);
+    await installBackendMock(page, { freshReveal: true }); // a brand-new save: the reveal's stage 0 (the TITLE)
     await page.addInitScript(() => {
       if (sessionStorage.getItem('tf')) return;
       sessionStorage.setItem('tf', '1');
-      localStorage.clear();
+      localStorage.clear(); // (also drops taw.season2.off: the first-run reveal is a season-2 menu)
       // a brand-new save, past the 2-step menu tour and the patch notes (they sit on top of the title)
       localStorage.setItem('taw.seenMenuSpotlight', '1');
       localStorage.setItem('taw.seen.patch', '2026-10-22');
     });
-    await page.goto('/?portal=1');
+    await page.goto('/?portal=1&season2=1');
     await page.locator('.tp').waitFor();
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(500);

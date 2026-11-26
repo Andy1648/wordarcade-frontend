@@ -50,7 +50,8 @@ function readCards(page) {
 }
 
 const SIZES = [
-  { w: 1920, h: 1080, full: true },
+  { w: 2560, h: 1440, full: true, wide: true },
+  { w: 1920, h: 1080, full: true, wide: true },
   { w: 1366, h: 768, full: true },
   // 1366x657: two full rows at 3:4 use every pixel of the cards area, so the peek costs the cards a little height
   { w: 1366, h: 657, full: false },
@@ -76,8 +77,14 @@ for (const { w, h, full, wide } of SIZES) {
     expect(cards.length, 'every mode is on the grid').toBe(GAMES.length);
     // (b) the first screen
     const first = cards.filter((c) => c.inView);
-    expect(first.length, 'six cards fully in view on the first screen').toBe(FIRST);
-    if (GAMES.length > FIRST) expect(cards.some((c) => c.peeks), 'the next row peeks in under the first six').toBe(true);
+    if (wide) {
+      await expect(page.locator('.homepage-cards-grid'), 'four across on a wide monitor').toHaveAttribute('data-cols', '4');
+      expect(first.length, 'every card fully in view on the first screen').toBe(Math.min(8, GAMES.length));
+    } else {
+      await expect(page.locator('.homepage-cards-grid'), 'three across under a wide monitor').toHaveAttribute('data-cols', '3');
+      expect(first.length, 'six cards fully in view on the first screen').toBe(FIRST);
+      if (GAMES.length > FIRST) expect(cards.some((c) => c.peeks), 'the next row peeks in under the first six').toBe(true);
+    }
     for (const c of first) {
       // eslint-disable-next-line no-console
       console.log(`[scroll-grid ${w}x${h}] ${c.game} ${c.w}x${c.h} ratio=${c.ratio.toFixed(3)} (ref ${ref.toFixed(3)})`);
@@ -86,7 +93,7 @@ for (const { w, h, full, wide } of SIZES) {
       if (full) expect(Math.abs(c.ratio - ref) / ref, `${c.game} ${c.w}x${c.h} is squashed`).toBeLessThanOrEqual(RATIO_TOL); // (c)
     }
 
-    if (GAMES.length <= FIRST) return;
+    if (GAMES.length <= first.length) return;
     // (d) scroll the cards area: the page and the wordmark stay put, the last card comes fully into view
     const logoY = await page.locator('.homepage-logo').evaluate((el) => el.getBoundingClientRect().top);
     await scrollCards(page, 'end');

@@ -610,7 +610,7 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             f.owed = Math.max(0, f.h - rowH);
             // the fourth column only ever joins at a true-3:4 size that fits two rows and is no narrower than the
             // cards a 1366 laptop already shows (their payout lines wrap cleanly there)
-            if (cols === 4 && (f.w < Math.min(minW, PAGED_4COL_MIN_W) || !f.aspect || f.owed > 0.5)) f = null;
+            if (cols === 4 && (f.w < PAGED_4COL_MIN_W || !f.aspect || f.owed > 0.5)) f = null;
           } else {
             const w0 = Math.min(colW, (rowH * 3) / 4);
             if (w0 >= minW) f = { w: w0, h: (w0 * 4) / 3, cols, rows, aspect: true };
