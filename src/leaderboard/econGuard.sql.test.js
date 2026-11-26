@@ -39,6 +39,9 @@ const STUBS = `
     created_at timestamptz not null default now());
   create function private.cheat_flag(p_pid uuid, p_reason text, p_detail jsonb) returns void language sql as
     $$ insert into private.cheat_flags (profile_id, reason, detail) values (p_pid, p_reason, p_detail) $$;
+  create table public.rebirth_requests (profile_id uuid not null, request_id uuid not null default gen_random_uuid(),
+    action text not null, result jsonb not null, created_at timestamptz not null default now(),
+    primary key (profile_id, request_id));
   create table private.roll_log (id bigserial primary key, profile_id uuid, mark_id text, tier text, state text);
   create table private.s2_week_final (wk date, profile_id uuid, week_stars integer, week_rebirths integer,
     week_levels integer, week_words bigint);
@@ -150,27 +153,45 @@ test('091 words bank: idling a day no longer banks a day of words; a first write
   assert.equal(Number((await row(db, 'FRESH')).lifetime_words), 100000);
 });
 
-test('091 catch-up pace: a write can lift rebirths 40 a day at most, and the level follows the kept rebirths', { skip }, async () => {
+test('091 catch-up pace (Andy nov26): 12 an hour, 20 a day, shared with lb_rebirth; the level follows the kept rebirths', { skip }, async () => {
   const db = await database();
   await db.exec(SQL_093);
   await db.exec(SQL_091);
-  // setup: words first (no submitted_at move = not a board write), then the clock
+  const ageCatchups = (name, h) => db.exec(`update private.econ_audit a set created_at = now() - interval '${h} hours'
+    from public.profiles p where p.id = a.profile_id and p.username = '${name}' and a.kind = 'rb_catchup'`);
+  const write = async (name, sets) => {
+    await db.exec(`update public.profiles set submitted_at = now() - interval '1 hour' where username = '${name}'`);
+    await db.exec(`update public.profiles set ${sets}, submitted_at = now() where username = '${name}'`);
+    return row(db, name);
+  };
+  // setup: words first (no submitted_at move = not a board write)
   await db.exec(`update public.profiles set lifetime_words = 50000 where username = 'HONEST5'`);
-  await db.exec(`update public.profiles set submitted_at = now() - interval '1 hour' where username = 'HONEST5'`);
-  await db.exec(`update public.profiles set rebirths = 500, level = 15 + 18 * 500 + 100, submitted_at = now() where username = 'HONEST5'`);
-  let r = await row(db, 'HONEST5');
-  assert.equal(r.rebirths, 45, '+40, not +495');
-  // 070's level rule on the KEPT rebirths: gate + 100, or +1 a second since the last write (20 min bank) — not R500's gate
-  assert.ok(r.level <= Math.max(15 + 18 * 45 + 100, 100 + 1200), `level ${r.level}`);
-  await db.exec(`update public.profiles set submitted_at = now() - interval '1 hour' where username = 'HONEST5'`);
-  await db.exec(`update public.profiles set rebirths = 500, level = 15 + 18 * 500 + 100, submitted_at = now() where username = 'HONEST5'`);
-  r = await row(db, 'HONEST5');
-  assert.equal(r.rebirths, 45, 'the day is spent');
-  // daan's real case: R2 row, R26 save, enough words -> lands in one write
+  let r = await write('HONEST5', 'rebirths = 500, level = 15 + 18 * 500 + 100');
+  assert.equal(r.rebirths, 5 + 12, '+12 (the hour), not +495');
+  // 4c on the KEPT rebirths: gate + 100, or +1 level a 10 s since the last write (20 min bank) - not R500's gate
+  assert.equal(r.level, Math.max(15 + 18 * 17 + 100, 100 + 120));
+  r = await write('HONEST5', 'rebirths = 500');
+  assert.equal(r.rebirths, 17, 'the hour is spent');
+  await ageCatchups('HONEST5', 2);
+  r = await write('HONEST5', 'rebirths = 500');
+  assert.equal(r.rebirths, 25, 'the next hour: +8, the rest of the 20 a day');
+  await ageCatchups('HONEST5', 2);
+  r = await write('HONEST5', 'rebirths = 500');
+  assert.equal(r.rebirths, 25, 'the day is spent');
+  // lb_rebirth's grants spend the same budget: 20 granted today -> no catch-up at all
+  await db.exec(`insert into public.rebirth_requests (profile_id, action, result, created_at)
+    select id, 'rebirth', '{"ok": true}'::jsonb, now() - interval '3 hours' from public.profiles, generate_series(1, 20)
+     where username = 'HONEST43'`);
+  r = await write('HONEST43', 'rebirths = 60');
+  assert.equal(r.rebirths, 43, 'lb_rebirth already used the day');
+  // daan's real case: R2 row, R26 save, enough words -> converges at the pace (12, then the day's last 8, then the
+  // next day's 4), never stuck
   await db.exec(`update public.profiles set rebirths = 2, level = 40, lifetime_words = 1842 where username = 'NEAR'`);
-  await db.exec(`update public.profiles set submitted_at = now() - interval '1 hour' where username = 'NEAR'`);
-  await db.exec(`update public.profiles set rebirths = 26, level = 100, submitted_at = now() where username = 'NEAR'`);
-  assert.equal((await row(db, 'NEAR')).rebirths, 26);
+  assert.equal((await write('NEAR', 'rebirths = 26, level = 100')).rebirths, 14);
+  await ageCatchups('NEAR', 2);
+  assert.equal((await write('NEAR', 'rebirths = 26, level = 100')).rebirths, 22);
+  await ageCatchups('NEAR', 25);
+  assert.equal((await write('NEAR', 'rebirths = 26, level = 100')).rebirths, 26);
   // lb_rebirth's own +1 (no submitted_at move) is not a catch-up; one with no typing is logged, never refused
   await db.exec(`update public.profiles set rebirths = rebirths + 1, level = 1, rb_words0 = lifetime_words where username = 'NEAR'`);
   assert.equal((await row(db, 'NEAR')).rebirths, 27);
@@ -179,6 +200,21 @@ test('091 catch-up pace: a write can lift rebirths 40 a day at most, and the lev
   const few = await one(db, `select count(*) n from private.econ_audit a join public.profiles p on p.id = a.profile_id
                               where p.username = 'NEAR' and a.kind = 'rebirth_few_words'`);
   assert.equal(Number(few.n), 1, 'the second one had 0 words since the first');
+});
+
+test('091 level rate (Andy nov26): +1 level a 10 s past the gate; an honest climb to the gate is untouched', { skip }, async () => {
+  const db = await database();
+  await db.exec(SQL_093);
+  await db.exec(SQL_091);
+  // HONEST102: R102 LV1838, gate + 100 = 1951. A write an hour later asking LV5000 keeps max(1951, 1838 + 120)
+  await db.exec(`update public.profiles set submitted_at = now() - interval '1 hour' where username = 'HONEST102'`);
+  await db.exec(`update public.profiles set level = 5000, submitted_at = now() where username = 'HONEST102'`);
+  assert.equal((await row(db, 'HONEST102')).level, 1958);
+  assert.ok(Number((await one(db, `select count(*) n from private.econ_audit where kind = 'level_rate'`)).n) >= 1);
+  // a fresh rebirth climbing straight to its gate (R5 LV1 -> LV105 in 10 s) is never clipped
+  await db.exec(`update public.profiles set level = 1, submitted_at = now() - interval '10 seconds' where username = 'HONEST5'`);
+  await db.exec(`update public.profiles set level = 15 + 18 * 5, submitted_at = now() where username = 'HONEST5'`);
+  assert.equal((await row(db, 'HONEST5')).level, 105);
 });
 
 test('092: hidden rows leave ALL TIME (ranked again, no gap), THIS WEEK and the weekly prizes; re-runnable; survives a rewritten board', { skip }, async () => {

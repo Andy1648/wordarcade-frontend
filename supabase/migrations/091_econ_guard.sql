@@ -27,7 +27,11 @@
 --      second over 4 hours), and a first season-2 write claims at most 100,000 words. Over it the words are CLAMPED (the
 --      write still lands, the row catches up on the next writes) - never refused, so no row can get stuck.
 --      4b. 070's REBIRTH CATCH-UP (a write lifting rebirths to the save's count, up to words / 10) had no pace at all -
---      one write could add hundreds of rebirths past lb_rebirth's 40 a day. It now shares that pace: 40 a rolling 24 h.
+--      one write could add hundreds of rebirths past lb_rebirth's 40 a day. It now shares lb_rebirth's pace (Andy nov26
+--      "yes close them": 20 a rolling 24 h, 12 an hour), counting lb_rebirth's grants AND earlier catch-ups together.
+--      4c. LEVEL RATE (Andy nov26): a board write may lift the level 1 every 10 s since the last write (was 1 a second,
+--      banking 20 min - 3,600 levels an hour; the fastest honest player gains ~1,850 levels in 24 h nonstop, sim
+--      nov26), never below the next rebirth gate + 100, so an honest climb to the gate is never touched.
 --   5. REBIRTHS WITH ALMOST NO TYPING are LOGGED (not refused - 074 removed the words gate on purpose): a rebirth with
 --      fewer than 3 game words since the last one is an audit row, for review.
 --   6. private.econ_suspects - one view to read it all (SQL editor).
@@ -79,8 +83,11 @@ revoke all on function private.wpw_cap_log10(integer) from anon, authenticated;
 create or replace function private.econ_guard_profile()
 returns trigger language plpgsql security definer set search_path = public, private, pg_temp as $$
 declare caplog numeric; sentlog numeric; secs numeric; allow bigint; excess bigint; since bigint;
-        day_rise integer; rise integer;
-        CATCHUP_PER_DAY constant integer := 40;     -- lb_rebirth's own 24 h pace (039)
+        day_rise integer; hour_rise integer; rise integer; lv_cap bigint;
+        CATCHUP_PER_DAY constant integer := 20;     -- lb_rebirth's 24 h pace (094, Andy nov26; was 40)
+        CATCHUP_PER_HOUR constant integer := 12;    -- lb_rebirth's hour pace (033)
+        LEVEL_SECS constant integer := 10;          -- 4c: one level per 10 s since the last write (070 allowed 1 a second)
+        LEVEL_BANK_SECS constant integer := 1200;   -- 070's 20-minute bank
         HIDE_ORDERS constant numeric := 4;          -- auto-hide past 10^4 x the ceiling
         WORDS_PER_SEC constant integer := 4;        -- 039's word pace
         WORDS_BANK_SECS constant integer := 7200;   -- the word bank stops at 2 hours
@@ -113,22 +120,39 @@ begin
     -- rebirths a rolling 24 h through board writes, and words / 10 is re-checked on the CLAMPED words. A row behind its
     -- save still converges (daan's R2 -> R26 needed 24) - over a day or two instead of one write.
     if old.submitted_at is not null and old.econ = 13 and new.rebirths > old.rebirths then
-      select coalesce(sum((a.detail->>'rise')::integer), 0) into day_rise from private.econ_audit a
+      -- one shared budget: earlier catch-ups + lb_rebirth's granted rebirths
+      select coalesce(sum((a.detail->>'rise')::integer) filter (where a.created_at > now() - interval '24 hours'), 0),
+             coalesce(sum((a.detail->>'rise')::integer) filter (where a.created_at > now() - interval '1 hour'), 0)
+        into day_rise, hour_rise from private.econ_audit a
        where a.profile_id = new.id and a.kind = 'rb_catchup' and a.created_at > now() - interval '24 hours';
+      select day_rise + count(*), hour_rise + count(*) filter (where r.created_at > now() - interval '1 hour')
+        into day_rise, hour_rise from public.rebirth_requests r
+       where r.profile_id = new.id and r.action = 'rebirth' and (r.result->>'ok')::boolean
+         and r.created_at > now() - interval '24 hours';
       rise := least(new.rebirths - old.rebirths,
                     greatest(0, CATCHUP_PER_DAY - day_rise),
+                    greatest(0, CATCHUP_PER_HOUR - hour_rise),
                     greatest(0, floor(coalesce(new.lifetime_words, 0) / 10.0)::integer - old.rebirths));
       if rise < new.rebirths - old.rebirths then
         perform private.econ_audit_add(new.id, 'rb_catchup_cap', jsonb_build_object(
           'sent', new.rebirths, 'kept', old.rebirths + rise, 'was', old.rebirths, 'day_rise', day_rise,
-          'words', new.lifetime_words), interval '10 minutes');
+          'hour_rise', hour_rise, 'words', new.lifetime_words), interval '10 minutes');
         new.rebirths := old.rebirths + rise;
-        -- the level 070 allowed was measured against the higher rebirths: re-cap it on the kept ones
-        new.level := least(new.level, greatest(15 + 18 * new.rebirths + 100,
-                                               old.level + floor(least(secs, 1200))::integer));
       end if;
       if rise > 0 then
         perform private.econ_audit_add(new.id, 'rb_catchup', jsonb_build_object('rise', rise, 'from', old.rebirths));
+      end if;
+    end if;
+
+    -- 4c. LEVEL RATE: never below the next gate + 100 (070's headroom, on the KEPT rebirths), else 1 level a 10 s
+    if old.submitted_at is not null and old.econ = 13 and new.level > old.level then
+      lv_cap := greatest(15 + 18 * new.rebirths::bigint + 100,
+                         old.level + floor(least(secs, LEVEL_BANK_SECS) / LEVEL_SECS)::bigint);
+      if new.level > lv_cap then
+        perform private.econ_audit_add(new.id, 'level_rate', jsonb_build_object(
+          'sent', new.level, 'kept', lv_cap, 'was', old.level, 'rebirths', new.rebirths,
+          'secs', round(secs)), interval '10 minutes');
+        new.level := lv_cap::integer;
       end if;
     end if;
   end if;
