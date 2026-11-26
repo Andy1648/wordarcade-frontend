@@ -260,14 +260,15 @@ export default function WordCard({ view, onHint, onSkip, onContinue, onPick }) {
   const stage = view.stage;
   // FIT LADDER (oct17, Andy: no scrollbar at 360x640 either). When a reveal lands and the fields
   // overflow, step down one cut at a time until they fit: fit-1 drops the root's cousins, fit-2
-  // tightens the leading, fit-3 drops the inline field chips. Same event-only cadence as below (one
+  // tightens the leading, fit-3 drops the inline field chips, fit-4 / fit-5 step the clue's type down (the language
+  // rushes' big clue: a two-line gloss at 1920 still overflowed after fit-3). Same event-only cadence as below (one
   // read per step, a handful of steps per word at most). Reset on every new word.
   const wordNumber = view.wordNumber;
   useEffect(() => {
     const box = fieldsRef.current;
     if (!box) return;
-    box.classList.remove('fit-1', 'fit-2', 'fit-3');
-    for (let level = 1; level <= 3 && box.scrollHeight > box.clientHeight + 1; level++) {
+    box.classList.remove('fit-1', 'fit-2', 'fit-3', 'fit-4', 'fit-5');
+    for (let level = 1; level <= 5 && box.scrollHeight > box.clientHeight + 1; level++) {
       box.classList.add(`fit-${level}`);
     }
   }, [shown, stage, atFinal, wordNumber]);

@@ -367,6 +367,14 @@
   .fr-app .sr-sentence {
     font-size: var(--fs-fr6);
   }
+  /* the FIT LADDER's last rungs (WordCard.jsx): a clue that still overflows after fit-3 steps its type down
+     ("kind regards (email sign-off)" wrapped to two 66px lines at 1920 and pushed the sentence under the rule) */
+  .fr-app .sr-fields.fit-4 .sr-gloss {
+    font-size: var(--fs-fr2);
+  }
+  .fr-app .sr-fields.fit-5 .sr-gloss {
+    font-size: var(--fs-fr12);
+  }
   .fr-app .sr-suspect {
     min-height: clamp(48px, calc(var(--fr-k) * 3), 84px);
   }
