@@ -116,9 +116,9 @@ begin
     end if;
 
     -- 4b. REBIRTH CATCH-UP PACE: 070 lets a later write lift rebirths to the save's count (words / 10). That bypassed
-    -- lb_rebirth's 40-a-day pace entirely (one write could add hundreds). A catch-up now shares that pace: at most 40
-    -- rebirths a rolling 24 h through board writes, and words / 10 is re-checked on the CLAMPED words. A row behind its
-    -- save still converges (daan's R2 -> R26 needed 24) - over a day or two instead of one write.
+    -- lb_rebirth's pace entirely (one write could add hundreds). A catch-up now shares that pace (Andy nov26): 12 an
+    -- hour and 20 a rolling 24 h, ONE budget with lb_rebirth's grants, and words / 10 is re-checked on the CLAMPED words.
+    -- A row behind its save still converges (daan's R2 -> R26 needed 24) - over a day or two instead of one write.
     if old.submitted_at is not null and old.econ = 13 and new.rebirths > old.rebirths then
       -- one shared budget: earlier catch-ups + lb_rebirth's granted rebirths
       select coalesce(sum((a.detail->>'rise')::integer) filter (where a.created_at > now() - interval '24 hours'), 0),

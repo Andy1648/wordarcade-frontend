@@ -6,7 +6,7 @@
 -- lb_rebirth = 074's body with RB_PER_DAY 20, and the day / hour counts now include the rebirths a board write caught up
 -- (091's rb_catchup audit rows): one shared budget for both doors. 091 caps the catch-up side with the same 20 / 12.
 -- Mirrors src/leaderboard/rebirthRules.js RB_PER_DAY (20).
--- ORDER: after 091 (it reads private.econ_audit). RE-RUNNABLE (create or replace). ASCII-only comments below.
+-- ORDER: after 091 (it reads private.econ_audit). RE-RUNNABLE (create or replace).
 -- WRITE-ONLY: Claude never runs migrations. HOW: Supabase -> SQL editor -> paste the WHOLE file -> Run.
 
 create or replace function public.lb_rebirth(p_secret text, p_request_id uuid, p_season smallint default 0)
@@ -57,8 +57,10 @@ begin
     -- 094: rebirths a board write caught up (091's rb_catchup audit rows) spend the same budget
     select day_n + coalesce(sum((a.detail->>'rise')::integer) filter (where a.created_at > now() - interval '24 hours'), 0),
            granted + coalesce(sum((a.detail->>'rise')::integer)
-                                filter (where a.created_at > now() - make_interval(secs => RB_WINDOW_SECS)), 0)
-      into day_n, granted from private.econ_audit a
+                                filter (where a.created_at > now() - make_interval(secs => RB_WINDOW_SECS)), 0),
+           least(day_oldest, min(a.created_at)),
+           least(oldest, min(a.created_at) filter (where a.created_at > now() - make_interval(secs => RB_WINDOW_SECS)))
+      into day_n, granted, day_oldest, oldest from private.econ_audit a
      where a.profile_id = pid and a.kind = 'rb_catchup' and a.created_at > now() - interval '24 hours';
     if day_n >= RB_PER_DAY and not coalesce(old.is_tester, false) then -- 094: ≤ 20 a day incl. catch-ups (testers skip)
       res := jsonb_build_object('ok', false, 'reason', 'wait', 'rebirths', old.rebirths,
