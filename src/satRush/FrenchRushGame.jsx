@@ -13,12 +13,16 @@
 // back to this cover, never to the arcade. A teacher can hand out a set as a link
 // (?mode=&level=&n=&theme=&pace=) — it opens CASE SETUP with that set preselected.
 //
-// CLASS ROOM (oct19, Andy: "can you do a create/join room for this?"): a teacher opens a class with a
+// CREATE ROOM / JOIN ROOM (oct19, Andy: "can you do a create/join room for this?"; the copy said CLASS ROOM
+// until nov21 — the code and the class_* protocol keep the class name): a teacher opens a class with a
 // code, students join it (or open ?class=CODE), everyone plays the same words and the teacher moves
 // everyone on. See class/ClassRoom.jsx; a reload mid-class goes straight back in.
 //
 // NOT PART OF THE ARCADE ECONOMY: nothing here banks wins, XP, gems, records or leaderboard rows. Its
 // learning memory lives under its own storage keys.
+// LANGUAGE RUSH (nov24): this is now the screen for every AP world language — French, Spanish, Italian, Latin
+// and Chinese — keyed by `lang` (rushLang.js holds what differs). Each language has its own link and root
+// (FrenchRushApp + rushApps/); the cover's language picker moves between them.
 import { useEffect, useRef, useState } from 'react';
 import './SatRush.css';
 import './FrenchRush.css';
@@ -36,42 +40,72 @@ import ClassFlow from './class/ClassRoom';
 import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
 import PressWipe from './PressWipe';
+import PrintPicker from './PrintPicker';
+import { RUSH_LANGS, RUSH_LANG_ORDER } from './rushLang';
 import { usePressOnChange } from './press';
-import { useFrVoice } from './useFrVoice';
+// last, so the nov21 clean pass wins over SatRush.css / FrenchRush.css / ClassRoom.css
+import './FrenchRushClean.css';
 
-// The cover: what this is in one line, the mechanic in one worked example, and the two ways in.
-function Cover({ onPlay, onBank, onClass, wordCount }) {
-  const canSay = useFrVoice(); // say up front that every word can be HEARD (only when this device can)
+// The cover (nov21, Andy: "REMOVE THE BS"): the title and the ways in. Nothing else — no tagline, no
+// worked example, no word count, no reassurance lines.
+// The LANGUAGE picker (nov24) is the one way between the languages: each has its own link, so a pick is a page
+// load — the next language's words are their own chunk, and nothing of this one's run carries over.
+function LangPicker({ lang }) {
+  const go = (id) => {
+    if (id === lang) return;
+    try {
+      window.location.assign(`/${RUSH_LANGS[id].slug}`);
+    } catch {
+      /* never break the cover */
+    }
+  };
+  return (
+    <PrintPicker
+      className="fr-lang-pick"
+      label={RUSH_LANGS[lang].menu.language}
+      value={lang}
+      options={RUSH_LANG_ORDER.map((id) => ({ value: id, label: RUSH_LANGS[id].native }))}
+      onChange={go}
+    />
+  );
+}
+
+function Cover({ lang, onPlay, onBank, onCreate, onJoin }) {
+  const L = RUSH_LANGS[lang] || RUSH_LANGS.fr;
+  const M = L.menu;
+  const [first, second] = L.title.split(' ');
   return (
     <div className="sr-screen">
       <div className="sr-cover fr-cover">
-        <div className="sr-title sr-print" data-v={'FRENCH RUSH'}>
-          FRENCH&nbsp;RUSH
+        {/* the language's own stamp (nov24 round 2, Andy: "we can do better with the design"): its name and its
+            hello, printed in its ink like a passport stamp */}
+        <div className="fr-visa" lang={L.htmlLang === 'en' ? 'zh' : L.htmlLang}>
+          <span className="fr-visa-native">{L.native}</span>
+          <span className="fr-visa-hello">{M.hello}</span>
         </div>
-        <p className="sr-cover-tag">AP French vocab. See the meaning — type the French.</p>
-
-        <div className="sr-cover-example">
-          <div className="sr-cover-ex-label">EXAMPLE</div>
-          <div className="sr-cover-ex-clue">to travel</div>
-          <div className="sr-cover-ex-arrow" aria-hidden="true">▼</div>
-          <div className="sr-cover-ex-answer">VOYAGER</div>
+        <div className={`sr-title sr-print${L.title.length > 11 ? ' fr-title-long' : ''}`} data-v={L.title}>
+          {first}&nbsp;{second}
         </div>
-
-        <div className="sr-cover-meta">
-          <span className="sr-cover-pay">6 AP THEMES + ESSAY &amp; EXAM WORDS · {wordCount} WORDS</span>
-          <span className="sr-cover-round">NO TIMER UNLESS YOU WANT ONE · ACCENTS OPTIONAL</span>
-          {canSay && <span className="sr-cover-round fr-cover-say">🔊 HEAR EVERY WORD SAID IN FRENCH</span>}
+        <div className="fr-cover-actions">
+          <button type="button" className="sr-btn fr-go" onClick={onPlay}>
+            {M.play}
+          </button>
+          <div className="fr-cover-pair">
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onCreate}>
+              {M.create}
+            </button>
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onJoin}>
+              {M.join}
+            </button>
+          </div>
+          {/* the language sits beside the word bank: one row, so the cover is no taller than before */}
+          <div className="fr-cover-pair">
+            <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
+              {M.bank}
+            </button>
+            <LangPicker lang={lang} />
+          </div>
         </div>
-
-        <button type="button" className="sr-btn" onClick={onPlay}>
-          Play
-        </button>
-        <button type="button" className="sr-btn sr-btn-ghost" onClick={onClass}>
-          Class room
-        </button>
-        <button type="button" className="sr-btn sr-btn-ghost" onClick={onBank}>
-          Word bank
-        </button>
         <a className="sr-cover-credit" href="/">
           a TYPE A WORD game
         </a>
@@ -80,17 +114,22 @@ function Cover({ onPlay, onBank, onClass, wordCount }) {
   );
 }
 
-// the press sheet for each solo screen: [French headline, English line, direction]
-const PRESS_BY_SCREEN = {
-  start: ['FRENCH RUSH', 'home', 'back'],
-  mode: ['À TOI !', 'your turn'],
-  setup: ['RÉGLAGES', 'set it up'],
-  briefing: ['ÉTUDIE', 'study'],
-  playing: ["C'EST PARTI !", 'here we go'],
-  over: ['TERMINÉ !', 'done'],
-  bank: ['LES MOTS', 'word bank'],
-  class: null, // ClassFlow presses its own
-};
+// The run's progress, Quizlet-style: one ink bar under the HUD that fills as words settle (transform only),
+// and a one-shot frame beat on every answer — ink for a capture, red ink for a miss.
+function RunProgress({ settled, total, stamp }) {
+  const frac = total > 0 ? Math.min(1, settled / total) : 0;
+  const beat = stamp && (stamp.kind === 'miss' ? 'miss' : 'got');
+  return (
+    <>
+      <div className="fr-progress" role="progressbar" aria-label="words done" aria-valuemin={0} aria-valuemax={total} aria-valuenow={settled}>
+        <span className="fr-progress-fill" style={{ transform: `scaleX(${frac})` }} />
+      </div>
+      {beat && <div className={`fr-beat ${beat}`} key={`beat-${stamp.id}`} aria-hidden="true" />}
+    </>
+  );
+}
+
+// the press sheet for each solo screen: [headline in the language, English line, direction] — rushLang.js `press`
 
 // ?mode=&level=&n=&theme=&pace= — a teacher's set (CaseSetup's "copy a link")
 function readPreset() {
@@ -99,10 +138,10 @@ function readPreset() {
     if (!q.has('mode') && !q.has('level') && !q.has('theme')) return null;
     return {
       mode: q.get('mode') === 'briefing' ? 'briefing' : 'lineup',
-      difficulty: q.get('level') || 'standard',
-      length: Number(q.get('n')) || 10,
+      difficulty: q.get('level') || 'hard', // a teacher link with no level: HARD, like the setup's default
+      length: Number(q.get('n')) || 20,
       category: q.get('theme') || null,
-      pace: q.get('pace') === 'timed' ? 'timed' : 'self',
+      pace: q.get('pace') === 'self' ? 'self' : 'timed',
     };
   } catch {
     return null;
@@ -119,9 +158,11 @@ function readClassCode() {
   }
 }
 
-export default function FrenchRushGame() {
+export default function FrenchRushGame({ lang = 'fr' }) {
   usePlayClock(); // TIME PLAYED on the profile (Andy oct21: French Rush time was never counted)
-  const game = useSatRushGame({ packId: 'fr' });
+  const L = RUSH_LANGS[lang] || RUSH_LANGS.fr;
+  const PRESS_BY_SCREEN = L.press;
+  const game = useSatRushGame({ packId: L.pack });
   const { view } = game;
   const appRef = useRef(null);
   const [bank, setBank] = useState(false);
@@ -129,6 +170,11 @@ export default function FrenchRushGame() {
   // link, or when this tab already holds a class seat (a reload mid-class).
   const [classCode] = useState(readClassCode);
   const [classOpen, setClassOpen] = useState(() => !!classCode || hasClassSeat());
+  const [classEntry, setClassEntry] = useState(classCode ? 'join' : 'setup'); // CREATE ROOM | JOIN ROOM
+  const openClass = (entry) => {
+    setClassEntry(entry);
+    setClassOpen(true);
+  };
   const [classState, setClassState] = useState({ playing: false, hostAway: false, offline: false });
   const classLeaveRef = useRef(null);
   const classStandbyRef = useRef(null); // a student's results → back to the class screen, seat kept
@@ -175,7 +221,12 @@ export default function FrenchRushGame() {
   };
 
   return (
-    <div className={`sr-app fr-app${view.silver ? ' silver' : ''}${inClassRun ? ' fr-class-on' : ''}`} ref={appRef}>
+    <div
+      className={`sr-app fr-app${inClassRun ? ' fr-class-on' : ''}`}
+      ref={appRef}
+      data-lang={L.id}
+      style={L.accent ? { '--lang': L.accent.ink, '--lang-on': L.accent.on } : undefined}
+    >
       {view.hasWord && view.stamp && view.stamp.kind === 'miss' && (
         <div className="sr-tear" key={`tear-${view.stamp.id}`} aria-hidden="true" />
       )}
@@ -190,13 +241,12 @@ export default function FrenchRushGame() {
               caseSize={view.runTotal}
               lives={view.lives}
               maxLives={view.maxLives}
-              heat={view.heat}
-              heatCap={view.heatCap}
               showHeat={false}
               exitLabel="HOME"
               caseLabel="words"
               onExit={inClassRun ? leaveClassRun : home}
             />
+            <RunProgress settled={view.settled} total={view.runTotal} stamp={view.stamp} />
             <div className="sr-body">
               <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} onPick={game.pickChoice} />
               {inClassRun && (classState.offline || classState.hostAway || view.pending !== 'idle') && (
@@ -217,7 +267,7 @@ export default function FrenchRushGame() {
           game={game}
           words={(view.pack && view.pack.words) || []}
           categories={(view.pack && view.pack.categories) || []}
-          entry={classCode ? 'join' : 'choose'}
+          entry={classEntry}
           initialCode={classCode}
           onExit={closeClass}
           onStudentState={setClassState}
@@ -235,7 +285,7 @@ export default function FrenchRushGame() {
         />
       )}
       {!bank && !classOpen && view.phase === 'start' && (
-        <Cover onPlay={game.startGame} onBank={() => setBank(true)} onClass={() => setClassOpen(true)} wordCount={view.packSize} />
+        <Cover lang={L.id} onPlay={game.startGame} onBank={() => setBank(true)} onCreate={() => openClass('setup')} onJoin={() => openClass('join')} />
       )}
       {!classOpen && view.phase === 'mode' && (
         <ModeSelect lastMode={view.lastMode} onChoose={game.chooseMode} onExit={home} ui={ui} />
@@ -247,7 +297,7 @@ export default function FrenchRushGame() {
           knownCount={view.knownCount}
           packSize={view.packSize}
           categories={(view.pack && view.pack.categories) || []}
-          pack="fr"
+          pack={L.pack}
           ui={ui}
           onStart={game.confirmSetup}
           onBack={game.backToModes}
@@ -261,7 +311,7 @@ export default function FrenchRushGame() {
         <SatRushResults
           results={view.results}
           economy={false}
-          ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: 'Back to the class', menu: 'Leave the class' } } : ui}
+          ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: ui.results.classAgain || 'Back to the class', menu: ui.results.classLeave || 'Leave the class' } } : ui}
           onAgain={inClassRun ? () => (classStandbyRef.current ? classStandbyRef.current() : leaveClassRun()) : game.startGame}
           onReplay={inClassRun ? null : game.replayMisses}
           onExit={inClassRun ? leaveClassRun : home}

@@ -26,12 +26,17 @@ import { formatNum } from '../../format';
 import EnglishLine from '../EnglishLine';
 import './ClassRoom.css';
 import FitText from '../../components/kit/FitText.jsx';
+import { LevelLabel } from '../CaseSetup';
+import { getPack, posLabelOf } from '../packs';
+import { rushLang } from '../rushLang';
 
 const LENGTHS = [10, 20, 30];
 const MODES = [
-  { id: 'briefing', label: 'TYPE IT', line: 'meaning → type the French' },
-  { id: 'lineup', label: 'PICK IT', line: 'a lineup of French words' },
+  { id: 'briefing', label: 'TYPE IT' },
+  { id: 'lineup', label: 'PICK IT' },
 ];
+// nov21: the room's first set is 20 words (Andy: defaults TIMED + 20 words — a room is always teacher-paced)
+const DEFAULT_WORDS = 20;
 // where the word is read aloud: the teacher's screen at the reveal (one voice for the room), every
 // student's phone as their card lands, or nowhere
 const VOICES = [
@@ -41,12 +46,12 @@ const VOICES = [
 ];
 
 const CLOSED_COPY = {
-  kicked: 'The teacher removed you from this class.',
-  ended: 'The class is over.',
-  host_gone: 'The teacher left the class.',
-  expired: 'The class timed out.',
-  idle: 'The class timed out.',
-  superseded: 'This class is open in another tab.',
+  kicked: 'The teacher removed you from this room.',
+  ended: 'The room is closed.',
+  host_gone: 'The teacher left the room.',
+  expired: 'The room timed out.',
+  idle: 'The room timed out.',
+  superseded: 'This room is open in another tab.',
 };
 
 function shuffled(rows) {
@@ -68,8 +73,28 @@ function density(n) {
   return n > 24 ? 'dense' : n > 10 ? 'mid' : 'roomy';
 }
 
+// one empty box per letter of the French (a space stays a gap) — the slots the students are filling
+function LetterBoxes({ word }) {
+  const parts = String(word || '').split(/(\s+)/).filter(Boolean);
+  return (
+    <div className="fr-class-boxes" role="img" aria-label={`${String(word || '').replace(/\s+/g, '').length} letters`}>
+      {parts.map((p, i) =>
+        /\s/.test(p) ? (
+          <span key={i} className="fr-class-boxgap" />
+        ) : (
+          <span key={i} className="fr-class-boxword">
+            {Array.from(p).map((_, j) => (
+              <i key={j} />
+            ))}
+          </span>
+        ),
+      )}
+    </div>
+  );
+}
+
 /** One frame: head (title, sub, status), body (grows / scrolls inside), foot (actions, always visible). */
-function Page({ title, sub, note, children, actions, onBack, backLabel = 'BACK', wide = false }) {
+function Page({ title, sub, note, children, actions, onBack, backLabel = 'BACK', wide = false, progress = null }) {
   return (
     <div className="sr-screen fr-class-screen">
       <div className={`sr-modeselect sr-setup fr-class-page${wide ? ' wide' : ''}`}>
@@ -80,6 +105,11 @@ function Page({ title, sub, note, children, actions, onBack, backLabel = 'BACK',
             </div>
           )}
           {sub && <div className="fr-class-sub">{sub}</div>}
+          {progress != null && (
+            <div className="fr-progress fr-class-progress" aria-hidden="true">
+              <span className="fr-progress-fill" style={{ transform: `scaleX(${Math.min(1, Math.max(0, progress))})` }} />
+            </div>
+          )}
           {note && (
             <div className="fr-class-status" role="status">
               {note}
@@ -125,44 +155,42 @@ const Kbd = () => (
 
 // ---- TEACHER: pick the set (a new class, or a new set in the class you're running) ----
 function ClassSetup({ words, categories, onCreate, onBack, busy, again = null }) {
-  const levels = difficultiesFor('fr');
+  const levels = difficultiesFor(rushLang().pack);
   const prev = (again && again.set) || {};
   const [mode, setMode] = useState(prev.mode || 'briefing');
-  const [level, setLevel] = useState(prev.level || 'standard');
-  const [n, setN] = useState(10);
+  const [level, setLevel] = useState(prev.level || 'hard'); // nov24 round 2: HARD by default, like solo
+  const [n, setN] = useState(DEFAULT_WORDS);
   const [theme, setTheme] = useState(prev.theme || 'all');
   const [voice, setVoice] = useState(prev.voice || 'projector');
   const label = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
-  const pool = bandWords(words, level, theme === 'all' ? null : theme, 'fr');
+  const pool = bandWords(words, level, theme === 'all' ? null : theme, rushLang().pack);
   const go = () => {
-    const rows = shuffled(pool).slice(0, n);
+    // LANGUAGE RUSH: a non-French row carries its language, so a student who opened another language's
+    // page is sent to the right one (ClassFlow); French rows go out exactly as before
+    const lang = rushLang().id;
+    const rows = shuffled(pool)
+      .slice(0, n)
+      .map((r) => (lang === 'fr' ? r : { ...r, lang }));
     if (!rows.length) return;
     onCreate({ set: { theme: theme === 'all' ? null : theme, level, mode, voice }, rows });
   };
   const count = (x) => <span className="sr-setup-opt-main">{x}</span>;
-  const two = (list) => (id) => {
-    const m = list.find((x) => x.id === id);
-    return (
-      <>
-        <span className="sr-setup-opt-main">{m.label}</span>
-        <span className="sr-setup-opt-sub">{m.line}</span>
-      </>
-    );
-  };
+  // nov21 (Andy: "too much stuff, more concise"): option names only — no pitch line under each one
+  const one = (list) => (id) => <span className="sr-setup-opt-main">{list.find((x) => x.id === id).label}</span>;
   return (
     <Page
-      title={again ? 'NEW SET' : 'CLASS ROOM'}
-      sub={again ? 'same class, same code — students stay in' : 'pick the set — everyone plays the same words'}
+      title={again ? 'NEW SET' : 'CREATE ROOM'}
       onBack={onBack}
       wide
       actions={
-        <button type="button" className="sr-btn" onClick={go} disabled={busy || !pool.length}>
-          {busy ? 'Opening…' : again ? 'Use this set' : 'Open the class'}
+        <button type="button" className="sr-btn fr-go" onClick={go} disabled={busy || !pool.length}>
+          {busy ? 'Opening…' : again ? 'Use this set' : 'Create room'}
         </button>
       }
     >
-      <div className="fr-class-setup">
-        <div className="fr-class-setup-col">
+      <div className="fr-class-setup fr-setup-grid">
+        <Pick label="difficulty" cls="stack" options={DIFFICULTY_ORDER} value={level} onPick={setLevel} render={(d) => <LevelLabel level={levels[d]} />} />
+        <div className="fr-setup-rest">
           <PrintPicker
             className="fr-class-select"
             label="theme"
@@ -170,25 +198,10 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
             options={['all', ...categories.map((c) => c.id)].map((id) => ({ value: id, label: label(id) }))}
             onChange={setTheme}
           />
-          <Pick
-            label="level"
-            cls="fr-three"
-            options={DIFFICULTY_ORDER}
-            value={level}
-            onPick={setLevel}
-            render={(d) => (
-              <>
-                <span className="sr-setup-opt-main">{levels[d].label}</span>
-                <span className="sr-setup-opt-sub">{levels[d].line}</span>
-              </>
-            )}
-          />
-          <Pick label="how many words" cls="fr-three" options={LENGTHS} value={n} onPick={setN} render={count} />
-        </div>
-        <div className="fr-class-setup-col">
-          <Pick label="how they answer" cls="duo" options={MODES.map((m) => m.id)} value={mode} onPick={setMode} render={two(MODES)} />
-          <Pick label="read words aloud" cls="fr-three" options={VOICES.map((v) => v.id)} value={voice} onPick={setVoice} render={two(VOICES)} />
-          <div className="fr-class-hint">{pool.length < n ? `only ${pool.length} words in this set` : `${pool.length} words to draw from`}</div>
+          <Pick label="words" cls="fr-three" options={LENGTHS} value={n} onPick={setN} render={count} />
+          <Pick label="answer by" cls="duo" options={MODES.map((m) => m.id)} value={mode} onPick={setMode} render={one(MODES)} />
+          <Pick label="voice" cls="fr-three" options={VOICES.map((v) => v.id)} value={voice} onPick={setVoice} render={one(VOICES)} />
+          {pool.length < n && <div className="fr-class-hint">only {pool.length} words in this set</div>}
         </div>
       </div>
     </Page>
@@ -197,16 +210,16 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
 
 function joinUrl(code) {
   try {
-    return `${window.location.origin}/french-rush?class=${code}`;
+    return `${window.location.origin}/${rushLang().slug}?class=${code}`;
   } catch {
-    return `typeaword.com/french-rush?class=${code}`;
+    return `typeaword.com/${rushLang().slug}?class=${code}`;
   }
 }
 function joinHost() {
   try {
-    return `${window.location.host}/french-rush`;
+    return `${window.location.host}/${rushLang().slug}`;
   } catch {
-    return 'typeaword.com/french-rush';
+    return `typeaword.com/${rushLang().slug}`;
   }
 }
 
@@ -404,14 +417,13 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
     const url = joinUrl(snap.code);
     return (
       <Page
-        title={snap.round > 1 ? 'NEXT SET' : 'CLASS ROOM'}
-        sub={`${formatNum(snap.total)} words${snap.set && snap.set.replay ? ' · the ones the class missed' : ''}`}
+        title={snap.round > 1 ? 'NEXT SET' : 'ROOM OPEN'}
         note={note}
         wide
         onBack={endClass}
         backLabel="END CLASS"
         actions={
-          <button type="button" className="sr-btn" onClick={host.start} disabled={!roster.length}>
+          <button type="button" className="sr-btn fr-go" onClick={host.start} disabled={!roster.length}>
             Start — {formatNum(roster.length)} {roster.length === 1 ? 'student' : 'students'} <Kbd />
           </button>
         }
@@ -439,7 +451,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
               </b>
               <span className="fr-class-joined-label">{roster.length === 1 ? 'student in' : 'students in'}</span>
             </div>
-            {roster.length === 0 && <div className="fr-class-none">waiting for the first one</div>}
+            {roster.length === 0 && <div className="fr-class-none">waiting…</div>}
             {roster.length > 0 && <NamesToggle on={showNames} set={setShowNames} />}
             {showNames && roster.length > 0 && <Chips names={roster} onKick={host.kick} size={roster.length} />}
           </div>
@@ -473,7 +485,6 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
     return (
       <Page
         title="CLASS DONE"
-        sub={`${formatNum(snap.total)} words · ${formatNum(roster.length)} ${roster.length === 1 ? 'student' : 'students'} · hardest first`}
         note={note}
         wide
         onBack={onLeave}
@@ -535,28 +546,34 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
     <Page
       title={`WORD ${snap.index + 1} / ${formatNum(snap.total)}`}
       note={note}
+      progress={(snap.index + (review ? 1 : 0)) / Math.max(1, snap.total)}
       wide
       onBack={endClass}
       backLabel="END CLASS"
       actions={
         word ? (
-          <button type="button" className="sr-btn" onClick={host.reveal}>
+          <button type="button" className="sr-btn fr-go" onClick={host.reveal}>
             Reveal the answer <Kbd />
           </button>
         ) : (
-          <button type="button" className="sr-btn" onClick={host.next}>
+          <button type="button" className="sr-btn fr-go" onClick={host.next}>
             {last ? 'Finish' : 'Next word'} <Kbd />
           </button>
         )
       }
     >
       <div className={`fr-class-console${showNames ? ' names' : ''}`}>
+        {/* THE PROMPT (nov21, a teacher: "have the teacher be able to see the problem"): the board shows what
+            every student is answering, as big as the panel allows — the meaning, its part of speech and one
+            box per letter of the French (the slots on every student's card); at the reveal the French answer
+            stamps in under it. */}
         {row && (
-          <div className="sr-panel fr-class-clue">
-            <div className="sr-panel-label">{word ? 'the clue' : 'the answer'}</div>
+          <div className={`sr-panel fr-class-clue${review ? ' revealed' : ''}`}>
+            <div className="fr-class-prompt-meta">{posLabelOf(getPack(rushLang().pack), row)}</div>
             <div className="fr-class-gloss" style={{ '--len': longest(row.gloss) }}>
               {row.gloss}
             </div>
+            {word && <LetterBoxes word={row.word} />}
             {review && (
               <>
                 <div className="fr-class-answer" key={`a-${snap.index}`} style={{ '--len': longest(withArticle(row.word, row.pos, row.gender)) + 1 }}>
@@ -636,8 +653,7 @@ function JoinScreen({ initialCode, onJoin, error, onBack, busy }) {
   };
   return (
     <Page
-      title="JOIN A CLASS"
-      sub="your teacher has the code"
+      title="JOIN ROOM"
       onBack={onBack}
       actions={
         <button type="submit" form="fr-class-join" className="sr-btn" disabled={!ok || busy}>
@@ -647,7 +663,7 @@ function JoinScreen({ initialCode, onJoin, error, onBack, busy }) {
     >
       <form id="fr-class-join" className="fr-class-form" onSubmit={submit}>
         <label>
-          <span className="sr-setup-label">class code</span>
+          <span className="sr-setup-label">room code</span>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={8} autoCapitalize="characters" autoComplete="off" spellCheck={false} inputMode="text" />
         </label>
         <label>
@@ -662,7 +678,7 @@ function JoinScreen({ initialCode, onJoin, error, onBack, busy }) {
 
 function StudentWait({ snap, onLeave }) {
   return (
-    <Page title="YOU'RE IN" sub={`class ${snap.code}`} onBack={onLeave} backLabel="LEAVE">
+    <Page title="YOU'RE IN" sub={snap.code} onBack={onLeave} backLabel="LEAVE">
       <div className="fr-class-hi">{snap.name}</div>
       <div className="fr-class-count">{snap.hostAway
           ? 'the teacher is reconnecting…'
@@ -671,9 +687,6 @@ function StudentWait({ snap, onLeave }) {
             : snap.round > 1
               ? 'next set coming up'
               : 'waiting for the teacher to start'}</div>
-      <div className="fr-class-count">
-        {formatNum(snap.total)} words · {formatNum(snap.studentCount)} in the class
-      </div>
     </Page>
   );
 }
@@ -686,7 +699,7 @@ function StudentDone({ snap, onLeave }) {
       <div className="fr-class-hi">
         {got} / {formatNum(snap.total)}
       </div>
-      <div className="fr-class-count">words you got · the teacher may start another set</div>
+      <div className="fr-class-count">words right</div>
     </Page>
   );
 }
@@ -711,6 +724,20 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
     setPending(false);
     if (snap.role === 'host') setNewSet(false);
     if (snap.role !== 'student' || !snap.rows) return;
+    // LANGUAGE RUSH: this room plays another language's words (a student typed a Spanish room's code on the
+    // French page) — go to that language's page; the seat is in this tab's sessionStorage, so it rejoins
+    const roomLang = (snap.rows[0] && snap.rows[0].lang) || 'fr';
+    if (roomLang !== rushLang().id) {
+      const to = { fr: 'french-rush', es: 'spanish-rush', it: 'italian-rush', la: 'latin-rush', zh: 'chinese-rush' }[roomLang];
+      if (to) {
+        try {
+          window.location.assign(`/${to}`);
+        } catch {
+          /* stay */
+        }
+        return;
+      }
+    }
     const g = gameRef.current;
     let run = runRef.current;
     // a NEW SET (class_restart): drop the old run and wait for the teacher like a fresh join
@@ -790,44 +817,46 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
 
   // THE PRESS (oct26): each class screen comes off the press titled in French (English underneath); on the
   // console every new word is a quick sheet — MOT 4 — so the room sees the page turn.
+  // (LANGUAGE RUSH: titled in the page's language — rushLang classPress)
+  const P = rushLang().classPress;
   let screen;
   let press = null;
   if (cr.closed) {
     screen = 'closed';
-    press = ['AU REVOIR', 'class over', 'back'];
+    press = [P.bye, 'class over', 'back'];
   } else if (snap && snap.role === 'host') {
     if (newSet) {
       screen = 'newset';
-      press = ['NOUVEAU', 'new set'];
+      press = [P.newSet, 'new set'];
     } else if (snap.phase === 'lobby') {
       screen = `lobby-${snap.round}`;
-      press = ['OUVERT !', 'the class is open'];
+      press = [P.open, 'the class is open'];
     } else if (snap.phase === 'done') {
       screen = `done-${snap.round}`;
-      press = ['BRAVO !', 'class done'];
+      press = [P.done, 'class done'];
     } else {
       screen = `run-${snap.round}-${snap.index}`;
-      press = snap.index === 0 ? ["C'EST PARTI !", 'here we go'] : [`MOT ${snap.index + 1}`, `word ${snap.index + 1} of ${snap.total}`, 'forward', true];
+      press = snap.index === 0 ? [P.go, 'here we go'] : [P.word(snap.index + 1), `word ${snap.index + 1} of ${snap.total}`, 'forward', true];
     }
   } else if (snap && snap.role === 'student') {
     if (runRef.current.started) screen = 'student-run'; // the game presses its own sheet
     else if (snap.phase === 'done') {
       screen = 'student-done';
-      press = ['BRAVO !', 'class done'];
+      press = [P.done, 'class done'];
     } else {
       screen = 'student-wait';
-      press = snap.round > 1 ? ['EN ATTENTE', 'next set soon'] : ['BIENVENUE', "you're in"];
+      press = snap.round > 1 ? [P.wait, 'next set soon'] : [P.welcome, "you're in"];
     }
   } else if (cr.hasSeat || offline) {
     screen = 'connecting';
   } else {
     screen = stage;
-    press = stage === 'setup' ? ['LE PROF', 'teacher'] : stage === 'join' ? ['REJOINS', 'join a class'] : ['EN CLASSE', 'class room'];
+    press = stage === 'setup' ? [P.teacher, 'create room'] : stage === 'join' ? [P.join, 'join room'] : [P.room, 'room'];
   }
   usePressOnChange(screen, press, entry !== 'join');
 
   if (cr.closed) {
-    return <Page title="CLASS ROOM" sub={CLOSED_COPY[cr.closed] || 'The class is over.'} onBack={leave} backLabel="HOME" />;
+    return <Page title="ROOM CLOSED" sub={CLOSED_COPY[cr.closed] || 'The room is closed.'} onBack={leave} backLabel="HOME" />;
   }
 
   if (snap && snap.role === 'host') {
@@ -859,11 +888,11 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
   }
 
   if (cr.hasSeat) {
-    return <Page title="CLASS ROOM" sub={offline ? 'reconnecting… (the server can take ~30 s to wake up)' : 'getting back into your class…'} onBack={leave} backLabel="LEAVE" />;
+    return <Page title="ROOM" sub={offline ? 'reconnecting… (can take ~30 s)' : 'getting back in…'} onBack={leave} backLabel="LEAVE" />;
   }
 
   if (offline) {
-    return <Page title="CLASS ROOM" sub="waking the server… (this can take ~30 seconds)" onBack={onExit} />;
+    return <Page title="ROOM" sub="connecting… (can take ~30 s)" onBack={onExit} />;
   }
 
   if (stage === 'setup') {
@@ -872,7 +901,7 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
         words={words}
         categories={categories}
         busy={pending}
-        onBack={() => setStage('choose')}
+        onBack={() => (entry === 'choose' ? setStage('choose') : onExit())}
         onCreate={(opts) => {
           setPending(true);
           cr.create({ ...opts, name: 'Teacher' });
@@ -889,7 +918,8 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
         busy={pending}
         onBack={() => {
           cr.clearError();
-          setStage('choose');
+          if (entry === 'choose') setStage('choose');
+          else onExit();
         }}
         onJoin={(v) => {
           setPending(true);
@@ -901,16 +931,15 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
 
   return (
     <Page
-      title="CLASS ROOM"
-      sub="the whole class plays the same words · the teacher moves everyone on"
+      title="ROOM"
       onBack={onExit}
       actions={
         <>
           <button type="button" className="sr-btn" onClick={() => setStage('join')}>
-            Join a class
+            Join room
           </button>
           <button type="button" className="sr-btn sr-btn-ghost" onClick={() => setStage('setup')}>
-            I&apos;m the teacher
+            Create room
           </button>
         </>
       }

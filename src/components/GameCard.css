@@ -988,3 +988,24 @@ html[data-beat='true'] .game-card.featured {
   .game-card:hover .gc-l-hero { rotate: none; }
   .gc-l-fx { transition: none; }
 }
+
+/* SQUAT CARD (feat/menu-six-grid): six cards on a very short desktop (1280x551, 1163x501) are wider than 0.9:1 —
+   the fit-math's last resort. The name then rises into the top corners, where the gem badge and the FEATURED /
+   AI JUDGED ribbon sit; drop those two decorations (no text the card owes: the rating is in the mode dialog, the
+   ribbon in the card's accessible name) so nothing lands on the name. Any 3:4-ish card keeps them. */
+@container (min-aspect-ratio: 9 / 10) {
+  .game-card-gems,
+  .game-card-ribbon,
+  .game-card-badge { display: none; } /* the badge: what the short-screen rule already drops on every non-featured card */
+  /* the name sizes off the card's HEIGHT (a 162x128 card at 1163x501 had a 144px title bar) and the bar drops its top
+     padding — the name and the pay line both stay, whole */
+  .game-card .game-card-titlebar { padding-top: 4px; }
+  .game-card-magnet .game-card .game-card-titlebar .game-card-name { font-size: clamp(16px, min(15cqh, 18cqw), 30px); }
+}
+/* A NARROW paper card (SAT RUSH's foot, six cards at the 162px minimum): "BASE 50 / WORD" is a nowrap row that ran
+   ~3px past the card on CI's font metrics (viewport-integrity 1163x501). Under 176px the row may wrap — "/ WORD" drops
+   whole to its own centred line (the same height the per's own internal wrap already took) instead of overflowing. */
+@container (max-width: 175px) {
+  .game-card-foot .game-card-payout { flex-wrap: wrap; row-gap: 0; }
+  .game-card-foot .game-card-payout-per { white-space: nowrap; }
+}

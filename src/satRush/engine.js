@@ -20,7 +20,7 @@
 // tier-4/5 gloss<->root flip is GONE — gloss and root co-reveal at stage 1, so
 // "answer early = more points" (and AVG ANTE) survives, just coarser.
 
-import { generateSuspects, distractorCandidates } from './suspects.js';
+import { generateSuspects, distractorCandidates, plausibility } from './suspects.js';
 
 export const DEFAULT_CONFIG = {
   // MODE — the two ways to play, chosen at mode-select:
@@ -53,6 +53,16 @@ export const DEFAULT_CONFIG = {
   // normally and keeps the streak, but leaves heat unchanged (never reset), so
   // SILVER TONGUE stays something you earn by knowing words.
   heatMaxRevealed: 1,
+  // SILVER TONGUE on/off (nov24, Andy: "remove for now as it's education setting"): false = heat never builds,
+  // so no silver, no doubled multipliers. SAT Rush keeps it; the LANGUAGE rushes turn it off (packs.js).
+  silverTongue: true,
+  // how many choices a word offers: LINEUP's full suspect lineup and BRIEFING's tap set (the language rushes
+  // ask for more — packs.js lineupSize / briefingChoices)
+  lineupSize: 6,
+  briefingChoices: 4,
+  // the choices are the words a student could really mistake for the answer (suspects.js plausibility) — the
+  // LANGUAGE rushes turn it on (nov24 round 2: "people say you can't get any wrong"); SAT keeps its draw
+  plausibleDistractors: false,
   tierEvery: 20, // tier = min(5, 1 + floor(wordNumber / tierEvery)). BA1: was 12 — every slot was tier 5 from word 48, 64% of words shown were unknowable to a median player
   tierMax: 5,
   deepCutEvery: 15, // every Nth word is a deep cut (forced tier 5 when fresh)
@@ -255,7 +265,7 @@ export const TAP_CHOICES_BRIEFING = 4;
  *
  * @returns {{ count:number, tickElims:number, choices:{word:string,isAnswer:boolean,out:null|{stage:number}|{tick:number}}[] }}
  */
-export function buildChoices({ answer, pool = [], rng = Math.random, mode = 'briefing', suspects = null, finalStage = 2, size = TAP_CHOICES_BRIEFING } = {}) {
+export function buildChoices({ answer, pool = [], rng = Math.random, mode = 'briefing', suspects = null, finalStage = 2, size = TAP_CHOICES_BRIEFING, plausible = false } = {}) {
   if (mode === 'lineup' && suspects && Array.isArray(suspects.lineup)) {
     const choices = suspects.lineup.map((s) => ({
       word: s.word,
@@ -264,13 +274,21 @@ export function buildChoices({ answer, pool = [], rng = Math.random, mode = 'bri
     }));
     return { count: choices.length, tickElims: 0, choices };
   }
-  const cands = distractorCandidates(answer, pool);
+  const cands = distractorCandidates(answer, pool, Math.max(3, size - 1));
   const tierOf = (r) => (Number.isFinite(r.tier) ? r.tier : 3);
-  const ranked = shuffle(cands, rng)
-    .map((d, i) => ({ d, i, pos: d.pos === answer.pos ? 0 : 1, tier: Math.abs(tierOf(d) - tierOf(answer)) }))
-    .sort((a, b) => a.pos - b.pos || a.tier - b.tier || a.i - b.i)
-    .slice(0, Math.max(1, size - 1))
-    .map((x) => x.d);
+  // PLAUSIBLE (language rushes): ranked by how easily a student could mistake each for the answer
+  // (suspects.js plausibility: part of speech, gender, theme, look-alike spelling, level), with a little noise
+  const ranked = plausible
+    ? cands
+        .map((d) => ({ d, s: plausibility(answer, d) + rng() }))
+        .sort((a, b) => b.s - a.s)
+        .slice(0, Math.max(1, size - 1))
+        .map((x) => x.d)
+    : shuffle(cands, rng)
+        .map((d, i) => ({ d, i, pos: d.pos === answer.pos ? 0 : 1, tier: Math.abs(tierOf(d) - tierOf(answer)) }))
+        .sort((a, b) => a.pos - b.pos || a.tier - b.tier || a.i - b.i)
+        .slice(0, Math.max(1, size - 1))
+        .map((x) => x.d);
   // ranked[0] = the closest (the survivor); the LAST is the least similar = the free stage-2 cut;
   // the ones between fall one per endgame tick, least similar first.
   const distractors = ranked.map((d, i) => {
@@ -449,7 +467,12 @@ export function createSatRushEngine({
     { isRevenant, isDeepCut, missCount = 0, isBriefed = false, isReturn = false, requeues = 0 }
   ) {
     const length = row.word.length;
-    const suspects = cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng }) : null;
+    // MORE CHOICES (lineupSize / briefingChoices) only for words that sit two to a row: a 12+ letter choice gets a
+    // whole row on a phone, and eight such rows cannot fit — a long word keeps the standard 6 / 4 (#746's fit).
+    // (Briefing distractors run up to 2 letters longer than the answer, so its cut-off is 9.)
+    const lineupSize = length > 11 ? Math.min(6, cfg.lineupSize) : cfg.lineupSize;
+    const briefingSize = length > 9 ? Math.min(TAP_CHOICES_BRIEFING, cfg.briefingChoices) : cfg.briefingChoices;
+    const suspects = cfg.mode === 'lineup' ? generateSuspects({ answer: row, pool: words, rng, size: lineupSize, plausible: cfg.plausibleDistractors }) : null;
     const choices = cfg.choices
       ? buildChoices({
           answer: row,
@@ -458,6 +481,8 @@ export function createSatRushEngine({
           mode: cfg.mode,
           suspects,
           finalStage: cfg.stageMultipliers.length - 1,
+          size: briefingSize,
+          plausible: cfg.plausibleDistractors,
         })
       : null;
     return {
@@ -742,7 +767,7 @@ export function createSatRushEngine({
     // the spell-along auto-reveals scores normally and keeps the streak, but
     // leaves heat UNCHANGED — never reset — so SILVER TONGUE stays something you
     // earn by knowing words, not by waiting for the letters.
-    const bumpsHeat = revealed <= cfg.heatMaxRevealed;
+    const bumpsHeat = cfg.silverTongue !== false && revealed <= cfg.heatMaxRevealed;
     // Silver is read from the heat AFTER this clear's (possible) bump, so a clear
     // that REACHES the cap is itself doubled — the state change (UI goes chrome)
     // and the score spike land on the same frame, and a player who earns silver

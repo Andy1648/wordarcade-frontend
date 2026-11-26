@@ -1,0 +1,39 @@
+/* SignInPrompt.css — SAVE YOUR PROGRESS: the inline row (a screen's own layout, never fixed) and the small sheet.
+   House look: flat fills, coloured outlines (a darker shade of the fill), hard black offset shadows, 8 px corners.
+   Every target ≥ 44 px; Google's own button is its iframe (~40 px, it can't be restyled). Nothing loops. */
+.sip {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px;
+  box-sizing: border-box; min-width: 0; padding: 10px 12px;
+  background: #13314a; border: 3px solid #12A99A; border-radius: 8px; box-shadow: 4px 4px 0 #000;
+}
+.sip-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 200px; }
+.sip-h {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 400 var(--fs-k16) 'Bungee', cursive; text-transform: uppercase; color: #2EFFE0; line-height: 1.15;
+}
+.sip-g { flex: none; width: 18px; height: 18px; }
+.sip-why { font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.04em; color: #d8f6f2; line-height: 1.3; overflow-wrap: anywhere; }
+.sip-acts { display: flex; align-items: flex-start; gap: 10px; flex: 0 1 auto; min-width: 0; }
+.sip-btn.gsi-wrap { width: 230px; max-width: 100%; }
+.sip-no {
+  flex: none; min-height: 44px; padding: 0 12px; cursor: pointer;
+  background: #1a0b2e; color: #fff; border: 3px solid #5b3f8a; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+  font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.06em; white-space: nowrap;
+}
+.sip-no:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+@media (max-width: 600px) {
+  .sip-why { font-size: var(--fs-k16); }
+  .sip-acts { width: 100%; }
+  .sip-btn.gsi-wrap { flex: 1 1 auto; width: auto; }
+}
+
+.sis-scrim { position: fixed; inset: 0; z-index: 9500; display: grid; place-items: center; padding: 16px; background: var(--scrim, rgba(13, 6, 24, 0.86)); }
+.sis {
+  width: min(420px, 100%); box-sizing: border-box; padding: 20px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background: #1a0b2e; border: 4px solid #12A99A; border-radius: 8px; box-shadow: 8px 8px 0 #000; text-align: center;
+}
+.sis-h { margin: 0; font: 400 var(--fs-k28) 'Bungee', cursive; text-transform: uppercase; color: #2EFFE0; -webkit-text-stroke: 4px #000; paint-order: stroke fill; line-height: 1.05; }
+.sis-why { margin: 0; font: 700 var(--fs-k16) 'Space Mono', monospace; color: #fff; line-height: 1.35; }
+.sis-btn.gsi-wrap { align-items: center; max-width: 300px; }
+.sis-fine { margin: 0; font: 700 var(--fs-k14) 'Space Mono', monospace; letter-spacing: 0.04em; color: #c9b8e8; line-height: 1.35; }
+.sis-no { min-width: 140px; }

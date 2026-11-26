@@ -11,7 +11,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import { installBackendMock } from './support/backendMock.js';
-import { menuReady } from './support/menu.js';
+import { menuReady, revealMode } from './support/menu.js';
 import { pinDay } from './support/fixedDay.js';
 
 const ME = 'e2e-player';
@@ -261,7 +261,7 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
 // ===== EVERY OTHER MODE (nov14): the same parade on each end screen, in the card's own column ===================
 // A shared end-state check: the parade is up with its rows (+ the nudge), neither the card nor the page scrolls, nothing in
 // the parade is under 11 px, it sits inside the card, the PLAY AGAIN of that mode is on screen, and the first tap skips.
-async function paradeEndState(page, { card, again, w, h, tag }) {
+async function paradeEndState(page, { card, again, w, h, tag, pageScrolls = false }) {
   const rp = page.getByTestId('results-parade');
   await expect(rp).toBeAttached({ timeout: 10000 });
   if (h > 640) await expect(rp).toBeVisible({ timeout: 10000 });
@@ -269,7 +269,7 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
   await page.locator(card).first().dispatchEvent('pointerdown'); // the first tap anywhere skips to the end state (a WINNER popup may sit over it)
   await expect(rp).toHaveAttribute('data-phase', 'done', { timeout: 6000 });
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${tag}-${w}x${h}.png` });
-  const m = await page.evaluate(({ card, again }) => {
+  const m = await page.evaluate(({ card, again, pageScrolls }) => {
     const c = document.querySelector(card);
     const rp = document.querySelector('[data-testid="results-parade"]');
     const vis = (el) => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0; };
@@ -282,7 +282,8 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
       .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 11).map((el) => el.className || el.tagName);
     const scrollers = [...document.querySelectorAll('body *')].filter((el) => {
       const cs = getComputedStyle(el);
-      return /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight - el.clientHeight > 2 && vis(el) && !el.matches('.sr-casefile, .sr-casefile *, .wr-standings, .mn-standings, .cb-scoreboard');
+      return /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight - el.clientHeight > 2 && vis(el) && !el.matches('.sr-casefile, .sr-casefile *, .wr-standings, .mn-standings, .cb-scoreboard')
+        && !(pageScrolls && el.matches('.sr-screen')); // SAT's results page scrolls BY DESIGN: the CASE FILE lives under the fold
     }).map((el) => String(el.className).split(' ')[0]);
     return {
       doc: de.scrollHeight - innerHeight,
@@ -292,8 +293,10 @@ async function paradeEndState(page, { card, again, w, h, tag }) {
       inCard: pr.top >= cr.top - 1 && pr.bottom <= cr.bottom + 1 && pr.left >= cr.left - 1 && pr.right <= cr.right + 1,
       small,
       again: !!ar && ar.top >= 0 && ar.bottom <= innerHeight + 1,
+      fold: pr.bottom <= innerHeight + 1,
     };
-  }, { card, again });
+  }, { card, again, pageScrolls });
+  expect(m.fold, `${tag}: the parade is on the first screen`).toBe(true);
   expect(m.doc, `${tag}: no page scroll`).toBeLessThanOrEqual(1);
   expect(m.scrollers, `${tag}: nothing scrolls but a real list`).toEqual([]);
   // 360x640: the parade fits what room the card has (rows drop before the nudge, the nudge last) — its job there is never to
@@ -325,6 +328,105 @@ for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { wi
     for (const a of BL_ANSWERS) { mock.pushToClient({ type: 'answer_result', payload: { accepted: true, answer: a } }); await page.waitForTimeout(120); }
     mock.pushToClient({ type: 'game_over', payload: { winnerId: ME, finalScores: [{ id: ME, name: 'YOU', score: 70 }, { id: 'p2', name: 'RIVAL', score: 20 }] } });
     await paradeEndState(page, { card: '.game-over-overlay .game-over-card', again: '.game-over-rematch', w: vp.width, h: vp.height, tag: 'blitz' });
+  });
+}
+
+const SAT_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-sat-caps', 'q-modes3'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-sat-caps': 4, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const satContext = (loc, sel) => loc.evaluate((el, s) => { const i = el.querySelector(s); return el.textContent.replace(i ? i.textContent : '', '').replace(/\s+/g, ' ').trim(); }, sel);
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`SAT RUSH @${vp.width}x${vp.height}: the parade on the results page, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await boot(page, { vp, quests: SAT_QUESTS });
+    await page.goto('/?satRush=1&portal=1&season2=1');
+    await (await revealMode(page, 'sat-rush')).click();
+    await page.getByRole('button', { name: /BRIEFING/ }).click();
+    await page.locator('.sr-setup .sr-btn').click();
+    await page.locator('.sr-brief-page').waitFor();
+    const n = await page.locator('.sr-brief-card').count();
+    const briefed = [];
+    for (let i = 0; i < n; i++) {
+      const s = page.locator('.sr-brief-card').nth(i).locator('.sr-brief-sentence');
+      briefed.push({ word: (await s.locator('.sr-brief-fill').innerText()).trim().toLowerCase(), context: await satContext(s, '.sr-brief-fill') });
+    }
+    await page.getByRole('button', { name: 'Start the run' }).click();
+    await page.locator('.sr-slots').waitFor();
+    let last = '';
+    for (let k = 0; k < n; k++) {
+      await expect.poll(async () => (await page.locator('.sr-sentence').isVisible()) && (await satContext(page.locator('.sr-sentence'), '.sr-blank')) !== last, { timeout: 15000 }).toBe(true);
+      last = await satContext(page.locator('.sr-sentence'), '.sr-blank');
+      const t = briefed.find((b) => b.context === last);
+      await page.keyboard.type(t.word, { delay: 15 });
+    }
+    await page.locator('.sr-respage').waitFor({ timeout: 20000 });
+    await paradeEndState(page, { card: '.sr-respage', again: '.sr-respage [data-parade-again]', w: vp.width, h: vp.height, tag: 'sat', pageScrolls: true });
+  });
+}
+
+const RA_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-ra-words', 'q-ra-win'], wpick: 'w-games25',
+  prog: { 'q-games3': 1, 'q-ra-words': 8, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+const RA_WORDS = ['planet', 'rocket', 'galaxy', 'meteor', 'comet', 'orbit', 'saturn', 'nebula'];
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`WORD RACE @${vp.width}x${vp.height}: the parade on the race-over, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: RA_QUESTS });
+    const racers = [{ id: ME, name: 'YOU' }, { id: 'b1', name: 'RIVAL', isBot: true }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'ABCD', gameType: 'word-race', hostId: ME, difficultyKey: 'chill', players: racers.map((r, i) => ({ ...r, isHost: i === 0 })) } });
+    await page.waitForTimeout(80);
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'word-race' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'race_start', payload: { seed: 9, variant: 'words', words: RA_WORDS, target: RA_WORDS.length, capMs: 60000, racers, serverNow: now, goAt: now + 50 } });
+    mock.pushToClient({ type: 'race_go', payload: { serverNow: now, goAt: now + 50, endsAt: now + 60000 } });
+    await page.locator('.wr-root[data-race-status="racing"]').waitFor({ timeout: 15000 });
+    for (let i = 0; i < RA_WORDS.length; i++) {
+      await page.locator('.wr-input').pressSequentially(RA_WORDS[i], { delay: 5 });
+      mock.pushToClient({ type: 'race_word_result', payload: { accepted: true, word: RA_WORDS[i], index: i } });
+      mock.pushToClient({ type: 'race_progress', payload: { racerId: ME, index: i + 1, word: RA_WORDS[i] } });
+      await page.waitForTimeout(60);
+    }
+    mock.pushToClient({ type: 'race_over', payload: { winnerId: ME, reason: 'finish', standings: [{ id: ME, name: 'YOU', place: 1, words: RA_WORDS.length }, { id: 'b1', name: 'RIVAL', place: 2, words: 3, isBot: true }] } });
+    await page.locator('.wr-over').waitFor();
+    await paradeEndState(page, { card: '.wr-over', again: '.wr-over .wr-btn-go', w: vp.width, h: vp.height, tag: 'race' });
+  });
+}
+
+const MN_QUESTS = JSON.stringify({
+  v: 1, seed: 'e2e', day: DAY, week: '2026-11-09',
+  picks: ['q-games3', 'q-words25', 'q-modes3'], wpick: 'w-games25',
+  prog: { 'q-games3': 2, 'q-words25': 20, 'w-games25': 7 }, seen: {}, done: [], paid: {}, pending: [], carry: [], rerolled: false, played: {}, hist: {},
+});
+for (const vp of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1366, height: 768 }]) {
+  test(`MINER @${vp.width}x${vp.height}: the parade on the end card, the first tap skips, nothing scrolls`, async ({ page }) => {
+    test.setTimeout(60_000);
+    const mock = await boot(page, { vp, quests: MN_QUESTS });
+    await page.goto('/miner/play');
+    await page.locator('.lobby-continue-btn').click();
+    await mock.waitForSent('create_room');
+    mock.pushToClient({ type: 'room_created', payload: { code: 'MINE1' } });
+    const miners = [{ id: ME, name: 'ANNA', depth: 0 }, { id: 'b1', name: 'BOT', isBot: true, depth: 0 }];
+    mock.pushToClient({ type: 'room_update', payload: { code: 'MINE1', hostId: ME, gameType: 'miner', isPublic: true, players: miners } });
+    await page.getByTestId('miner-lobby').waitFor();
+    mock.pushToClient({ type: 'game_started', payload: { gameType: 'miner' } });
+    await page.waitForTimeout(80);
+    const now = Date.now();
+    mock.pushToClient({ type: 'miner_start', payload: { serverNow: now, goAt: now + 50, miners, target: 500, lives: 3 } });
+    for (let n = 1; n <= 3; n++) {
+      const t = Date.now();
+      mock.pushToClient({ type: 'miner_round', payload: { serverNow: t, round: n, prompt: 'pizza toppings', ask: 'PIZZA TOPPING', endsAt: t + 15000, roundMs: 15000 } });
+      await page.getByTestId('miner-prompt').waitFor();
+      mock.pushToClient({ type: 'miner_result', payload: { accepted: true, answer: `anchovy${n}`, ore: 'gold', depth: 50 * n, top: 3 } });
+      await page.waitForTimeout(150);
+    }
+    mock.pushToClient({ type: 'miner_over', payload: { winnerIds: [ME], reason: 'core', rounds: 3, standings: [{ id: ME, name: 'ANNA', depth: 520, best: { ore: 'gold', text: 'ANCHOVY' } }, { id: 'b1', name: 'BOT', isBot: true, depth: 200 }] } });
+    await page.getByTestId('miner-over').waitFor();
+    await paradeEndState(page, { card: '[data-testid="miner-over"]', again: '.mn-over-actions .mn-btn-go', w: vp.width, h: vp.height, tag: 'miner' });
   });
 }
 

@@ -56,8 +56,11 @@ import { weekPrize } from '../leaderboard/weekPrizes.js';
 import RankSeal from '../leaderboard/RankSeal.jsx';
 import { gapTo } from '../leaderboard/gap.js';
 import { lazyWithReload } from '../lib/chunkReload';
+import SignInPrompt from './account/SignInPrompt.jsx';
 
 const fmt = (n) => formatNum(Number(n) || 0);
+// the SAVE YOUR RANK line (SignInPrompt): what a wiped Chromebook would take — your place, else your name
+const signWhy = (meRow, profile) => (meRow && meRow.rank ? `KEEP #${fmt(meRow.rank)} AS ${profile.username} ON ANY DEVICE` : `KEEP ${profile.username} ON ANY DEVICE`);
 // 031 LEADERBOARD PROFILES (Andy oct10): tap a row / a podium spot → that player's card (gear, BASE, POWER …). Lazy.
 const ProfileCard = lazyWithReload(() => import('./ProfileCard.jsx'), 'ProfileCard');
 /** Row / podium props that open a profile: a button by role, Enter / Space too. */
@@ -707,6 +710,8 @@ export default function LeaderboardV2({ onBack }) {
               </p>
             ) : null}
             {meRow && Number(meRow.rank) > 10 ? (() => { const g = climbGoal(Number(meRow.rank), wk); return <p className="lb2-climb-band"><b>{fmt(g.n)}</b> TO {g.to}</p>; })() : null}
+            {/* SAVE YOUR RANK (nov21): a guest with a name is asked here, in the panel's own flow (SignInPrompt) */}
+            {!wk && profile ? <SignInPrompt key={profile.id} place="board" className="lb2-signin" title="SAVE YOUR RANK" why={signWhy(meRow, profile)} /> : null}
             {wk ? (
               <ol className="lb2-climb-prizes" aria-label="This week's prizes">
                 {Array.from({ length: 10 }, (_, i) => i + 1).filter((k) => weekPrize(k)).map((k) => (
@@ -717,6 +722,7 @@ export default function LeaderboardV2({ onBack }) {
           </aside>
         )}
 
+        {narrow && profile ? <SignInPrompt key={profile.id} place="board" className="lb2-signin is-narrow" title="SAVE YOUR RANK" why={signWhy(meRow, profile)} /> : null}
         <div className="lb2-cols" aria-hidden="true">
           <span>#</span><span className="lb2-cols-who"><span className={myPct ? 'lb2-cols-pl has-pct' : 'lb2-cols-pl'}>PLAYER</span>{wk ? <span className="lb2-cols-prize"> · TOP 10 WIN GEMS</span> : myPct ? <span className="lb2-pct" data-testid="lb2-pct">YOU: TOP {myPct}%</span> : null}</span><span /><span className="lb2-num">{hR}</span><span className="lb2-num">{hL}</span>
         </div>

@@ -8,6 +8,7 @@
 //
 // Pure module: no React, no DOM, no storage — and no JSON import, so node:test can load it. The word
 // rows are attached by packWords.js (bundled by Vite) under the same ids.
+import { RUSH_LANGS, LANGUAGE_PACK_IDS } from './rushLang.js';
 
 export const PACKS = {
   sat: {
@@ -62,11 +63,21 @@ export const PACKS = {
     ],
     storageKey: 'wa_frenchrush_lexicon',
     recentKey: 'wa_frenchrush_recent',
+    // nov24 (Andy: "give more answer choices" / silver tongue "remove for now as it's education setting"):
+    // 8 suspects in QUIZ (8 → 5 → 2), 6 choices in STUDY FIRST, and no SILVER TONGUE. Every LANGUAGE pack
+    // (languagePack below) inherits these; SAT keeps its 6 / 4 and its silver.
+    lineupSize: 8,
+    briefingChoices: 6,
+    silverTongue: false,
+    // nov24 round 2 ("people say you can't get any wrong"): the choices are words a student could really mistake
+    // for the answer — same part of speech + gender + theme, look-alike spellings (suspects.js plausibility)
+    plausibleDistractors: true,
     meaningFirst: true,
     accentFold: true,
-    // the run is the student's: no clock by default (HINT for the next clue, CONTINUE after every word);
-    // the TIMED pace is slow — a stage is 7s (×1.4 with choices) and the letters print every 1.8s
-    defaultPace: 'self',
+    // TIMED by default (nov21, Andy: defaults TIMED + 20 words); NO TIMER is one tap away (HINT for the next
+    // clue, CONTINUE after every word). The TIMED pace is slow — a stage is 7s (×1.4 with choices) and the
+    // letters print every 1.8s
+    defaultPace: 'timed',
     // STUDY FIRST deals only words an English speaker could not guess (`guessable: false`)
     studyNonGuessable: true,
     timing: { stageMs: 7000, lineupScale: 1.4, spellMs: 1800 },
@@ -80,15 +91,20 @@ export const PACKS = {
       hud: { heat: false },
       reward: { caption: false },
       stamps: { got: 'BRAVO !', miss: 'RATÉ', streak: 'SÉRIE ×' },
-      review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'THE ANSWER' },
+      // the review card is LEAN (WordCard ReEncode): the verdict, the word, its meaning, CONTINUE
+      review: { got: 'BRAVO !', weak: 'GOT IT — WITH HINTS', miss: 'MISSED', lean: true },
       lineup: { label: 'Choices', standing: 'left', cleared: 'NON' },
-      modeHead: 'HOW DO YOU WANT TO PRACTICE?',
+      // nov21 (Andy: "REMOVE THE BS … directions are too AI slop"): titles, choices and buttons only — no
+      // pitch lines, no sub-heads, no counts.
+      modeHead: 'PRACTICE',
       modes: {
-        briefing: { title: 'STUDY FIRST', line: "learn the words you can't guess from English" },
-        lineup: { title: 'QUIZ', line: 'every word — a few choices help you' },
+        briefing: { title: 'STUDY FIRST', line: '' },
+        lineup: { title: 'QUIZ', line: '' },
       },
-      setupSub: 'set up your practice',
-      pace: 'self', // CASE SETUP offers a pace row, preselected to no timer
+      setupSub: 'set up your practice', // a flag for CASE SETUP's French Rush layout (never printed)
+      compactSetup: true,
+      pace: 'timed', // CASE SETUP offers a timer row, preselected to TIMED
+      defaultLength: { lineup: 20, briefing: 10 }, // briefing tops out at 15 (LENGTHS.briefing)
       briefingTitle: 'STUDY',
       startLabel: 'Start',
       results: {
@@ -106,11 +122,69 @@ export const PACKS = {
   },
 };
 
+// THE MENUS IN THE LANGUAGE (nov24 round 2, Andy: a one-word label like "STUDY" should simply be ÉTUDIER /
+// ESTUDIAR / STUDIARE / DISCE / 学习): every label, button and heading the menus print comes from the language's
+// `menu` (rushLang.js). The pack's `ui` carries it, so screens shared with SAT Rush (modes, setup, study, results)
+// stay English there — SAT has no `ui.menu`.
+function menuUi(base, L) {
+  const M = L.menu;
+  return {
+    ...base.ui,
+    menu: M,
+    modeHead: M.practice,
+    modes: { briefing: { title: M.studyFirst, line: '' }, lineup: { title: M.quiz, line: '' } },
+    briefingTitle: M.studyTitle,
+    startLabel: M.start,
+    review: { ...base.ui.review, weak: M.review.weak, miss: M.review.miss },
+    results: { ...base.ui.results, ...M.results, copied: M.copied, done: L.press.over[0] },
+    defaultDifficulty: 'hard', // nov24 round 2 (Andy: "default difficulty = HARD everywhere")
+  };
+}
+
+// LANGUAGE RUSH (nov24): Spanish, Italian, Latin and Chinese are FRENCH RUSH with their own words, themes,
+// storage and a few labels in that language (rushLang.js). Everything else — the slow TIMED pace, the
+// study deck, the lean review card, the results — is the French pack's, so they behave the same.
+function languagePack(lang) {
+  const fr = PACKS.fr;
+  const L = RUSH_LANGS[lang];
+  const name = L.name;
+  return {
+    ...fr,
+    id: L.pack,
+    title: L.title,
+    lang,
+    words: [], // filled by that language's root (its own lazy chunk)
+    categories: L.categories,
+    storageKey: `wa_${name.toLowerCase()}rush_lexicon`,
+    recentKey: `wa_${name.toLowerCase()}rush_recent`,
+    timing: { ...fr.timing },
+    ui: {
+      ...fr.ui,
+      fields: { ...fr.ui.fields, sentence: L.sentence, ...(L.glossLabel ? { gloss: L.glossLabel } : null) },
+      stamps: { ...L.stamps },
+      review: { ...fr.ui.review, got: L.stamps.got },
+      lineup: { ...fr.ui.lineup, cleared: L.cleared },
+    },
+  };
+}
+for (const id of ['es', 'it', 'la', 'zh']) {
+  const p = languagePack(id);
+  PACKS[id] = { ...p, ui: menuUi(p, RUSH_LANGS[id]) };
+}
+// French: its themes and menus in French too (the play card's labels stay as they were)
+PACKS.fr = { ...PACKS.fr, categories: RUSH_LANGS.fr.categories, ui: menuUi(PACKS.fr, RUSH_LANGS.fr) };
+
+/** Is this pack one of the LANGUAGE RUSH packs (French and its siblings)? */
+export function isLanguagePack(id) {
+  return LANGUAGE_PACK_IDS.has(id);
+}
+
 /** "noun (f.)" — the case id's part of speech, with a noun's gender when the row has one. */
 export function posLabelOf(pack, row, short = false) {
   const labels = (short ? pack.posShort : pack.posLabels) || {};
   const base = labels[row.pos] || row.pos;
-  if (row.pos === 'n' && (row.gender === 'm' || row.gender === 'f')) return `${base} (${row.gender}.)`;
+  // (Latin nouns can be neuter: "noun (n.)")
+  if (row.pos === 'n' && (row.gender === 'm' || row.gender === 'f' || row.gender === 'n')) return `${base} (${row.gender}.)`;
   return base;
 }
 

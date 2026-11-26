@@ -59,3 +59,11 @@
 .scn-chip:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
 .scn-chip-k { font: 700 var(--fs-k16) 'Space Mono', monospace; color: #c9b8e8; }
 .scn-chip-v { font: 400 var(--fs-k20) 'Bungee', sans-serif; color: #2EFFE0; -webkit-text-stroke: 3px #000; paint-order: stroke fill; letter-spacing: 1px; }
+
+/* OR SIGN IN (nov21): a quiet second line on the card — opens the sign-in sheet (account/SignInPrompt.jsx) */
+.scn-google {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 10px; cursor: pointer;
+  background: #fff; color: #1f1f1f; border: 3px solid #9a8fb0; border-radius: 8px; box-shadow: 3px 3px 0 var(--k-ink, #000);
+  font: 700 var(--fs-k16) 'Space Mono', monospace; letter-spacing: 0.02em; transition: transform 120ms ease-out;
+}
+.scn-google:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--k-ink, #000); }

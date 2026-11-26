@@ -202,6 +202,9 @@ export default function BuyGems({ onClose, tab0 = 'gems' }) {
                 <button type="button" className="pg-back" onClick={() => setWant(null)} data-testid="pay-signin-back">BACK</button>
               </div>
             ) : (
+              <>
+              {/* nov21: say it BEFORE the tap — a guest learned only after picking a pack that buying needs a sign-in */}
+              {!signed && authAvailable() ? <p className="pg-guest" data-testid="pay-guest-note">BUYING SIGNS YOU IN WITH GOOGLE · YOUR GEMS AND PROGRESS FOLLOW YOU</p> : null}
               <div className="pg-grid" role="list" aria-label="Gem packs">
                 {PACKS.map((p) => {
                   const over = pay.over(p);
@@ -225,6 +228,7 @@ export default function BuyGems({ onClose, tab0 = 'gems' }) {
                   );
                 })}
               </div>
+              </>
             )}
 
             <div className="pg-foot">

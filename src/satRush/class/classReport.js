@@ -3,13 +3,14 @@
 // first, per-student totals). Pure: the console passes the host's done snapshot (summary + students).
 import { difficultiesFor } from '../runSpec.js';
 import { withArticle } from '../speak.js';
+import { rushLang } from '../rushLang.js';
 import { formatNum } from '../../format.js';
 
 // The CLASS REPORT: plain text for a gradebook or an email. Tab-separated tables, so a paste into a
 // spreadsheet lands in columns and a paste into an email still lines up.
 export function classReport({ snap, categories = [], modes = [], now = new Date() }) {
   const set = snap.set || {};
-  const levels = difficultiesFor('fr');
+  const levels = difficultiesFor('fr'); // every LANGUAGE RUSH pack shares the French level table
   const themeLabel = set.theme ? (categories.find((c) => c.id === set.theme) || {}).label || set.theme : 'All themes';
   const levelLabel = (levels[set.level] || {}).label || set.level || '';
   const modeLabel = (modes.find((m) => m.id === set.mode) || {}).label || '';
@@ -25,7 +26,7 @@ export function classReport({ snap, categories = [], modes = [], now = new Date(
   }
   const students = (snap.students || []).slice().sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   const lines = [
-    'FRENCH RUSH — CLASS REPORT',
+    `${rushLang().title} — CLASS REPORT`,
     `Date: ${when}`,
     `Class: ${snap.code}${snap.round > 1 ? ` (set ${formatNum(snap.round)})` : ''}`,
     `Set: ${[themeLabel, levelLabel, `${formatNum(snap.total)} words`, modeLabel].filter(Boolean).join(' · ')}${set.replay ? ' · replay of the hardest' : ''}`,

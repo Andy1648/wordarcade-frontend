@@ -11,6 +11,9 @@ import { issueShortCode, formatShort, copyText } from './saveCode.js';
 import { dueNudge, readSaid, writeSaid } from './codeNudge.js';
 import { storedLevel } from '../progress/xp.js';
 import { s2Rebirths } from '../progress/v3/store.js';
+import { readSession } from '../leaderboard/auth.js';
+import { guestAsk, noteMoment, SignInSheet } from '../components/account/SignInPrompt.jsx';
+import { useAuthSession } from '../components/account/GoogleAccount.jsx';
 import './SaveCodeNudge.css';
 
 /** This account's short code (formatted), or null — no board name, offline, 071 not run. Never throws. */
@@ -44,6 +47,11 @@ function useCopy(code) {
 /** The toast body (KitEdgeToast renders a payload's Body in the stack). */
 export function SaveCodeCard({ t, close }) {
   const [said, copy] = useCopy(t.code);
+  // OR SIGN IN (nov21): the same milestone offers Google — no code to lose. Asked at most every 3 days (signInNudge.js)
+  const signed = useAuthSession();
+  const [offer] = useState(() => guestAsk('code', readSession()));
+  const [sheet, setSheet] = useState(false);
+  useEffect(() => { if (offer) noteMoment('code'); }, [offer]);
   return (
     <div className="scn" data-testid="save-code-nudge">
       <span className="scn-head">WRITE DOWN YOUR CODE</span>
@@ -52,6 +60,13 @@ export function SaveCodeCard({ t, close }) {
         <button type="button" className="scn-copy" onClick={() => copy().then((ok) => { if (ok) setTimeout(close, 1200); })}>{said || 'COPY'}</button>
         <button type="button" className="scn-x" onClick={close} aria-label="Close">✕</button>
       </span>
+      {offer && !signed ? (
+        <button type="button" className="scn-google" onClick={() => setSheet(true)} data-testid="save-code-nudge-google">
+          <img src="/brand/google-g.svg" width="18" height="18" alt="" aria-hidden="true" draggable="false" />
+          OR SIGN IN · NO CODE NEEDED
+        </button>
+      ) : null}
+      {sheet ? <SignInSheet place="code" title="NO CODE TO LOSE" why="SIGN IN WITH GOOGLE ONCE AND YOUR PROGRESS FOLLOWS YOU TO ANY DEVICE." onClose={() => { setSheet(false); if (readSession()) close(); }} /> : null}
     </div>
   );
 }

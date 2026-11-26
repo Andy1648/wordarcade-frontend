@@ -136,6 +136,33 @@ function passesCore(d, answer, altSet) {
   return true;
 }
 
+// --- PLAUSIBILITY (nov24 round 2, Andy: "people say you can't get any wrong") -----------------------------
+// A random same-length word is easy to rule out: wrong part of speech, wrong gender for the "NOUN (F.)" the card
+// prints, a theme miles away. With `plausible` the lineup and the study choices instead draw the words a student
+// could really mistake for the answer — same part of speech, same gender, same theme, a look-alike spelling
+// (shared opening, shared ending, letters in the same places), a similar level — and still never a synonym, an
+// alt or a word of the same family (passesCore). The least plausible fall first; the most plausible stands last.
+const foldWord = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+export function plausibility(answer, d) {
+  let s = 0;
+  if (d.pos === answer.pos) s += 4;
+  if (answer.pos === 'n' && answer.gender && d.gender) s += d.gender === answer.gender ? 2 : -2;
+  if (answer.category && d.category === answer.category) s += 1.5;
+  const a = foldWord(answer.word);
+  const b = foldWord(d.word);
+  let pre = 0;
+  while (pre < Math.min(3, a.length, b.length) && a[pre] === b[pre]) pre++;
+  let suf = 0;
+  while (suf < Math.min(4, a.length, b.length) && a[a.length - 1 - suf] === b[b.length - 1 - suf]) suf++;
+  let same = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] === b[i]) same++;
+  s += 0.6 * pre + 0.6 * suf + 2 * (same / Math.max(a.length, b.length, 1));
+  const ta = Number.isFinite(answer.tier) ? answer.tier : 3;
+  const tb = Number.isFinite(d.tier) ? d.tier : 3;
+  s += 1 - 0.3 * Math.abs(ta - tb);
+  return s;
+}
+
 // Candidate distractors at a given length tolerance (0 = exact, 1 = +/-1, ...),
 // ANY part of speech (POS is the ladder's axis, applied by the caller).
 function candidatesAt(answer, pool, altSet, tol) {
@@ -166,7 +193,11 @@ function candidatesAt(answer, pool, altSet, tol) {
  *                   // surviving distractor (which differs at the first letter).
  * }
  */
-export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) {
+// `size` (nov24, Andy: "give more answer choices"): the FULL lineup count. SAT Rush keeps 6; the LANGUAGE
+// rushes ask for 8 (packs.js lineupSize). Only the full rungs use it — a pool too thin for `size` falls back
+// to the honest 6 / 4 / 2 ladder below, exactly as before.
+export function generateSuspects({ answer, pool = [], rng = Math.random, size = 6, plausible = false } = {}) {
+  const full = Math.max(6, Math.floor(size) || 6);
   const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
   const aFirst = answer.word[0];
 
@@ -181,12 +212,16 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
   let fallbackTier;
   let widened = false;
 
-  if (exactSamePos.length >= 5) {
+  if (exactSamePos.length >= full - 1) {
     candidates = exactSamePos; // rung 0 — ideal: same length + same POS
-    count = 6;
+    count = full;
     fallbackTier = 0;
-  } else if (exactLen.length >= 5) {
+  } else if (exactLen.length >= full - 1) {
     candidates = exactLen; // rung 1 — same length, any POS (POS is preferred in the pick)
+    count = full;
+    fallbackTier = 1;
+  } else if (exactLen.length >= 5) {
+    candidates = exactLen; // rung 1b — too thin for a bigger `size`: the standard six
     count = 6;
     fallbackTier = 1;
   } else if (exactLen.length >= 1) {
@@ -213,31 +248,45 @@ export function generateSuspects({ answer, pool = [], rng = Math.random } = {}) 
     }
     count = candidates.length >= 5 ? 6 : candidates.length >= 3 ? 4 : 2;
   }
-  const reducedCount = count < 6;
+  const reducedCount = count < full;
   const distractorsNeeded = count - 1;
 
   // 2. Choose the SURVIVOR — a distractor that differs from the answer at the first
   //    letter (the solvability invariant), PREFERRING one that also shares the POS.
   //    If none differ (a pathological pool), fall back to any distractor so we still
   //    return a lineup; the tests assert the invariant holds for real pools.
+  // PLAUSIBLE (language rushes): a strict synonym guard when the pool allows it (one shared gloss word is enough to
+  // sit out), then every candidate scored once — with a little noise so the same word does not always draw the
+  // same lineup.
+  if (plausible) {
+    const strict = candidates.filter((d) => !(d.gloss && answer.gloss && glossOverlap(d.gloss, answer.gloss) >= 1));
+    if (strict.length >= distractorsNeeded) candidates = strict;
+  }
+  const score = plausible ? new Map(candidates.map((d) => [d.word, plausibility(answer, d) + rng()])) : null;
+  const byScore = (list) => list.slice().sort((x, y) => score.get(y.word) - score.get(x.word));
   const diffFirst = candidates.filter((d) => d.word[0] !== aFirst);
   const diffFirstSamePos = diffFirst.filter(isSamePos);
-  const survivor = (
-    diffFirstSamePos.length
-      ? shuffle(diffFirstSamePos, rng)
-      : diffFirst.length
-        ? shuffle(diffFirst, rng)
-        : shuffle(candidates, rng)
-  )[0];
+  const survivor = plausible
+    ? (byScore(diffFirst.length ? diffFirst : candidates)[0])
+    : (
+        diffFirstSamePos.length
+          ? shuffle(diffFirstSamePos, rng)
+          : diffFirst.length
+            ? shuffle(diffFirst, rng)
+            : shuffle(candidates, rng)
+      )[0];
 
   // 3. The remaining distractors, SAME-POS preferred (so a reduced or any-POS lineup
   //    still shows the most honest suspects it can), get eliminated across stages 1
   //    and 2 (stage 1 first). The survivor is never eliminated.
+  //    PLAUSIBLE: the most plausible are kept, and the LEAST plausible of those fall first (stage 1).
   const remaining = candidates.filter((d) => d.word !== survivor.word);
-  const rest = [
-    ...shuffle(remaining.filter(isSamePos), rng),
-    ...shuffle(remaining.filter((d) => !isSamePos(d)), rng),
-  ].slice(0, distractorsNeeded - 1);
+  const rest = plausible
+    ? byScore(remaining).slice(0, distractorsNeeded - 1).reverse()
+    : [
+        ...shuffle(remaining.filter(isSamePos), rng),
+        ...shuffle(remaining.filter((d) => !isSamePos(d)), rng),
+      ].slice(0, distractorsNeeded - 1);
   const half = Math.floor(rest.length / 2); // eliminated at stage 1; the rest at stage 2
 
   const distractorEntries = [
@@ -282,14 +331,14 @@ export function suspectsStanding(lineup, stage) {
 // sits out — measured on the first play-test card: "A fallen tree began to ___ traffic" offered
 // IMPEDE / STYMIE / HINDER (glosses "block progress" / "block, thwart" / "progress difficult"), three
 // right answers. Relaxed back to the lineup's >= 2 rule only if the strict pool is too thin.
-export function distractorCandidates(answer, pool = []) {
+export function distractorCandidates(answer, pool = [], need = 3) {
   const altSet = new Set((answer.alts || []).map((a) => String(a).toLowerCase()));
   const strict = (d) =>
     !(d.gloss && answer.gloss && glossOverlap(d.gloss, answer.gloss) >= 1) &&
     !(d.alts || []).some((a) => String(a).toLowerCase() === answer.word);
   let out = [];
-  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol).filter(strict);
-  for (let tol = 0; tol <= 2 && out.length < 3; tol++) out = candidatesAt(answer, pool, altSet, tol);
+  for (let tol = 0; tol <= 2 && out.length < need; tol++) out = candidatesAt(answer, pool, altSet, tol).filter(strict);
+  for (let tol = 0; tol <= 2 && out.length < need; tol++) out = candidatesAt(answer, pool, altSet, tol);
   const seen = new Set([answer.word]);
   return out.filter((d) => {
     if (seen.has(d.word)) return false;

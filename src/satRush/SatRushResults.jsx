@@ -4,10 +4,13 @@
 // count up on the shared JUICE.CELEBRATION timings (same staged sequence Category
 // Blitz solo results use), then the rest of the page staggers in. AVG ANTE stays
 // working untouched; only its container is styled to sit on the page.
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { recordBestStreak } from '../solo/bestStreak.js';
 import { contractEvent } from '../progress/contracts/bus.js';
 import { formatNum } from '../format';
+
+// THE PROGRESS PARADE on the results page (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 import EnglishLine from './EnglishLine';
 import { createCountUp } from '../juice/countUp';
 import { JUICE, prefersReducedMotion } from '../juice';
@@ -22,6 +25,7 @@ import ContractDoneLine from '../components/contracts/ContractDoneLine.jsx';
 import { XpEarnedLine } from '../components/xp/XpEarned';
 import { withArticle } from './speak';
 import SayButton from './SayButton';
+import { rushLang } from './rushLang';
 
 const C = JUICE.CELEBRATION;
 
@@ -78,6 +82,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
   const RU = (ui && ui.results) || null;
   const speak = !!(ui && ui.stamps); // FRENCH RUSH reads words aloud (its pack has its own stamps)
   const [copied, setCopied] = useState(false);
+  const pageRef = useRef(null); // the results page: the parade's tap-to-skip surface + its fit box
+  const [pageNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
   // BEST STREAK vs the all-time record (nov12, the Word Bomb pass): recorded ONCE per results page (a ref guards a re-run)
   const [peak, setPeak] = useState(null);
   const peakDone = useRef(false);
@@ -180,7 +186,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
 
   return (
     <div className="sr-screen sr-results">
-      <div className="sr-respage">
+      <div className="sr-respage" ref={pageRef}>
         {/* entry stamp, bounty voice: the run is over — the case is closed. */}
         <div className="sr-dead">
           {finite && !results.complete ? (RU ? RU.out : 'OUT OF LIVES') : RU ? RU.done : 'CASE CLOSED'}
@@ -194,7 +200,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             </div>
             <div className="sr-capt-side">
               <span className="sr-capt-label">
-                {finite ? `of ${results.runTotal} ${RU ? RU.captured : 'captured'}` : 'captured'}
+                {finite ? (RU && RU.of ? RU.of(results.runTotal) : `of ${results.runTotal} ${RU ? RU.captured : 'captured'}`) : 'captured'}
               </span>
               <span className="sr-capt-away">
                 {finite
@@ -233,7 +239,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
               {RU ? RU.replay(unsettled) : `Replay the ${unsettled} that got away`}
             </button>
           )}
-          <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} onClick={onAgain}>
+          <button type="button" className={`sr-btn${finite && unsettled > 0 && onReplay ? ' sr-btn-ghost' : ''}`} data-parade-again onClick={onAgain}>
             {RU ? RU.again : finite ? 'New case' : 'Run it back'}
           </button>
           {/* COPY RESULTS (FRENCH RUSH): a plain-text summary to paste to a teacher */}
@@ -245,7 +251,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
                 const sp = results.spec || {};
                 const missed = caseFile.filter((c) => c.outcome !== 'clean').map((c) => c.word);
                 const text = [
-                  `French Rush — ${capturedWords}/${results.runTotal} correct`,
+                  `${rushLang().name} Rush — ${capturedWords}/${results.runTotal} correct`,
                   sp.category ? `Theme: ${sp.category}` : 'Theme: all',
                   `Level: ${sp.difficulty || '—'} · ${sp.pace === 'self' ? 'my pace' : 'timed'}`,
                   missed.length ? `To review: ${missed.join(', ')}` : 'No words to review',
@@ -262,7 +268,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
                 }
               }}
             >
-              {copied ? 'Copied!' : 'Copy my results'}
+              {copied ? (RU.copied || 'Copied!') : RU.copy || 'Copy my results'}
             </button>
           )}
           {/* A deep-link visitor has never seen the menu, so their way on is the OFFER below —
@@ -282,6 +288,10 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
           {economy && <NearMiss mode="sat-rush" onPlay={onAgain} look="print" />}
           {offerMenu || !economy ? null : <TryModeRow current="sat-rush" />}
         </div>
+
+        {/* THE PROGRESS PARADE: the quests / contract / league rows this run moved, right under the exits (SAT only — FRENCH RUSH
+            has no economy). The page scrolls by design (the CASE FILE is under the fold), so the parade keeps to the first screen. */}
+        {economy && <Suspense fallback={null}><ResultsParade cardRef={pageRef} inFlow foldFit narrow={pageNarrow} gemsSince={gemsSince} /></Suspense>}
 
         {/* The mode's own numbers, one ruled line (was three boxed panels + a strip). */}
         {/* FRENCH RUSH keeps its page to the result + the words: no ante / mastery stat line */}

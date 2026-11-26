@@ -149,6 +149,14 @@ function findSmallText(min) {
     // The one sanctioned --fs-micro use: a digit superscript INSIDE a 14px identity dot (PlayerDot's
     // duplicate-hue group number). Marked in the markup, never inferred, so nothing else slips by.
     if (el.closest('[data-decor]')) continue;
+    // scrolled out of a scrolling area (the menu's cards area keeps its third row below the fold): not on screen
+    let scrolledOut = false;
+    for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+      if (!/^(auto|scroll)$/.test(getComputedStyle(a).overflowY)) continue;
+      const ar = a.getBoundingClientRect();
+      if (r.top >= ar.bottom - 0.5 || r.bottom <= ar.top + 0.5) { scrolledOut = true; break; }
+    }
+    if (scrolledOut) continue;
     let px = parseFloat(getComputedStyle(el).fontSize) * (el.currentCSSZoom || 1);
     // Every ancestor scale() shrinks the paint without touching font-size. Read the real scale off
     // each transform matrix (hypot of a,b) — a rotation alone is scale 1, not a bbox ratio.

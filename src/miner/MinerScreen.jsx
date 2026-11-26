@@ -13,7 +13,7 @@
 // public/cards/miner-*.webp); CSS only moves them. MOTION: transform/opacity only, every animation finite —
 // the digger slides when its depth lands, an ore pops once on a find, the crown drops once, the bell drains
 // once per round. Nothing loops at rest.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { ORES, ORE_ORDER, MINER_REASON_COPY } from './config';
 import { secondsLeft } from './minerState';
 import { formatNum } from '../format';
@@ -27,6 +27,9 @@ import { payGameResult } from '../progress/gems';
 import { otherSeatIds } from '../progress/seats';
 import FitText from '../components/kit/FitText.jsx';
 import './Miner.css';
+
+// THE PROGRESS PARADE on the end card (nov14: every mode's end screen; results/ResultsParade.jsx) — its own lazy chunk
+const ResultsParade = lazy(() => import('../components/results/ResultsParade.jsx').catch(() => ({ default: () => null }))); // optional: no parade when the chunk cannot load (offline)
 import ComboMeter from '../components/ComboMeter';
 import { TierSlam } from '../components/FeelLadder';
 import { heatTier } from '../juice/ladder';
@@ -154,6 +157,8 @@ export default function MinerScreen({
   const heroOf = useSeatHeroes(roomPlayers, myId);
   usePlayClock();
   const [text, setText] = useState('');
+  const overRef = useRef(null); // the end card: the parade's tap-to-skip surface + its fit box
+  const [overNarrow] = useState(() => typeof window !== 'undefined' && window.innerWidth < 700);
   const [shakeSeq, setShakeSeq] = useState(0);
   const inputRef = useRef(null);
   const status = miner ? miner.status : 'countdown';
@@ -389,7 +394,7 @@ export default function MinerScreen({
           )}
 
           {over && (
-            <div className="mn-over" data-testid="miner-over">
+            <div className="mn-over" data-testid="miner-over" ref={overRef}>
               <div className="mn-over-hero">
                 {/* the winner's hero (yours when you hit the core) */}
                 <CastArt className={`mn-over-digger${iWon ? ' is-win' : ''}`} id={heroOf(iWon ? myId : (over.winnerIds[0] || (standings[0] && standings[0].id) || myId))} live={false} />
@@ -425,10 +430,12 @@ export default function MinerScreen({
                 <GemsEarnedLine since={gemsSince} />
                 <ContractDoneLine since={gemsSince} />
               </div>
+              {/* THE PROGRESS PARADE: the quests / contract / league rows this mine moved, in the card's flow */}
+              {watchOnly ? null : <Suspense fallback={null}><ResultsParade cardRef={overRef} inFlow narrow={overNarrow} gemsSince={gemsSince} /></Suspense>}
               <div className="mn-over-actions">
                 {watchOnly ? null : <RebirthReadyButton onGo={onLeave} />}
                 {watchOnly ? null : (
-                  <button type="button" className="mn-btn mn-btn-go" onClick={onAgain} disabled={againPending}>
+                  <button type="button" className="mn-btn mn-btn-go" data-parade-again onClick={onAgain} disabled={againPending}>
                     DIG AGAIN
                   </button>
                 )}

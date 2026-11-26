@@ -4,6 +4,7 @@
 // the engine, every slot/alt decision from input.js. Timing constants that ARE
 // rules (deep-cut interval scale, grace length) are read from engine.config; the
 // only thing this hook decides is the base stage interval (dev-tunable).
+import { RUSH_LANGS } from './rushLang';
 import { noteAcceptedWord } from '../unlisted/acceptedWords.js';
 import { useReducer, useRef, useEffect, useCallback } from 'react';
 import { createSatRushEngine, DEFAULT_CONFIG, effectiveStageIntervalMs, lineupWindowMs } from './engine';
@@ -81,7 +82,8 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // THE PACK this hook plays (packs.js): its words, its memory keys, its clue order, its accents.
   const packRef = useRef(null);
   if (packRef.current === null) packRef.current = getPack(packId);
-  const ulModeRef = useRef(packId === 'fr' ? 'french' : 'sat'); // THE UNLISTED: which mode a find came from
+  // THE UNLISTED: which mode a find came from (LANGUAGE RUSH: the language's name — 'french', 'spanish', …)
+  const ulModeRef = useRef(packId === 'sat' ? 'sat' : (RUSH_LANGS[packId] && RUSH_LANGS[packId].unlisted) || 'french');
   // (read through packRef.current inside callbacks: the pack is fixed for the hook's lifetime)
   const [, force] = useReducer((x) => x + 1, 0);
 
@@ -181,7 +183,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // 7-day return, briefing vs lineup. `word_resolved`'s `stage`/`suspectsStanding`
   // answer whether players are actually anteing (answering early).
   const trackSR = useCallback((event, props = {}) => {
-    track(event, { game: packRef.current.id === 'sat' ? 'sat-rush' : 'french-rush', mode: modeRef.current, ...props });
+    track(event, { game: packRef.current.id === 'sat' ? 'sat-rush' : (RUSH_LANGS[packRef.current.id] || RUSH_LANGS.fr).slug, mode: modeRef.current, ...props });
   }, []);
 
   const trackRunEnd = useCallback(() => {
@@ -821,6 +823,11 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
         deepCutEvery: deepEvery,
         ...(finite ? {} : { revenantOffset: revGap }),
         tierEvery: climb,
+        // LANGUAGE RUSH (nov24): more choices per word, and no SILVER TONGUE in a classroom (packs.js)
+        ...(packRef.current.lineupSize ? { lineupSize: packRef.current.lineupSize } : {}),
+        ...(packRef.current.briefingChoices ? { briefingChoices: packRef.current.briefingChoices } : {}),
+        ...(packRef.current.silverTongue === false ? { silverTongue: false } : {}),
+        ...(packRef.current.plausibleDistractors ? { plausibleDistractors: true } : {}),
         ...(extra || {}),
       },
     });
@@ -976,14 +983,18 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
   // The remembered CASE SETUP choices, per mode: { difficulty, lineup: length, briefing: length }.
   const setupPrefs = () => {
     const p = lexRef.current.setup;
-    return p && typeof p === 'object' ? p : {};
+    const prefs = p && typeof p === 'object' ? p : {};
+    // a pack's default level (LANGUAGE rushes: HARD, nov24 round 2) wins over a level remembered from before it
+    // existed — once: the player's own pick after this (levelPicked) is remembered again
+    const def = packRef.current.ui && packRef.current.ui.defaultDifficulty;
+    return def && !prefs.levelPicked ? { ...prefs, difficulty: def } : prefs;
   };
 
   // TEACHER LINK (FRENCH RUSH ?mode=&level=&n=&theme=&pace=): preselect CASE SETUP with that set.
   const applyPreset = useCallback(({ mode, difficulty, length, category, pace } = {}) => {
     const lex = lexRef.current;
     const m = mode === 'briefing' ? 'briefing' : 'lineup';
-    lex.setup = { ...setupPrefs(), difficulty, [m]: Number(length) || undefined, category: category || null, pace };
+    lex.setup = { ...setupPrefs(), difficulty, levelPicked: !!difficulty, [m]: Number(length) || undefined, category: category || null, pace };
     lex.mode = m;
     persistLexicon();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1016,7 +1027,7 @@ export function useSatRushGame({ packId = 'sat' } = {}) {
       specRef.current = spec;
       paceRef.current = spec.pace;
       const lex = lexRef.current;
-      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, [mode]: spec.length, category: spec.category, pace: spec.pace, skipStudied: spec.skipStudied };
+      lex.setup = { ...setupPrefs(), difficulty: spec.difficulty, levelPicked: true, [mode]: spec.length, category: spec.category, pace: spec.pace, skipStudied: spec.skipStudied };
       persistLexicon();
       trackSR('setup_confirmed', { difficulty: spec.difficulty, length: spec.length });
       if (mode === 'lineup') {
