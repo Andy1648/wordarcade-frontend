@@ -834,3 +834,87 @@
 .fr-app[data-lang='zh'] :is(.sr-btn, .sr-exit-chip) {
   letter-spacing: 0.04em;
 }
+
+/* ---------- THE BEST LANE (solo, nov26): your right answers against your best run's, at the same point ----------
+   One thin lane under the progress bar: the record as a hatched-free flat ghost (ink at 25%), you in the
+   language's ink on top, the two counts at its end. Passing the record prints a one-shot chip. */
+.fr-best {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px clamp(10px, 2vw, 24px) 0;
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+}
+.fr-best-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 10px;
+  border: 2px solid var(--ink);
+  overflow: hidden;
+}
+.fr-best-ghost,
+.fr-best-you {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  transition: transform 300ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.fr-best-ghost {
+  background: var(--ink);
+  opacity: 0.25;
+}
+.fr-best-you {
+  inset: 2px 0;
+  background: var(--lang, var(--ink));
+}
+.fr-best-nums {
+  flex: none;
+  white-space: nowrap;
+}
+.fr-best-chip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  padding: 3px 8px;
+  background: var(--lang, var(--ink));
+  color: var(--lang-on, var(--paper));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  animation: fr-best-chip 1400ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes fr-best-chip {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.9); }
+  15% { opacity: 1; transform: none; }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+/* a NEW RECORD on the results page: a stamp in the language's ink, once */
+.fr-app .fr-newbest {
+  align-self: center;
+  padding: 6px 16px 4px;
+  border: 4px double var(--lang, var(--ink));
+  color: var(--lang, var(--ink));
+  font-size: var(--fs-fr6);
+  letter-spacing: 0.06em;
+  transform: rotate(-3deg);
+  animation: fr-got-stamp 260ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fr-best-chip,
+  .fr-app .fr-newbest {
+    animation: none;
+  }
+}
+/* RESULTS on a phone: the page fits the screen, so the cross-run "words you keep missing" panel (English, and the
+   same misses the word list above already marks) stays off the phone page — it fell below the bottom edge at
+   360x640 whenever a run had misses. The word bank's "still to learn" filter keeps that list. */
+@media (max-width: 999px) {
+  .fr-app .sr-respage > .sr-keepmissing {
+    display: none;
+  }
+}

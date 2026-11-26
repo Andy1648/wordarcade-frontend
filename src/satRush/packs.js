@@ -136,7 +136,7 @@ function menuUi(base, L) {
     briefingTitle: M.studyTitle,
     startLabel: M.start,
     review: { ...base.ui.review, weak: M.review.weak, miss: M.review.miss },
-    results: { ...base.ui.results, ...M.results, copied: M.copied, done: L.press.over[0] },
+    results: { ...base.ui.results, ...M.results, copied: M.copied, mastery: M.status, done: L.press.over[0] },
     defaultDifficulty: 'hard', // nov24 round 2 (Andy: "default difficulty = HARD everywhere")
   };
 }

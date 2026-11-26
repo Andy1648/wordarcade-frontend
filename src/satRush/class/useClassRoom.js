@@ -77,6 +77,7 @@ export function useClassRoom() {
   const { status, messages, consumeMessages, send } = useWebSocket();
   const [snap, setSnap] = useState(null); // the latest class_state (rows merged in)
   const [tally, setTally] = useState(null); // host: the live class_tally for the current word
+  const [race, setRace] = useState(null); // TEAM RACE standings (class_state.race / class_race); null = no teams
   const [error, setError] = useState(null); // { code, message, context }
   const [closed, setClosed] = useState(null); // reason, once the class is over for us
   const rowsRef = useRef(null);
@@ -107,8 +108,14 @@ export function useClassRoom() {
           if (Array.isArray(p.rows)) rowsRef.current = p.rows;
           const rows = rowsRef.current;
           setSnap(() => ({ ...p, rows }));
+          setRace(p.race || null);
           if (p.tally) setTally(p.tally);
           else if (p.phase !== 'word' && p.phase !== 'review') setTally(null);
+          break;
+        }
+        case 'class_race': {
+          // mid-word standings (debounced on the server); the next class_state replaces them
+          if (p && Array.isArray(p.teams)) setRace(p);
           break;
         }
         case 'class_tally': {
@@ -181,6 +188,7 @@ export function useClassRoom() {
     setHasSeat(false);
     setSnap(null);
     setTally(null);
+    setRace(null);
     rowsRef.current = null;
   }, [send]);
 
@@ -196,5 +204,5 @@ export function useClassRoom() {
 
   const result = useCallback((index, outcome, hints) => send('class_result', { index, outcome, hints }), [send]);
 
-  return { status, snap, tally, error, closed, hasSeat, create, join, leave, host, result, clearError: () => setError(null) };
+  return { status, snap, tally, race, error, closed, hasSeat, create, join, leave, host, result, clearError: () => setError(null) };
 }

@@ -32,6 +32,8 @@ export const RUSH_LANGS = {
   fr: {
     id: 'fr',
     pack: 'fr',
+    // TEAM RACE + the solo BEST lane (nov26): team names (red / blue / green / yellow ink) and the race's words
+    race: { names: ['ROUGE', 'BLEU', 'VERT', 'JAUNE'], win: (t) => `${t} GAGNE !`, tie: 'ÉGALITÉ !', yours: 'ton équipe', chain: 'chaîne', record: 'record', you: 'toi', ahead: 'DEVANT TON RECORD !', newBest: 'NOUVEAU RECORD !' },
     // the menus in the language (nov24 round 2, Andy: "STUDY" should simply be ÉTUDIER / ESTUDIAR / …)
     menu: {
       play: 'Jouer', create: 'Créer une salle', join: 'Rejoindre', bank: 'Les mots', language: 'langue', hello: 'Bonjour !',
@@ -66,6 +68,8 @@ export const RUSH_LANGS = {
   es: {
     id: 'es',
     pack: 'es',
+    // TEAM RACE + the solo BEST lane (nov26): team names (red / blue / green / yellow ink) and the race's words
+    race: { names: ['ROJO', 'AZUL', 'VERDE', 'AMARILLO'], win: (t) => `¡GANA ${t}!`, tie: '¡EMPATE!', yours: 'tu equipo', chain: 'cadena', record: 'récord', you: 'tú', ahead: '¡SUPERAS TU RÉCORD!', newBest: '¡NUEVO RÉCORD!' },
     // the menus in the language (nov24 round 2, Andy: "STUDY" should simply be ÉTUDIER / ESTUDIAR / …)
     menu: {
       play: 'Jugar', create: 'Crear sala', join: 'Unirse', bank: 'Palabras', language: 'idioma', hello: '¡Hola!',
@@ -102,6 +106,8 @@ export const RUSH_LANGS = {
   it: {
     id: 'it',
     pack: 'it',
+    // TEAM RACE + the solo BEST lane (nov26): team names (red / blue / green / yellow ink) and the race's words
+    race: { names: ['ROSSO', 'BLU', 'VERDE', 'GIALLO'], win: (t) => `VINCE IL ${t}!`, tie: 'PAREGGIO!', yours: 'la tua squadra', chain: 'catena', record: 'record', you: 'tu', ahead: 'SOPRA IL TUO RECORD!', newBest: 'NUOVO RECORD!' },
     // the menus in the language (nov24 round 2, Andy: "STUDY" should simply be ÉTUDIER / ESTUDIAR / …)
     menu: {
       play: 'Gioca', create: 'Crea aula', join: 'Entra', bank: 'Parole', language: 'lingua', hello: 'Ciao!',
@@ -138,6 +144,8 @@ export const RUSH_LANGS = {
   la: {
     id: 'la',
     pack: 'la',
+    // TEAM RACE + the solo BEST lane (nov26): team names (red / blue / green / yellow ink) and the race's words
+    race: { names: ['RUBRĪ', 'CAERULEĪ', 'VIRIDĒS', 'FLĀVĪ'], win: (t) => `${t} VINCUNT!`, tie: 'PARĒS!', yours: 'tua turma', chain: 'catēna', record: 'optimum', you: 'tū', ahead: 'SUPRĀ OPTIMUM!', newBest: 'NOVUM OPTIMUM!' },
     // the menus in the language (nov24 round 2, Andy: "STUDY" should simply be ÉTUDIER / ESTUDIAR / …)
     menu: {
       play: 'Lūde', create: 'Aperī scholam', join: 'Intrā', bank: 'Verba', language: 'lingua', hello: 'Salvē!',
@@ -175,6 +183,8 @@ export const RUSH_LANGS = {
   zh: {
     id: 'zh',
     pack: 'zh',
+    // TEAM RACE + the solo BEST lane (nov26): team names (red / blue / green / yellow ink) and the race's words
+    race: { names: ['红队', '蓝队', '绿队', '黄队'], win: (t) => `${t}获胜！`, tie: '平局！', yours: '你的队', chain: '连击', record: '最佳', you: '你', ahead: '超过最佳纪录！', newBest: '新纪录！' },
     // the menus in the language (nov24 round 2, Andy: "STUDY" should simply be ÉTUDIER / ESTUDIAR / …)
     menu: {
       play: '开始玩', create: '创建房间', join: '加入房间', bank: '词汇表', language: '语言', hello: '你好！',

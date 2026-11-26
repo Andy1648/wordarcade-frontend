@@ -33,6 +33,15 @@ for (const L of LANGS) {
       const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: touch, isMobile: touch });
       const page = await ctx.newPage();
       await installBackendMock(page);
+      // a BEST LANE record to race (nov26): this STUDY FIRST 5-word run's best so far was 3 right — so the lane
+      // shows in play and the results stamp a NEW RECORD; both are held to the fit rule like everything else
+      await page.addInitScript((key) => {
+        try {
+          window.localStorage.setItem(key, JSON.stringify([0, 1, 1, 2, 2, 3]));
+        } catch {
+          /* no storage */
+        }
+      }, `wa_${L.id}rush_best_briefing_5`);
       const errors = [];
       page.on('pageerror', (e) => errors.push(e.message));
       const check = async (where) => {
@@ -81,7 +90,10 @@ for (const L of LANGS) {
         const gloss = page.locator('.sr-field--gloss.in .sr-gloss');
         await expect(over.or(gloss)).toBeVisible({ timeout: 15_000 });
         if (await over.isVisible()) break;
-        if (shotPlay) await check('6-play');
+        if (shotPlay) {
+          await expect(page.locator('.fr-best')).toBeVisible();
+          await check('6-play');
+        }
         const text = (await gloss.innerText()).trim();
         const row = WORDS.find((r) => r.gloss === text);
         expect(row, `a word meaning "${text}"`).toBeTruthy();
@@ -95,6 +107,7 @@ for (const L of LANGS) {
         await page.locator('.sr-reencode .sr-continue').click();
       }
       await expect(page.locator('.sr-respage')).toBeVisible();
+      await expect(page.locator('.fr-newbest')).toBeVisible(); // 5 right beat the record of 3
       await check('8-results');
       expect(errors).toEqual([]);
       await ctx.close();

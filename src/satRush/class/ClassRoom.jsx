@@ -29,6 +29,10 @@ import FitText from '../../components/kit/FitText.jsx';
 import { LevelLabel } from '../CaseSetup';
 import { getPack, posLabelOf } from '../packs';
 import { rushLang } from '../rushLang';
+import TeamRace, { teamName } from './TeamRace';
+
+// TEAM RACE (nov26): off, or the class split into 2 / 3 / 4 teams (the server deals the students)
+const TEAMS = [0, 2, 3, 4];
 
 const LENGTHS = [10, 20, 30];
 const MODES = [
@@ -162,6 +166,7 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
   const [n, setN] = useState(DEFAULT_WORDS);
   const [theme, setTheme] = useState(prev.theme || 'all');
   const [voice, setVoice] = useState(prev.voice || 'projector');
+  const [teams, setTeams] = useState(Number.isInteger(prev.teams) ? prev.teams : 2); // a race by default: the class plays as teams
   const label = (id) => (id === 'all' ? 'All themes' : (categories.find((c) => c.id === id) || {}).label || id);
   const pool = bandWords(words, level, theme === 'all' ? null : theme, rushLang().pack);
   const go = () => {
@@ -172,7 +177,7 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
       .slice(0, n)
       .map((r) => (lang === 'fr' ? r : { ...r, lang }));
     if (!rows.length) return;
-    onCreate({ set: { theme: theme === 'all' ? null : theme, level, mode, voice }, rows });
+    onCreate({ set: { theme: theme === 'all' ? null : theme, level, mode, voice, teams }, rows });
   };
   const count = (x) => <span className="sr-setup-opt-main">{x}</span>;
   // nov21 (Andy: "too much stuff, more concise"): option names only — no pitch line under each one
@@ -200,7 +205,18 @@ function ClassSetup({ words, categories, onCreate, onBack, busy, again = null })
           />
           <Pick label="words" cls="fr-three" options={LENGTHS} value={n} onPick={setN} render={count} />
           <Pick label="answer by" cls="duo" options={MODES.map((m) => m.id)} value={mode} onPick={setMode} render={one(MODES)} />
-          <Pick label="voice" cls="fr-three" options={VOICES.map((v) => v.id)} value={voice} onPick={setVoice} render={one(VOICES)} />
+          {/* VOICE and TEAMS share one row as two printed pickers (nov26): the TEAM RACE added a choice without
+              making the page taller — it fits a 360x640 phone and a 1093x515 Chromebook with no scroll */}
+          <div className="fr-class-pair">
+            <PrintPicker className="fr-class-select" label="voice" value={voice} options={VOICES.map((v) => ({ value: v.id, label: v.label }))} onChange={setVoice} />
+            <PrintPicker
+              className="fr-class-select"
+              label="teams"
+              value={String(teams)}
+              options={TEAMS.map((x) => ({ value: String(x), label: x ? `${x} TEAMS` : 'OFF' }))}
+              onChange={(v) => setTeams(Number(v))}
+            />
+          </div>
           {pool.length < n && <div className="fr-class-hint">only {pool.length} words in this set</div>}
         </div>
       </div>
@@ -383,7 +399,7 @@ function useConsoleKeys(primary, toggleNames) {
 }
 
 // ---- TEACHER: the console ----
-function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories = [] }) {
+function HostConsole({ snap, tally, race, host, onLeave, offline, onNewSet, categories = [] }) {
   const [showNames, setShowNames] = useState(false);
   const [showGot, setShowGot] = useState(false); // "got it" names stay folded: who struggled is what matters
   const [copied, copy] = useCopied();
@@ -452,6 +468,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
               <span className="fr-class-joined-label">{roster.length === 1 ? 'student in' : 'students in'}</span>
             </div>
             {roster.length === 0 && <div className="fr-class-none">waiting…</div>}
+            {race && roster.length > 0 && <TeamRace race={race} variant="strip" showSize />}
             {roster.length > 0 && <NamesToggle on={showNames} set={setShowNames} />}
             {showNames && roster.length > 0 && <Chips names={roster} onKick={host.kick} size={roster.length} />}
           </div>
@@ -505,7 +522,8 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
           </>
         }
       >
-        <div className="fr-class-done">
+        {race && <TeamRace race={race} final />}
+        <div className={`fr-class-done${race ? ' raced' : ''}`}>
           <div className="sr-panel fr-class-score">
             <div className="sr-panel-label">the class</div>
             <div className="fr-class-score-n sr-print" data-v={`${pct}%`}>
@@ -587,6 +605,7 @@ function HostConsole({ snap, tally, host, onLeave, offline, onNewSet, categories
           </div>
         )}
         <div className="fr-class-side">
+          {race && <TeamRace race={race} />}
           {t && <TallyBar t={t} review={review} />}
           <NamesToggle on={showNames} set={setShowNames} />
           {showNames && who && (
@@ -676,10 +695,22 @@ function JoinScreen({ initialCode, onJoin, error, onBack, busy }) {
   );
 }
 
+function YourTeam({ snap }) {
+  if (!snap.race || !Number.isInteger(snap.team)) return null;
+  const R = rushLang().race || {};
+  return (
+    <div className={`fr-race-yours t${snap.team}`}>
+      <span className="fr-race-yours-label">{R.yours}</span>
+      <b>{teamName(snap.team)}</b>
+    </div>
+  );
+}
+
 function StudentWait({ snap, onLeave }) {
   return (
     <Page title="YOU'RE IN" sub={snap.code} onBack={onLeave} backLabel="LEAVE">
       <div className="fr-class-hi">{snap.name}</div>
+      <YourTeam snap={snap} />
       <div className="fr-class-count">{snap.hostAway
           ? 'the teacher is reconnecting…'
           : snap.phase === 'review'
@@ -696,6 +727,7 @@ function StudentDone({ snap, onLeave }) {
   const got = mine.filter((o) => o === 'clean' || o === 'hinted').length;
   return (
     <Page title="CLASS DONE" onBack={onLeave} backLabel="HOME">
+      {snap.race && <TeamRace race={snap.race} mine={snap.team} variant="strip" final />}
       <div className="fr-class-hi">
         {got} / {formatNum(snap.total)}
       </div>
@@ -789,9 +821,13 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
   const studentPlaying = !!(snap && snap.role === 'student' && runRef.current.started);
   const hostAway = !!(snap && snap.hostAway);
   const offline = status !== 'open';
+  // TEAM RACE: the standings + this student's team ride along, so the game screen can show the race
+  const race = snap && snap.role === 'student' ? cr.race : null;
+  const team = snap && snap.role === 'student' && Number.isInteger(snap.team) ? snap.team : null;
+  const classDone = !!(snap && snap.phase === 'done');
   useEffect(() => {
-    if (onStudentState) onStudentState({ playing: studentPlaying, hostAway, offline });
-  }, [studentPlaying, hostAway, offline, onStudentState]);
+    if (onStudentState) onStudentState({ playing: studentPlaying, hostAway, offline, race, team, done: classDone });
+  }, [studentPlaying, hostAway, offline, onStudentState, race, team, classDone]);
 
   useEffect(() => {
     if (cr.error) setPending(false);
@@ -875,7 +911,7 @@ export default function ClassFlow({ game, words, categories, entry, initialCode,
         />
       );
     }
-    return <HostConsole snap={snap} tally={cr.tally} host={cr.host} onLeave={leave} offline={offline} onNewSet={() => setNewSet(true)} categories={categories} />;
+    return <HostConsole snap={snap} tally={cr.tally} race={cr.race} host={cr.host} onLeave={leave} offline={offline} onNewSet={() => setNewSet(true)} categories={categories} />;
   }
 
   if (snap && snap.role === 'student') {

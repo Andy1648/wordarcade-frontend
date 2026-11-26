@@ -1,0 +1,233 @@
+/* TeamRace.css — the TEAM RACE lanes (nov26). Flat print inks, ink rules, no gradients; motion is one-shot only:
+   the fills slide (a transform transition), a snapped chain jolts its lane once, the winner stamps once. */
+.fr-race {
+  --t0: #c8321e; /* red ink */
+  --t1: #2349a4; /* blue */
+  --t2: #1f7a45; /* green */
+  --t3: #d08a00; /* saffron */
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.fr-race .t0, .fr-race-yours.t0, .fr-race-win.t0 { --tc: var(--t0); }
+.fr-race .t1, .fr-race-yours.t1, .fr-race-win.t1 { --tc: var(--t1); }
+.fr-race .t2, .fr-race-yours.t2, .fr-race-win.t2 { --tc: var(--t2); }
+.fr-race .t3, .fr-race-yours.t3, .fr-race-win.t3 { --tc: var(--t3); }
+.fr-race-lanes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+/* BOARD (the teacher's projector): name · track · chain · score, one row per team */
+.fr-race.board .fr-lane {
+  display: grid;
+  grid-template-columns: minmax(0, 7.5em) minmax(0, 1fr) 2.6em 3.2em;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 3px solid var(--ink);
+  border-left: 12px solid var(--tc, var(--ink));
+  background: var(--paper);
+  font-size: var(--fs-fr7, var(--fs-body));
+}
+.fr-lane-name {
+  min-width: 0;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--tc, var(--ink));
+  overflow-wrap: anywhere;
+}
+.fr-lane-size {
+  color: var(--ink);
+  font-weight: 400;
+}
+.fr-lane-track {
+  position: relative;
+  height: 18px;
+  border: 2px solid var(--ink);
+  overflow: hidden;
+}
+.fr-lane-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--tc, var(--ink));
+  transform-origin: 0 50%;
+  transition: transform 300ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.fr-lane-chain {
+  justify-self: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: var(--fs-label);
+  opacity: 0.55;
+}
+.fr-lane-chain.hot {
+  padding: 2px 6px;
+  background: var(--tc, var(--ink));
+  color: var(--paper);
+  opacity: 1;
+}
+.fr-lane-score {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+.fr-lane.lead {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+/* a chain just snapped: the lane jolts once */
+.fr-lane.snap {
+  animation: fr-lane-snap 320ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+@keyframes fr-lane-snap {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  55% { transform: translateX(5px); }
+  80% { transform: translateX(-2px); }
+}
+
+/* STRIP (a student's phone): one row of team chips, your own outlined thick */
+.fr-race.strip .fr-race-lanes {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.fr-race.strip .fr-lane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  min-height: 34px;
+  padding: 2px 4px;
+  border: 2px solid var(--tc, var(--ink));
+  border-top-width: 6px;
+  background: var(--paper);
+  font-size: var(--fs-label);
+  line-height: 1.1;
+}
+.fr-race.strip .fr-lane.mine {
+  border-width: 4px;
+  border-top-width: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.fr-race.strip .fr-lane-chain {
+  font-size: var(--fs-label);
+}
+
+/* in a run, the strip sits under the progress bar, inside the page's side gutters */
+.fr-app .sr-stage > .fr-race.strip {
+  flex: none;
+  margin: 6px clamp(10px, 2vw, 24px) 0;
+}
+
+/* the winner: a stamp in the team's ink, once */
+.fr-race-win {
+  justify-self: center;
+  max-width: 100%;
+  padding: 6px 18px 4px;
+  border: 4px double var(--tc, var(--ink));
+  color: var(--tc, var(--ink));
+  font-size: var(--fs-fr1, var(--fs-h2));
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
+  transform: rotate(-3deg);
+  animation: fr-race-win 380ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.fr-race.strip .fr-race-win {
+  font-size: var(--fs-fr6, var(--fs-panel));
+}
+@keyframes fr-race-win {
+  0% { opacity: 0; transform: scale(1.8) rotate(-9deg); }
+  60% { opacity: 1; transform: scale(0.95) rotate(-2deg); }
+  100% { opacity: 1; transform: rotate(-3deg); }
+}
+
+/* a student's team, on the waiting screen */
+.fr-race-yours {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 8px 20px;
+  border: 4px solid var(--tc, var(--ink));
+  color: var(--tc, var(--ink));
+}
+.fr-race-yours b {
+  font-size: var(--fs-fr6, var(--fs-panel));
+  letter-spacing: 0.08em;
+}
+.fr-race-yours-label {
+  font-family: 'Space Mono', monospace;
+  font-size: var(--fs-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fr-lane.snap,
+  .fr-race-win {
+    animation: none;
+  }
+  .fr-lane-fill {
+    transition: none;
+  }
+}
+
+/* THE FINAL BOARD (class done): the winner's stamp and the lanes share ONE row, so the class score and the word
+   list below keep their room */
+.fr-race.board.final {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.fr-race.board.final .fr-race-win {
+  font-size: var(--fs-fr6, var(--fs-panel));
+}
+.fr-race.board.final .fr-race-lanes {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.fr-race.board.final .fr-lane {
+  grid-template-columns: minmax(0, auto) minmax(32px, 1fr) auto auto;
+  gap: 8px;
+}
+@media (max-width: 899px) {
+  .fr-race.board.final {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fr-race.board.final .fr-race-lanes {
+    grid-auto-flow: row;
+  }
+}
+/* with a race above it, the class score prints its three counts on one line */
+.fr-class-done.raced .fr-class-score .fr-class-legend {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+}
+
+/* CREATE ROOM: VOICE and TEAMS side by side, two printed pickers in the row VOICE used to fill alone */
+.fr-class-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 1.4vw, 16px);
+  min-width: 0;
+}
+/* a class page that is taller than the screen scrolls from its TOP (plain centring hid the first rows) */
+.fr-class-page.wide .fr-class-body {
+  justify-content: safe center;
+}
+/* CLASS DONE's word list: a column is never narrower than the longest word in the display face
+   ("medioambiental" broke mid-word in a 17rem column at 1920); the list scrolls, so fewer columns is fine */
+.fr-class-done .fr-class-summary {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+}
