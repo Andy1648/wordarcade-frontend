@@ -246,7 +246,7 @@ test('074 NO WORDS: a season-2 rebirth needs only the level gate (037 had 10 gam
   assert.equal(decideRebirth({ ...row, level: 14 }, { requestId: id(), season: 2 }, [], T0).result.reason, 'gate');
 });
 
-test('074 is the newest lb_rebirth = 042 with WORDS_PER_RB 0 (nothing else changes)', () => {
+test('074 = 042 with WORDS_PER_RB 0 (nothing else changes); 094 (its 20-a-day copy) is the newest lb_rebirth', () => {
   const dir = join(process.cwd(), 'supabase', 'migrations');
   const read = (f) => readFileSync(join(dir, f), 'utf8').replace(/\r\n/g, '\n');
   const fn = (t) => { const a = t.indexOf('create or replace function public.lb_rebirth('); return t.slice(a, t.indexOf('end $$;', a)); };
@@ -254,7 +254,7 @@ test('074 is the newest lb_rebirth = 042 with WORDS_PER_RB 0 (nothing else chang
   const b74 = fn(read('074_rebirth_no_words.sql'));
   assert.equal(b74.replace(/WORDS_PER_RB constant integer := 0;.*\n/, ''), b42.replace(/WORDS_PER_RB constant integer := 10;.*\n/, ''), '074 changes only the constant');
   const last = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort().filter((f) => read(f).includes('create or replace function public.lb_rebirth(')).pop();
-  assert.equal(last, '074_rebirth_no_words.sql');
+  assert.equal(last, '094_rebirth_pace_20.sql');
 });
 
 test('037 is the newest lb_rebirth = 035 with WORDS_PER_RB 10; gear_check flags but never hides; nothing reverts', () => {
