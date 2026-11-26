@@ -37,6 +37,11 @@ const SAMPLER = () => {
       // the SCREEN-CHANGE WIPE (TransitionOverlay) is not a notice: a ≤320 ms cosmetic sweep over a screen that has
       // already swapped (pointer-events:none) — its word sticker + ink splat ride the cover, then the node hides
       if (el.closest('.transition-overlay')) continue;
+      // a game card's ACT part (.gc-p, cardLayers/cardActs.js) is the card's own one-shot act, played on ONE shared
+      // timer that walks the grid (first at 1.4 s, then every 3.4 s). It sits on its card, inside the card grid, so it
+      // is the menu, not a notice. Whether the centred card happens to act inside the 1.5 s baseline or the window
+      // after the return is pure timing (it tripped CI 3/3 on one branch, 1/3 locally in UTC, never on main's run)
+      if (el.matches('.game-card .gc-p')) continue;
       const r = el.getBoundingClientRect();
       const area = (r.width * r.height) / (vw * vh);
       if (r.width < 100 || area < 0.015 || area > 0.6) continue;

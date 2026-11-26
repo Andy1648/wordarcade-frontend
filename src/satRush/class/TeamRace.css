@@ -231,3 +231,10 @@
 .fr-class-done .fr-class-summary {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
 }
+/* on a PROJECTOR the words print at the panel size: "discriminación" is ~300px of Dela Gothic there, wider than a
+   20rem (or 24rem) column's word cell, so the columns widen until the longest word (14 letters) sits whole */
+@media (min-width: 1400px) and (min-height: 820px) {
+  .fr-class-page .fr-class-done .fr-class-summary {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
+  }
+}
