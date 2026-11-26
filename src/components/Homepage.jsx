@@ -152,6 +152,9 @@ const PAGED_MENU_QUERY = '(min-width: 761px) and (min-aspect-ratio: 5/4)';
 // the right-column PROFILE layout on the wide paged menu: 'chip' (default) | 'slab' (?menu=slab — for comparing)
 const MENU_VARIANT = (() => { try { return new URLSearchParams(window.location.search).get('menu') === 'slab' ? 'slab' : 'chip'; } catch { return 'chip'; } })();
 const PAGED_CARD_MAX_W = 560;
+// four across replaces three on a wide monitor once its cards keep this share of the three-across card width
+const PAGED_4COL_KEEP = 0.85;
+const PAGED_4COL_MIN_W = 220;
 // the scrolling grid (short-wide stage): rows on the first screen, and how much of the next row peeks in under them
 const MENU_VIS_ROWS = 2;
 // the third row's visible strip: ~6% of the cards area, 24-44px — plainly "there's more"; on a short Chromebook
@@ -575,8 +578,11 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
         // SCROLLING GRID (feat/menu-six-grid, Andy nov25): on the short-wide stage the cards are three across; the
         // first TWO rows (six cards) fill the first screen and the third row PEEKS in under them (menuPeekPx), so
         // the scroll down to the rest is obvious. Elsewhere (a portrait window) every card fits, no scroll.
+        // WIDE MONITORS (Andy nov26 "huge gap" at 1920): two rows on screen make the cards HEIGHT-bound, so three
+        // across left a wide empty band either side of the row. A FOURTH column joins when the panel is wide enough
+        // for it (picked below), so the row fills the panel instead of floating in it.
         const LAYOUTS = isPagedMenu
-          ? [[Math.min(3, count), Math.ceil(count / Math.min(3, count))]]
+          ? [[Math.min(3, count), Math.ceil(count / Math.min(3, count))], ...(count > 3 ? [[4, Math.ceil(count / 4)]] : [])]
           : (narrow ? [2] : [count, 4, 3, 2, 1]).map((c) => [c, Math.ceil(count / c)]);
         let best = null;
         for (const [cols, rows] of LAYOUTS) {
@@ -602,6 +608,9 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
             // stops at the row's height, so two rows + the peek still fit the first screen.
             if (clampPaged && f.h > rowH) f = { ...f, h: rowH, aspect: false };
             f.owed = Math.max(0, f.h - rowH);
+            // the fourth column only ever joins at a true-3:4 size that fits two rows and is no narrower than the
+            // cards a 1366 laptop already shows (their payout lines wrap cleanly there)
+            if (cols === 4 && (f.w < PAGED_4COL_MIN_W || !f.aspect || f.owed > 0.5)) f = null;
           } else {
             const w0 = Math.min(colW, (rowH * 3) / 4);
             if (w0 >= minW) f = { w: w0, h: (w0 * 4) / 3, cols, rows, aspect: true };
@@ -611,9 +620,12 @@ export default function Homepage({ onSelectGame, onPlaySolo, onRaceQuickMatch, o
           }
           if (!f || f.w <= 4 || f.h <= 4) continue;
           // A true 3:4 card beats a squat one; among 3:4 the widest wins; among squat the tallest.
-          const better = !best
-            || (f.aspect && !best.aspect)
-            || (f.aspect === best.aspect && (f.aspect ? f.w > best.w + 0.5 : f.h > best.h + 0.5));
+          // Paged: four across beats three when its cards keep PAGED_4COL_KEEP of the three-across size (the row
+          // then fills the panel — the cards barely shrink, and the scroll's third row comes up onto the screen).
+          const better = !best || (isPagedMenu && f.cols !== best.cols
+            ? f.cols > best.cols && f.w >= best.w * PAGED_4COL_KEEP
+            : (f.aspect && !best.aspect)
+              || (f.aspect === best.aspect && (f.aspect ? f.w > best.w + 0.5 : f.h > best.h + 0.5)));
           if (better) best = f;
         }
         if (!best) { grid.style.removeProperty('--card-h'); return { wide: minW, tall: 0, rows: 1 }; }

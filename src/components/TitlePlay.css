@@ -1,6 +1,10 @@
 /* TitlePlay.css — the fresh menu's TITLE (TitlePlay.jsx): hero on a burst · ONE big PLAY · a quiet OR PICK row.
  * Flat fills, darker-shade outlines, hard black offset shadows (CLAUDE.md design style). Motion: one finite enter
- * pop on the hero and the PLAY plate, press/hover feedback — transform only, nothing loops. */
+ * pop on the hero and the PLAY plate, press/hover feedback — transform only, nothing loops.
+ *
+ * FIT (Andy nov26 "very compressed"): the title is a size container. The hero takes the height there is but never
+ * more than ~52% of the row, the PLAY column gets the rest (up to 640px) and the OR PICK chips fill that column edge
+ * to edge, so the PLAY + chips grow with the screen instead of sitting small in a wide panel. */
 
 .tp {
   grid-area: cards;
@@ -12,15 +16,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(16px, 4vw, 64px);
-  padding: 0 0 clamp(4px, 1.5vh, 16px);
+  gap: clamp(12px, 1.6vw, 32px);
+  padding: 0 clamp(8px, 2vw, 32px) clamp(4px, 1.5vh, 16px);
+  container-type: size;
 }
 
 /* the hero on its burst — a square that takes what height the row has */
 .tp-stage {
   position: relative;
   flex: 0 0 auto;
-  height: min(100%, 50vh, 40vw);
+  /* the hero takes the height there is, up to ~half the row, and always leaves the PLAY column ~360px */
+  height: min(100cqh, 52cqw, calc(100cqw - 400px));
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -47,17 +53,17 @@
 }
 
 .tp-side {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 520px;
+  max-width: 640px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: clamp(14px, 3vh, 28px);
+  gap: clamp(16px, 4cqh, 40px);
 }
 
 /* ---- the ONE path: the painted PLAY sticker (playPlate/PlayPlate.css owns its art + motion) ---- */
-.pp.tp-play { align-self: center; width: min(100%, 520px); }
+.pp.tp-play { align-self: center; width: 100%; }
 .tp-play-s {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
@@ -67,30 +73,43 @@
   white-space: nowrap;
 }
 
-/* ---- OR PICK: the other open modes, quiet ---- */
+/* ---- OR PICK: the other open modes — one rule-flanked label, then chips that fill the column edge to edge ---- */
 .tp-pick {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(10px, 1.8cqh, 16px);
 }
 .tp-pick-k {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-label);
-  letter-spacing: 3px;
+  font-size: max(var(--fs-body), var(--fs-hp13));
+  letter-spacing: 4px;
   color: #A89EC4;
+  white-space: nowrap;
+}
+.tp-pick-k::before,
+.tp-pick-k::after {
+  content: '';
+  flex: 1 1 0;
+  height: 3px;
+  border-radius: 2px;
+  background: #3a2a5c;
 }
 .tp-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: clamp(10px, 1.4cqh, 14px);
 }
 .tp-chip {
-  min-height: 44px;
-  padding: 6px 14px;
+  flex: 1 1 auto; /* each row stretches to the column's full width */
+  min-height: clamp(48px, 8cqh, 64px);
+  padding: 6px clamp(12px, 1.2vw, 20px);
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  font-size: var(--fs-body);
+  font-size: max(var(--fs-body), var(--fs-hp13)); /* the menu's own scale (--u): 16px on a laptop, ~22px at 1920 */
   letter-spacing: 0.5px;
   color: #0d0618;
   background: var(--chip);
@@ -124,6 +143,7 @@
   justify-content: flex-start;
   gap: 12px;
   padding: 0;
+  container-type: normal;
 }
 .tp--phone .tp-stage {
   flex: 1 1 0;
@@ -138,9 +158,11 @@
 .tp--phone .tp-hero { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tp--phone .tp-side { max-width: none; gap: 12px; flex: 0 0 auto; }
 .tp--phone .pp.tp-play { width: min(100%, 330px); }
+.tp--phone .tp-pick { gap: 8px; }
+.tp--phone .tp-pick-k { font-size: var(--fs-body); }
 .tp--phone .tp-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.tp--phone .tp-chip { padding: 6px 8px; white-space: normal; line-height: 1.15; }
-.tp--phone .tp-pick-k { text-align: center; }
+.tp--phone .tp-chip { min-height: 48px; padding: 6px 8px; font-size: var(--fs-body); white-space: normal; line-height: 1.15; }
+.tp--phone .tp-chip:last-child:nth-child(odd) { grid-column: 1 / -1; } /* an odd one out takes the whole last row */
 @media (max-height: 680px) {
   .tp--phone .pp.tp-play { width: min(100%, 250px); }
   .tp--phone .tp-side { gap: 8px; }

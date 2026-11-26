@@ -12,6 +12,8 @@
 //   (d) scrolling the cards area moving the wordmark / scrolling the page, or not bringing the last card fully into
 //       view; a card there not opening its mode dialog;
 //   (e) the cards not centred in the console (left gap = right gap).
+// WIDE MONITORS (Andy nov26 "huge gap"): where the panel is wide enough a FOURTH column joins — every card is then on
+// the first screen (no peek, no scroll) and the row fills the console instead of floating in it (f).
 import { test, expect } from '@playwright/test';
 import { GAMES } from '../src/gameData.js';
 import { installBackendMock } from './support/backendMock.js';
@@ -48,7 +50,8 @@ function readCards(page) {
 }
 
 const SIZES = [
-  { w: 1920, h: 1080, full: true },
+  { w: 2560, h: 1440, full: true, wide: true },
+  { w: 1920, h: 1080, full: true, wide: true },
   { w: 1366, h: 768, full: true },
   // 1366x657: two full rows at 3:4 use every pixel of the cards area, so the peek costs the cards a little height
   { w: 1366, h: 657, full: false },
@@ -56,7 +59,7 @@ const SIZES = [
   { w: 1163, h: 501, full: false },
 ];
 
-for (const { w, h, full } of SIZES) {
+for (const { w, h, full, wide } of SIZES) {
   test(`${w}x${h}: six cards fill the first screen, the next row peeks, only the cards area scrolls`, async ({ page }) => {
     await installBackendMock(page);
 
@@ -74,8 +77,14 @@ for (const { w, h, full } of SIZES) {
     expect(cards.length, 'every mode is on the grid').toBe(GAMES.length);
     // (b) the first screen
     const first = cards.filter((c) => c.inView);
-    expect(first.length, 'six cards fully in view on the first screen').toBe(FIRST);
-    if (GAMES.length > FIRST) expect(cards.some((c) => c.peeks), 'the next row peeks in under the first six').toBe(true);
+    if (wide) {
+      await expect(page.locator('.homepage-cards-grid'), 'four across on a wide monitor').toHaveAttribute('data-cols', '4');
+      expect(first.length, 'every card fully in view on the first screen').toBe(Math.min(8, GAMES.length));
+    } else {
+      await expect(page.locator('.homepage-cards-grid'), 'three across under a wide monitor').toHaveAttribute('data-cols', '3');
+      expect(first.length, 'six cards fully in view on the first screen').toBe(FIRST);
+      if (GAMES.length > FIRST) expect(cards.some((c) => c.peeks), 'the next row peeks in under the first six').toBe(true);
+    }
     for (const c of first) {
       // eslint-disable-next-line no-console
       console.log(`[scroll-grid ${w}x${h}] ${c.game} ${c.w}x${c.h} ratio=${c.ratio.toFixed(3)} (ref ${ref.toFixed(3)})`);
@@ -84,7 +93,7 @@ for (const { w, h, full } of SIZES) {
       if (full) expect(Math.abs(c.ratio - ref) / ref, `${c.game} ${c.w}x${c.h} is squashed`).toBeLessThanOrEqual(RATIO_TOL); // (c)
     }
 
-    if (GAMES.length <= FIRST) return;
+    if (GAMES.length <= first.length) return;
     // (d) scroll the cards area: the page and the wordmark stay put, the last card comes fully into view
     const logoY = await page.locator('.homepage-logo').evaluate((el) => el.getBoundingClientRect().top);
     await scrollCards(page, 'end');
@@ -110,5 +119,19 @@ for (const { w, h } of [{ w: 1366, h: 657 }, { w: 1366, h: 768 }, { w: 1280, h: 
     });
     expect(g.left, 'a card is outside the console').toBeGreaterThanOrEqual(0);
     expect(Math.abs(g.left - g.right), `left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1.5);
+  });
+}
+
+// (f) Andy nov26: on a wide monitor the card row FILLS the console — no wide empty band either side of it.
+for (const { w, h } of [{ w: 1920, h: 1080 }, { w: 2560, h: 1440 }]) {
+  test(`${w}x${h}: the card row fills the console's width`, async ({ page }) => {
+    await installBackendMock(page);
+    await boot(page, w, h);
+    const f = await page.evaluate(() => {
+      const rs = [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')].map((m) => m.getBoundingClientRect());
+      const box = document.querySelector('.homepage-cards-region').getBoundingClientRect();
+      return (Math.max(...rs.map((r) => r.right)) - Math.min(...rs.map((r) => r.left))) / box.width;
+    });
+    expect(f, 'the row spans at least 90% of the console').toBeGreaterThanOrEqual(0.9);
   });
 }
