@@ -12,6 +12,8 @@
 //   (d) scrolling the cards area moving the wordmark / scrolling the page, or not bringing the last card fully into
 //       view; a card there not opening its mode dialog;
 //   (e) the cards not centred in the console (left gap = right gap).
+// WIDE MONITORS (Andy nov26 "huge gap"): where the panel is wide enough a FOURTH column joins — every card is then on
+// the first screen (no peek, no scroll) and the row fills the console instead of floating in it (f).
 import { test, expect } from '@playwright/test';
 import { GAMES } from '../src/gameData.js';
 import { installBackendMock } from './support/backendMock.js';
@@ -56,7 +58,7 @@ const SIZES = [
   { w: 1163, h: 501, full: false },
 ];
 
-for (const { w, h, full } of SIZES) {
+for (const { w, h, full, wide } of SIZES) {
   test(`${w}x${h}: six cards fill the first screen, the next row peeks, only the cards area scrolls`, async ({ page }) => {
     await installBackendMock(page);
 
@@ -110,5 +112,19 @@ for (const { w, h } of [{ w: 1366, h: 657 }, { w: 1366, h: 768 }, { w: 1280, h: 
     });
     expect(g.left, 'a card is outside the console').toBeGreaterThanOrEqual(0);
     expect(Math.abs(g.left - g.right), `left gap ${g.left.toFixed(1)} vs right gap ${g.right.toFixed(1)}`).toBeLessThanOrEqual(1.5);
+  });
+}
+
+// (f) Andy nov26: on a wide monitor the card row FILLS the console — no wide empty band either side of it.
+for (const { w, h } of [{ w: 1920, h: 1080 }, { w: 2560, h: 1440 }]) {
+  test(`${w}x${h}: the card row fills the console's width`, async ({ page }) => {
+    await installBackendMock(page);
+    await boot(page, w, h);
+    const f = await page.evaluate(() => {
+      const rs = [...document.querySelectorAll('.homepage-cards-grid > .game-card-magnet')].map((m) => m.getBoundingClientRect());
+      const box = document.querySelector('.homepage-cards-region').getBoundingClientRect();
+      return (Math.max(...rs.map((r) => r.right)) - Math.min(...rs.map((r) => r.left))) / box.width;
+    });
+    expect(f, 'the row spans at least 90% of the console').toBeGreaterThanOrEqual(0.9);
   });
 }

@@ -486,6 +486,15 @@ html[data-beat='true'] .homepage-logo {
    (7 = 3 + 3 + 1) takes the MIDDLE track */
 .homepage-stage[data-paged] .homepage-cards-grid[data-cols] .game-card-magnet:nth-child(n):nth-child(n) { grid-column: auto; }
 .homepage-stage[data-paged] .homepage-cards-grid[data-cols='3'] .game-card-magnet:nth-child(3n+1):last-child:nth-child(n) { grid-column: 2; }
+/* FOUR ACROSS (a wide monitor — the fit-math picks it, Andy nov26): eight half-tracks, so a short last row (7 = 4 + 3)
+   sits centred under the full one instead of hugging the left edge */
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='4'] {
+  grid-template-columns: repeat(8, calc((var(--card-w, 200px) - var(--gap)) / 2));
+}
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(n):nth-child(n) { grid-column: span 2; }
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(4n+1):nth-last-child(3):nth-child(n) { grid-column: 2 / span 2; }
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(4n+1):nth-last-child(2):nth-child(n) { grid-column: 3 / span 2; }
+.homepage-stage[data-paged] .homepage-cards-grid[data-cols='4'] .game-card-magnet:nth-child(4n+1):last-child:nth-child(n) { grid-column: 4 / span 2; }
 
 /* ---- a narrow desktop window (481-760px): a slimmer rail, a smaller wordmark floor ---- */
 @media (max-width: 760px) {
@@ -1100,6 +1109,28 @@ html[data-beat='true'] .hp-rail .kb-rwrap.is-stats .kb-rico { animation-delay: 3
    Same three faces, same fill; only bigger. ---- */
 .homepage-stage[data-first] .homepage-logo-wrap { height: max(84px, 17vh); }
 .homepage-stage[data-first] .homepage-logo { font-size: calc(var(--fs-hpword) * 1.5); }
+/* THE TITLE TAKES THE WIDTH (Andy nov26 "very compressed"): at stage 0 there is no rail and the right column holds only
+   the settings icon + CREDITS, yet both kept their full ~236px+ tracks — the title sat squeezed in the middle third
+   with empty bands either side. Here the side tracks shrink to what they hold (symmetric, so the wordmark stays on
+   the page's centre line) and the console + TitlePlay take the rest. Beats the <1200px paged areas by specificity. */
+.homepage-stage[data-paged][data-first] {
+  --hp-first-side: max(100px, calc(110 * var(--u)));
+  grid-template-columns: var(--hp-first-side) minmax(0, 1fr) var(--hp-first-side);
+  grid-template-areas:
+    '. logo icons'
+    '. xp .'
+    '. cards .'
+    '. cards extras';
+}
+.homepage-stage[data-paged][data-first]::before { grid-area: 2 / 2 / 5 / 3; }
+.homepage-stage[data-paged][data-first] .hp-icons { justify-self: end; }
+.homepage-stage[data-paged][data-first] .hp-extras {
+  grid-area: extras;
+  align-self: end;
+  justify-self: end;
+  justify-content: flex-end;
+  padding-left: 0;
+}
 
 /* THE POWER FORM on the UPGRADES tile (Andy oct26 "include their current stage icon too bc it looks hella cool"): the
    painted form is a busier picture than a kit glyph, so it sits a size up — big enough to read the art */
