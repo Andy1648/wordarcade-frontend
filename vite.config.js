@@ -89,7 +89,7 @@ function pwaPlugin() {
       // which made EVERY first-time visitor's worker download all ~1,570 files (every lazy chunk + all of
       // cast/anim, shop, gear art) in the background, and re-download every changed chunk after EACH deploy.
       // That was ~6M CDN requests/month against a 1M flat-rate tier, for files most visitors never open.
-      // Now only the app shell is precached; everything else is fetched on demand and runtime-cached below.
+      // Now only the app shell is precached; everything else is fetched on demand (browser HTTP cache).
       globPatterns: ['assets/index-*.{js,css}', 'fonts/*.woff2', '*.{avif,webp,ico}'],
       // NETWORK-FIRST HTML (Andy oct8: "people's updates still load after waiting a while or refreshing").
       // With `navigateFallback: '/index.html'` every navigation was answered from the PRECACHE — the previous
@@ -108,18 +108,9 @@ function pwaPlugin() {
           handler: 'NetworkFirst',
           options: { cacheName: 'taw-pages', networkTimeoutSeconds: 3, cacheableResponse: { statuses: [0, 200] } },
         },
-        {
-          // On-demand cache for what the page actually used: hashed chunks + art. Immutable on Vercel, so
-          // cache-first never serves stale content; capped so it can't grow without bound.
-          urlPattern: ({ url, request }) => url.origin === self.location.origin
-            && (url.pathname.startsWith('/assets/') || ['image', 'font'].includes(request.destination)),
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'taw-static',
-            expiration: { maxEntries: 400, maxAgeSeconds: 30 * 24 * 3600 },
-            cacheableResponse: { statuses: [200] },
-          },
-        },
+        // No runtime rule for chunks/art: vercel.json already serves them `immutable, max-age=1y`, so the
+        // browser HTTP cache keeps them for repeat visits with zero extra CDN requests. A CacheFirst rule
+        // here would only duplicate that and hide the fetches from the page (breaks the load-state e2e).
       ],
       cleanupOutdatedCaches: true,
       clientsClaim: true,

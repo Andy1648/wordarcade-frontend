@@ -20,7 +20,7 @@ function walk(dir) {
 }
 
 /** Build B = build A with the LeaderboardScreen chunk renamed (a deploy re-hashes it) + a marker. */
-function makeBuilds() {
+function makeBuilds({ rehashEntry = false } = {}) {
   const dist = path.resolve('dist');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'taw-chunk-'));
   const A = path.join(root, 'A');
@@ -36,6 +36,18 @@ function makeBuilds() {
     if (!/\.(js|html|css|json)$/.test(f)) continue;
     const t = fs.readFileSync(f, 'utf8');
     if (t.includes(old)) fs.writeFileSync(f, t.split(old).join(neu));
+  }
+  // A real deploy also re-hashes the ENTRY chunk (its content now imports the new chunk name), so build B
+  // must not serve different bytes at A's entry URL — the precached shell would otherwise pin A's entry.
+  const entry = fs.readdirSync(assets).find((f) => /^index-[\w-]+\.js$/.test(f));
+  if (rehashEntry && entry) {
+    const neuEntry = 'index-DEPLOYB0.js';
+    fs.renameSync(path.join(assets, entry), path.join(assets, neuEntry));
+    for (const f of walk(B)) {
+      if (!/\.(js|html|css|json)$/.test(f)) continue;
+      const t = fs.readFileSync(f, 'utf8');
+      if (t.includes(entry)) fs.writeFileSync(f, t.split(entry).join(neuEntry));
+    }
   }
   const idx = path.join(B, 'index.html');
   fs.writeFileSync(idx, fs.readFileSync(idx, 'utf8').replace('</head>', '<meta name="taw-build" content="B"></head>'));
@@ -64,7 +76,7 @@ const CRASH_WATCH = () => {
 for (const sw of ['block', 'allow']) {
   test(`a tab left open across a deploy opens the leaderboard (service worker: ${sw}) — no broken screen`, async ({ browser }) => {
     test.setTimeout(90000);
-    const { A, B } = makeBuilds();
+    const { A, B } = makeBuilds({ rehashEntry: sw === 'allow' });
     const dirRef = { dir: A };
     const server = await serve(dirRef);
     const base = `http://127.0.0.1:${server.address().port}`;
