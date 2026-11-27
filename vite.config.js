@@ -85,7 +85,12 @@ function pwaPlugin() {
       // would ask for the avif, get nothing, and render no mascot at all.
       // mp3 stays OUT on purpose: precaching would pull the 1.6MB track in the background
       // with no user gesture, which is exactly what this branch removed.
-      globPatterns: ['**/*.{js,css,html,svg,png,avif,webp,ico,woff2}'],
+      // PRECACHE DIET (nov27, Vercel CDN bill): this used to be '**/*.{js,css,html,svg,png,avif,webp,ico,woff2}',
+      // which made EVERY first-time visitor's worker download all ~1,570 files (every lazy chunk + all of
+      // cast/anim, shop, gear art) in the background, and re-download every changed chunk after EACH deploy.
+      // That was ~6M CDN requests/month against a 1M flat-rate tier, for files most visitors never open.
+      // Now only the app shell is precached; everything else is fetched on demand (browser HTTP cache).
+      globPatterns: ['assets/index-*.{js,css}', 'fonts/*.woff2', '*.{avif,webp,ico}'],
       // NETWORK-FIRST HTML (Andy oct8: "people's updates still load after waiting a while or refreshing").
       // With `navigateFallback: '/index.html'` every navigation was answered from the PRECACHE — the previous
       // deploy's index.html, pointing at the previous deploy's hashed bundle — and the new build only appeared
@@ -103,6 +108,9 @@ function pwaPlugin() {
           handler: 'NetworkFirst',
           options: { cacheName: 'taw-pages', networkTimeoutSeconds: 3, cacheableResponse: { statuses: [0, 200] } },
         },
+        // No runtime rule for chunks/art: vercel.json already serves them `immutable, max-age=1y`, so the
+        // browser HTTP cache keeps them for repeat visits with zero extra CDN requests. A CacheFirst rule
+        // here would only duplicate that and hide the fetches from the page (breaks the load-state e2e).
       ],
       cleanupOutdatedCaches: true,
       clientsClaim: true,
