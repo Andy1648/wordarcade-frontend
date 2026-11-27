@@ -238,3 +238,55 @@
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
   }
 }
+
+/* THE BOARD on a narrow screen (a phone or a split window running the class): the console stacks the clue over the
+   class, so the lanes sit side by side as compact tiles (name · score, then a thin track · chain) instead of one
+   44px row each; a long clue on a 360x640 phone pushed its "noun (m.)" line out of the body */
+@media (max-width: 899px) {
+  .fr-class-side .fr-race.board:not(.final) .fr-race-lanes {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+    gap: 4px;
+  }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'name score' 'track chain';
+    gap: 2px 6px;
+    padding: 3px 6px;
+    border-width: 2px;
+    border-left-width: 2px;
+    border-top: 6px solid var(--tc, var(--ink));
+    font-size: var(--fs-label);
+  }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-name { grid-area: name; overflow-wrap: normal; }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-chain { grid-area: chain; }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-score { grid-area: score; }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-track {
+    grid-area: track;
+    height: 8px;
+  }
+}
+/* a PHONE running the class: every pixel goes to the clue, so a team is a two-line tile (name, then score · chain)
+   with no track, two to a row, the class column packs tighter, and the clue steps down one more size */
+@media (max-width: 520px) {
+  .fr-class-side:has(> .fr-race) {
+    gap: 6px;
+  }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane {
+    grid-template-columns: auto auto;
+    grid-template-areas: 'name name' 'score chain';
+    justify-content: center;
+    justify-items: center;
+    gap: 0 8px;
+    min-height: 0;
+    padding: 1px 4px 2px;
+  }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-track {
+    display: none;
+  }
+  .fr-class-side .fr-race.board:not(.final) .fr-lane-chain.hot {
+    padding: 0 5px;
+  }
+  .fr-app .fr-class-console:has(.fr-race) .fr-class-clue .fr-class-gloss {
+    font-size: min(var(--fs-fr12), calc(150cqw / var(--len, 8)), 6vh);
+  }
+}
