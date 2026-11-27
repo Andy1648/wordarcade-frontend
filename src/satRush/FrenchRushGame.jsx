@@ -23,7 +23,7 @@
 // LANGUAGE RUSH (nov24): this is now the screen for every AP world language — French, Spanish, Italian, Latin
 // and Chinese — keyed by `lang` (rushLang.js holds what differs). Each language has its own link and root
 // (FrenchRushApp + rushApps/); the cover's language picker moves between them.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import './SatRush.css';
 import './FrenchRush.css';
 import { useSatRushGame } from './useSatRushGame';
@@ -37,11 +37,14 @@ import CaseSetup from './CaseSetup';
 import SatKeyInput from './SatKeyInput';
 import WordBank from './WordBank';
 import ClassFlow from './class/ClassRoom';
+import TeamRace from './class/TeamRace';
+import { readBest, bestAt, saveIfBest } from './bestLane';
+import { formatNum } from '../format';
 import { hasClassSeat } from './class/useClassRoom';
 import { usePlayClock } from '../progress/playClock.js';
 import PressWipe from './PressWipe';
 import PrintPicker from './PrintPicker';
-import { RUSH_LANGS, RUSH_LANG_ORDER } from './rushLang';
+import { RUSH_LANGS, RUSH_LANG_ORDER, rushLang } from './rushLang';
 import { usePressOnChange } from './press';
 // last, so the nov21 clean pass wins over SatRush.css / FrenchRush.css / ClassRoom.css
 import './FrenchRushClean.css';
@@ -116,6 +119,30 @@ function Cover({ lang, onPlay, onBank, onCreate, onJoin }) {
 
 // The run's progress, Quizlet-style: one ink bar under the HUD that fills as words settle (transform only),
 // and a one-shot frame beat on every answer — ink for a capture, red ink for a miss.
+// THE BEST LANE (solo, nov26): under it, your right answers so far against your best run's at the same point —
+// two fills on one lane, and the two counts at its end. Passing the record prints a one-shot chip.
+function BestLane({ right, best, total, aheadKey }) {
+  const R = rushLang().race || {};
+  const f = (n) => (total > 0 ? Math.min(1, n / total) : 0);
+  const ahead = right > best;
+  return (
+    <div className={`fr-best${ahead ? ' ahead' : ''}`} aria-label={`${R.you} ${formatNum(right)} · ${R.record} ${formatNum(best)}`}>
+      <span className="fr-best-track" aria-hidden="true">
+        <span className="fr-best-ghost" style={{ transform: `scaleX(${f(best)})` }} />
+        <span className="fr-best-you" style={{ transform: `scaleX(${f(right)})` }} />
+      </span>
+      <span className="fr-best-nums" aria-hidden="true">
+        {R.you} <b>{formatNum(right)}</b> · {R.record} {formatNum(best)}
+      </span>
+      {aheadKey > 0 && (
+        <span className="fr-best-chip" key={aheadKey} role="status">
+          {R.ahead}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function RunProgress({ settled, total, stamp }) {
   const frac = total > 0 ? Math.min(1, settled / total) : 0;
   const beat = stamp && (stamp.kind === 'miss' ? 'miss' : 'got');
@@ -180,6 +207,36 @@ export default function FrenchRushGame({ lang = 'fr' }) {
   const classStandbyRef = useRef(null); // a student's results → back to the class screen, seat kept
   const inClassRun = classOpen && classState.playing;
   const ui = (view.pack && view.pack.ui) || null;
+
+  // THE BEST LANE (solo): the record for this language + mode + length, read when a run starts
+  const playingSolo = view.phase === 'playing' && view.hasWord && !inClassRun && view.runTotal > 0;
+  const bestKey = playingSolo ? `${view.mode}:${view.runTotal}` : null;
+  const best = useMemo(() => (bestKey ? readBest(L.id, view.mode, view.runTotal) : null), [bestKey, L.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const bestNow = best ? bestAt(best, view.answered) : null;
+  // the one-shot "ahead of your record" chip: each time you go from level-or-behind to ahead
+  const aheadRef = useRef({ ahead: false, n: 0, key: null });
+  if (aheadRef.current.key !== bestKey) aheadRef.current = { ahead: false, n: 0, key: bestKey };
+  if (bestNow != null) {
+    const ahead = view.cleared > bestNow;
+    if (ahead && !aheadRef.current.ahead) aheadRef.current.n += 1;
+    aheadRef.current.ahead = ahead;
+  }
+  // a finished solo run: keep it if it beat the record, and say so on the results
+  // (once per finished run: the results object is rebuilt on every render, so the run is marked saved until the
+  // page leaves the results)
+  const [newBest, setNewBest] = useState(null);
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (view.phase !== 'over') {
+      savedRef.current = false;
+      return;
+    }
+    if (inClassRun || !view.results || savedRef.current) return;
+    savedRef.current = true;
+    const r = view.results;
+    const total = r.runTotal || 0;
+    setNewBest(total ? saveIfBest(L.id, (r.spec && r.spec.mode) || view.mode, total, r.runLog) : null);
+  }, [view.phase, view.results, inClassRun, L.id, view.mode]);
 
   // THE PRESS (oct26): every solo screen change pulls a fresh sheet off the press, titled in French with its
   // English underneath. The class screens press their own sheets (ClassFlow); a class run starts here.
@@ -247,6 +304,8 @@ export default function FrenchRushGame({ lang = 'fr' }) {
               onExit={inClassRun ? leaveClassRun : home}
             />
             <RunProgress settled={view.settled} total={view.runTotal} stamp={view.stamp} />
+            {inClassRun && classState.race && <TeamRace race={classState.race} mine={classState.team} variant="strip" />}
+            {!inClassRun && bestNow != null && <BestLane right={view.cleared} best={bestNow} total={view.runTotal} aheadKey={aheadRef.current.n} />}
             <div className="sr-body">
               <WordCard view={view} onHint={game.hint} onSkip={game.skip} onContinue={game.continueRun} onPick={game.pickChoice} />
               {inClassRun && (classState.offline || classState.hostAway || view.pending !== 'idle') && (
@@ -311,6 +370,15 @@ export default function FrenchRushGame({ lang = 'fr' }) {
         <SatRushResults
           results={view.results}
           economy={false}
+          banner={
+            inClassRun && classState.race ? (
+              <TeamRace race={classState.race} mine={classState.team} variant="strip" final={!!classState.done} />
+            ) : newBest && newBest.isNew ? (
+              <div className="fr-newbest" role="status">
+                {(L.race || {}).newBest}
+              </div>
+            ) : null
+          }
           ui={inClassRun && ui && ui.results ? { ...ui, results: { ...ui.results, again: ui.results.classAgain || 'Back to the class', menu: ui.results.classLeave || 'Leave the class' } } : ui}
           onAgain={inClassRun ? () => (classStandbyRef.current ? classStandbyRef.current() : leaveClassRun()) : game.startGame}
           onReplay={inClassRun ? null : game.replayMisses}

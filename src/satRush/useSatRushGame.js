@@ -1470,5 +1470,7 @@ function buildView(state, cur, eng, input, extra) {
     // FINITE run progress for the HUD: words settled / the run's length.
     runTotal: state.runTotal || 0,
     settled: state.settled || 0,
+    // the run's answers so far (the solo BEST lane races `cleared` against the record at the same point)
+    answered: (state.cleared || 0) + (state.missed || 0),
   };
 }

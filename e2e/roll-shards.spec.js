@@ -91,12 +91,17 @@ test('LEGENDARY: ONE idea — its rays + slam, NO blade shards stacked on the re
     sessionStorage.setItem('rs.seeded', '1');
     for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
   }, { ...SEED, 'taw.markRolls': ROLLS(59) });
+  // the 60th roll's hard pity guarantees LEGENDARY *or better*: a natural MYTHIC could still land (it did on CI), so
+  // the press's Math.random is pinned low (a plain draw) and the pity alone makes it the LEGENDARY under test
+  await page.addInitScript(() => { const real = Math.random; Math.random = () => (window.__rollRng ? 0.3 : real()); });
   await page.goto('/?portal=1');
   await menuReady(page);
   await page.locator('.hp-nav.is-gears:visible').first().click();
   await page.locator('.rs-overlay').waitFor();
+  await page.evaluate(() => { window.__rollRng = true; });
   await holdRoll(page);
   await expect(page.getByTestId('roll-cutscene')).toHaveClass(/is-on/, { timeout: 15_000 });
+  await page.evaluate(() => { window.__rollRng = false; });
   await expect(page.getByTestId('roll-cutscene')).toHaveClass(/legendary/);
   let most = 0;
   const until = Date.now() + 3000;

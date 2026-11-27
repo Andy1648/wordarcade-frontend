@@ -151,7 +151,9 @@ test('device A links its board row; device B signs in, gets its own secret on th
   // nothing of its own on B: no question — it restores and reloads into the account
   await expect.poll(async () => JSON.parse((await raw(b.page, 'taw.lb.profile')) || '{}').username, { timeout: 20_000 }).toBe('GoogleKid');
   await expect.poll(async () => JSON.parse((await raw(b.page, 'taw.s2.xp')) || '{}').lv, { timeout: 20_000 }).toBe(40);
-  expect(await raw(b.page, 'taw.s2.wins')).toBe('777');
+  // the restore writes its keys one by one around a reload: the XP landing first does not mean the wins have (CI read
+  // null between them), so the wins are waited for the same way
+  await expect.poll(() => raw(b.page, 'taw.s2.wins'), { timeout: 20_000 }).toBe('777');
   const bSecret = await raw(b.page, 'taw.lb.secret');
   expect(bSecret).not.toBe(SECRET); // B's OWN device secret…
   expect(shared.secrets.get(bSecret)).toBe(ID); // …on A's row; A keeps its own

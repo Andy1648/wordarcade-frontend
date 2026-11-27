@@ -595,6 +595,27 @@ button.fr-class-chip:focus-visible .fr-class-chip-x {
     min-height: 44px;
     padding: 2px 4px;
   }
+  /* the printed pickers (THEME, and VOICE + TEAMS side by side) sit tight to their labels at the 44px floor, so the
+     TEAM RACE's extra choice never tips a 360x640 setup into a scroll (Linux type runs taller than Windows) */
+  .fr-app .fr-setup-grid.fr-class-setup,
+  .fr-app .fr-setup-grid.fr-class-setup .fr-setup-rest {
+    gap: 8px;
+  }
+  .fr-app .fr-setup-grid.fr-class-setup .fr-pick {
+    gap: 2px;
+  }
+  .fr-app .fr-setup-grid.fr-class-setup .fr-pick-btn {
+    min-height: 44px;
+    padding-block: 4px;
+  }
+  /* half a phone's width: "2 TEAMS" stays one line (the caret tab tucks in closer) */
+  .fr-app .fr-class-pair .fr-pick-btn {
+    gap: 6px;
+    padding-left: 10px;
+  }
+  .fr-app .fr-class-pair .fr-pick-val {
+    white-space: nowrap;
+  }
 }
 
 /* ---- a SHORT screen (a laptop at 450-560px tall, a phone on its side): tighten everything ---- */

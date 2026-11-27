@@ -47,7 +47,7 @@ function frameOf(e) {
 const OUTCOME = { clean: 'CAPTURED', recaptured: 'RECAPTURED', shaky: 'BARELY', escaped: 'ESCAPED' };
 const MASTERY = { known: 'known', learning: 'learning', new: 'new' };
 
-function CaseFileRow({ c, outcomes, speak }) {
+function CaseFileRow({ c, outcomes, mastery = null, speak }) {
   const open = c.outcome !== 'clean';
   const [before, after] = String(c.context || '').split(/_+/);
   return (
@@ -57,7 +57,7 @@ function CaseFileRow({ c, outcomes, speak }) {
           {speak ? withArticle(c.word, c.rawPos, c.gender) : c.word}
           {speak && <SayButton word={c.word} />}
         </b>
-        <span className={`sr-casefile-mastery ${c.mastery}`}>{MASTERY[c.mastery]}</span>
+        <span className={`sr-casefile-mastery ${c.mastery}`}>{(mastery && mastery[c.mastery]) || MASTERY[c.mastery]}</span>
         <span className={`sr-casefile-out ${c.outcome}`}>{(outcomes || OUTCOME)[c.outcome]}</span>
       </div>
       {open && (
@@ -77,7 +77,7 @@ function CaseFileRow({ c, outcomes, speak }) {
   );
 }
 
-export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, xpSince = 0, economy = true, ui = null }) {
+export default function SatRushResults({ results, winsEarned = 0, winsBonusLines = [], onAgain, onReplay, onExit, offerMenu = false, gemsSince = 0, xpSince = 0, economy = true, ui = null, banner = null }) {
   // a pack's own words for this page (FRENCH RUSH: TERMINÉ / correct / missed / your words …)
   const RU = (ui && ui.results) || null;
   const speak = !!(ui && ui.stamps); // FRENCH RUSH reads words aloud (its pack has its own stamps)
@@ -191,6 +191,8 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
         <div className="sr-dead">
           {finite && !results.complete ? (RU ? RU.out : 'OUT OF LIVES') : RU ? RU.done : 'CASE CLOSED'}
         </div>
+        {/* a LANGUAGE RUSH run's moment (nov26): the class's TEAM RACE, or a NEW RECORD on a solo run */}
+        {banner}
 
         {/* THE ONE BIG THING: how many you captured (and how many got away). */}
         <div className="sr-panel sr-hero">
@@ -308,7 +310,7 @@ export default function SatRushResults({ results, winsEarned = 0, winsBonusLines
             <span className="sr-panel-label">{RU ? RU.file : 'case file'}</span>
             <ul className="sr-casefile-list">
               {caseFile.map((c) => (
-                <CaseFileRow key={c.word} c={c} outcomes={RU && RU.outcomes} speak={speak} />
+                <CaseFileRow key={c.word} c={c} outcomes={RU && RU.outcomes} mastery={RU && RU.mastery} speak={speak} />
               ))}
             </ul>
           </div>

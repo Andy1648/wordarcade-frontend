@@ -101,3 +101,45 @@ test('the cover picks the language: each one is its own link', async ({ page }) 
   await page.waitForURL('**/spanish-rush');
   await expect(page.locator('.sr-cover .sr-title')).toContainText('SPANISH');
 });
+
+// TEAM RACE (nov26) on the teacher's board, mocked: the lobby's teams, the lanes mid-class and the winner at the
+// end fit at every size (the real two-phone race is e2e/class-team-race.spec.js, against a real class server).
+for (const [w, h] of [
+  [360, 640],
+  [390, 844],
+  [1366, 768],
+  [1920, 1080],
+]) {
+  test(`TEAM RACE board fits at ${w}x${h}: lobby, a word, the winner`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    const mock = await installBackendMock(page);
+    await page.goto('/spanish-rush');
+    await page.getByRole('button', { name: re(RUSH_LANGS.es.menu.create) }).click();
+    await page.locator('.fr-class-foot').getByRole('button', { name: /^Create room$/i }).click();
+    const sent = await mock.waitForSent('class_create');
+    expect(sent.payload.set.teams).toBe(2); // a race by default
+    const rows = sent.payload.rows;
+    const roster = ['Ana', 'Ben', 'Cleo', 'Dev', 'Eli'].map((name, i) => ({ id: `s${i}`, name, away: false, team: i % 2 }));
+    const race = (pts, chains, leaders) => ({
+      teams: [0, 1].map((id) => ({ id, size: id ? 2 : 3, pts: pts[id], chain: chains[id], mult: chains[id] >= 6 ? 3 : chains[id] >= 3 ? 2 : 1, best: chains[id], score: Math.round((pts[id] / (id ? 2 : 3)) * 10) / 10 })),
+      goal: rows.length * 4,
+      leaders,
+    });
+    const base = { code: 'K7QMXZ', round: 1, role: 'host', total: rows.length, set: { ...sent.payload.set, voice: 'off' }, hostName: 'Teacher', hostAway: false, rows, roster, studentCount: 5 };
+    mock.pushToClient({ type: 'class_created', payload: { code: 'K7QMXZ', hostToken: 'tok' } });
+    mock.pushToClient({ type: 'class_state', payload: { ...base, phase: 'lobby', index: 0, race: race([0, 0], [0, 0], []) } });
+    await expect(page.locator('.fr-race .fr-lane')).toHaveCount(2);
+    await page.waitForTimeout(1500);
+    await noClip(page, 'race lobby');
+    const tally = { index: 3, answered: 4, clean: 3, hinted: 0, miss: 1, total: 5, away: 0, who: { clean: ['Ana', 'Cleo', 'Ben'], hinted: [], miss: ['Dev'], waiting: ['Eli'] } };
+    mock.pushToClient({ type: 'class_state', payload: { ...base, phase: 'word', index: 3, tally, race: race([22, 9], [4, 0], [0]) } });
+    await expect(page.locator('.fr-lane.t0 .fr-lane-chain.hot')).toHaveText('×2');
+    await page.waitForTimeout(1500);
+    await noClip(page, 'race word');
+    const summary = rows.map((r, i) => ({ index: i, word: r.word, clean: 4, hinted: 0, miss: i % 3 === 0 ? 1 : 0 }));
+    mock.pushToClient({ type: 'class_state', payload: { ...base, phase: 'done', index: rows.length - 1, summary, students: [], race: race([120, 70], [7, 2], [0]) } });
+    await expect(page.locator('.fr-race-win')).toHaveText(RUSH_LANGS.es.race.win(RUSH_LANGS.es.race.names[0]));
+    await page.waitForTimeout(1500);
+    await noClip(page, 'race winner');
+  });
+}

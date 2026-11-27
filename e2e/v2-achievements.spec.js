@@ -137,7 +137,7 @@ for (const vp of [{ width: 1024, height: 768 }, { width: 390, height: 844 }, { w
         return { h: r.height, minFont: Math.min(...txt) };
       }));
       for (const c of claims) {
-        expect(c.h, 'a phone CLAIM is a 44px target').toBeGreaterThanOrEqual(44);
+        expect(c.h, 'a phone CLAIM is a 44px target').toBeGreaterThanOrEqual(43.99); // 44 to the pixel: a transformed box reads 43.99997
         expect(c.minFont, 'a phone CLAIM reads ≥ 16px').toBeGreaterThanOrEqual(15.75);
       }
     }
